@@ -1,11 +1,4 @@
-mod brain;
-mod parser;
-
-use brain::*;
-
-use crate::engine::Engine;
-
-mod engine;
+use hakim_engine::engine::Engine;
 
 fn main() {
     /*let u = term_ref!(universe 0);
@@ -48,6 +41,9 @@ fn main() {
         match session.run_tactic(&line) {
             Ok(_) => (),
             Err(e) => println!("Tactic Error: {:#?}", e),
+        }
+        if session.is_finished() {
+            break;
         }
     }
     //println!("{:#?}", parse("forall x: nat, eq nat (plus x 24) 75"));
