@@ -9,6 +9,7 @@ pub enum Token {
     Kw(Keyword),
     Sign(String),
     Number(u32),
+    Wild(usize),
 }
 
 use Keyword::*;
@@ -60,6 +61,15 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
                 ident.push(text.eat_char());
             }
             result.push(Ident(ident));
+            continue;
+        }
+        if c == '_' {
+            let mut num = 0;
+            while let Some(d) = text.pick_char().and_then(|x| x.to_digit(10)) {
+                text.eat_char();
+                num = num * 10 + d as usize;
+            }
+            result.push(Wild(num));
             continue;
         }
         if let Some(d) = c.to_digit(10) {

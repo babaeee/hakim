@@ -2,7 +2,6 @@ mod brain;
 mod parser;
 
 use brain::*;
-use parser::parse;
 
 use crate::engine::Engine;
 
@@ -34,12 +33,22 @@ fn main() {
         type_of(app_ref!(app_ref!(eq_switch, nat, n3, plus_2_1), eq_2_p_1_3))
     );*/
     let mut eng = Engine::default();
-    eng.add_axiom("eq", "forall t: U, forall a: t, forall b: t, U");
     eng.add_axiom(
         "eq_switch",
         "forall t: U, forall x1: t, forall x2: t, forall p: eq t x1 x2, eq t x2 x1",
     );
-    dbg!(eng.calc_type("eq_switch"));
-    dbg!(eng.calc_type("eq_switch nat 2 3"));
+    let mut session = eng.interactive_session("forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)");
+    let mut rl = rustyline::Editor::<()>::new();
+    loop {
+        session.print();    
+        let line = match rl.readline("input tactic: ") {
+            Ok(l) => l,
+            Err(_) => break,
+        };
+        match session.run_tactic(&line) {
+            Ok(_) => (),
+            Err(e) => println!("Tactic Error: {:#?}", e),
+        }
+    }
     //println!("{:#?}", parse("forall x: nat, eq nat (plus x 24) 75"));
 }

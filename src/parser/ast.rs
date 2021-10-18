@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use crate::{
-    app, app_ref,
-    brain::{Term, TermRef},
-    term, term_ref,
+    app_ref,
+    brain::{increase_foreign_vars, Term, TermRef},
+    term_ref,
 };
 
 use super::tokenizer::{Keyword, Token};
@@ -11,13 +11,14 @@ use super::tokenizer::{Keyword, Token};
 #[derive(Debug)]
 pub enum AstTerm {
     Forall {
-        name: String,
+        name: Vec<String>,
         ty: Box<AstTerm>,
         body: Box<AstTerm>,
     },
     Ident(String),
     App(Box<AstTerm>, Box<AstTerm>),
     Number(u32),
+    Wild(usize),
 }
 
 use AstTerm::*;
@@ -48,6 +49,15 @@ trait TokenEater {
         }
     }
 
+    fn eat_ident_vec(&mut self) -> Result<Vec<String>> {
+        let mut v = vec![];
+        while let Token::Ident(s) = self.peek_token()? {
+            self.eat_token()?;
+            v.push(s);
+        }
+        Ok(v)
+    }
+
     fn eat_sign(&mut self, sign: &str) -> Result<()> {
         let t = self.peek_token()?;
         if let Token::Sign(s) = t {
@@ -69,10 +79,15 @@ trait TokenEater {
                 self.eat_token()?;
                 Ok(ident)
             }
+            Token::Wild(i) => {
+                let t = Wild(i);
+                self.eat_token()?;
+                Ok(t)
+            }
             Token::Kw(kw) => match kw {
                 Keyword::Forall => {
                     self.eat_token()?;
-                    let name = self.eat_ident()?;
+                    let name = self.eat_ident_vec()?;
                     self.eat_sign(":")?;
                     let ty = Box::new(self.eat_ast()?);
                     self.eat_sign(",")?;
@@ -144,7 +159,7 @@ pub fn tokens_to_ast(mut tokens: &[Token]) -> AstTerm {
                 panic!("Parse was ok but some tokens remained: {:?}", tokens);
             }
             ast
-        },
+        }
         Err(err) => panic!("Error in parsing: {:?}. Tokens remain: {:?}", err, tokens),
     }
 }
@@ -156,14 +171,22 @@ pub fn ast_to_term(
 ) -> TermRef {
     match ast {
         Forall { name, ty, body } => {
-            let ty_term = ast_to_term(*ty, globals, name_stack);
-            name_stack.push(name);
-            let body_term = ast_to_term(*body, globals, name_stack);
-            name_stack.pop();
-            TermRef::new(Term::Forall {
-                var_ty: ty_term,
-                body: body_term,
-            })
+            let mut ty_term = ast_to_term(*ty, globals, name_stack);
+            let mut tys = vec![];
+            for n in name {
+                tys.push(ty_term.clone());
+                ty_term = increase_foreign_vars(ty_term, 0);
+                name_stack.push(n);
+            }
+            let mut r = ast_to_term(*body, globals, name_stack);
+            for ty in tys.into_iter().rev() {
+                name_stack.pop();
+                r = TermRef::new(Term::Forall {
+                    body: r,
+                    var_ty: ty,
+                });
+            }
+            r
         }
         Ident(s) => {
             if let Some(i) = name_stack.iter().rev().position(|x| *x == s) {
@@ -182,6 +205,9 @@ pub fn ast_to_term(
         Number(num) => {
             let num_i32 = num as i32;
             term_ref!(n num_i32)
-        },
+        }
+        Wild(i) => {
+            term_ref!(_ i)
+        }
     }
 }
