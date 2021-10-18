@@ -26,7 +26,7 @@ impl Default for Engine {
     }
 }
 
-mod interactive;
+pub mod interactive;
 mod tactic;
 
 impl Engine {
