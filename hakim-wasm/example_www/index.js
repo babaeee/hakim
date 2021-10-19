@@ -13,6 +13,10 @@ document.body.appendChild(monitor);
 const inp = document.createElement('input');
 inp.type = 'text';
 document.body.appendChild(inp);
+
+const history = document.createElement('ul');
+document.body.appendChild(history);
+
 inp.addEventListener('keydown', (e) => {
     if (e.code === 'Enter') {
         const error = instance.run_tactic(inp.value);
@@ -20,6 +24,9 @@ inp.addEventListener('keydown', (e) => {
             alert(error);
             return;
         }
+        const li = document.createElement('li');
+        li.innerText = inp.value;
+        history.appendChild(li);
         monitor.innerText = instance.monitor();
         inp.value = '';
     }

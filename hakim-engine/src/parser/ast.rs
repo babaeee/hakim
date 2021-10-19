@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use super::{Result, Error::*};
 
 use crate::{
     app_ref,
@@ -22,18 +23,6 @@ pub enum AstTerm {
 }
 
 use AstTerm::*;
-
-#[derive(Debug, PartialEq)]
-pub enum Error {
-    UnexpectedEOF,
-    ExpectedIdentButGot(Token),
-    ExpectedSignButGot(String, Token),
-    ExpectedExprButGot(Token),
-}
-
-use Error::*;
-
-type Result<T> = std::result::Result<T, Error>;
 
 trait TokenEater {
     fn peek_token(&self) -> Result<Token>;
@@ -142,7 +131,7 @@ trait TokenEater {
 
 impl TokenEater for &[Token] {
     fn peek_token(&self) -> Result<Token> {
-        Ok(self.get(0).ok_or(Error::UnexpectedEOF)?.clone())
+        Ok(self.get(0).ok_or(UnexpectedEOF)?.clone())
     }
 
     fn eat_token(&mut self) -> Result<Token> {
@@ -152,15 +141,12 @@ impl TokenEater for &[Token] {
     }
 }
 
-pub fn tokens_to_ast(mut tokens: &[Token]) -> AstTerm {
-    match tokens.eat_ast() {
-        Ok(ast) => {
-            if !tokens.is_empty() {
-                panic!("Parse was ok but some tokens remained: {:?}", tokens);
-            }
-            ast
-        }
-        Err(err) => panic!("Error in parsing: {:?}. Tokens remain: {:?}", err, tokens),
+pub fn tokens_to_ast(mut tokens: &[Token]) -> Result<AstTerm> {
+    let ast = tokens.eat_ast()?;
+    if tokens.is_empty() {
+        Ok(ast)
+    } else {
+        Err(RemainTokens(tokens.to_vec()))
     }
 }
 
@@ -168,17 +154,17 @@ pub fn ast_to_term(
     ast: AstTerm,
     globals: &HashMap<String, TermRef>,
     name_stack: &mut Vec<String>,
-) -> TermRef {
+) -> Result<TermRef> {
     match ast {
         Forall { name, ty, body } => {
-            let mut ty_term = ast_to_term(*ty, globals, name_stack);
+            let mut ty_term = ast_to_term(*ty, globals, name_stack)?;
             let mut tys = vec![];
             for n in name {
                 tys.push(ty_term.clone());
                 ty_term = increase_foreign_vars(ty_term, 0);
                 name_stack.push(n);
             }
-            let mut r = ast_to_term(*body, globals, name_stack);
+            let mut r = ast_to_term(*body, globals, name_stack)?;
             for ty in tys.into_iter().rev() {
                 name_stack.pop();
                 r = TermRef::new(Term::Forall {
@@ -186,28 +172,28 @@ pub fn ast_to_term(
                     var_ty: ty,
                 });
             }
-            r
+            Ok(r)
         }
         Ident(s) => {
             if let Some(i) = name_stack.iter().rev().position(|x| *x == s) {
-                return term_ref!(v i);
+                return Ok(term_ref!(v i));
             }
             if let Some(t) = globals.get(&s) {
-                t.clone()
+                Ok(t.clone())
             } else {
-                panic!("name {} is undefined", s);
+                Err(UndefinedName(s))
             }
         }
-        App(a, b) => app_ref!(
-            ast_to_term(*a, globals, name_stack),
-            ast_to_term(*b, globals, name_stack)
-        ),
+        App(a, b) => Ok(app_ref!(
+            ast_to_term(*a, globals, name_stack)?,
+            ast_to_term(*b, globals, name_stack)?
+        )),
         Number(num) => {
             let num_i32 = num as i32;
-            term_ref!(n num_i32)
+            Ok(term_ref!(n num_i32))
         }
         Wild(i) => {
-            term_ref!(_ i)
+            Ok(term_ref!(_ i))
         }
     }
 }

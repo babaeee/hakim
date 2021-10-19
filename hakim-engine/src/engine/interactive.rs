@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::brain::TermRef;
 
-use super::{Engine, tactic::{self, apply, intros, rewrite}};
+use super::{Engine, tactic::{self, apply, intros, rewrite}, Error};
 
 pub struct InteractiveFrame {
     pub goal: TermRef,
@@ -43,16 +43,16 @@ fn smart_split(text: &str) -> Vec<String> {
 }
 
 impl InteractiveSession<'_> {
-    pub fn new<'a>(engine: &'a mut Engine, goal: &str) -> InteractiveSession<'a> {
-        let goal_term = engine.parse_text(goal);
+    pub fn new<'a>(engine: &'a mut Engine, goal: &str) -> Result<InteractiveSession<'a>, Error> {
+        let goal_term = engine.parse_text(goal)?;
         let frame = InteractiveFrame {
             hyps: Default::default(),
             goal: goal_term,
         };
-        InteractiveSession {
+        Ok(InteractiveSession {
             engine,
             frames: vec![frame],
-        }
+        })
     }
 
     pub fn monitor_string(&self) -> String {

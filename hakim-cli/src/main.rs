@@ -29,11 +29,12 @@ fn main() {
     eng.add_axiom(
         "eq_switch",
         "forall t: U, forall x1: t, forall x2: t, forall p: eq t x1 x2, eq t x2 x1",
-    );
-    let mut session = eng.interactive_session("forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)");
+    )
+    .unwrap();
+    let mut session = eng.interactive_session("forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)").unwrap();
     let mut rl = rustyline::Editor::<()>::new();
     loop {
-        session.print();    
+        session.print();
         let line = match rl.readline("input tactic: ") {
             Ok(l) => l,
             Err(_) => break,

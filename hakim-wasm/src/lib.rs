@@ -30,7 +30,7 @@ impl Instance {
     #[wasm_bindgen(constructor)]
     pub fn new(goal: &str) -> Self {
         let engine = Box::leak(Box::new(Engine::default()));
-        let session = engine.interactive_session(goal);
+        let session = engine.interactive_session(goal).unwrap();
         Instance { session }
     }
 
