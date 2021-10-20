@@ -1,6 +1,6 @@
 use std::{fmt::Debug, iter::once, rc::Rc};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Term {
     Axiom { ty: TermRef, unique_name: String },
     Universe { index: usize },
@@ -268,7 +268,7 @@ fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef, 
             .nth(*index)
             .ok_or(Error::BadTerm)?
             .clone(),
-        Term::Number { .. } => term_ref!(axiom "nat".to_string(), universe 0),
+        Term::Number { .. } => term_ref!(axiom "ℤ".to_string(), universe 0),
         Term::App { func, op } => {
             let op_ty = type_of_inner(op.clone(), var_ty_stack)?;
             let func_type = type_of_inner(func.clone(), var_ty_stack)?;

@@ -1,6 +1,11 @@
-use std::collections::HashMap;
-use crate::{app_ref, brain::{self, Term, TermRef, type_of}, parser::{self, ast_to_term, parse}, term_ref};
 use self::interactive::InteractiveSession;
+use crate::{
+    app_ref,
+    brain::{self, type_of, Term, TermRef},
+    parser::{self, ast_to_term, parse},
+    term_ref,
+};
+use std::collections::HashMap;
 
 pub struct Engine {
     name_dict: HashMap<String, TermRef>,
@@ -13,15 +18,19 @@ impl Default for Engine {
     fn default() -> Self {
         let mut name_dict: HashMap<String, TermRef> = Default::default();
         let u = term_ref!(universe 0);
-        let nat = term_ref!(axiom "nat" , u);
+        let z = term_ref!(axiom "ℤ" , u);
         let v0 = term_ref!(v 0);
         let v1 = term_ref!(v 1);
         let eq = term_ref!(axiom "eq" , forall u, forall v0, forall v1, u);
         let eq_refl = term_ref!(axiom "eq_refl" , forall u, forall v0, app_ref!(eq, v1, v0, v0));
+        let plus = term_ref!(axiom "plus", forall z, forall z, z);
+        let mult = term_ref!(axiom "mult", forall z, forall z, z);
         name_dict.insert("U".to_string(), u);
-        name_dict.insert("nat".to_string(), nat);
+        name_dict.insert("ℤ".to_string(), z);
         name_dict.insert("eq".to_string(), eq);
         name_dict.insert("eq_refl".to_string(), eq_refl);
+        name_dict.insert("plus".to_string(), plus);
+        name_dict.insert("mult".to_string(), mult);
         Self { name_dict }
     }
 }

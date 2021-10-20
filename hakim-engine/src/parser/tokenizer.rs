@@ -28,7 +28,7 @@ impl Eater for &str {
 
     fn eat_char(&mut self) -> char {
         let c = self.chars().next().unwrap();
-        *self = &self[1..];
+        *self = &self[c.len_utf8()..];
         c
     }
 

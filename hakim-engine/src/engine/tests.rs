@@ -34,11 +34,14 @@ fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
     }
 }
 
-const F_EQUAL: &str = "forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)";
+const F_EQUAL: &str =
+    "forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)";
 
 #[test]
 fn proof_f_equal() {
-    run_interactive_to_end(F_EQUAL, r#"
+    run_interactive_to_end(
+        F_EQUAL,
+        r#"
     intros t1
     intros t2
     intros f
@@ -47,7 +50,8 @@ fn proof_f_equal() {
     intros eq_proof
     rewrite eq_proof
     apply (eq_refl t2 (f b))
-    "#);
+    "#,
+    );
 }
 
 #[test]
@@ -57,13 +61,40 @@ fn duplicate_hyp() {
 
 #[test]
 fn dont_panic1() {
-    run_interactive_to_fail(F_EQUAL, r#"
+    run_interactive_to_fail(
+        F_EQUAL,
+        r#"
         intros x
         intros y
         intros f
         intros a
         intros b
         intros p
-    "#, "rewrite (eq_switch p)");
-}    
+    "#,
+        "rewrite (eq_switch p)",
+    );
+}
 
+#[test]
+fn success_ring1() {
+    run_interactive_to_end(
+        "forall x: ℤ, eq ℤ (plus x x) (mult 2 x)",
+        r#"
+        intros x
+        ring
+        "#,
+    );
+}
+
+#[test]
+fn success_ring2() {
+    run_interactive_to_end(
+        "forall a b: ℤ, eq ℤ (mult (plus a b) (plus a b)) \
+        (plus (mult a a) (plus (mult 2 (mult a b)) (mult b b)))",
+        r#"
+        intros a
+        intros b
+        ring
+        "#,
+    );
+}

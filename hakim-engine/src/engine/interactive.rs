@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use crate::brain::TermRef;
 
-use super::{Engine, tactic::{self, apply, intros, rewrite}, Error};
+use super::{
+    tactic::{self, apply, intros, rewrite, ring},
+    Engine, Error,
+};
 
 pub struct InteractiveFrame {
     pub goal: TermRef,
@@ -62,7 +65,7 @@ impl InteractiveSession<'_> {
         let mut r = "".to_string();
         for frame in &self.frames {
             for (name, ty) in &frame.hyps {
-                r += &format!(" {}: {:#?}\n", name, ty);        
+                r += &format!(" {}: {:#?}\n", name, ty);
             }
             r += &format!("--------------------------------------------\n");
             r += &format!("    {:#?}\n", frame.goal);
@@ -83,9 +86,18 @@ impl InteractiveSession<'_> {
         let mut parts = parts.iter();
         let name = parts.next().unwrap();
         match name.as_str() {
-            "intros" => intros(self.engine, self.frames.last_mut().unwrap(), parts.next().unwrap()),
-            "rewrite" => rewrite(self.engine, self.frames.last_mut().unwrap(), parts.next().unwrap()),
+            "intros" => intros(
+                self.engine,
+                self.frames.last_mut().unwrap(),
+                parts.next().unwrap(),
+            ),
+            "rewrite" => rewrite(
+                self.engine,
+                self.frames.last_mut().unwrap(),
+                parts.next().unwrap(),
+            ),
             "apply" => apply(self, parts.next().unwrap()),
+            "ring" => ring(self),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }
     }
