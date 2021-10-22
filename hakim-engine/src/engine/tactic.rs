@@ -3,10 +3,7 @@ use crate::{
     term_ref,
 };
 
-use super::{
-    interactive::{InteractiveFrame, InteractiveSession},
-    Engine,
-};
+use super::interactive::InteractiveSnapshot;
 
 mod rewrite;
 pub use rewrite::rewrite;
@@ -19,12 +16,18 @@ pub enum Error {
     UnknownTactic(String),
     BadHyp(&'static str, TermRef),
     BadGoal(&'static str),
+    BadArgCount {
+        tactic_name: String,
+        expected: usize,
+        found: usize,
+    },
     BrainError(brain::Error),
     EngineError(super::Error),
     CanNotSolve(&'static str),
+    CanNotUndo,
 }
 
-type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 impl From<super::Error> for Error {
     fn from(e: super::Error) -> Self {
@@ -40,22 +43,48 @@ impl From<brain::Error> for Error {
 
 use Error::*;
 
-pub fn intros(engine: &mut Engine, frame: &mut InteractiveFrame, name: &str) -> Result<()> {
-    let goal = &frame.goal;
+pub fn get_one_arg(mut args: impl Iterator<Item = String>, tactic_name: &str) -> Result<String> {
+    let arg1 = args.next().ok_or(BadArgCount {
+        tactic_name: tactic_name.to_string(),
+        expected: 1,
+        found: 0,
+    })?;
+    let c = args.count();
+    if c > 0 {
+        return Err(BadArgCount {
+            tactic_name: tactic_name.to_string(),
+            expected: 1,
+            found: c + 1,
+        });
+    }
+    Ok(arg1)
+}
+
+pub fn intros(
+    snapshot: &InteractiveSnapshot,
+    args: impl Iterator<Item = String>,
+) -> Result<InteractiveSnapshot> {
+    let name = get_one_arg(args, "intros")?;
+    let mut snapshot = snapshot.clone();
+    let goal = snapshot.current_frame().goal.clone();
     match goal.as_ref() {
         Term::Forall { var_ty, body } => {
-            engine.add_axiom_with_term(name, var_ty.clone())?;
-            frame.hyps.insert(name.to_string(), var_ty.clone());
-            frame.goal = subst(body.clone(), term_ref!(axiom name, var_ty));
-            Ok(())
+            snapshot.add_hyp_with_name(&name, var_ty.clone())?;
+            snapshot.current_frame().goal = subst(body.clone(), term_ref!(axiom name, var_ty));
+            Ok(snapshot)
         }
         _ => Err(BadGoal("intros expects forall")),
     }
 }
 
-pub fn apply(session: &mut InteractiveSession, exp: &str) -> Result<()> {
+pub fn apply(
+    session: &InteractiveSnapshot,
+    args: impl Iterator<Item = String>,
+) -> Result<InteractiveSnapshot> {
+    let exp = &get_one_arg(args, "apply")?;
+    let mut session = session.clone();
     let term = session.engine.calc_type(exp)?;
     match_term(term, session.current_frame().goal.clone())?;
     session.solve_goal();
-    Ok(())
+    Ok(session)
 }

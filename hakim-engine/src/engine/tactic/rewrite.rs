@@ -1,7 +1,8 @@
 use crate::brain::{create_infer_vec, match_and_infer, Term, TermRef};
+use crate::engine::interactive::InteractiveSnapshot;
 
-use super::super::{interactive::InteractiveFrame, Engine};
-use super::Error::{self, *};
+use super::super::Engine;
+use super::{get_one_arg, Error::*, Result};
 
 fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
     if exp == find {
@@ -32,10 +33,16 @@ pub fn get_eq_params(engine: &Engine, term: TermRef) -> Option<[TermRef; 2]> {
     Some([iter.next().unwrap(), iter.next().unwrap()])
 }
 
-pub fn rewrite(engine: &Engine, frame: &mut InteractiveFrame, exp: &str) -> Result<(), Error> {
-    let term = engine.calc_type(exp)?;
-    let [op1, op2] =
-        get_eq_params(engine, term.clone()).ok_or(BadHyp("rewrite expect eq but got", term))?;
-    frame.goal = replace_term(frame.goal.clone(), op1, op2);
-    Ok(())
+pub fn rewrite(
+    snapshot: &InteractiveSnapshot,
+    args: impl Iterator<Item = String>,
+) -> Result<InteractiveSnapshot> {
+    let exp = &get_one_arg(args, "rewrite")?;
+    let mut snapshot = snapshot.clone();
+    let term = snapshot.engine.calc_type(exp)?;
+    let [op1, op2] = get_eq_params(&snapshot.engine, term.clone())
+        .ok_or(BadHyp("rewrite expect eq but got", term))?;
+    let goal = snapshot.current_frame().goal.clone();
+    snapshot.current_frame().goal = replace_term(goal, op1, op2);
+    Ok(snapshot)
 }

@@ -1,10 +1,13 @@
 mod ast;
 mod tokenizer;
 
-pub use self::ast::{AstTerm, ast_to_term};
+pub use self::ast::{ast_to_term, AstTerm};
+pub use self::tokenizer::is_valid_ident;
 
-use self::{ast::{tokens_to_ast}, tokenizer::{Token, tokenize}};
-
+use self::{
+    ast::tokens_to_ast,
+    tokenizer::{tokenize, Token},
+};
 
 #[derive(Debug, PartialEq)]
 pub enum Error {

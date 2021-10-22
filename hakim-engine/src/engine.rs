@@ -2,13 +2,13 @@ use self::interactive::InteractiveSession;
 use crate::{
     app_ref,
     brain::{self, type_of, Term, TermRef},
-    parser::{self, ast_to_term, parse},
+    parser::{self, ast_to_term, is_valid_ident, parse},
     term_ref,
 };
-use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
 pub struct Engine {
-    name_dict: HashMap<String, TermRef>,
+    name_dict: im::HashMap<String, TermRef>,
 }
 
 #[cfg(test)]
@@ -16,7 +16,7 @@ mod tests;
 
 impl Default for Engine {
     fn default() -> Self {
-        let mut name_dict: HashMap<String, TermRef> = Default::default();
+        let mut name_dict: im::HashMap<String, TermRef> = Default::default();
         let u = term_ref!(universe 0);
         let z = term_ref!(axiom "ℤ" , u);
         let v0 = term_ref!(v 0);
@@ -41,6 +41,7 @@ mod tactic;
 #[derive(Debug)]
 pub enum Error {
     DuplicateName(String),
+    InvalidIdentName(String),
     ParserError(parser::Error),
     BrainError(brain::Error),
 }
@@ -63,6 +64,9 @@ type Result<T> = std::result::Result<T, Error>;
 
 impl Engine {
     fn add_name(&mut self, name: &str, term: TermRef) -> Result<()> {
+        if !is_valid_ident(name) {
+            return Err(InvalidIdentName(name.to_string()));
+        }
         if self.name_dict.contains_key(name) {
             return Err(DuplicateName(name.to_string()));
         }
@@ -94,7 +98,7 @@ impl Engine {
         Ok(term)
     }
 
-    pub fn interactive_session<'a>(&'a mut self, goal: &str) -> Result<InteractiveSession<'a>> {
-        InteractiveSession::new(self, goal)
+    pub fn interactive_session(&self, goal: &str) -> Result<InteractiveSession> {
+        InteractiveSession::new(self.clone(), goal)
     }
 }

@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use super::{Result, Error::*};
+use super::{Error::*, Result};
 
 use crate::{
     app_ref,
@@ -152,7 +151,7 @@ pub fn tokens_to_ast(mut tokens: &[Token]) -> Result<AstTerm> {
 
 pub fn ast_to_term(
     ast: AstTerm,
-    globals: &HashMap<String, TermRef>,
+    globals: &im::HashMap<String, TermRef>,
     name_stack: &mut Vec<String>,
 ) -> Result<TermRef> {
     match ast {
@@ -192,8 +191,6 @@ pub fn ast_to_term(
             let num_i32 = num as i32;
             Ok(term_ref!(n num_i32))
         }
-        Wild(i) => {
-            Ok(term_ref!(_ i))
-        }
+        Wild(i) => Ok(term_ref!(_ i)),
     }
 }

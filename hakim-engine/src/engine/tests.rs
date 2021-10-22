@@ -1,7 +1,7 @@
 use super::Engine;
 
 fn run_interactive_to_end(goal: &str, tactics: &str) {
-    let mut eng = Engine::default();
+    let eng = Engine::default();
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
@@ -16,7 +16,7 @@ fn run_interactive_to_end(goal: &str, tactics: &str) {
 }
 
 fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
-    let mut eng = Engine::default();
+    let eng = Engine::default();
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
@@ -55,6 +55,29 @@ fn proof_f_equal() {
 }
 
 #[test]
+fn check_undo() {
+    run_interactive_to_end(
+        F_EQUAL,
+        r#"
+    intros t1
+    intros t2
+    intros f
+    intros a
+    intros b
+    intros bad_name
+    Undo
+    Undo
+    intros c
+    Undo
+    intros b
+    intros eq_proof
+    rewrite eq_proof
+    apply (eq_refl t2 (f b))
+    "#,
+    );
+}
+
+#[test]
 fn duplicate_hyp() {
     run_interactive_to_fail(F_EQUAL, "intros x", "intros x");
 }
@@ -73,6 +96,23 @@ fn dont_panic1() {
     "#,
         "rewrite (eq_switch p)",
     );
+    run_interactive_to_fail(
+        F_EQUAL,
+        r#"
+        intros x
+        intros y
+    "#,
+        "intros",
+    );
+}
+
+#[test]
+fn intros_bad_arg() {
+    run_interactive_to_fail(F_EQUAL, "", "intros");
+    run_interactive_to_fail(F_EQUAL, "", "intros  ");
+    run_interactive_to_fail(F_EQUAL, "", "intros x y");
+    run_interactive_to_fail(F_EQUAL, "", "intros -2");
+    run_interactive_to_fail(F_EQUAL, "", "intros (rewrite x)");
 }
 
 #[test]

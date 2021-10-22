@@ -17,6 +17,18 @@ document.body.appendChild(inp);
 const history = document.createElement('ul');
 document.body.appendChild(history);
 
+const updateHistory = () => {
+    while (history.lastChild) {
+        history.removeChild(history.lastChild);
+    }
+    const hl = instance.get_history();
+    for (const h of hl) {
+        const li = document.createElement('li');
+        li.innerText = h;
+        history.appendChild(li);
+    }
+};
+
 inp.addEventListener('keydown', (e) => {
     if (e.code === 'Enter') {
         const error = instance.run_tactic(inp.value);
@@ -24,9 +36,7 @@ inp.addEventListener('keydown', (e) => {
             alert(error);
             return;
         }
-        const li = document.createElement('li');
-        li.innerText = inp.value;
-        history.appendChild(li);
+        updateHistory();
         monitor.innerText = instance.monitor();
         inp.value = '';
     }

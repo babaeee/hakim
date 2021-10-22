@@ -41,6 +41,25 @@ impl Eater for &str {
     }
 }
 
+pub fn is_valid_ident_first_char(c: char) -> bool {
+    c.is_alphabetic()
+}
+
+pub fn is_valid_ident_char(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
+}
+
+pub fn is_valid_ident(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+    let mut chars = s.chars();
+    if !is_valid_ident_first_char(chars.next().unwrap()) {
+        return false;
+    }
+    chars.all(is_valid_ident_char)
+}
+
 pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
     let mut result = vec![];
     loop {
@@ -55,9 +74,9 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
         if c.is_whitespace() {
             continue;
         }
-        if c.is_alphabetic() {
+        if is_valid_ident_first_char(c) {
             let mut ident = c.to_string();
-            while text.pick_char().map(|x| x.is_alphanumeric() || x == '_') == Some(true) {
+            while text.pick_char().map(is_valid_ident_char) == Some(true) {
                 ident.push(text.eat_char());
             }
             result.push(Ident(ident));

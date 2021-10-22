@@ -1,6 +1,6 @@
 mod utils;
 
-use hakim_engine::engine::{Engine, interactive::InteractiveSession};
+use hakim_engine::engine::{interactive::InteractiveSession, Engine};
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 
@@ -11,13 +11,13 @@ use wasm_bindgen::prelude::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-extern {
+extern "C" {
     fn alert(s: &str);
 }
 
 #[wasm_bindgen]
 pub struct Instance {
-    session: InteractiveSession<'static>,
+    session: InteractiveSession,
 }
 
 #[wasm_bindgen(start)]
@@ -29,7 +29,8 @@ pub fn start() {
 impl Instance {
     #[wasm_bindgen(constructor)]
     pub fn new(goal: &str) -> Self {
-        let engine = Box::leak(Box::new(Engine::default()));
+        set_panic_hook();
+        let engine = Engine::default();
         let session = engine.interactive_session(goal).unwrap();
         Instance { session }
     }
@@ -45,5 +46,10 @@ impl Instance {
             Ok(_) => None,
             Err(e) => Some(format!("{:?}", e)),
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn get_history(&self) -> JsValue {
+        JsValue::from_serde(&self.session.get_history()).unwrap()
     }
 }
