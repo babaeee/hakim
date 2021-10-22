@@ -3,6 +3,7 @@ use super::{Error::*, Result};
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, Term, TermRef},
+    parser::binop::BinOp,
     term_ref,
 };
 
@@ -17,6 +18,7 @@ pub enum AstTerm {
     },
     Ident(String),
     App(Box<AstTerm>, Box<AstTerm>),
+    BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
     Number(u32),
     Wild(usize),
 }
@@ -100,7 +102,25 @@ trait TokenEater {
     }
 
     fn eat_ast(&mut self) -> Result<AstTerm> {
-        let mut v = vec![self.eat_ast_without_app()?];
+        fn build_ast(a: AstTerm, op: BinOp, b: AstTerm) -> AstTerm {
+            if op == BinOp::App {
+                App(Box::new(a), Box::new(b))
+            } else {
+                BinOp(Box::new(a), op, Box::new(b))
+            }
+        }
+        fn push_to_stack(stack: &mut Vec<(AstTerm, BinOp)>, op: BinOp, mut n: AstTerm) {
+            while let Some((_, op2)) = stack.last() {
+                if op2.prec() > op.prec() {
+                    break;
+                }
+                let (n2, op2) = stack.pop().unwrap();
+                n = build_ast(n2, op2, n);
+            }
+            stack.push((n, op));
+        }
+        let mut cur = self.eat_ast_without_app()?;
+        let mut stack: Vec<(AstTerm, BinOp)> = vec![];
         loop {
             let t = match self.peek_token() {
                 Ok(k) => k,
@@ -113,18 +133,26 @@ trait TokenEater {
                 }
             };
             if let Token::Sign(s) = t {
-                if s != "(" {
-                    break;
+                if let Some(op) = BinOp::from_str(&s) {
+                    self.eat_token()?;
+                    push_to_stack(&mut stack, op, cur);
+                    cur = self.eat_ast_without_app()?;
+                    continue;
                 }
+                if s == "(" {
+                    push_to_stack(&mut stack, BinOp::App, cur);
+                    cur = self.eat_ast_without_app()?;
+                    continue;
+                }
+                break;
             }
-            v.push(self.eat_ast_without_app()?);
+            push_to_stack(&mut stack, BinOp::App, cur);
+            cur = self.eat_ast_without_app()?;
         }
-        let mut iter = v.into_iter();
-        let mut r = iter.next().unwrap();
-        for x in iter {
-            r = AstTerm::App(Box::new(r), Box::new(x));
+        for (t, op) in stack.into_iter().rev() {
+            cur = build_ast(t, op, cur);
         }
-        Ok(r)
+        Ok(cur)
     }
 }
 
@@ -192,5 +220,10 @@ pub fn ast_to_term(
             Ok(term_ref!(n num_i32))
         }
         Wild(i) => Ok(term_ref!(_ i)),
+        BinOp(a, op, b) => {
+            let ta = ast_to_term(*a, globals, name_stack)?;
+            let tb = ast_to_term(*b, globals, name_stack)?;
+            Ok(op.run_on_term(ta, tb))
+        }
     }
 }

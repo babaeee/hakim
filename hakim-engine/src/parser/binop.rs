@@ -1,0 +1,86 @@
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum BinOp {
+    App,
+    Eq,
+    Imply,
+    Le,
+    Mult,
+    Plus,
+}
+
+impl Display for BinOp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        f.write_str(match self {
+            App => " ",
+            Eq => "=",
+            Imply => "→",
+            Le => "<",
+            Mult => "*",
+            Plus => "+",
+        })
+    }
+}
+
+use std::fmt::{Display, Formatter};
+
+use BinOp::*;
+
+use crate::{app_ref, brain::increase_foreign_vars, prelude::*, term_ref, Term, TermRef};
+
+impl BinOp {
+    pub fn prec(&self) -> u8 {
+        match self {
+            App => 0,
+            Eq => 70,
+            Imply => 99,
+            Le => 70,
+            Mult => 40,
+            Plus => 50,
+        }
+    }
+
+    pub fn from_str(op: &str) -> Option<Self> {
+        Some(match op {
+            "→" => Imply,
+            "<" => Le,
+            "*" => Mult,
+            "+" => Plus,
+            _ => return None,
+        })
+    }
+
+    pub fn run_on_term(&self, l: TermRef, r: TermRef) -> TermRef {
+        match self {
+            App => app_ref!(l, r),
+            Eq => todo!(),
+            Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
+            Le => app_ref!(le(), l, r),
+            Mult => app_ref!(mult(), l, r),
+            Plus => app_ref!(plus(), l, r),
+        }
+    }
+
+    pub fn detect(t: TermRef) -> Option<(TermRef, Self, TermRef)> {
+        match t.as_ref() {
+            Term::App { func, op: op2 } => match func.as_ref() {
+                Term::App { func, op } => match func.as_ref() {
+                    Term::App { func, op: _ } => match func.as_ref() {
+                        Term::Axiom { ty: _, unique_name } if unique_name == "eq" => {
+                            Some((op.clone(), BinOp::Eq, op2.clone()))
+                        }
+                        _ => None,
+                    },
+                    Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
+                        "plus" => Some((op.clone(), BinOp::Plus, op2.clone())),
+                        "mult" => Some((op.clone(), BinOp::Mult, op2.clone())),
+                        "le" => Some((op.clone(), BinOp::Le, op2.clone())),
+                        _ => None,
+                    },
+                    _ => None,
+                },
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+}

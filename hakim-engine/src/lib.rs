@@ -1,5 +1,6 @@
+pub mod brain;
 pub mod engine;
 pub mod parser;
-pub mod brain;
+mod prelude;
 
-pub use brain::TermRef;
+pub use brain::{Term, TermRef};

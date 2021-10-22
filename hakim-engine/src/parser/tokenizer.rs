@@ -66,7 +66,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
         if text.is_empty() {
             return Ok(result);
         }
-        if text.eat_prefix("forall") {
+        if text.eat_prefix("forall") || text.eat_prefix("∀") {
             result.push(Kw(Forall));
             continue;
         }

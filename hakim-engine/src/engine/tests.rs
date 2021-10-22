@@ -118,7 +118,7 @@ fn intros_bad_arg() {
 #[test]
 fn success_ring1() {
     run_interactive_to_end(
-        "forall x: ℤ, eq ℤ (plus x x) (mult 2 x)",
+        "forall x: ℤ, eq ℤ (x + x) (2 * x)",
         r#"
         intros x
         ring

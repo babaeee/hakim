@@ -1,9 +1,8 @@
 use self::interactive::InteractiveSession;
 use crate::{
-    app_ref,
-    brain::{self, type_of, Term, TermRef},
+    brain::{self, type_of, TermRef},
     parser::{self, ast_to_term, is_valid_ident, parse},
-    term_ref,
+    prelude, term_ref,
 };
 
 #[derive(Debug, Clone)]
@@ -17,20 +16,12 @@ mod tests;
 impl Default for Engine {
     fn default() -> Self {
         let mut name_dict: im::HashMap<String, TermRef> = Default::default();
-        let u = term_ref!(universe 0);
-        let z = term_ref!(axiom "ℤ" , u);
-        let v0 = term_ref!(v 0);
-        let v1 = term_ref!(v 1);
-        let eq = term_ref!(axiom "eq" , forall u, forall v0, forall v1, u);
-        let eq_refl = term_ref!(axiom "eq_refl" , forall u, forall v0, app_ref!(eq, v1, v0, v0));
-        let plus = term_ref!(axiom "plus", forall z, forall z, z);
-        let mult = term_ref!(axiom "mult", forall z, forall z, z);
-        name_dict.insert("U".to_string(), u);
-        name_dict.insert("ℤ".to_string(), z);
-        name_dict.insert("eq".to_string(), eq);
-        name_dict.insert("eq_refl".to_string(), eq_refl);
-        name_dict.insert("plus".to_string(), plus);
-        name_dict.insert("mult".to_string(), mult);
+        name_dict.insert("U".to_string(), prelude::u());
+        name_dict.insert("ℤ".to_string(), prelude::z());
+        name_dict.insert("eq".to_string(), prelude::eq());
+        name_dict.insert("eq_refl".to_string(), prelude::eq_refl());
+        name_dict.insert("plus".to_string(), prelude::plus());
+        name_dict.insert("mult".to_string(), prelude::mult());
         Self { name_dict }
     }
 }
@@ -81,7 +72,7 @@ impl Engine {
 
     pub fn add_axiom(&mut self, name: &str, ty: &str) -> Result<()> {
         let parsed = self.parse_text(ty)?;
-        type_of(dbg!(parsed.clone())).unwrap();
+        type_of(parsed.clone()).unwrap();
         self.add_axiom_with_term(name, parsed)
     }
 

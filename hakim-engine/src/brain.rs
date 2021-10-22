@@ -1,3 +1,4 @@
+use crate::parser::term_pretty_print;
 use std::{fmt::Debug, iter::once, rc::Rc};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -13,68 +14,14 @@ pub enum Term {
 
 pub type TermRef = Rc<Term>;
 
-fn term_pretty_print(term: &Term, name_stack: &mut Vec<(String, usize)>, level: u8) -> String {
-    match term {
-        Term::Axiom { unique_name, .. } => unique_name.to_string(),
-        Term::Universe { index } => format!("u{}", index),
-        Term::Forall { var_ty, body } => {
-            let name = format!("x{}", name_stack.len());
-            let var_ty_str = term_pretty_print(var_ty, name_stack, 98);
-            name_stack.push((name.clone(), 0));
-            let body_str = term_pretty_print(body, name_stack, 200);
-            let (_, c) = name_stack.pop().unwrap();
-            if c == 0 {
-                format!("{} -> {}", var_ty_str, body_str)
-            } else {
-                format!("forall {}: {}, {}", name, var_ty_str, body_str)
-            }
-        }
-        Term::Var { index } => {
-            if let Some(x) = name_stack.iter_mut().rev().nth(*index) {
-                x.1 += 1;
-                x.0.clone()
-            } else {
-                format!("f{}", index - name_stack.len())
-            }
-        }
-        Term::Number { value } => value.to_string(),
-        Term::App { func, op } => {
-            match func.as_ref() {
-                Term::App { func, op: op2 } => match func.as_ref() {
-                    Term::App { func, op: _ } => match func.as_ref() {
-                        Term::Axiom { ty: _, unique_name } if unique_name == "eq" => {
-                            let s = format!(
-                                "{} = {}",
-                                term_pretty_print(op2, name_stack, 69),
-                                term_pretty_print(op, name_stack, 69)
-                            );
-                            return if level < 70 { format!("({})", s) } else { s };
-                        }
-                        _ => (),
-                    },
-                    _ => (),
-                },
-                _ => (),
-            }
-            let s = format!(
-                "{} {}",
-                term_pretty_print(func, name_stack, 1),
-                term_pretty_print(op, name_stack, 0)
-            );
-            if level < 1 {
-                format!("({})", s)
-            } else {
-                s
-            }
-        }
-        Term::Wild { index } => format!("_{}", index),
-    }
-}
-
 impl Debug for Term {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut name_stack = vec![];
-        f.write_str(&term_pretty_print(self, &mut name_stack, 200))
+        f.write_str(&term_pretty_print(
+            Rc::new(self.clone()),
+            &mut name_stack,
+            200,
+        ))
     }
 }
 
@@ -86,31 +33,31 @@ macro_rules! term_ref {
 
 #[macro_export]
 macro_rules! term {
-    {forall $ty:expr , $($i:tt)*} => (Term::Forall { var_ty: term_ref!($ty), body: (term_ref!($( $i)*)) });
-    {axiom $name:expr , $($i:tt)*} => (Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
-    {universe $input:expr} => (Term::Universe { index: ($input) });
-    {v $input:expr} => (Term::Var { index: ($input) });
-    {n $input:expr} => (Term::Number { value: ($input) });
-    {_ $input:expr} => (Term::Wild { index: ($input) });
+    {forall $ty:expr , $($i:tt)*} => (crate::Term::Forall { var_ty: term_ref!($ty), body: (term_ref!($( $i)*)) });
+    {axiom $name:expr , $($i:tt)*} => (crate::Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
+    {universe $input:expr} => (crate::Term::Universe { index: ($input) });
+    {v $input:expr} => (crate::Term::Var { index: ($input) });
+    {n $input:expr} => (crate::Term::Number { value: ($input) });
+    {_ $input:expr} => (crate::Term::Wild { index: ($input) });
     {$input:expr} => ($input);
 }
 
 #[macro_export]
 macro_rules! app_ref {
-    {$($i:tt)*} => (TermRef::new(crate::app!($( $i)*)));
+    {$($i:tt)*} => (crate::TermRef::new(crate::app!($( $i)*)));
 }
 
 #[macro_export]
 macro_rules! app {
     ( $x:expr , $y:expr ) => {
-        Term::App {
+        crate::Term::App {
             func: ($x).clone(),
             op: ($y).clone(),
         }
     };
     ( $x:expr , $y:expr, $z:expr ) => {
-        Term::App {
-            func: TermRef::new(Term::App {
+        crate::Term::App {
+            func: crate::TermRef::new(crate::Term::App {
                 func: ($x).clone(),
                 op: ($y).clone(),
             }),
@@ -118,9 +65,9 @@ macro_rules! app {
         }
     };
     ( $x:expr , $y:expr, $z:expr, $w:expr ) => {
-        Term::App {
-            func: TermRef::new(Term::App {
-                func: TermRef::new(Term::App {
+        crate::Term::App {
+            func: crate::TermRef::new(crate::Term::App {
+                func: TermRef::new(crate::Term::App {
                     func: ($x).clone(),
                     op: ($y).clone(),
                 }),
@@ -242,7 +189,7 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
         }
         Term::App { func, op } => {
             let func = increase_foreign_vars(func.clone(), depth);
-            let op = increase_foreign_vars(op.clone(), depth + 1);
+            let op = increase_foreign_vars(op.clone(), depth);
             TermRef::new(Term::App { func, op })
         }
     }
