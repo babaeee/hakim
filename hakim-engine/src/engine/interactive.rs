@@ -88,6 +88,10 @@ impl InteractiveSession {
         self.last_snapshot().monitor_string()
     }
 
+    pub fn print(&self) {
+        println!("{}", self.monitor_string());
+    }
+
     pub fn is_finished(&self) -> bool {
         self.last_snapshot().is_finished()
     }
@@ -131,10 +135,6 @@ impl InteractiveSnapshot {
             r += &format!("    {:#?}\n", frame.goal);
         }
         r
-    }
-
-    pub fn print(&self) {
-        println!("{}", self.monitor_string());
     }
 
     pub fn current_frame(&mut self) -> &mut InteractiveFrame {
