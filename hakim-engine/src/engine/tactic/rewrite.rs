@@ -39,10 +39,12 @@ pub fn rewrite(
 ) -> Result<InteractiveSnapshot> {
     let exp = &get_one_arg(args, "rewrite")?;
     let mut snapshot = snapshot.clone();
-    let term = snapshot.engine.calc_type(exp)?;
-    let [op1, op2] = get_eq_params(&snapshot.engine, term.clone())
+    let mut frame = snapshot.pop_frame();
+    let term = frame.engine.calc_type(exp)?;
+    let [op1, op2] = get_eq_params(&frame.engine, term.clone())
         .ok_or(BadHyp("rewrite expect eq but got", term))?;
-    let goal = snapshot.current_frame().goal.clone();
-    snapshot.current_frame().goal = replace_term(goal, op1, op2);
+    let goal = frame.goal.clone();
+    frame.goal = replace_term(goal, op1, op2);
+    snapshot.push_frame(frame);
     Ok(snapshot)
 }

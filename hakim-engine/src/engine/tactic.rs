@@ -61,17 +61,35 @@ pub fn get_one_arg(mut args: impl Iterator<Item = String>, tactic_name: &str) ->
     Ok(arg1)
 }
 
+pub fn add_hyp(
+    snapshot: &InteractiveSnapshot,
+    args: impl Iterator<Item = String>,
+) -> Result<InteractiveSnapshot> {
+    let exp = get_one_arg(args, "intros")?;
+    let mut snapshot = snapshot.clone();
+    let mut frame = snapshot.pop_frame();
+    let term = frame.engine.parse_text(&exp)?;
+    let mut frame2 = frame.clone();
+    frame.add_hyp_with_name(&frame.engine.generate_name("H"), term.clone())?;
+    frame2.goal = term;
+    snapshot.push_frame(frame);
+    snapshot.push_frame(frame2);
+    Ok(snapshot)
+}
+
 pub fn intros(
     snapshot: &InteractiveSnapshot,
     args: impl Iterator<Item = String>,
 ) -> Result<InteractiveSnapshot> {
     let name = get_one_arg(args, "intros")?;
     let mut snapshot = snapshot.clone();
-    let goal = snapshot.current_frame().goal.clone();
+    let mut frame = snapshot.pop_frame();
+    let goal = frame.goal.clone();
     match goal.as_ref() {
         Term::Forall { var_ty, body } => {
-            snapshot.add_hyp_with_name(&name, var_ty.clone())?;
-            snapshot.current_frame().goal = subst(body.clone(), term_ref!(axiom name, var_ty));
+            frame.add_hyp_with_name(&name, var_ty.clone())?;
+            frame.goal = subst(body.clone(), term_ref!(axiom name, var_ty));
+            snapshot.push_frame(frame);
             Ok(snapshot)
         }
         _ => Err(BadGoal("intros expects forall")),
@@ -84,8 +102,8 @@ pub fn apply(
 ) -> Result<InteractiveSnapshot> {
     let exp = &get_one_arg(args, "apply")?;
     let mut session = session.clone();
-    let term = session.engine.calc_type(exp)?;
-    match_term(term, session.current_frame().goal.clone())?;
-    session.solve_goal();
+    let frame = session.pop_frame();
+    let term = frame.engine.calc_type(exp)?;
+    match_term(term, frame.goal.clone())?;
     Ok(session)
 }

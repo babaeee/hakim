@@ -120,13 +120,13 @@ fn canonical(x: ArithTree) -> Poly {
 
 pub fn ring(session: &InteractiveSnapshot) -> Result<InteractiveSnapshot> {
     let mut session = session.clone();
-    let goal = session.current_frame().goal.clone();
+    let frame = session.pop_frame();
+    let goal = frame.goal.clone();
     let [op1, op2] =
-        get_eq_params(&session.engine, goal).ok_or(BadGoal("ring only work on equality"))?;
+        get_eq_params(&frame.engine, goal).ok_or(BadGoal("ring only work on equality"))?;
     let d1 = canonical(ArithTree::from(op1));
     let d2 = canonical(ArithTree::from(op2));
     if d1 == d2 {
-        session.solve_goal();
         Ok(session)
     } else {
         Err(CanNotSolve("ring"))

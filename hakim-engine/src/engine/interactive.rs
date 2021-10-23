@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
+use im::vector;
+
 use crate::brain::TermRef;
 
 use super::{
-    tactic::{self, apply, intros, rewrite, ring},
+    tactic::{self, add_hyp, apply, intros, rewrite, ring},
     Engine, Error,
 };
 
@@ -11,12 +13,12 @@ use super::{
 pub struct InteractiveFrame {
     pub goal: TermRef,
     pub hyps: HashMap<String, TermRef>,
+    pub engine: Engine,
 }
 
 #[derive(Debug, Clone)]
 pub struct InteractiveSnapshot {
-    pub frames: Vec<InteractiveFrame>,
-    pub engine: Engine,
+    pub frames: im::Vector<InteractiveFrame>,
 }
 
 pub struct HistoryRecord {
@@ -115,10 +117,10 @@ impl InteractiveSnapshot {
         let frame = InteractiveFrame {
             hyps: Default::default(),
             goal: goal_term,
+            engine,
         };
         Ok(InteractiveSnapshot {
-            engine,
-            frames: vec![frame],
+            frames: vector![frame],
         })
     }
 
@@ -137,10 +139,6 @@ impl InteractiveSnapshot {
         r
     }
 
-    pub fn current_frame(&mut self) -> &mut InteractiveFrame {
-        self.frames.last_mut().unwrap()
-    }
-
     pub fn run_tactic(&self, line: &str) -> Result<Self, tactic::Error> {
         let parts = smart_split(line);
         let mut parts = parts.into_iter();
@@ -149,22 +147,29 @@ impl InteractiveSnapshot {
             "intros" => intros(self, parts),
             "rewrite" => rewrite(self, parts),
             "apply" => apply(self, parts),
+            "add_hyp" => add_hyp(self, parts),
             "ring" => ring(self),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }
     }
 
-    pub fn solve_goal(&mut self) {
-        self.frames.pop();
+    pub fn pop_frame(&mut self) -> InteractiveFrame {
+        self.frames.pop_back().unwrap()
     }
 
-    pub fn add_hyp_with_name(&mut self, name: &str, ty: TermRef) -> tactic::Result<()> {
-        self.engine.add_axiom_with_term(name, ty.clone())?;
-        self.current_frame().hyps.insert(name.to_string(), ty);
-        Ok(())
+    pub fn push_frame(&mut self, frame: InteractiveFrame) {
+        self.frames.push_back(frame);
     }
 
     pub fn is_finished(&self) -> bool {
         self.frames.is_empty()
+    }
+}
+
+impl InteractiveFrame {
+    pub fn add_hyp_with_name(&mut self, name: &str, ty: TermRef) -> tactic::Result<()> {
+        self.engine.add_axiom_with_term(name, ty.clone())?;
+        self.hyps.insert(name.to_string(), ty);
+        Ok(())
     }
 }

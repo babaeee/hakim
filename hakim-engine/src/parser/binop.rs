@@ -3,9 +3,17 @@ pub enum BinOp {
     App,
     Eq,
     Imply,
-    Le,
+    Lt,
     Mult,
     Plus,
+}
+
+#[derive(PartialEq, Eq)]
+pub enum Assoc {
+    Left,
+    Right,
+    No,
+    Comm,
 }
 
 impl Display for BinOp {
@@ -14,7 +22,7 @@ impl Display for BinOp {
             App => " ",
             Eq => "=",
             Imply => "→",
-            Le => "<",
+            Lt => "<",
             Mult => "*",
             Plus => "+",
         })
@@ -23,6 +31,7 @@ impl Display for BinOp {
 
 use std::fmt::{Display, Formatter};
 
+use Assoc::*;
 use BinOp::*;
 
 use crate::{app_ref, brain::increase_foreign_vars, library::prelude::*, term_ref, Term, TermRef};
@@ -33,16 +42,27 @@ impl BinOp {
             App => 0,
             Eq => 70,
             Imply => 99,
-            Le => 70,
+            Lt => 70,
             Mult => 40,
             Plus => 50,
+        }
+    }
+
+    pub fn assoc(&self) -> Assoc {
+        match self {
+            App => Left,
+            Eq => No,
+            Imply => Right,
+            Lt => No,
+            Mult => Comm,
+            Plus => Comm,
         }
     }
 
     pub fn from_str(op: &str) -> Option<Self> {
         Some(match op {
             "→" => Imply,
-            "<" => Le,
+            "<" => Lt,
             "*" => Mult,
             "+" => Plus,
             _ => return None,
@@ -54,7 +74,7 @@ impl BinOp {
             App => app_ref!(l, r),
             Eq => todo!(),
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
-            Le => app_ref!(le(), l, r),
+            Lt => app_ref!(lt(), l, r),
             Mult => app_ref!(mult(), l, r),
             Plus => app_ref!(plus(), l, r),
         }
@@ -73,7 +93,7 @@ impl BinOp {
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                         "plus" => Some((op.clone(), BinOp::Plus, op2.clone())),
                         "mult" => Some((op.clone(), BinOp::Mult, op2.clone())),
-                        "le" => Some((op.clone(), BinOp::Le, op2.clone())),
+                        "lt" => Some((op.clone(), BinOp::Lt, op2.clone())),
                         _ => None,
                     },
                     _ => None,

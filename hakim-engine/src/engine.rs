@@ -57,6 +57,19 @@ use Error::*;
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl Engine {
+    fn generate_name(&self, base: &str) -> String {
+        if !self.name_dict.contains_key(base) {
+            return base.to_string();
+        }
+        for i in 0.. {
+            let n = format!("{}{}", base, i);
+            if !self.name_dict.contains_key(&n) {
+                return n.to_string();
+            }
+        }
+        unreachable!();
+    }
+
     fn add_name(&mut self, name: &str, term: TermRef) -> Result<()> {
         if !is_valid_ident(name) {
             return Err(InvalidIdentName(name.to_string()));

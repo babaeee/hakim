@@ -1,14 +1,18 @@
 use super::Engine;
 
 fn run_interactive_to_end(goal: &str, tactics: &str) {
-    let eng = Engine::default();
+    let mut eng = Engine::default();
+    eng.load_library("Arith").unwrap();
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
         if tactic.is_empty() {
             continue;
         }
-        session.run_tactic(tactic).unwrap();
+        session
+            .run_tactic(tactic)
+            .map_err(|e| panic!("Error {:?}\nMonitor:\n{}", e, session.monitor_string()))
+            .unwrap();
     }
     if !session.is_finished() {
         panic!("Goal not solved:\n{}", session.monitor_string());
@@ -135,6 +139,26 @@ fn success_ring2() {
         intros a
         intros b
         ring
+        "#,
+    );
+}
+
+#[test]
+fn success_add_hyp() {
+    run_interactive_to_end(
+        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
+        r#"
+        intros a
+        intros b
+        intros c
+        intros d
+        intros a_lt_b
+        intros c_lt_d
+        add_hyp (a + c < b + c)
+        apply (lt_plus_r a b c a_lt_b)
+        add_hyp (b + c < b + d)
+        apply (lt_plus_l c d b c_lt_d)
+        apply (lt_trans (a+c) (b+c) (b+d) H H0)
         "#,
     );
 }

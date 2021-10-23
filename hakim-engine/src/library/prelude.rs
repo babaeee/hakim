@@ -15,8 +15,8 @@ pub fn v1() -> TermRef {
 pub fn eq() -> TermRef {
     term_ref!(axiom "eq" , forall u(), forall v0(), forall v1(), u())
 }
-pub fn le() -> TermRef {
-    term_ref!(axiom "le" , forall z(), forall z(), u())
+pub fn lt() -> TermRef {
+    term_ref!(axiom "lt" , forall z(), forall z(), u())
 }
 pub fn eq_refl() -> TermRef {
     term_ref!(axiom "eq_refl" , forall u(), forall v0(), app_ref!(eq(), v1(), v0(), v0()))

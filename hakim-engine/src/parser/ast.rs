@@ -3,7 +3,7 @@ use super::{Error::*, Result};
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, Term, TermRef},
-    parser::binop::BinOp,
+    parser::binop::{Assoc, BinOp},
     term_ref,
 };
 
@@ -112,6 +112,9 @@ trait TokenEater {
         fn push_to_stack(stack: &mut Vec<(AstTerm, BinOp)>, op: BinOp, mut n: AstTerm) {
             while let Some((_, op2)) = stack.last() {
                 if op2.prec() > op.prec() {
+                    break;
+                }
+                if op2.prec() == op.prec() && op.assoc() == Assoc::Right {
                     break;
                 }
                 let (n2, op2) = stack.pop().unwrap();
