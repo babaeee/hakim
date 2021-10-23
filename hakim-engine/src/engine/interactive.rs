@@ -144,15 +144,14 @@ impl InteractiveSnapshot {
     pub fn run_tactic(&self, line: &str) -> Result<Self, tactic::Error> {
         let parts = smart_split(line);
         let mut parts = parts.into_iter();
-        let name = parts.next().unwrap();
-        let snapshot = match name.as_str() {
-            "intros" => intros(self, parts)?,
-            "rewrite" => rewrite(self, parts)?,
-            "apply" => apply(self, parts)?,
-            "ring" => ring(self)?,
-            _ => return Err(tactic::Error::UnknownTactic(name.to_string())),
-        };
-        Ok(snapshot)
+        let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
+        match name.as_str() {
+            "intros" => intros(self, parts),
+            "rewrite" => rewrite(self, parts),
+            "apply" => apply(self, parts),
+            "ring" => ring(self),
+            _ => Err(tactic::Error::UnknownTactic(name.to_string())),
+        }
     }
 
     pub fn solve_goal(&mut self) {

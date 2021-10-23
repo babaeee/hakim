@@ -25,7 +25,7 @@ use std::fmt::{Display, Formatter};
 
 use BinOp::*;
 
-use crate::{app_ref, brain::increase_foreign_vars, prelude::*, term_ref, Term, TermRef};
+use crate::{app_ref, brain::increase_foreign_vars, library::prelude::*, term_ref, Term, TermRef};
 
 impl BinOp {
     pub fn prec(&self) -> u8 {

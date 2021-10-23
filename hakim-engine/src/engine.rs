@@ -1,8 +1,9 @@
 use self::interactive::InteractiveSession;
 use crate::{
     brain::{self, type_of, TermRef},
+    library::{load_library_by_name, prelude},
     parser::{self, ast_to_term, is_valid_ident, parse},
-    prelude, term_ref,
+    term_ref,
 };
 
 #[derive(Debug, Clone)]
@@ -33,6 +34,8 @@ mod tactic;
 pub enum Error {
     DuplicateName(String),
     InvalidIdentName(String),
+    UnknownLibrary(String),
+    InvalidSentence(String),
     ParserError(parser::Error),
     BrainError(brain::Error),
 }
@@ -51,7 +54,7 @@ impl From<brain::Error> for Error {
 
 use Error::*;
 
-type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 impl Engine {
     fn add_name(&mut self, name: &str, term: TermRef) -> Result<()> {
@@ -80,6 +83,10 @@ impl Engine {
         let exp = self.parse_text(text)?;
         let ty = type_of(exp)?;
         Ok(ty)
+    }
+
+    pub fn load_library(&mut self, name: &str) -> Result<()> {
+        load_library_by_name(self, name)
     }
 
     fn parse_text(&self, text: &str) -> Result<TermRef> {

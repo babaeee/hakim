@@ -70,6 +70,10 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             result.push(Kw(Forall));
             continue;
         }
+        if text.eat_prefix("->") {
+            result.push(Sign("→".to_string()));
+            continue;
+        }
         let c = text.eat_char();
         if c.is_whitespace() {
             continue;

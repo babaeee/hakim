@@ -22,9 +22,10 @@ pub enum Error {
         found: usize,
     },
     BrainError(brain::Error),
-    EngineError(super::Error),
     CanNotSolve(&'static str),
     CanNotUndo,
+    EmptyTactic,
+    EngineError(super::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
