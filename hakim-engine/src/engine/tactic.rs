@@ -1,7 +1,4 @@
-use crate::{
-    brain::{self, match_term, subst, Term, TermRef},
-    term_ref,
-};
+use crate::brain::{self, match_term, TermRef};
 
 use super::interactive::InteractiveSnapshot;
 
@@ -10,6 +7,9 @@ pub use rewrite::rewrite;
 
 mod ring;
 pub use ring::ring;
+
+mod intros;
+pub use intros::intros;
 
 #[derive(Debug)]
 pub enum Error {
@@ -75,25 +75,6 @@ pub fn add_hyp(
     snapshot.push_frame(frame);
     snapshot.push_frame(frame2);
     Ok(snapshot)
-}
-
-pub fn intros(
-    snapshot: &InteractiveSnapshot,
-    args: impl Iterator<Item = String>,
-) -> Result<InteractiveSnapshot> {
-    let name = get_one_arg(args, "intros")?;
-    let mut snapshot = snapshot.clone();
-    let mut frame = snapshot.pop_frame();
-    let goal = frame.goal.clone();
-    match goal.as_ref() {
-        Term::Forall { var_ty, body } => {
-            frame.add_hyp_with_name(&name, var_ty.clone())?;
-            frame.goal = subst(body.clone(), term_ref!(axiom name, var_ty));
-            snapshot.push_frame(frame);
-            Ok(snapshot)
-        }
-        _ => Err(BadGoal("intros expects forall")),
-    }
 }
 
 pub fn apply(

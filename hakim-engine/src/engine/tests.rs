@@ -112,9 +112,7 @@ fn dont_panic1() {
 
 #[test]
 fn intros_bad_arg() {
-    run_interactive_to_fail(F_EQUAL, "", "intros");
-    run_interactive_to_fail(F_EQUAL, "", "intros  ");
-    run_interactive_to_fail(F_EQUAL, "", "intros x y");
+    run_interactive_to_fail(F_EQUAL, "", "intros x 5");
     run_interactive_to_fail(F_EQUAL, "", "intros -2");
     run_interactive_to_fail(F_EQUAL, "", "intros (rewrite x)");
 }
