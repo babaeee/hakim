@@ -128,12 +128,17 @@ impl InteractiveSnapshot {
         if self.is_finished() {
             return "No more subgoals.".to_string();
         }
+        let goal_count = self.frames.len();
         let mut r = "".to_string();
-        for frame in &self.frames {
-            for (name, ty) in &frame.hyps {
-                r += &format!(" {}: {:#?}\n", name, ty);
-            }
-            r += &format!("--------------------------------------------\n");
+        for (name, ty) in &self.frames.last().unwrap().hyps {
+            r += &format!(" {}: {:#?}\n", name, ty);
+        }
+        for (i, frame) in self.frames.iter().rev().enumerate() {
+            r += &format!(
+                "--------------------------------------------({}/{})\n",
+                i + 1,
+                goal_count
+            );
             r += &format!("    {:#?}\n", frame.goal);
         }
         r
