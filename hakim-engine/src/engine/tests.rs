@@ -20,7 +20,8 @@ fn run_interactive_to_end(goal: &str, tactics: &str) {
 }
 
 fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
-    let eng = Engine::default();
+    let mut eng = Engine::default();
+    eng.load_library("Arith").unwrap();
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
@@ -106,7 +107,7 @@ fn dont_panic1() {
         intros x
         intros y
     "#,
-        "intros",
+        "apply",
     );
 }
 
@@ -158,5 +159,38 @@ fn success_add_hyp() {
         apply (lt_plus_l c d b c_lt_d)
         apply (lt_trans (a+c) (b+c) (b+d) H H0)
         "#,
+    );
+}
+
+#[test]
+fn success_apply_implicit() {
+    run_interactive_to_end(
+        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
+        r#"
+        intros a b c d a_lt_b c_lt_d
+        add_hyp (a + c < b + c)
+        apply lt_plus_r
+        apply a_lt_b
+        add_hyp (b + c < b + d)
+        apply lt_plus_l
+        apply c_lt_d
+        apply (lt_trans (a+c) (b+c) (b+d) H H0)
+        "#,
+    );
+}
+
+#[test]
+fn apply_implicit_fail_instance() {
+    run_interactive_to_fail(
+        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
+        r#"
+        intros a b c d a_lt_b c_lt_d
+        add_hyp (a + c < b + c)
+        apply lt_plus_r
+        apply a_lt_b
+        add_hyp (b + c < b + d)
+        apply lt_plus_l
+        apply c_lt_d"#,
+        "apply lt_trans",
     );
 }

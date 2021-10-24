@@ -1,4 +1,7 @@
-use crate::brain::{create_infer_vec, match_and_infer, Term, TermRef};
+use crate::brain::{
+    infer::{match_and_infer, InferResults},
+    Term, TermRef,
+};
 use crate::engine::interactive::InteractiveSnapshot;
 
 use super::super::Engine;
@@ -27,9 +30,9 @@ fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
 
 pub fn get_eq_params(engine: &Engine, term: TermRef) -> Option<[TermRef; 2]> {
     let eq_pat = engine.parse_text("eq _2 _0 _1").ok()?;
-    let mut infers = create_infer_vec(3);
+    let mut infers = InferResults::new(3);
     match_and_infer(term.clone(), eq_pat, &mut infers).ok()?;
-    let mut iter = infers.into_iter();
+    let mut iter = infers.terms.into_iter();
     Some([iter.next().unwrap(), iter.next().unwrap()])
 }
 

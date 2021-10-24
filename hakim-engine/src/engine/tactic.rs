@@ -1,4 +1,4 @@
-use crate::brain::{self, match_term, TermRef};
+use crate::brain::{self, TermRef};
 
 use super::interactive::InteractiveSnapshot;
 
@@ -10,6 +10,9 @@ pub use ring::ring;
 
 mod intros;
 pub use intros::intros;
+
+mod apply;
+pub use apply::apply;
 
 #[derive(Debug)]
 pub enum Error {
@@ -26,6 +29,7 @@ pub enum Error {
     CanNotUndo,
     EmptyTactic,
     EngineError(super::Error),
+    CanNotFindInstance(usize, TermRef),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -75,16 +79,4 @@ pub fn add_hyp(
     snapshot.push_frame(frame);
     snapshot.push_frame(frame2);
     Ok(snapshot)
-}
-
-pub fn apply(
-    session: &InteractiveSnapshot,
-    args: impl Iterator<Item = String>,
-) -> Result<InteractiveSnapshot> {
-    let exp = &get_one_arg(args, "apply")?;
-    let mut session = session.clone();
-    let frame = session.pop_frame();
-    let term = frame.engine.calc_type(exp)?;
-    match_term(term, frame.goal.clone())?;
-    Ok(session)
 }

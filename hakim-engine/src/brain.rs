@@ -1,6 +1,8 @@
 use crate::parser::term_pretty_print;
 use std::{fmt::Debug, iter::once, rc::Rc};
 
+pub mod infer;
+
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Term {
     Axiom { ty: TermRef, unique_name: String },
@@ -85,70 +87,37 @@ pub enum Error {
     IsNotFunc,
 }
 
-pub fn match_term(t1: TermRef, t2: TermRef) -> Result<(), Error> {
+pub type Result<T> = std::result::Result<T, Error>;
+
+use Error::*;
+
+pub fn contains_wild(t: &TermRef) -> bool {
+    match t.as_ref() {
+        Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => {
+            false
+        }
+        Term::App { func, op } => contains_wild(func) || contains_wild(op),
+        Term::Forall { var_ty, body } => contains_wild(var_ty) || contains_wild(body),
+        Term::Wild { .. } => true,
+    }
+}
+
+fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
+    match t.as_ref() {
+        Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => t,
+        Term::App { func, op } => app_ref!(fill_wild(func.clone(), f), fill_wild(op.clone(), f)),
+        Term::Forall { var_ty, body } => {
+            term_ref!(forall fill_wild(var_ty.clone(), f), fill_wild(body.clone(), f))
+        }
+        Term::Wild { index } => f(*index),
+    }
+}
+
+pub fn match_term(t1: TermRef, t2: TermRef) -> Result<()> {
     if t1 == t2 {
         Ok(())
     } else {
-        Err(Error::TypeMismatch(t1, t2))
-    }
-}
-
-pub fn create_infer_vec(n: usize) -> Vec<TermRef> {
-    let mut r = vec![];
-    for index in 0..n {
-        r.push(TermRef::new(Term::Wild { index }))
-    }
-    r
-}
-
-pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut [TermRef]) -> Result<(), Error> {
-    match (t1.as_ref(), t2.as_ref()) {
-        (Term::Wild { index }, _) => {
-            let i = *index;
-            if infers[i] == t1 {
-                infers[i] = t2.clone();
-                Ok(())
-            } else {
-                match_and_infer(infers[i].clone(), t2, infers)
-            }
-        }
-        (_, Term::Wild { index }) => {
-            let i = *index;
-            if infers[i] == t2 {
-                infers[i] = t1.clone();
-                Ok(())
-            } else {
-                match_and_infer(infers[i].clone(), t1, infers)
-            }
-        }
-        (
-            Term::App {
-                func: func1,
-                op: op1,
-            },
-            Term::App {
-                func: func2,
-                op: op2,
-            },
-        ) => {
-            match_and_infer(func1.clone(), func2.clone(), infers)?;
-            match_and_infer(op1.clone(), op2.clone(), infers)
-        }
-        (
-            Term::Axiom {
-                unique_name: u1, ..
-            },
-            Term::Axiom {
-                unique_name: u2, ..
-            },
-        ) => {
-            if u1 == u2 {
-                Ok(())
-            } else {
-                Err(Error::TypeMismatch(t1, t2))
-            }
-        }
-        _ => Err(Error::TypeMismatch(t1, t2)),
+        Err(TypeMismatch(t1, t2))
     }
 }
 
@@ -195,7 +164,7 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
     }
 }
 
-fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef, Error> {
+fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef> {
     Ok(match term.as_ref() {
         Term::Axiom { ty, .. } => ty.clone(),
         Term::Universe { index } => TermRef::new(Term::Universe { index: index + 1 }),
@@ -213,7 +182,7 @@ fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef, 
             .iter()
             .rev()
             .nth(*index)
-            .ok_or(Error::BadTerm)?
+            .ok_or(BadTerm)?
             .clone(),
         Term::Number { .. } => term_ref!(axiom "ℤ".to_string(), universe 0),
         Term::App { func, op } => {
@@ -222,7 +191,7 @@ fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef, 
             let (var_ty, body) = if let Term::Forall { var_ty, body } = func_type.as_ref() {
                 (var_ty, body)
             } else {
-                return Err(Error::IsNotFunc);
+                return Err(IsNotFunc);
             };
             match_term(var_ty.clone(), op_ty)?;
             subst(body.clone(), op.clone())
@@ -231,6 +200,6 @@ fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef, 
     })
 }
 
-pub fn type_of(term: TermRef) -> Result<TermRef, Error> {
+pub fn type_of(term: TermRef) -> Result<TermRef> {
     type_of_inner(term, &vec![])
 }
