@@ -33,7 +33,7 @@ fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
 pub fn get_eq_params(engine: &Engine, term: TermRef) -> Option<[TermRef; 2]> {
     let eq_pat = engine.parse_text("eq _2 _0 _1").ok()?;
     let mut infers = InferResults::new(3);
-    match_and_infer(term.clone(), eq_pat, &mut infers).ok()?;
+    match_and_infer(term, eq_pat, &mut infers).ok()?;
     let mut iter = infers.terms.into_iter();
     Some([iter.next().unwrap(), iter.next().unwrap()])
 }

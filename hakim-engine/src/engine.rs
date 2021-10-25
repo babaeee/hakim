@@ -64,7 +64,7 @@ impl Engine {
         for i in 0.. {
             let n = format!("{}{}", base, i);
             if !self.name_dict.contains_key(&n) {
-                return n.to_string();
+                return n;
             }
         }
         unreachable!();

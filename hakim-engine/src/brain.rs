@@ -121,8 +121,8 @@ pub fn match_term(t1: TermRef, t2: TermRef) -> Result<()> {
     }
 }
 
-pub fn subst<'a>(exp: TermRef, to_put: TermRef) -> TermRef {
-    fn inner<'a>(exp: TermRef, to_put: TermRef, i: usize) -> TermRef {
+pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
+    fn inner(exp: TermRef, to_put: TermRef, i: usize) -> TermRef {
         match exp.as_ref() {
             Term::Var { index } if *index == i => to_put,
             Term::Var { .. }
@@ -164,7 +164,7 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
     }
 }
 
-fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef> {
+fn type_of_inner(term: TermRef, var_ty_stack: &[TermRef]) -> Result<TermRef> {
     Ok(match term.as_ref() {
         Term::Axiom { ty, .. } => ty.clone(),
         Term::Universe { index } => TermRef::new(Term::Universe { index: index + 1 }),
@@ -174,7 +174,7 @@ fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef> 
                 .iter()
                 .chain(once(var_ty))
                 .map(|x| increase_foreign_vars(x.clone(), 0))
-                .collect();
+                .collect::<Vec<_>>();
             type_of_inner(body.clone(), &new_var_stack)?;
             vtt
         }
@@ -201,5 +201,5 @@ fn type_of_inner(term: TermRef, var_ty_stack: &Vec<TermRef>) -> Result<TermRef> 
 }
 
 pub fn type_of(term: TermRef) -> Result<TermRef> {
-    type_of_inner(term, &vec![])
+    type_of_inner(term, &[])
 }

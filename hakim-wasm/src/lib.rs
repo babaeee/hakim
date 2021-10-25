@@ -15,6 +15,7 @@ extern "C" {
 }
 
 #[wasm_bindgen]
+#[derive(Default)]
 pub struct Instance {
     engine: Engine,
     session: Option<Session>,

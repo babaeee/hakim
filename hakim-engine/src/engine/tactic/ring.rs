@@ -30,14 +30,14 @@ fn normalize(tree: ArithTree) -> ArithTree {
                 let ya = normalize(Mult(y, Box::new(a.clone())));
                 return Plus(Box::new(xa), Box::new(ya));
             }
-            return Mult(Box::new(a), Box::new(b));
+            Mult(Box::new(a), Box::new(b))
         }
     }
 }
 
 fn tree_to_d2(tree: ArithTree) -> Poly {
     match tree {
-        Atom(t) => (0, vec![(1, vec![t.clone()])]),
+        Atom(t) => (0, vec![(1, vec![t])]),
         Const(i) => (i, vec![]),
         Plus(t1, t2) => {
             let (c1, r1) = tree_to_d2(*t1);
@@ -114,8 +114,8 @@ fn sorter(x: Poly) -> Poly {
 fn canonical(x: ArithTree) -> Poly {
     let x = normalize(x);
     let x = tree_to_d2(x);
-    let x = sorter(x);
-    x
+    
+    sorter(x)
 }
 
 pub fn ring(frame: Frame) -> Result<Vec<Frame>> {

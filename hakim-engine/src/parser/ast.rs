@@ -165,7 +165,7 @@ impl TokenEater for &[Token] {
     }
 
     fn eat_token(&mut self) -> Result<Token> {
-        let t = self.peek_token()?.clone();
+        let t = self.peek_token()?;
         *self = &self[1..];
         Ok(t)
     }

@@ -117,7 +117,7 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
 
 fn type_of_inner(
     term: TermRef,
-    var_ty_stack: &Vec<TermRef>,
+    var_ty_stack: &[TermRef],
     infers: &mut InferResults,
 ) -> Result<TermRef> {
     Ok(match term.as_ref() {
@@ -129,7 +129,7 @@ fn type_of_inner(
                 .iter()
                 .chain(once(var_ty))
                 .map(|x| increase_foreign_vars(x.clone(), 0))
-                .collect();
+                .collect::<Vec<_>>();
             type_of_inner(body.clone(), &new_var_stack, infers)?;
             vtt
         }
@@ -156,5 +156,5 @@ fn type_of_inner(
 }
 
 pub fn type_of_and_infer(term: TermRef, infers: &mut InferResults) -> Result<TermRef> {
-    type_of_inner(term, &vec![], infers)
+    type_of_inner(term, &[], infers)
 }
