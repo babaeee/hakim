@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use im::vector;
 
 use crate::brain::TermRef;
@@ -10,23 +8,23 @@ use super::{
 };
 
 #[derive(Debug, Clone)]
-pub struct InteractiveFrame {
+pub struct Frame {
     pub goal: TermRef,
-    pub hyps: HashMap<String, TermRef>,
+    pub hyps: im::HashMap<String, TermRef>,
     pub engine: Engine,
 }
 
 #[derive(Debug, Clone)]
-pub struct InteractiveSnapshot {
-    pub frames: im::Vector<InteractiveFrame>,
+pub struct Snapshot {
+    pub frames: im::Vector<Frame>,
 }
 
 pub struct HistoryRecord {
     tactic: String,
-    snapshot: InteractiveSnapshot,
+    snapshot: Snapshot,
 }
 
-pub struct InteractiveSession {
+pub struct Session {
     history: Vec<HistoryRecord>,
 }
 
@@ -60,17 +58,17 @@ fn smart_split(text: &str) -> Vec<String> {
     r
 }
 
-impl InteractiveSession {
+impl Session {
     pub fn new(engine: Engine, goal: &str) -> Result<Self, Error> {
-        let snapshot = InteractiveSnapshot::new(engine, goal)?;
+        let snapshot = Snapshot::new(engine, goal)?;
         let hr = HistoryRecord {
             snapshot,
             tactic: "Goal".to_string(),
         };
-        Ok(InteractiveSession { history: vec![hr] })
+        Ok(Session { history: vec![hr] })
     }
 
-    pub fn last_snapshot(&self) -> &InteractiveSnapshot {
+    pub fn last_snapshot(&self) -> &Snapshot {
         &self.history.last().unwrap().snapshot
     }
 
@@ -111,15 +109,15 @@ impl InteractiveSession {
     }
 }
 
-impl InteractiveSnapshot {
-    pub fn new(engine: Engine, goal: &str) -> Result<InteractiveSnapshot, Error> {
+impl Snapshot {
+    pub fn new(engine: Engine, goal: &str) -> Result<Snapshot, Error> {
         let goal_term = engine.parse_text(goal)?;
-        let frame = InteractiveFrame {
+        let frame = Frame {
             hyps: Default::default(),
             goal: goal_term,
             engine,
         };
-        Ok(InteractiveSnapshot {
+        Ok(Snapshot {
             frames: vector![frame],
         })
     }
@@ -148,22 +146,22 @@ impl InteractiveSnapshot {
         let parts = smart_split(line);
         let mut parts = parts.into_iter();
         let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
-        match name.as_str() {
-            "intros" => intros(self, parts),
-            "rewrite" => rewrite(self, parts),
-            "apply" => apply(self, parts),
-            "add_hyp" => add_hyp(self, parts),
-            "ring" => ring(self),
+        let mut snapshot = self.clone();
+        let frame = snapshot.pop_frame();
+        let new_frames = (match name.as_str() {
+            "intros" => intros(frame, parts),
+            "rewrite" => rewrite(frame, parts),
+            "apply" => apply(frame, parts),
+            "add_hyp" => add_hyp(frame, parts),
+            "ring" => ring(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
-        }
+        })?;
+        snapshot.frames.extend(new_frames);
+        Ok(snapshot)
     }
 
-    pub fn pop_frame(&mut self) -> InteractiveFrame {
+    pub fn pop_frame(&mut self) -> Frame {
         self.frames.pop_back().unwrap()
-    }
-
-    pub fn push_frame(&mut self, frame: InteractiveFrame) {
-        self.frames.push_back(frame);
     }
 
     pub fn is_finished(&self) -> bool {
@@ -171,7 +169,7 @@ impl InteractiveSnapshot {
     }
 }
 
-impl InteractiveFrame {
+impl Frame {
     pub fn add_hyp_with_name(&mut self, name: &str, ty: TermRef) -> tactic::Result<()> {
         self.engine.add_axiom_with_term(name, ty.clone())?;
         self.hyps.insert(name.to_string(), ty);

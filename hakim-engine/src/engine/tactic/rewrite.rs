@@ -1,8 +1,10 @@
-use crate::brain::{
-    infer::{match_and_infer, InferResults},
-    Term, TermRef,
+use crate::{
+    brain::{
+        infer::{match_and_infer, InferResults},
+        Term, TermRef,
+    },
+    engine::interactive::Frame,
 };
-use crate::engine::interactive::InteractiveSnapshot;
 
 use super::super::Engine;
 use super::{get_one_arg, Error::*, Result};
@@ -36,18 +38,12 @@ pub fn get_eq_params(engine: &Engine, term: TermRef) -> Option<[TermRef; 2]> {
     Some([iter.next().unwrap(), iter.next().unwrap()])
 }
 
-pub fn rewrite(
-    snapshot: &InteractiveSnapshot,
-    args: impl Iterator<Item = String>,
-) -> Result<InteractiveSnapshot> {
+pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let exp = &get_one_arg(args, "rewrite")?;
-    let mut snapshot = snapshot.clone();
-    let mut frame = snapshot.pop_frame();
     let term = frame.engine.calc_type(exp)?;
     let [op1, op2] = get_eq_params(&frame.engine, term.clone())
         .ok_or(BadHyp("rewrite expect eq but got", term))?;
     let goal = frame.goal.clone();
     frame.goal = replace_term(goal, op1, op2);
-    snapshot.push_frame(frame);
-    Ok(snapshot)
+    Ok(vec![frame])
 }

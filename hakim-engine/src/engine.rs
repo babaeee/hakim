@@ -1,4 +1,4 @@
-use self::interactive::InteractiveSession;
+use self::interactive::Session;
 use crate::{
     brain::{self, type_of, TermRef},
     library::{load_library_by_name, prelude},
@@ -109,7 +109,7 @@ impl Engine {
         Ok(term)
     }
 
-    pub fn interactive_session(&self, goal: &str) -> Result<InteractiveSession> {
-        InteractiveSession::new(self.clone(), goal)
+    pub fn interactive_session(&self, goal: &str) -> Result<Session> {
+        Session::new(self.clone(), goal)
     }
 }

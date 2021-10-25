@@ -1,6 +1,6 @@
 use std::panic;
 
-use hakim_engine::engine::{interactive::InteractiveSession, Engine};
+use hakim_engine::engine::{interactive::Session, Engine};
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -17,7 +17,7 @@ extern "C" {
 #[wasm_bindgen]
 pub struct Instance {
     engine: Engine,
-    session: Option<InteractiveSession>,
+    session: Option<Session>,
 }
 
 #[wasm_bindgen(start)]

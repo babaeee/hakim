@@ -1,5 +1,5 @@
 use super::{rewrite::get_eq_params, Error::*, Result};
-use crate::{brain::Term, engine::interactive::InteractiveSnapshot, TermRef};
+use crate::{brain::Term, engine::interactive::Frame, TermRef};
 
 #[derive(Debug, Clone)]
 enum ArithTree {
@@ -118,16 +118,14 @@ fn canonical(x: ArithTree) -> Poly {
     x
 }
 
-pub fn ring(session: &InteractiveSnapshot) -> Result<InteractiveSnapshot> {
-    let mut session = session.clone();
-    let frame = session.pop_frame();
+pub fn ring(frame: Frame) -> Result<Vec<Frame>> {
     let goal = frame.goal.clone();
     let [op1, op2] =
         get_eq_params(&frame.engine, goal).ok_or(BadGoal("ring only work on equality"))?;
     let d1 = canonical(ArithTree::from(op1));
     let d2 = canonical(ArithTree::from(op2));
     if d1 == d2 {
-        Ok(session)
+        Ok(vec![])
     } else {
         Err(CanNotSolve("ring"))
     }

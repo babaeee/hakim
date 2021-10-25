@@ -1,12 +1,12 @@
 use crate::{
     brain::{subst, Term},
-    engine::interactive::{InteractiveFrame, InteractiveSnapshot},
+    engine::interactive::Frame,
     term_ref,
 };
 
 use super::{Error::*, Result};
 
-pub fn intros_one(frame: &mut InteractiveFrame, name: &str) -> Result<()> {
+pub fn intros_one(frame: &mut Frame, name: &str) -> Result<()> {
     let goal = frame.goal.clone();
     match goal.as_ref() {
         Term::Forall { var_ty, body } => {
@@ -18,12 +18,7 @@ pub fn intros_one(frame: &mut InteractiveFrame, name: &str) -> Result<()> {
     }
 }
 
-pub fn intros(
-    snapshot: &InteractiveSnapshot,
-    args: impl Iterator<Item = String>,
-) -> Result<InteractiveSnapshot> {
-    let mut snapshot = snapshot.clone();
-    let mut frame = snapshot.pop_frame();
+pub fn intros(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     if args.peek().is_none() {
         loop {
@@ -41,6 +36,5 @@ pub fn intros(
             intros_one(&mut frame, &name)?;
         }
     }
-    snapshot.push_frame(frame);
-    Ok(snapshot)
+    Ok(vec![frame])
 }

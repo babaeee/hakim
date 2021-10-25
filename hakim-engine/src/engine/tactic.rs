@@ -1,6 +1,6 @@
 use crate::brain::{self, TermRef};
 
-use super::interactive::InteractiveSnapshot;
+use super::interactive::Frame;
 
 mod rewrite;
 pub use rewrite::rewrite;
@@ -65,18 +65,11 @@ pub fn get_one_arg(mut args: impl Iterator<Item = String>, tactic_name: &str) ->
     Ok(arg1)
 }
 
-pub fn add_hyp(
-    snapshot: &InteractiveSnapshot,
-    args: impl Iterator<Item = String>,
-) -> Result<InteractiveSnapshot> {
+pub fn add_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "intros")?;
-    let mut snapshot = snapshot.clone();
-    let mut frame = snapshot.pop_frame();
     let term = frame.engine.parse_text(&exp)?;
     let mut frame2 = frame.clone();
     frame.add_hyp_with_name(&frame.engine.generate_name("H"), term.clone())?;
     frame2.goal = term;
-    snapshot.push_frame(frame);
-    snapshot.push_frame(frame2);
-    Ok(snapshot)
+    Ok(vec![frame, frame2])
 }
