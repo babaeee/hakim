@@ -3,6 +3,15 @@ use crate::{app_ref, term_ref, TermRef};
 pub fn u() -> TermRef {
     term_ref!(universe 0)
 }
+pub fn u1() -> TermRef {
+    term_ref!(universe 1)
+}
+pub fn u2() -> TermRef {
+    term_ref!(universe 2)
+}
+pub fn u3() -> TermRef {
+    term_ref!(universe 3)
+}
 pub fn z() -> TermRef {
     term_ref!(axiom "ℤ" , u())
 }

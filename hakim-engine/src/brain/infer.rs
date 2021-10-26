@@ -1,7 +1,8 @@
-use std::iter::once;
-
 use super::{fill_wild, increase_foreign_vars, subst, Error::*, Result, Term, TermRef};
-use crate::term_ref;
+use crate::{brain::get_universe, term_ref};
+
+use std::cmp::max;
+use std::iter::once;
 
 pub struct InferResults {
     pub n: usize,
@@ -115,7 +116,7 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
     }
 }
 
-fn type_of_inner(
+pub fn type_of_inner(
     term: TermRef,
     var_ty_stack: &[TermRef],
     infers: &mut InferResults,
@@ -124,14 +125,24 @@ fn type_of_inner(
         Term::Axiom { ty, .. } => ty.clone(),
         Term::Universe { index } => TermRef::new(Term::Universe { index: index + 1 }),
         Term::Forall { var_ty, body } => {
-            let vtt = type_of_inner(var_ty.clone(), var_ty_stack, infers)?;
+            let vtt = get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
             let new_var_stack = var_ty_stack
                 .iter()
                 .chain(once(var_ty))
                 .map(|x| increase_foreign_vars(x.clone(), 0))
                 .collect::<Vec<_>>();
-            type_of_inner(body.clone(), &new_var_stack, infers)?;
-            vtt
+            let body_ty = get_universe(type_of_inner(body.clone(), &new_var_stack, infers)?)?;
+            term_ref!(universe max(vtt, body_ty))
+        }
+        Term::Fun { var_ty, body } => {
+            get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
+            let new_var_stack = var_ty_stack
+                .iter()
+                .chain(once(var_ty))
+                .map(|x| increase_foreign_vars(x.clone(), 0))
+                .collect::<Vec<_>>();
+            let body_ty = type_of_inner(body.clone(), &new_var_stack, infers)?;
+            term_ref!(forall var_ty, body_ty)
         }
         Term::Var { index } => var_ty_stack
             .iter()

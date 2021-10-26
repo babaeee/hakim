@@ -1,18 +1,19 @@
-#[derive(Debug, Clone, PartialEq)]
-pub enum Keyword {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum AbsSign {
     Forall,
+    Fun,
+    Exists,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Ident(String),
-    Kw(Keyword),
+    Abs(AbsSign),
     Sign(String),
     Number(u32),
     Wild(usize),
 }
 
-use Keyword::*;
 use Token::*;
 
 trait Eater {
@@ -67,7 +68,15 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             return Ok(result);
         }
         if text.eat_prefix("forall") || text.eat_prefix("∀") {
-            result.push(Kw(Forall));
+            result.push(Abs(AbsSign::Forall));
+            continue;
+        }
+        if text.eat_prefix("exists") || text.eat_prefix("∃") {
+            result.push(Abs(AbsSign::Exists));
+            continue;
+        }
+        if text.eat_prefix("fun") || text.eat_prefix("λ") {
+            result.push(Abs(AbsSign::Fun));
             continue;
         }
         if text.eat_prefix("->") {

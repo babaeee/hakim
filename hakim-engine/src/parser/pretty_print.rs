@@ -24,7 +24,7 @@ pub fn term_pretty_print(
             if *index == 0 {
                 "U".to_string()
             } else {
-                format!("u{}", index)
+                format!("U{}", index)
             }
         }
         Term::Forall { var_ty, body } => {
@@ -38,6 +38,14 @@ pub fn term_pretty_print(
             } else {
                 format!("∀ {}: {}, {}", name, var_ty_str, body_str)
             }
+        }
+        Term::Fun { var_ty, body } => {
+            let name = format!("x{}", name_stack.len());
+            let var_ty_str = term_pretty_print(var_ty.clone(), name_stack, 200);
+            name_stack.push((name.clone(), 0));
+            let body_str = term_pretty_print(body.clone(), name_stack, 200);
+            name_stack.pop();
+            format!("λ {}: {}, {}", name, var_ty_str, body_str)
         }
         Term::Var { index } => {
             if let Some(x) = name_stack.iter_mut().rev().nth(*index) {

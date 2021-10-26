@@ -23,6 +23,10 @@ fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
             var_ty: replace_term(var_ty.clone(), find.clone(), replace.clone()),
             body: replace_term(body.clone(), find, replace),
         }),
+        Term::Fun { var_ty, body } => TermRef::new(Term::Fun {
+            var_ty: replace_term(var_ty.clone(), find.clone(), replace.clone()),
+            body: replace_term(body.clone(), find, replace),
+        }),
         Term::App { func, op } => TermRef::new(Term::App {
             func: replace_term(func.clone(), find.clone(), replace.clone()),
             op: replace_term(op.clone(), find, replace),

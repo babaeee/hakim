@@ -1,17 +1,20 @@
-use super::{Error::*, Result};
+use super::{
+    tokenizer::{AbsSign, Token},
+    Error::*,
+    Result,
+};
 
 use crate::{
     app_ref,
-    brain::{increase_foreign_vars, Term, TermRef},
+    brain::{increase_foreign_vars, TermRef},
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
 
-use super::tokenizer::{Keyword, Token};
-
 #[derive(Debug)]
 pub enum AstTerm {
-    Forall {
+    Abs {
+        sign: AbsSign,
         name: Vec<String>,
         ty: Box<AstTerm>,
         body: Box<AstTerm>,
@@ -74,17 +77,20 @@ trait TokenEater {
                 self.eat_token()?;
                 Ok(t)
             }
-            Token::Kw(kw) => match kw {
-                Keyword::Forall => {
-                    self.eat_token()?;
-                    let name = self.eat_ident_vec()?;
-                    self.eat_sign(":")?;
-                    let ty = Box::new(self.eat_ast()?);
-                    self.eat_sign(",")?;
-                    let body = Box::new(self.eat_ast()?);
-                    Ok(Forall { name, ty, body })
-                }
-            },
+            Token::Abs(sign) => {
+                self.eat_token()?;
+                let name = self.eat_ident_vec()?;
+                self.eat_sign(":")?;
+                let ty = Box::new(self.eat_ast()?);
+                self.eat_sign(",")?;
+                let body = Box::new(self.eat_ast()?);
+                Ok(Abs {
+                    sign,
+                    name,
+                    ty,
+                    body,
+                })
+            }
             Token::Sign(s) => match s.as_str() {
                 "(" => {
                     self.eat_token()?;
@@ -180,13 +186,26 @@ pub fn tokens_to_ast(mut tokens: &[Token]) -> Result<AstTerm> {
     }
 }
 
+pub fn pack_abstraction(sign: AbsSign, ty: TermRef, body: TermRef) -> TermRef {
+    match sign {
+        AbsSign::Forall => term_ref!(forall ty, body),
+        AbsSign::Fun => term_ref!(fun ty, body),
+        AbsSign::Exists => todo!(),
+    }
+}
+
 pub fn ast_to_term(
     ast: AstTerm,
     globals: &im::HashMap<String, TermRef>,
     name_stack: &mut Vec<String>,
 ) -> Result<TermRef> {
     match ast {
-        Forall { name, ty, body } => {
+        Abs {
+            sign,
+            name,
+            ty,
+            body,
+        } => {
             let mut ty_term = ast_to_term(*ty, globals, name_stack)?;
             let mut tys = vec![];
             for n in name {
@@ -197,10 +216,7 @@ pub fn ast_to_term(
             let mut r = ast_to_term(*body, globals, name_stack)?;
             for ty in tys.into_iter().rev() {
                 name_stack.pop();
-                r = TermRef::new(Term::Forall {
-                    body: r,
-                    var_ty: ty,
-                });
+                r = pack_abstraction(sign, ty, r);
             }
             Ok(r)
         }

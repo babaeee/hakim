@@ -1,13 +1,17 @@
 use crate::parser::term_pretty_print;
-use std::{fmt::Debug, iter::once, rc::Rc};
+use std::{fmt::Debug, rc::Rc};
 
 pub mod infer;
+
+#[cfg(test)]
+mod tests;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Term {
     Axiom { ty: TermRef, unique_name: String },
     Universe { index: usize },
     Forall { var_ty: TermRef, body: TermRef },
+    Fun { var_ty: TermRef, body: TermRef },
     Var { index: usize },
     Number { value: i32 },
     App { func: TermRef, op: TermRef },
@@ -36,6 +40,7 @@ macro_rules! term_ref {
 #[macro_export]
 macro_rules! term {
     {forall $ty:expr , $($i:tt)*} => (crate::Term::Forall { var_ty: term_ref!($ty), body: (term_ref!($( $i)*)) });
+    {fun $ty:expr , $($i:tt)*} => (crate::Term::Fun { var_ty: term_ref!($ty), body: (term_ref!($( $i)*)) });
     {axiom $name:expr , $($i:tt)*} => (crate::Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
     {universe $input:expr} => (crate::Term::Universe { index: ($input) });
     {v $input:expr} => (crate::Term::Var { index: ($input) });
@@ -85,6 +90,8 @@ pub enum Error {
     BadTerm,
     TypeMismatch(TermRef, TermRef),
     IsNotFunc,
+    ContainsWild,
+    IsNotUniverse,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -97,8 +104,26 @@ pub fn contains_wild(t: &TermRef) -> bool {
             false
         }
         Term::App { func, op } => contains_wild(func) || contains_wild(op),
-        Term::Forall { var_ty, body } => contains_wild(var_ty) || contains_wild(body),
+        Term::Forall { var_ty, body } | Term::Fun { var_ty, body } => {
+            contains_wild(var_ty) || contains_wild(body)
+        }
         Term::Wild { .. } => true,
+    }
+}
+
+fn get_universe(t: TermRef) -> Result<usize> {
+    if let Term::Universe { index } = t.as_ref() {
+        Ok(*index)
+    } else {
+        Err(IsNotUniverse)
+    }
+}
+
+fn deny_wild(t: &TermRef) -> Result<()> {
+    if contains_wild(t) {
+        Err(ContainsWild)
+    } else {
+        Ok(())
     }
 }
 
@@ -108,6 +133,9 @@ fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
         Term::App { func, op } => app_ref!(fill_wild(func.clone(), f), fill_wild(op.clone(), f)),
         Term::Forall { var_ty, body } => {
             term_ref!(forall fill_wild(var_ty.clone(), f), fill_wild(body.clone(), f))
+        }
+        Term::Fun { var_ty, body } => {
+            term_ref!(fun fill_wild(var_ty.clone(), f), fill_wild(body.clone(), f))
         }
         Term::Wild { index } => f(*index),
     }
@@ -134,6 +162,10 @@ pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
                 var_ty: inner(var_ty.clone(), to_put.clone(), i),
                 body: inner(body.clone(), to_put, i + 1),
             }),
+            Term::Fun { var_ty, body } => TermRef::new(Term::Fun {
+                var_ty: inner(var_ty.clone(), to_put.clone(), i),
+                body: inner(body.clone(), to_put, i + 1),
+            }),
             Term::App { func, op } => TermRef::new(Term::App {
                 func: inner(func.clone(), to_put.clone(), i),
                 op: inner(op.clone(), to_put, i),
@@ -154,7 +186,12 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
         Term::Forall { var_ty, body } => {
             let var_ty = increase_foreign_vars(var_ty.clone(), depth);
             let body = increase_foreign_vars(body.clone(), depth + 1);
-            TermRef::new(Term::Forall { var_ty, body })
+            term_ref!(forall var_ty, body)
+        }
+        Term::Fun { var_ty, body } => {
+            let var_ty = increase_foreign_vars(var_ty.clone(), depth);
+            let body = increase_foreign_vars(body.clone(), depth + 1);
+            term_ref!(fun var_ty, body)
         }
         Term::App { func, op } => {
             let func = increase_foreign_vars(func.clone(), depth);
@@ -164,42 +201,7 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
     }
 }
 
-fn type_of_inner(term: TermRef, var_ty_stack: &[TermRef]) -> Result<TermRef> {
-    Ok(match term.as_ref() {
-        Term::Axiom { ty, .. } => ty.clone(),
-        Term::Universe { index } => TermRef::new(Term::Universe { index: index + 1 }),
-        Term::Forall { var_ty, body } => {
-            let vtt = type_of_inner(var_ty.clone(), var_ty_stack)?;
-            let new_var_stack = var_ty_stack
-                .iter()
-                .chain(once(var_ty))
-                .map(|x| increase_foreign_vars(x.clone(), 0))
-                .collect::<Vec<_>>();
-            type_of_inner(body.clone(), &new_var_stack)?;
-            vtt
-        }
-        Term::Var { index } => var_ty_stack
-            .iter()
-            .rev()
-            .nth(*index)
-            .ok_or(BadTerm)?
-            .clone(),
-        Term::Number { .. } => term_ref!(axiom "ℤ".to_string(), universe 0),
-        Term::App { func, op } => {
-            let op_ty = type_of_inner(op.clone(), var_ty_stack)?;
-            let func_type = type_of_inner(func.clone(), var_ty_stack)?;
-            let (var_ty, body) = if let Term::Forall { var_ty, body } = func_type.as_ref() {
-                (var_ty, body)
-            } else {
-                return Err(IsNotFunc);
-            };
-            match_term(var_ty.clone(), op_ty)?;
-            subst(body.clone(), op.clone())
-        }
-        Term::Wild { .. } => todo!(),
-    })
-}
-
 pub fn type_of(term: TermRef) -> Result<TermRef> {
-    type_of_inner(term, &[])
+    deny_wild(&term)?;
+    infer::type_of_inner(term, &[], &mut infer::InferResults::new(0))
 }

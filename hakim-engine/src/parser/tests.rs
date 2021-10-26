@@ -23,3 +23,18 @@ fn number_ops() {
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, ∀ x2: ℤ, x0 < x1 → x0 + x2 < x1 + x2");
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, (x0 + x1) * (x0 + x1) < x0 * x0 + x1 * x1");
 }
+
+#[test]
+fn simple_fun() {
+    parse_pretty("λ x0: ℤ, x0 + 2");
+}
+
+#[test]
+fn universes() {
+    parse_pretty("U");
+    parse_pretty("U1");
+    parse_pretty("U2");
+    parse_pretty("U3");
+    parse_pretty("U → U1");
+    parse_pretty("U3 → U2");
+}

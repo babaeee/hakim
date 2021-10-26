@@ -18,6 +18,9 @@ impl Default for Engine {
     fn default() -> Self {
         let mut name_dict: im::HashMap<String, TermRef> = Default::default();
         name_dict.insert("U".to_string(), prelude::u());
+        name_dict.insert("U1".to_string(), prelude::u1());
+        name_dict.insert("U2".to_string(), prelude::u2());
+        name_dict.insert("U3".to_string(), prelude::u3());
         name_dict.insert("ℤ".to_string(), prelude::z());
         name_dict.insert("eq".to_string(), prelude::eq());
         name_dict.insert("eq_refl".to_string(), prelude::eq_refl());
@@ -102,7 +105,7 @@ impl Engine {
         load_library_by_name(self, name)
     }
 
-    fn parse_text(&self, text: &str) -> Result<TermRef> {
+    pub fn parse_text(&self, text: &str) -> Result<TermRef> {
         let ast = parse(text)?;
         let mut name_stack = vec![];
         let term = ast_to_term(ast, &self.name_dict, &mut name_stack)?;
