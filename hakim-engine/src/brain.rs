@@ -178,11 +178,29 @@ fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
     }
 }
 
-pub fn match_term(t1: TermRef, t2: TermRef) -> Result<()> {
-    if t1 == t2 {
-        Ok(())
-    } else {
-        Err(TypeMismatch(t1, t2))
+fn normalize(t: TermRef) -> TermRef {
+    fn for_abs(a: Abstraction) -> Abstraction {
+        Abstraction {
+            var_ty: normalize(a.var_ty),
+            body: normalize(a.body),
+        }
+    }
+    match t.as_ref() {
+        Term::Var { .. }
+        | Term::Axiom { .. }
+        | Term::Universe { .. }
+        | Term::Number { .. }
+        | Term::Wild { .. } => t,
+        Term::Forall(x) => TermRef::new(Term::Forall(for_abs(x.clone()))),
+        Term::Fun(x) => TermRef::new(Term::Fun(for_abs(x.clone()))),
+        Term::App { func, op } => {
+            let func = normalize(func.clone());
+            if let Term::Fun(x) = func.as_ref() {
+                return normalize(subst(x.body.clone(), op.clone()));
+            }
+            let op = normalize(op.clone());
+            app_ref!(func, op)
+        }
     }
 }
 

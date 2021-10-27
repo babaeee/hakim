@@ -1,4 +1,4 @@
-use super::{fill_wild, increase_foreign_vars, subst, Error::*, Result, Term, TermRef};
+use super::{fill_wild, increase_foreign_vars, normalize, subst, Error::*, Result, Term, TermRef};
 use crate::Abstraction;
 use crate::{brain::get_universe, term_ref};
 
@@ -59,7 +59,15 @@ impl InferResults {
     }
 }
 
-pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> Result<()> {
+fn match_and_infer_without_normalize(
+    t1: TermRef,
+    t2: TermRef,
+    infers: &mut InferResults,
+) -> Result<()> {
+    fn for_abs(a1: Abstraction, a2: Abstraction, infers: &mut InferResults) -> Result<()> {
+        match_and_infer_without_normalize(a1.var_ty, a2.var_ty, infers)?;
+        match_and_infer_without_normalize(a1.body, a2.body, infers)
+    }
     match (t1.as_ref(), t2.as_ref()) {
         (Term::Wild { index }, _) => {
             let i = *index;
@@ -67,7 +75,7 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
                 infers.set(i, t2.clone());
                 Ok(())
             } else {
-                match_and_infer(infers.get(i), t2, infers)
+                match_and_infer_without_normalize(infers.get(i), t2, infers)
             }
         }
         (_, Term::Wild { index }) => {
@@ -76,7 +84,7 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
                 infers.set(i, t1.clone());
                 Ok(())
             } else {
-                match_and_infer(infers.get(i), t1, infers)
+                match_and_infer_without_normalize(infers.get(i), t1, infers)
             }
         }
         (
@@ -89,8 +97,8 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
                 op: op2,
             },
         ) => {
-            match_and_infer(func1.clone(), func2.clone(), infers)?;
-            match_and_infer(op1.clone(), op2.clone(), infers)
+            match_and_infer_without_normalize(func1.clone(), func2.clone(), infers)?;
+            match_and_infer_without_normalize(op1.clone(), op2.clone(), infers)
         }
         (
             Term::Axiom {
@@ -113,11 +121,18 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
                 Err(TypeMismatch(t1, t2))
             }
         }
-        (Term::Forall(x1), Term::Forall(x2)) => {
-            if x1 == x2 {
-                // this is more aggressive than it should, normally we should allow infering
-                // inside foralls as well, but it will introduce infering wildcards equal to
-                // local variables, which is very very complex concept
+        (Term::Number { value: i1 }, Term::Number { value: i2 }) => {
+            if i1 == i2 {
+                Ok(())
+            } else {
+                Err(TypeMismatch(t1, t2))
+            }
+        }
+        (Term::Forall(a1), Term::Forall(a2)) | (Term::Fun(a1), Term::Fun(a2)) => {
+            for_abs(a1.clone(), a2.clone(), infers)
+        }
+        (Term::Var { index: i1 }, Term::Var { index: i2 }) => {
+            if i1 == i2 {
                 Ok(())
             } else {
                 Err(TypeMismatch(t1, t2))
@@ -125,6 +140,12 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
         }
         _ => Err(TypeMismatch(t1, t2)),
     }
+}
+
+pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> Result<()> {
+    let t1 = normalize(t1);
+    let t2 = normalize(t2);
+    match_and_infer_without_normalize(t1, t2, infers)
 }
 
 pub fn type_of_inner(

@@ -1,8 +1,14 @@
 use super::Engine;
 
-fn run_interactive_to_end(goal: &str, tactics: &str) {
+fn build_engine() -> Engine {
     let mut eng = Engine::default();
     eng.load_library("Arith").unwrap();
+    eng.load_library("Logic").unwrap();
+    eng
+}
+
+fn run_interactive_to_end(goal: &str, tactics: &str) {
+    let eng = build_engine();
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
@@ -20,8 +26,7 @@ fn run_interactive_to_end(goal: &str, tactics: &str) {
 }
 
 fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
-    let mut eng = Engine::default();
-    eng.load_library("Arith").unwrap();
+    let eng = build_engine();
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
@@ -193,4 +198,51 @@ fn apply_implicit_fail_instance() {
         apply c_lt_d"#,
         "apply lt_trans",
     );
+}
+// ∀ x0: U, ∀ x1: x0 → U, (∀ x2: x0, x1 x2) → (x0 → ∃ x2: x0, x1 x2)
+
+#[test]
+fn exists_simple() {
+    run_interactive_to_end(
+        "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, P x",
+        r#"
+        intros A P pall a
+        apply (ex_intro A P a)
+        apply pall
+        "#,
+    );
+    run_interactive_to_fail(
+        "∀ A: U, ∀ P Q: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, Q x",
+        r#"
+        intros A P Q pall a
+        "#,
+        "apply (ex_intro A P a)",
+    );
+    run_interactive_to_fail(
+        "∀ A: U, ∀ P Q: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, Q x",
+        r#"
+        intros A P Q pall a
+        apply (ex_intro A Q a)
+        "#,
+        "apply pall",
+    );
+}
+
+#[test]
+fn exists_number() {
+    run_interactive_to_end(
+        "∀ a: ℤ, ∃ b: ℤ, a < b",
+        r#"
+        intros a
+        apply (ex_intro ℤ (λ t: ℤ, a < t) (a + 1))
+        add_hyp (eq ℤ a (a+0))
+        ring
+        rewrite H
+        add_hyp (eq ℤ ((a+0)+1) (a+1))
+        ring
+        rewrite H0
+        apply lt_plus_l
+        apply lt_0_1
+        "#,
+    )
 }

@@ -6,6 +6,7 @@ document.body.appendChild(title);
 
 const instance = new Instance()
 instance.load_library('Arith');
+instance.load_library('Logic');
 instance.start_session("forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)");
 
 const monitor = document.createElement('pre');
@@ -21,14 +22,17 @@ document.body.appendChild(document.createElement('p'));
 const newGoal = document.createElement('button');
 newGoal.innerText = 'New Goal';
 document.body.appendChild(newGoal);
-newGoal.onclick = () => {
-    const error = instance.start_session(window.prompt('New goal?'));
+
+const setGoal = (x) => {
+    const error = instance.start_session(x);
     if (error) {
         alert(error);
         return;
     }
     update();
-};
+}
+
+newGoal.onclick = () => setGoal(window.prompt('New Goal?'));
 
 const undo = document.createElement('button');
 undo.innerText = 'Undo';
@@ -70,6 +74,23 @@ inp.addEventListener('keydown', (e) => {
         }
     }
 });
+
+const exampleGoals = [
+    '∀ a b c d: ℤ, a < b -> c < d -> a + c < b + d',
+    '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, P x',
+];
+
+const exampleSection = document.createElement('div');
+for (const ex of exampleGoals) {
+    const b = document.createElement('button');
+    b.innerText = ex;
+    b.onclick = () => {
+        setGoal(ex);
+    };
+    exampleSection.appendChild(b);
+}
+
+document.body.appendChild(exampleSection);
 
 const help = document.createElement('div');
 
