@@ -34,7 +34,12 @@ use std::fmt::{Display, Formatter};
 use Assoc::*;
 use BinOp::*;
 
-use crate::{app_ref, brain::increase_foreign_vars, library::prelude::*, term_ref, Term, TermRef};
+use crate::{
+    app_ref,
+    brain::{increase_foreign_vars, remove_unused_var},
+    library::prelude::*,
+    term_ref, Abstraction, Term, TermRef,
+};
 
 impl BinOp {
     pub fn prec(&self) -> u8 {
@@ -80,7 +85,7 @@ impl BinOp {
         }
     }
 
-    pub fn detect(t: TermRef) -> Option<(TermRef, Self, TermRef)> {
+    pub fn detect(t: &TermRef) -> Option<(TermRef, Self, TermRef)> {
         match t.as_ref() {
             Term::App { func, op: op2 } => match func.as_ref() {
                 Term::App { func, op } => match func.as_ref() {
@@ -100,6 +105,10 @@ impl BinOp {
                 },
                 _ => None,
             },
+            Term::Forall(Abstraction { body, var_ty }) => {
+                let x = remove_unused_var(body, 0)?;
+                Some((var_ty.clone(), BinOp::Imply, x))
+            }
             _ => None,
         }
     }

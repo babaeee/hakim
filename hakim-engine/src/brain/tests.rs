@@ -60,3 +60,18 @@ fn forall_universe() {
     check_type("∀ x: ℤ, x + 2 < 7", "U");
     check_type("∀ A: U, A → A", "U1");
 }
+
+#[test]
+fn exists_good() {
+    check_type("exists x: ℤ, x < 2", "U");
+    check_type("exists x y: ℤ, x < y", "U");
+    check_type("exists x: ℤ, x < x -> exists x: ℤ, 2 * x < x", "U");
+}
+
+#[test]
+fn exists_bad() {
+    fail_type("exists x: 2, x");
+    fail_type("exists x: ℤ, x");
+    fail_type("exists x: ℤ, x + 2");
+    fail_type("exists x: U, x");
+}

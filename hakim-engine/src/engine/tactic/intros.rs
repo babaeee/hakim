@@ -1,7 +1,7 @@
 use crate::{
     brain::{subst, Term},
     engine::interactive::Frame,
-    term_ref,
+    term_ref, Abstraction,
 };
 
 use super::{Error::*, Result};
@@ -9,7 +9,7 @@ use super::{Error::*, Result};
 pub fn intros_one(frame: &mut Frame, name: &str) -> Result<()> {
     let goal = frame.goal.clone();
     match goal.as_ref() {
-        Term::Forall { var_ty, body } => {
+        Term::Forall(Abstraction { var_ty, body }) => {
             frame.add_hyp_with_name(name, var_ty.clone())?;
             frame.goal = subst(body.clone(), term_ref!(axiom name, var_ty));
             Ok(())
@@ -21,7 +21,7 @@ pub fn intros_one(frame: &mut Frame, name: &str) -> Result<()> {
 pub fn intros(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     if args.peek().is_none() {
-        while let Term::Forall { var_ty, body } = frame.goal.clone().as_ref() {
+        while let Term::Forall(Abstraction { var_ty, body }) = frame.goal.clone().as_ref() {
             let name = frame.engine.generate_name("x");
             frame.add_hyp_with_name(&name, var_ty.clone())?;
             frame.goal = subst(body.clone(), term_ref!(axiom name, var_ty));

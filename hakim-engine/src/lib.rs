@@ -5,4 +5,4 @@ pub mod engine;
 mod library;
 pub mod parser;
 
-pub use brain::{Term, TermRef};
+pub use brain::{Abstraction, Term, TermRef};

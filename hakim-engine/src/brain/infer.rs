@@ -1,4 +1,5 @@
 use super::{fill_wild, increase_foreign_vars, subst, Error::*, Result, Term, TermRef};
+use crate::Abstraction;
 use crate::{brain::get_universe, term_ref};
 
 use std::cmp::max;
@@ -112,6 +113,16 @@ pub fn match_and_infer(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> R
                 Err(TypeMismatch(t1, t2))
             }
         }
+        (Term::Forall(x1), Term::Forall(x2)) => {
+            if x1 == x2 {
+                // this is more aggressive than it should, normally we should allow infering
+                // inside foralls as well, but it will introduce infering wildcards equal to
+                // local variables, which is very very complex concept
+                Ok(())
+            } else {
+                Err(TypeMismatch(t1, t2))
+            }
+        }
         _ => Err(TypeMismatch(t1, t2)),
     }
 }
@@ -124,7 +135,7 @@ pub fn type_of_inner(
     Ok(match term.as_ref() {
         Term::Axiom { ty, .. } => ty.clone(),
         Term::Universe { index } => TermRef::new(Term::Universe { index: index + 1 }),
-        Term::Forall { var_ty, body } => {
+        Term::Forall(Abstraction { var_ty, body }) => {
             let vtt = get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
             let new_var_stack = var_ty_stack
                 .iter()
@@ -134,7 +145,7 @@ pub fn type_of_inner(
             let body_ty = get_universe(type_of_inner(body.clone(), &new_var_stack, infers)?)?;
             term_ref!(universe max(vtt, body_ty))
         }
-        Term::Fun { var_ty, body } => {
+        Term::Fun(Abstraction { var_ty, body }) => {
             get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
             let new_var_stack = var_ty_stack
                 .iter()
@@ -154,10 +165,9 @@ pub fn type_of_inner(
         Term::App { func, op } => {
             let op_ty = type_of_inner(op.clone(), var_ty_stack, infers)?;
             let func_type = type_of_inner(func.clone(), var_ty_stack, infers)?;
-            let (var_ty, body) = if let Term::Forall { var_ty, body } = func_type.as_ref() {
-                (var_ty, body)
-            } else {
-                return Err(IsNotFunc);
+            let (var_ty, body) = match func_type.as_ref() {
+                Term::Forall(Abstraction { var_ty, body }) => (var_ty, body),
+                _ => return Err(IsNotFunc),
             };
             match_and_infer(var_ty.clone(), op_ty, infers)?;
             subst(body.clone(), op.clone())

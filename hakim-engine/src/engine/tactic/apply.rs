@@ -6,14 +6,14 @@ use crate::{
         type_of,
     },
     engine::interactive::Frame,
-    term_ref, Term, TermRef,
+    term_ref, Abstraction, Term, TermRef,
 };
 
 use super::{get_one_arg, Error::*, Result};
 
 pub fn get_forall_depth(term: &TermRef) -> usize {
     match term.as_ref() {
-        Term::Forall { body, .. } => get_forall_depth(body) + 1,
+        Term::Forall(Abstraction { body, .. }) => get_forall_depth(body) + 1,
         _ => 0,
     }
 }

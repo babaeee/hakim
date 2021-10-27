@@ -15,10 +15,10 @@ pub fn u3() -> TermRef {
 pub fn z() -> TermRef {
     term_ref!(axiom "ℤ" , u())
 }
-pub fn v0() -> TermRef {
+fn v0() -> TermRef {
     term_ref!(v 0)
 }
-pub fn v1() -> TermRef {
+fn v1() -> TermRef {
     term_ref!(v 1)
 }
 pub fn eq() -> TermRef {
@@ -35,4 +35,7 @@ pub fn plus() -> TermRef {
 }
 pub fn mult() -> TermRef {
     term_ref!(axiom "mult", forall z(), forall z(), z())
+}
+pub fn ex() -> TermRef {
+    term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
 }

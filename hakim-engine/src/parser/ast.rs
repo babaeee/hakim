@@ -7,6 +7,7 @@ use super::{
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, TermRef},
+    library::prelude::ex,
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
@@ -190,7 +191,7 @@ pub fn pack_abstraction(sign: AbsSign, ty: TermRef, body: TermRef) -> TermRef {
     match sign {
         AbsSign::Forall => term_ref!(forall ty, body),
         AbsSign::Fun => term_ref!(fun ty, body),
-        AbsSign::Exists => todo!(),
+        AbsSign::Exists => app_ref!(ex(), ty.clone(), term_ref!(fun ty, body)),
     }
 }
 
