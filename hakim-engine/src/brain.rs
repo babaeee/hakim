@@ -164,7 +164,7 @@ fn deny_wild(t: &TermRef) -> Result<()> {
     }
 }
 
-fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
+pub fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
     match t.as_ref() {
         Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => t,
         Term::App { func, op } => app_ref!(fill_wild(func.clone(), f), fill_wild(op.clone(), f)),

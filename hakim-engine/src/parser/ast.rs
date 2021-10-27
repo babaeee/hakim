@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use super::{
     tokenizer::{AbsSign, Token},
     Error::*,
@@ -199,6 +201,7 @@ pub fn ast_to_term(
     ast: AstTerm,
     globals: &im::HashMap<String, TermRef>,
     name_stack: &mut Vec<String>,
+    infer_cnt: &mut usize,
 ) -> Result<TermRef> {
     match ast {
         Abs {
@@ -207,14 +210,14 @@ pub fn ast_to_term(
             ty,
             body,
         } => {
-            let mut ty_term = ast_to_term(*ty, globals, name_stack)?;
+            let mut ty_term = ast_to_term(*ty, globals, name_stack, infer_cnt)?;
             let mut tys = vec![];
             for n in name {
                 tys.push(ty_term.clone());
                 ty_term = increase_foreign_vars(ty_term, 0);
                 name_stack.push(n);
             }
-            let mut r = ast_to_term(*body, globals, name_stack)?;
+            let mut r = ast_to_term(*body, globals, name_stack, infer_cnt)?;
             for ty in tys.into_iter().rev() {
                 name_stack.pop();
                 r = pack_abstraction(sign, ty, r);
@@ -232,17 +235,20 @@ pub fn ast_to_term(
             }
         }
         App(a, b) => Ok(app_ref!(
-            ast_to_term(*a, globals, name_stack)?,
-            ast_to_term(*b, globals, name_stack)?
+            ast_to_term(*a, globals, name_stack, infer_cnt)?,
+            ast_to_term(*b, globals, name_stack, infer_cnt)?
         )),
         Number(num) => {
             let num_i32 = num as i32;
             Ok(term_ref!(n num_i32))
         }
-        Wild(i) => Ok(term_ref!(_ i)),
+        Wild(i) => {
+            *infer_cnt = max(*infer_cnt, i + 1);
+            Ok(term_ref!(_ i))
+        }
         BinOp(a, op, b) => {
-            let ta = ast_to_term(*a, globals, name_stack)?;
-            let tb = ast_to_term(*b, globals, name_stack)?;
+            let ta = ast_to_term(*a, globals, name_stack, infer_cnt)?;
+            let tb = ast_to_term(*b, globals, name_stack, infer_cnt)?;
             Ok(op.run_on_term(ta, tb))
         }
     }

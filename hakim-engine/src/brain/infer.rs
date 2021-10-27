@@ -153,7 +153,7 @@ pub fn type_of_inner(
     var_ty_stack: &[TermRef],
     infers: &mut InferResults,
 ) -> Result<TermRef> {
-    Ok(match term.as_ref() {
+    let r = match term.as_ref() {
         Term::Axiom { ty, .. } => ty.clone(),
         Term::Universe { index } => TermRef::new(Term::Universe { index: index + 1 }),
         Term::Forall(Abstraction { var_ty, body }) => {
@@ -194,7 +194,8 @@ pub fn type_of_inner(
             subst(body.clone(), op.clone())
         }
         Term::Wild { index } => infers.type_of(*index),
-    })
+    };
+    Ok(r)
 }
 
 pub fn type_of_and_infer(term: TermRef, infers: &mut InferResults) -> Result<TermRef> {

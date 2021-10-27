@@ -1,6 +1,10 @@
 use self::interactive::Session;
 use crate::{
-    brain::{self, type_of, TermRef},
+    brain::{
+        self, fill_wild,
+        infer::{type_of_and_infer, InferResults},
+        type_of, TermRef,
+    },
     library::{load_library_by_name, prelude},
     parser::{self, ast_to_term, is_valid_ident, parse},
     term_ref,
@@ -108,8 +112,16 @@ impl Engine {
     pub fn parse_text(&self, text: &str) -> Result<TermRef> {
         let ast = parse(text)?;
         let mut name_stack = vec![];
-        let term = ast_to_term(ast, &self.name_dict, &mut name_stack)?;
-        Ok(term)
+        let mut infer_cnt = 0;
+        let term = ast_to_term(ast, &self.name_dict, &mut name_stack, &mut infer_cnt)?;
+        if infer_cnt == 0 {
+            return Ok(term);
+        }
+        let mut infers = InferResults::new(infer_cnt);
+        let ty = dbg!(type_of_and_infer(term.clone(), &mut infers)?);
+        dbg!(type_of_and_infer(ty, &mut infers)?);
+        let term = fill_wild(term.clone(), &|t| infers.terms[t].clone());
+        Ok(dbg!(term))
     }
 
     pub fn interactive_session(&self, goal: &str) -> Result<Session> {

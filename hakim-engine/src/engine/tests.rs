@@ -246,3 +246,18 @@ fn exists_number() {
         "#,
     )
 }
+
+#[test]
+fn exists_destruct() {
+    run_interactive_to_end(
+        "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
+        r#"
+        intros P px_p2x exP
+        apply (ex_ind _0 _1 exP)
+        intros exP_value exP_proof
+        apply (ex_intro _0 (λ t: ℤ, P (2 * t)) exP_value)
+        apply px_p2x
+        apply exP_proof
+        "#,
+    )
+}
