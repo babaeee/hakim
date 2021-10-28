@@ -24,6 +24,10 @@ pub enum Error {
         expected: usize,
         found: usize,
     },
+    BadArg {
+        tactic_name: String,
+        arg: String,
+    },
     BrainError(brain::Error),
     CanNotSolve(&'static str),
     CanNotUndo,

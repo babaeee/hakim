@@ -192,7 +192,16 @@ fn normalize(t: TermRef) -> TermRef {
         | Term::Number { .. }
         | Term::Wild { .. } => t,
         Term::Forall(x) => TermRef::new(Term::Forall(for_abs(x.clone()))),
-        Term::Fun(x) => TermRef::new(Term::Fun(for_abs(x.clone()))),
+        Term::Fun(x) => {
+            if let Term::App { func, op } = x.body.as_ref() {
+                if **op == (Term::Var { index: 0 }) {
+                    if let Some(x) = remove_unused_var(func, 0) {
+                        return normalize(x);
+                    }
+                }
+            }
+            TermRef::new(Term::Fun(for_abs(x.clone())))
+        }
         Term::App { func, op } => {
             let func = normalize(func.clone());
             if let Term::Fun(x) = func.as_ref() {

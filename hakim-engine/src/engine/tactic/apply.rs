@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     app_ref,
     brain::{
@@ -5,11 +7,11 @@ use crate::{
         infer::{match_and_infer, type_of_and_infer, InferResults},
         type_of,
     },
-    engine::interactive::Frame,
+    engine::{interactive::Frame, Engine},
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::{get_one_arg, Error::*, Result};
+use super::{Error::*, Result};
 
 pub fn get_forall_depth(term: &TermRef) -> usize {
     match term.as_ref() {
@@ -18,20 +20,56 @@ pub fn get_forall_depth(term: &TermRef) -> usize {
     }
 }
 
-pub fn apply(frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
-    let exp = &get_one_arg(args, "apply")?;
+fn parse_other_args(
+    args: impl Iterator<Item = String>,
+    engine: &Engine,
+) -> Result<HashMap<usize, TermRef>> {
+    let mut r = HashMap::default();
+    for arg in args {
+        let c = || BadArg {
+            arg: arg.clone(),
+            tactic_name: "apply".to_string(),
+        };
+        let mut chars = arg.chars();
+        if chars.next() != Some('(') {
+            return Err(c());
+        }
+        if chars.next_back() != Some(')') {
+            return Err(c());
+        }
+        let arg = chars.as_str();
+        let (num, val) = arg.split_once(":=").ok_or_else(c)?;
+        let num = num.parse::<usize>().map_err(|_| c())?;
+        r.insert(num, engine.parse_text(val)?);
+    }
+    Ok(r)
+}
+
+pub fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+    let exp = &args.next().ok_or(BadArgCount {
+        expected: 1,
+        found: 0,
+        tactic_name: "apply".to_string(),
+    })?;
+    let mut other_args = parse_other_args(args, &frame.engine)?;
     let term = frame.engine.parse_text(exp)?;
     let ty = type_of(term.clone())?;
     let d_forall = get_forall_depth(&ty);
     let mut twa = term;
+    let mut inf_num = 0;
     for i in 0..d_forall {
-        twa = app_ref!(twa, term_ref!(_ i));
+        if let Some(x) = other_args.remove(&(i + 1)) {
+            twa = app_ref!(twa, x);
+        } else {
+            twa = app_ref!(twa, term_ref!(_ inf_num));
+            inf_num += 1;
+        }
     }
-    let mut infers = InferResults::new(d_forall);
+    let mut infers = InferResults::new(inf_num);
     let twa_ty = type_of_and_infer(twa, &mut infers)?;
     match_and_infer(twa_ty, frame.goal.clone(), &mut infers)?;
     let mut v = vec![];
-    for i in 0..d_forall {
+    for i in 0..inf_num {
         let mut frame = frame.clone();
         if !contains_wild(&infers.terms[i]) {
             continue;

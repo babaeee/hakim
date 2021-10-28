@@ -68,25 +68,43 @@ fn match_and_infer_without_normalize(
         match_and_infer_without_normalize(a1.var_ty, a2.var_ty, infers)?;
         match_and_infer_without_normalize(a1.body, a2.body, infers)
     }
+    fn is_wild(t: &TermRef) -> Option<usize> {
+        if let Term::Wild { index } = t.as_ref() {
+            Some(*index)
+        } else {
+            None
+        }
+    }
+    fn match_wild(i: usize, t: TermRef, infers: &mut InferResults) -> Result<()> {
+        if *infers.get(i) == (Term::Wild { index: i }) {
+            infers.set(i, t.clone());
+            Ok(())
+        } else {
+            match_and_infer_without_normalize(infers.get(i), t, infers)
+        }
+    }
+    fn func_is_wild(t: &TermRef) -> bool {
+        if let Term::App { func, .. } = t.as_ref() {
+            if is_wild(func).is_some() {
+                true
+            } else {
+                func_is_wild(func)
+            }
+        } else {
+            false
+        }
+    }
+    if let Some(i) = is_wild(&t1) {
+        return match_wild(i, t2, infers);
+    }
+    if let Some(i) = is_wild(&t2) {
+        return match_wild(i, t1, infers);
+    }
+    if func_is_wild(&t1) || func_is_wild(&t2) {
+        dbg!((t1, t2));
+        return Ok(());
+    }
     match (t1.as_ref(), t2.as_ref()) {
-        (Term::Wild { index }, _) => {
-            let i = *index;
-            if infers.get(i) == t1 {
-                infers.set(i, t2.clone());
-                Ok(())
-            } else {
-                match_and_infer_without_normalize(infers.get(i), t2, infers)
-            }
-        }
-        (_, Term::Wild { index }) => {
-            let i = *index;
-            if infers.get(i) == t2 {
-                infers.set(i, t1.clone());
-                Ok(())
-            } else {
-                match_and_infer_without_normalize(infers.get(i), t1, infers)
-            }
-        }
         (
             Term::App {
                 func: func1,

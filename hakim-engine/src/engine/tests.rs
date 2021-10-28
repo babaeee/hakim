@@ -17,7 +17,14 @@ fn run_interactive_to_end(goal: &str, tactics: &str) {
         }
         session
             .run_tactic(tactic)
-            .map_err(|e| panic!("Error {:?}\nMonitor:\n{}", e, session.monitor_string()))
+            .map_err(|e| {
+                panic!(
+                    "Error {:?}\nTactic: {}\nMonitor:\n{}",
+                    e,
+                    tactic,
+                    session.monitor_string()
+                )
+            })
             .unwrap();
     }
     if !session.is_finished() {
@@ -253,9 +260,9 @@ fn exists_destruct() {
         "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
         r#"
         intros P px_p2x exP
-        apply (ex_ind _0 _1 exP)
+        apply ex_ind (3:=exP)
         intros exP_value exP_proof
-        apply (ex_intro _0 (λ t: ℤ, P (2 * t)) exP_value)
+        apply ex_intro (3:=exP_value)
         apply px_p2x
         apply exP_proof
         "#,
