@@ -2,10 +2,14 @@ use im::vector;
 
 use crate::brain::TermRef;
 
-use super::{
-    tactic::{self, add_hyp, apply, intros, rewrite, ring},
-    Engine, Error,
-};
+use crate::engine::{Engine, Error};
+
+#[cfg(test)]
+mod tests;
+
+mod tactic;
+
+use tactic::{add_hyp, apply, intros, rewrite, ring};
 
 #[derive(Debug, Clone)]
 pub struct Frame {

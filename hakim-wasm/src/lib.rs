@@ -1,6 +1,6 @@
 use std::panic;
 
-use hakim_engine::engine::{interactive::Session, Engine};
+use hakim_engine::{engine::Engine, interactive::Session};
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global

@@ -1,5 +1,5 @@
 use super::{rewrite::get_eq_params, Error::*, Result};
-use crate::{brain::Term, engine::interactive::Frame, TermRef};
+use crate::{brain::Term, interactive::Frame, TermRef};
 
 #[derive(Debug, Clone)]
 enum ArithTree {
@@ -114,7 +114,7 @@ fn sorter(x: Poly) -> Poly {
 fn canonical(x: ArithTree) -> Poly {
     let x = normalize(x);
     let x = tree_to_d2(x);
-    
+
     sorter(x)
 }
 

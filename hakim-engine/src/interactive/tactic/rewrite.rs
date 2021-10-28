@@ -3,7 +3,7 @@ use crate::{
         infer::{match_and_infer, InferResults},
         Term, TermRef,
     },
-    engine::interactive::Frame,
+    interactive::Frame,
     term_ref, Abstraction,
 };
 

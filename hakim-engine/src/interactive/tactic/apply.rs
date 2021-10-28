@@ -7,7 +7,8 @@ use crate::{
         infer::{match_and_infer, type_of_and_infer, InferResults},
         type_of,
     },
-    engine::{interactive::Frame, Engine},
+    engine::Engine,
+    interactive::Frame,
     term_ref, Abstraction, Term, TermRef,
 };
 

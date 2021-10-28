@@ -1,6 +1,6 @@
 use crate::{
     brain::{subst, Term},
-    engine::interactive::Frame,
+    interactive::Frame,
     term_ref, Abstraction,
 };
 

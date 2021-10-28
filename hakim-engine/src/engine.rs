@@ -1,4 +1,4 @@
-use self::interactive::Session;
+use super::interactive::Session;
 use crate::{
     brain::{
         self, fill_wild,
@@ -15,9 +15,6 @@ pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
 }
 
-#[cfg(test)]
-mod tests;
-
 impl Default for Engine {
     fn default() -> Self {
         let mut name_dict: im::HashMap<String, TermRef> = Default::default();
@@ -33,9 +30,6 @@ impl Default for Engine {
         Self { name_dict }
     }
 }
-
-pub mod interactive;
-mod tactic;
 
 #[derive(Debug)]
 pub enum Error {
@@ -64,7 +58,7 @@ use Error::*;
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl Engine {
-    fn generate_name(&self, base: &str) -> String {
+    pub fn generate_name(&self, base: &str) -> String {
         if !self.name_dict.contains_key(base) {
             return base.to_string();
         }
@@ -88,7 +82,7 @@ impl Engine {
         Ok(())
     }
 
-    fn add_axiom_with_term(&mut self, name: &str, term: TermRef) -> Result<()> {
+    pub fn add_axiom_with_term(&mut self, name: &str, term: TermRef) -> Result<()> {
         let axiom = term_ref!(axiom name, term);
         self.add_name(name, axiom)
     }

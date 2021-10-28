@@ -1,6 +1,6 @@
 use crate::brain::{self, TermRef};
 
-use super::interactive::Frame;
+use crate::interactive::Frame;
 
 mod rewrite;
 pub use rewrite::rewrite;
