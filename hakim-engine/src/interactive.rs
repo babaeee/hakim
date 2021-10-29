@@ -7,9 +7,12 @@ use crate::engine::{Engine, Error};
 #[cfg(test)]
 mod tests;
 
+mod suggest;
 mod tactic;
 
 use tactic::{add_hyp, apply, intros, rewrite, ring};
+
+use self::suggest::{suggest_on_goal_dblclk, Suggestion};
 
 #[derive(Debug, Clone)]
 pub struct Frame {
@@ -88,6 +91,24 @@ impl Session {
         Ok(())
     }
 
+    pub fn run_suggestion(
+        &mut self,
+        sugg: Suggestion,
+        ans: Vec<String>,
+    ) -> Result<(), tactic::Error> {
+        assert_eq!(sugg.questions.len(), ans.len());
+        let tactics = sugg.tactic.into_iter().map(|mut x| {
+            for (i, a) in ans.iter().enumerate() {
+                x = x.replace(&format!("${}", i), a);
+            }
+            x
+        });
+        for t in tactics {
+            self.run_tactic(&t)?;
+        }
+        Ok(())
+    }
+
     pub fn monitor_string(&self) -> String {
         self.last_snapshot().monitor_string()
     }
@@ -110,6 +131,11 @@ impl Session {
 
     pub fn get_history(&self) -> Vec<String> {
         self.history.iter().map(|x| x.tactic.clone()).collect()
+    }
+
+    pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
+        let frame = self.last_snapshot().clone().pop_frame();
+        frame.suggest_on_goal_dblclk()
     }
 }
 
@@ -178,5 +204,9 @@ impl Frame {
         self.engine.add_axiom_with_term(name, ty.clone())?;
         self.hyps.insert(name.to_string(), ty);
         Ok(())
+    }
+
+    pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
+        suggest_on_goal_dblclk(&self.goal)
     }
 }

@@ -1,4 +1,4 @@
-use super::Engine;
+use super::{Engine, Session};
 
 fn build_engine() -> Engine {
     let mut eng = Engine::default();
@@ -7,7 +7,7 @@ fn build_engine() -> Engine {
     eng
 }
 
-fn run_interactive_to_end(goal: &str, tactics: &str) {
+pub fn run_interactive(goal: &str, tactics: &str) -> Session {
     let eng = build_engine();
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
@@ -27,21 +27,18 @@ fn run_interactive_to_end(goal: &str, tactics: &str) {
             })
             .unwrap();
     }
+    session
+}
+
+fn run_interactive_to_end(goal: &str, tactics: &str) {
+    let session = run_interactive(goal, tactics);
     if !session.is_finished() {
         panic!("Goal not solved:\n{}", session.monitor_string());
     }
 }
 
 fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
-    let eng = build_engine();
-    let mut session = eng.interactive_session(goal).unwrap();
-    for tactic in tactics.lines() {
-        let tactic = tactic.trim();
-        if tactic.is_empty() {
-            continue;
-        }
-        session.run_tactic(tactic).unwrap();
-    }
+    let mut session = run_interactive(goal, tactics);
     match session.run_tactic(fail_tactic) {
         Ok(_) => panic!(
             "tactic succeed but we need fail. Current monitor:\n{}",

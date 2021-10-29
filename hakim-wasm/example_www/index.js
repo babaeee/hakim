@@ -39,7 +39,18 @@ undo.innerText = 'Undo';
 document.body.appendChild(undo);
 undo.onclick = () => {
     tacticAndUpdate('Undo');
-}
+};
+
+window.ask_question = (x) => {
+    return window.prompt(x);
+};
+
+const sugg_goal = document.createElement('button');
+sugg_goal.innerText = 'Sugg goal';
+document.body.appendChild(sugg_goal);
+sugg_goal.onclick = () => {
+    suggestion_on_goal_dblclk();
+};
 
 const history = document.createElement('ul');
 document.body.appendChild(history);
@@ -65,6 +76,16 @@ const tacticAndUpdate = (x) => {
     }
     update();
     return true;
+};
+
+const suggestion_on_goal_dblclk = () => {
+    const error = instance.suggest_dblclk_goal();
+    if (error) {
+        alert(error);
+        return false;
+    }
+    update();
+    return true;
 }
 
 inp.addEventListener('keydown', (e) => {
@@ -78,6 +99,8 @@ inp.addEventListener('keydown', (e) => {
 const exampleGoals = [
     '∀ a b c d: ℤ, a < b -> c < d -> a + c < b + d',
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, P x',
+    '∀ a: ℤ, ∃ b: ℤ, a < b',
+    '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False',
 ];
 
 const exampleSection = document.createElement('div');

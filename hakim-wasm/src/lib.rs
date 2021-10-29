@@ -12,6 +12,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[wasm_bindgen]
 extern "C" {
     fn alert(s: &str);
+    fn ask_question(s: &str) -> String;
 }
 
 #[wasm_bindgen]
@@ -95,5 +96,21 @@ impl Instance {
             None => return JsValue::UNDEFINED,
         };
         JsValue::from_serde(&session.get_history()).unwrap()
+    }
+
+    pub fn suggest_dblclk_goal(&mut self) -> Option<String> {
+        let session = match &mut self.session {
+            Some(s) => s,
+            None => return Some("Session is not started".to_string()),
+        };
+        let sugg = match session.suggest_on_goal_dblclk() {
+            Some(s) => s,
+            None => return Some("No suggestion for this type of goal".to_string()),
+        };
+        let v = sugg.questions.iter().map(|x| ask_question(x)).collect();
+        match session.run_suggestion(sugg, v) {
+            Ok(_) => None,
+            Err(e) => Some(format!("{:?}", e)),
+        }
     }
 }
