@@ -1,4 +1,4 @@
-use crate::{app_ref, term_ref, TermRef};
+use crate::{term_ref, TermRef};
 
 pub fn u() -> TermRef {
     term_ref!(universe 0)
@@ -15,6 +15,9 @@ pub fn u3() -> TermRef {
 pub fn z() -> TermRef {
     term_ref!(axiom "ℤ" , u())
 }
+pub fn false_ty() -> TermRef {
+    term_ref!(axiom "False" , u())
+}
 fn v0() -> TermRef {
     term_ref!(v 0)
 }
@@ -26,9 +29,6 @@ pub fn eq() -> TermRef {
 }
 pub fn lt() -> TermRef {
     term_ref!(axiom "lt" , forall z(), forall z(), u())
-}
-pub fn eq_refl() -> TermRef {
-    term_ref!(axiom "eq_refl" , forall u(), forall v0(), app_ref!(eq(), v1(), v0(), v0()))
 }
 pub fn plus() -> TermRef {
     term_ref!(axiom "plus", forall z(), forall z(), z())

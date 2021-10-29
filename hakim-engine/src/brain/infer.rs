@@ -204,9 +204,15 @@ pub fn type_of_inner(
         Term::App { func, op } => {
             let op_ty = type_of_inner(op.clone(), var_ty_stack, infers)?;
             let func_type = type_of_inner(func.clone(), var_ty_stack, infers)?;
+            let func_type = normalize(func_type);
             let (var_ty, body) = match func_type.as_ref() {
                 Term::Forall(Abstraction { var_ty, body }) => (var_ty, body),
-                _ => return Err(IsNotFunc),
+                _ => {
+                    return Err(IsNotFunc {
+                        value: func.clone(),
+                        ty: func_type,
+                    })
+                }
             };
             match_and_infer(var_ty.clone(), op_ty, infers)?;
             subst(body.clone(), op.clone())

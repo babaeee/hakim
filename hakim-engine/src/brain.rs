@@ -95,7 +95,7 @@ macro_rules! app {
 pub enum Error {
     BadTerm,
     TypeMismatch(TermRef, TermRef),
-    IsNotFunc,
+    IsNotFunc { value: TermRef, ty: TermRef },
     ContainsWild,
     IsNotUniverse,
 }
@@ -178,7 +178,7 @@ pub fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
     }
 }
 
-fn normalize(t: TermRef) -> TermRef {
+pub fn normalize(t: TermRef) -> TermRef {
     fn for_abs(a: Abstraction) -> Abstraction {
         Abstraction {
             var_ty: normalize(a.var_ty),

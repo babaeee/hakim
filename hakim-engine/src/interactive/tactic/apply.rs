@@ -54,8 +54,8 @@ pub fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec
     })?;
     let mut other_args = parse_other_args(args, &frame.engine)?;
     let term = frame.engine.parse_text(exp)?;
-    let ty = type_of(term.clone())?;
-    let d_forall = get_forall_depth(&ty);
+    let ty = type_of(dbg!(term.clone()))?;
+    let d_forall = get_forall_depth(dbg!(&ty));
     let mut twa = term;
     let mut inf_num = 0;
     for i in 0..d_forall {

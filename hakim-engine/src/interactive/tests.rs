@@ -4,6 +4,7 @@ fn build_engine() -> Engine {
     let mut eng = Engine::default();
     eng.load_library("Arith").unwrap();
     eng.load_library("Logic").unwrap();
+    eng.load_library("Eq").unwrap();
     eng
 }
 
@@ -264,4 +265,27 @@ fn exists_destruct() {
         apply exP_proof
         "#,
     )
+}
+
+#[test]
+fn forall_not_exist() {
+    run_interactive_to_end(
+        "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
+        r#"
+        intros A P fa exi
+        apply ex_ind (3:=exi)
+        intros exv exv_not_p
+        apply (exv_not_p (fa exv))
+        "#,
+    );
+    run_interactive_to_end(
+        "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
+        r#"
+        intros A P fa exi
+        apply ex_ind (3:=exi)
+        intros exv exv_not_p
+        apply exv_not_p
+        apply fa
+        "#,
+    );
 }

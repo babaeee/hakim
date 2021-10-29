@@ -3,7 +3,7 @@ use crate::{
     brain::{
         self, fill_wild,
         infer::{type_of_and_infer, InferResults},
-        type_of, TermRef,
+        normalize, type_of, TermRef,
     },
     library::{load_library_by_name, prelude},
     parser::{self, ast_to_term, is_valid_ident, parse},
@@ -23,8 +23,8 @@ impl Default for Engine {
         name_dict.insert("U2".to_string(), prelude::u2());
         name_dict.insert("U3".to_string(), prelude::u3());
         name_dict.insert("ℤ".to_string(), prelude::z());
+        name_dict.insert("False".to_string(), prelude::false_ty());
         name_dict.insert("eq".to_string(), prelude::eq());
-        name_dict.insert("eq_refl".to_string(), prelude::eq_refl());
         name_dict.insert("plus".to_string(), prelude::plus());
         name_dict.insert("mult".to_string(), prelude::mult());
         Self { name_dict }
@@ -83,6 +83,7 @@ impl Engine {
     }
 
     pub fn add_axiom_with_term(&mut self, name: &str, term: TermRef) -> Result<()> {
+        let term = normalize(term);
         let axiom = term_ref!(axiom name, term);
         self.add_name(name, axiom)
     }
