@@ -47,21 +47,30 @@ window.ask_question = (x) => {
     return window.prompt(x);
 };
 
-const sugg_goal = document.createElement('button');
-sugg_goal.innerText = 'Sugg goal';
-document.body.appendChild(sugg_goal);
-sugg_goal.onclick = () => {
-    suggestion_on_goal_dblclk();
-};
+const auto_goal = document.createElement('button');
+auto_goal.innerText = 'Automatic proof is available';
+auto_goal.style.display = 'none';
+document.body.appendChild(auto_goal);
+
 
 const history = document.createElement('ul');
 document.body.appendChild(history);
 
 const update = () => {
     monitor.innerHTML = '';
+    auto_goal.style.display = 'none';
+    while (history.lastChild) {
+        history.removeChild(history.lastChild);
+    }
+    const hl = instance.get_history();
+    for (const h of hl) {
+        const li = document.createElement('li');
+        li.innerText = h;
+        history.appendChild(li);
+    }
     let m = instance.monitor();
     if (m == 'Finished') {
-        monitor.innerText = 'هدف به طور کامل ثابت شد.';
+        monitor.innerText = 'Proof is complete.';
         return;
     }
     const { goals, hyps } = m.Monitor;
@@ -88,14 +97,12 @@ const update = () => {
         monitor.appendChild(d);
         i += 1;
     }
-    while (history.lastChild) {
-        history.removeChild(history.lastChild);
-    }
-    const hl = instance.get_history();
-    for (const h of hl) {
-        const li = document.createElement('li');
-        li.innerText = h;
-        history.appendChild(li);
+    const auto_tactic = instance.try_auto();
+    if (auto_tactic) {
+        auto_goal.style.display = 'inline';
+        auto_goal.onclick = () => {
+            tacticAndUpdate(auto_tactic);
+        }
     }
 };
 update();

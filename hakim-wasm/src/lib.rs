@@ -106,6 +106,20 @@ impl Instance {
         JsValue::from_serde(&monitor).unwrap()
     }
 
+    pub fn try_auto(&self) -> Option<String> {
+        let s = (&self.session)
+            .as_ref()?
+            .last_snapshot()
+            .clone()
+            .pop_frame();
+        let tac = if s.run_tactic("ring").ok().filter(|x| x.is_empty()).is_some() {
+            "ring"
+        } else {
+            return None;
+        };
+        Some(tac.to_string())
+    }
+
     #[wasm_bindgen]
     pub fn run_tactic(&mut self, tactic: &str) -> Option<String> {
         let session = match &mut self.session {

@@ -181,20 +181,9 @@ impl Snapshot {
     }
 
     pub fn run_tactic(&self, line: &str) -> Result<Self, tactic::Error> {
-        let parts = smart_split(line);
-        let mut parts = parts.into_iter();
-        let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
         let mut snapshot = self.clone();
         let frame = snapshot.pop_frame();
-        let new_frames = (match name.as_str() {
-            "intros" => intros(frame, parts),
-            "rewrite" => rewrite(frame, parts),
-            "apply" => apply(frame, parts),
-            "add_hyp" => add_hyp(frame, parts),
-            "remove_hyp" => remove_hyp(frame, parts),
-            "ring" => ring(frame),
-            _ => Err(tactic::Error::UnknownTactic(name.to_string())),
-        })?;
+        let new_frames = frame.run_tactic(line)?;
         snapshot.frames.extend(new_frames);
         Ok(snapshot)
     }
@@ -222,5 +211,21 @@ impl Frame {
     pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
         let h = self.hyps.get(hyp_name)?;
         suggest_on_hyp_dblclk(&self.engine, hyp_name, h)
+    }
+
+    pub fn run_tactic(&self, line: &str) -> Result<Vec<Self>, tactic::Error> {
+        let parts = smart_split(line);
+        let mut parts = parts.into_iter();
+        let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
+        let frame = self.clone();
+        Ok(match name.as_str() {
+            "intros" => intros(frame, parts),
+            "rewrite" => rewrite(frame, parts),
+            "apply" => apply(frame, parts),
+            "add_hyp" => add_hyp(frame, parts),
+            "remove_hyp" => remove_hyp(frame, parts),
+            "ring" => ring(frame),
+            _ => Err(tactic::Error::UnknownTactic(name.to_string())),
+        }?)
     }
 }
