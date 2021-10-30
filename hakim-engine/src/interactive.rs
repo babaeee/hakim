@@ -12,7 +12,10 @@ mod tactic;
 
 use tactic::{add_hyp, apply, intros, rewrite, ring};
 
-use self::suggest::{suggest_on_goal_dblclk, Suggestion};
+use self::suggest::{suggest_on_goal_dblclk, suggest_on_hyp_dblclk};
+
+pub use self::suggest::Suggestion;
+use self::tactic::remove_hyp;
 
 #[derive(Debug, Clone)]
 pub struct Frame {
@@ -137,6 +140,11 @@ impl Session {
         let frame = self.last_snapshot().clone().pop_frame();
         frame.suggest_on_goal_dblclk()
     }
+
+    pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
+        let frame = self.last_snapshot().clone().pop_frame();
+        frame.suggest_on_hyp_dblclk(hyp_name)
+    }
 }
 
 impl Snapshot {
@@ -183,6 +191,7 @@ impl Snapshot {
             "rewrite" => rewrite(frame, parts),
             "apply" => apply(frame, parts),
             "add_hyp" => add_hyp(frame, parts),
+            "remove_hyp" => remove_hyp(frame, parts),
             "ring" => ring(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         })?;
@@ -208,5 +217,10 @@ impl Frame {
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
         suggest_on_goal_dblclk(&self.goal)
+    }
+
+    pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
+        let h = self.hyps.get(hyp_name)?;
+        suggest_on_hyp_dblclk(&self.engine, hyp_name, h)
     }
 }

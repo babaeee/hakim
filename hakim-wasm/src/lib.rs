@@ -1,6 +1,10 @@
+use serde::{Deserialize, Serialize};
 use std::panic;
 
-use hakim_engine::{engine::Engine, interactive::Session};
+use hakim_engine::{
+    engine::Engine,
+    interactive::{Session, Suggestion},
+};
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -36,6 +40,16 @@ pub fn start() {
     });
 }
 
+#[derive(Serialize, Deserialize)]
+enum Monitor {
+    SessionIsNotStarted,
+    Finished,
+    Monitor {
+        hyps: Vec<(String, String)>,
+        goals: Vec<String>,
+    },
+}
+
 #[wasm_bindgen]
 impl Instance {
     #[wasm_bindgen(constructor)]
@@ -69,12 +83,27 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn monitor(&self) -> String {
-        let session = match &self.session {
-            Some(s) => s,
-            None => return "Session is not started".to_string(),
+    pub fn monitor(&self) -> JsValue {
+        let monitor = match &self.session {
+            Some(s) if s.is_finished() => Monitor::Finished,
+            Some(s) => {
+                let mut snapshot = s.last_snapshot().clone();
+                let goals = snapshot
+                    .frames
+                    .iter()
+                    .map(|x| format!("{:?}", x.goal))
+                    .collect();
+                let hyps = snapshot
+                    .pop_frame()
+                    .hyps
+                    .into_iter()
+                    .map(|(k, v)| (k, format!("{:?}", v)))
+                    .collect();
+                Monitor::Monitor { goals, hyps }
+            }
+            None => Monitor::SessionIsNotStarted,
         };
-        session.monitor_string()
+        JsValue::from_serde(&monitor).unwrap()
     }
 
     #[wasm_bindgen]
@@ -98,6 +127,18 @@ impl Instance {
         JsValue::from_serde(&session.get_history()).unwrap()
     }
 
+    fn run_sugg(&mut self, sugg: Suggestion) -> Option<String> {
+        let session = match &mut self.session {
+            Some(s) => s,
+            None => return Some("Session is not started".to_string()),
+        };
+        let v = sugg.questions.iter().map(|x| ask_question(x)).collect();
+        match session.run_suggestion(sugg, v) {
+            Ok(_) => None,
+            Err(e) => Some(format!("{:?}", e)),
+        }
+    }
+
     pub fn suggest_dblclk_goal(&mut self) -> Option<String> {
         let session = match &mut self.session {
             Some(s) => s,
@@ -107,10 +148,18 @@ impl Instance {
             Some(s) => s,
             None => return Some("No suggestion for this type of goal".to_string()),
         };
-        let v = sugg.questions.iter().map(|x| ask_question(x)).collect();
-        match session.run_suggestion(sugg, v) {
-            Ok(_) => None,
-            Err(e) => Some(format!("{:?}", e)),
-        }
+        self.run_sugg(sugg)
+    }
+
+    pub fn suggest_dblclk_hyp(&mut self, hyp_name: &str) -> Option<String> {
+        let session = match &mut self.session {
+            Some(s) => s,
+            None => return Some("Session is not started".to_string()),
+        };
+        let sugg = match session.suggest_on_hyp_dblclk(hyp_name) {
+            Some(s) => s,
+            None => return Some("No suggestion for this type of hyp".to_string()),
+        };
+        self.run_sugg(sugg)
     }
 }

@@ -1,7 +1,5 @@
 use crate::brain::{self, TermRef};
 
-use crate::interactive::Frame;
-
 mod rewrite;
 pub use rewrite::rewrite;
 
@@ -14,9 +12,13 @@ pub use intros::intros;
 mod apply;
 pub use apply::apply;
 
+mod hyps;
+pub use hyps::{add_hyp, remove_hyp};
+
 #[derive(Debug)]
 pub enum Error {
     UnknownTactic(String),
+    UnknownHyp(String),
     BadHyp(&'static str, TermRef),
     BadGoal(&'static str),
     BadArgCount {
@@ -67,13 +69,4 @@ pub fn get_one_arg(mut args: impl Iterator<Item = String>, tactic_name: &str) ->
         });
     }
     Ok(arg1)
-}
-
-pub fn add_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
-    let exp = get_one_arg(args, "intros")?;
-    let term = frame.engine.parse_text(&exp)?;
-    let mut frame2 = frame.clone();
-    frame.add_hyp_with_name(&frame.engine.generate_name("H"), term.clone())?;
-    frame2.goal = term;
-    Ok(vec![frame, frame2])
 }

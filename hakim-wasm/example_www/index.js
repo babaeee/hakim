@@ -1,4 +1,5 @@
 import { Instance } from "../pkg/hakim_wasm";
+import "./my.css";
 
 const title = document.createElement('h1');
 title.innerText = document.title = 'Hello Hakim';
@@ -9,8 +10,9 @@ instance.load_library('Arith');
 instance.load_library('Logic');
 instance.start_session("forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)");
 
-const monitor = document.createElement('pre');
-monitor.innerText = instance.monitor();
+window.instance = instance;
+
+const monitor = document.createElement('div');
 document.body.appendChild(monitor);
 
 const inp = document.createElement('input');
@@ -56,7 +58,36 @@ const history = document.createElement('ul');
 document.body.appendChild(history);
 
 const update = () => {
-    monitor.innerText = instance.monitor();
+    monitor.innerHTML = '';
+    let m = instance.monitor();
+    if (m == 'Finished') {
+        monitor.innerText = 'هدف به طور کامل ثابت شد.';
+        return;
+    }
+    const { goals, hyps } = m.Monitor;
+    for (const hyp of hyps) {
+        const d = document.createElement('div');
+        d.className = 'backgreen';
+        d.innerText = `${hyp[0]}: ${hyp[1]}`;
+        d.addEventListener('dblclick', () => {
+            suggestion_on_hyp_dblclk(hyp[0]);
+        });
+        monitor.appendChild(d);
+    }
+    let i = 0;
+    for (const goal of goals) {
+        monitor.appendChild(document.createElement('hr'));
+        const d = document.createElement('div');
+        if (i == 0) {
+            d.className = 'backgreen';
+            d.addEventListener('dblclick', () => {
+                suggestion_on_goal_dblclk();
+            });
+        }
+        d.innerText = goal;
+        monitor.appendChild(d);
+        i += 1;
+    }
     while (history.lastChild) {
         history.removeChild(history.lastChild);
     }
@@ -67,6 +98,7 @@ const update = () => {
         history.appendChild(li);
     }
 };
+update();
 
 const tacticAndUpdate = (x) => {
     const error = instance.run_tactic(x);
@@ -86,7 +118,17 @@ const suggestion_on_goal_dblclk = () => {
     }
     update();
     return true;
-}
+};
+
+const suggestion_on_hyp_dblclk = (name) => {
+    const error = instance.suggest_dblclk_hyp(name);
+    if (error) {
+        alert(error);
+        return false;
+    }
+    update();
+    return true;
+};
 
 inp.addEventListener('keydown', (e) => {
     if (e.code === 'Enter') {
