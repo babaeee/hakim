@@ -73,16 +73,16 @@ fn detect_class(t: &TermRef) -> TermClass {
 
 pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
     let c = detect_class(goal);
-    return Some(match c {
+    Some(match c {
         TermClass::Forall => Suggestion::new(Intros, "intros"),
         TermClass::Exists => Suggestion::newq1(Destruct, "apply ex_intro (3:=$0)", "Enter value"),
         TermClass::Eq | TermClass::Unknown => return None,
-    });
+    })
 }
 
 pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &TermRef) -> Option<Suggestion> {
     let c = detect_class(ty);
-    return Some(match c {
+    Some(match c {
         TermClass::Eq => Suggestion::new(Rewrite, &format!("rewrite {}", name)),
         TermClass::Exists => {
             let val_name = engine.generate_name(&format!("{}_value", name));
@@ -98,5 +98,5 @@ pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &TermRef) -> Optio
             }
         }
         TermClass::Forall | TermClass::Unknown => return None,
-    });
+    })
 }

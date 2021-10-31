@@ -193,7 +193,7 @@ pub fn pack_abstraction(sign: AbsSign, ty: TermRef, body: TermRef) -> TermRef {
     match sign {
         AbsSign::Forall => term_ref!(forall ty, body),
         AbsSign::Fun => term_ref!(fun ty, body),
-        AbsSign::Exists => app_ref!(ex(), ty.clone(), term_ref!(fun ty, body)),
+        AbsSign::Exists => app_ref!(ex(), ty, term_ref!(fun ty, body)),
     }
 }
 

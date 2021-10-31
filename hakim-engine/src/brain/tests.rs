@@ -15,9 +15,8 @@ fn check_type(exp: &str, ty: &str) {
 fn fail_type(exp: &str) {
     let eng = Engine::default();
     let exp_term = eng.parse_text(exp).unwrap();
-    match type_of(exp_term) {
-        Ok(t) => panic!("We expect fail but type {:?} found for {}", t, exp),
-        Err(_) => (),
+    if let Ok(t) = type_of(exp_term) {
+        panic!("We expect fail but type {:?} found for {}", t, exp)
     }
 }
 
@@ -26,9 +25,8 @@ fn fail_match_infer(a: &str, b: &str) {
     let (a, c1) = eng.parse_text_with_wild(a).unwrap();
     let (b, c2) = eng.parse_text_with_wild(b).unwrap();
     let c = std::cmp::max(c1, c2);
-    match match_and_infer(a, b, &mut InferResults::new(c)) {
-        Ok(_) => panic!("We expect fail but it found match"),
-        Err(_) => (),
+    if match_and_infer(a, b, &mut InferResults::new(c)).is_ok() {
+        panic!("We expect fail but it found match")
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::parser::term_pretty_print;
-use std::{fmt::Debug, rc::Rc};
+use std::{cmp::Ordering, fmt::Debug, rc::Rc};
 
 pub mod infer;
 
@@ -127,8 +127,8 @@ pub fn contains_wild(t: &TermRef) -> bool {
 pub fn remove_unused_var(t: &TermRef, depth: usize) -> Option<TermRef> {
     fn for_abs(Abstraction { var_ty, body }: &Abstraction, depth: usize) -> Option<Abstraction> {
         Some(Abstraction {
-            var_ty: remove_unused_var(&var_ty, depth)?,
-            body: remove_unused_var(&body, depth + 1)?,
+            var_ty: remove_unused_var(var_ty, depth)?,
+            body: remove_unused_var(body, depth + 1)?,
         })
     }
     Some(match t.as_ref() {
@@ -144,12 +144,10 @@ pub fn remove_unused_var(t: &TermRef, depth: usize) -> Option<TermRef> {
         Term::Fun(x) => TermRef::new(Term::Fun(for_abs(x, depth)?)),
         Term::Var { index } => {
             let i = *index;
-            if i == depth {
-                return None;
-            } else if i < depth {
-                term_ref!(v i)
-            } else {
-                term_ref!(v i - 1)
+            match i.cmp(&depth) {
+                Ordering::Less => term_ref!(v i),
+                Ordering::Equal => return None,
+                Ordering::Greater => term_ref!(v i - 1),
             }
         }
     })

@@ -40,12 +40,11 @@ fn run_interactive_to_end(goal: &str, tactics: &str) {
 
 fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
     let mut session = run_interactive(goal, tactics);
-    match session.run_tactic(fail_tactic) {
-        Ok(_) => panic!(
+    if session.run_tactic(fail_tactic).is_ok() {
+        panic!(
             "tactic succeed but we need fail. Current monitor:\n{}",
             session.monitor_string()
-        ),
-        Err(_) => (),
+        )
     }
 }
 

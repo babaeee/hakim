@@ -218,7 +218,7 @@ impl Frame {
         let mut parts = parts.into_iter();
         let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
         let frame = self.clone();
-        Ok(match name.as_str() {
+        match name.as_str() {
             "intros" => intros(frame, parts),
             "rewrite" => rewrite(frame, parts),
             "apply" => apply(frame, parts),
@@ -226,6 +226,6 @@ impl Frame {
             "remove_hyp" => remove_hyp(frame, parts),
             "ring" => ring(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
-        }?)
+        }
     }
 }

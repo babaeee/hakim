@@ -57,8 +57,8 @@ mod tests {
             .map(|x| x.trim())
             .filter(|x| !x.is_empty())
             .collect::<Vec<_>>();
-        items.sort();
-        result.sort();
+        items.sort_unstable();
+        result.sort_unstable();
         assert_eq!(items, result);
     }
 

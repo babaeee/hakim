@@ -113,7 +113,7 @@ impl Engine {
     }
 
     pub fn search(&self, query: &str) -> Result<Vec<String>> {
-        search(&self, query)
+        search(self, query)
     }
 
     pub fn parse_text_with_wild(&self, text: &str) -> Result<(TermRef, usize)> {
@@ -132,7 +132,7 @@ impl Engine {
         let mut infers = InferResults::new(infer_cnt);
         let ty = type_of_and_infer(term.clone(), &mut infers)?;
         dbg!(type_of_and_infer(ty, &mut infers)?);
-        let term = fill_wild(term.clone(), &|t| infers.terms[t].clone());
+        let term = fill_wild(term, &|t| infers.terms[t].clone());
         Ok(dbg!(term))
     }
 
