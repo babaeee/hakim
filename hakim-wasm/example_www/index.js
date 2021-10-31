@@ -164,6 +164,23 @@ for (const ex of exampleGoals) {
 
 document.body.appendChild(exampleSection);
 
+const sr_title = document.createElement('h1');
+sr_title.innerText = 'Search';
+document.body.appendChild(sr_title);
+const sr = document.createElement('input');
+sr.type = 'text';
+document.body.appendChild(sr);
+const sr_val = document.createElement('pre');
+sr_val.innerText = 'Type search query and press enter';
+document.body.appendChild(sr_val);
+
+sr.addEventListener('keydown', (e) => {
+    if (e.code === 'Enter') {
+        const r = instance.search(sr.value);
+        sr_val.innerText = r;
+    }
+});
+
 const help = document.createElement('div');
 
 help.innerHTML = `

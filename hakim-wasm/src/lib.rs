@@ -176,4 +176,17 @@ impl Instance {
         };
         self.run_sugg(sugg)
     }
+
+    pub fn search(&self, query: &str) -> String {
+        match self.engine.search(query) {
+            Ok(r) => r
+                .into_iter()
+                .map(|x| {
+                    let ty = self.engine.calc_type(&x).unwrap();
+                    format!("{}: {:?}\n", x, ty)
+                })
+                .collect(),
+            Err(e) => format!("{:?}", e),
+        }
+    }
 }

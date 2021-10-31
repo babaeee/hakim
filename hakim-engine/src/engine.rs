@@ -7,6 +7,7 @@ use crate::{
     },
     library::{load_library_by_name, prelude},
     parser::{self, ast_to_term, is_valid_ident, parse},
+    search::search,
     term_ref,
 };
 
@@ -71,6 +72,13 @@ impl Engine {
         unreachable!();
     }
 
+    pub fn lib_iter(&self) -> impl Iterator<Item = (&str, TermRef)> {
+        self.name_dict.iter().filter_map(|(a, t)| {
+            let ty = type_of(t.clone()).ok()?;
+            Some((a.as_str(), ty))
+        })
+    }
+
     fn add_name(&mut self, name: &str, term: TermRef) -> Result<()> {
         if !is_valid_ident(name) {
             return Err(InvalidIdentName(name.to_string()));
@@ -104,16 +112,25 @@ impl Engine {
         load_library_by_name(self, name)
     }
 
-    pub fn parse_text(&self, text: &str) -> Result<TermRef> {
+    pub fn search(&self, query: &str) -> Result<Vec<String>> {
+        search(&self, query)
+    }
+
+    pub fn parse_text_with_wild(&self, text: &str) -> Result<(TermRef, usize)> {
         let ast = parse(text)?;
         let mut name_stack = vec![];
         let mut infer_cnt = 0;
         let term = ast_to_term(ast, &self.name_dict, &mut name_stack, &mut infer_cnt)?;
+        Ok((term, infer_cnt))
+    }
+
+    pub fn parse_text(&self, text: &str) -> Result<TermRef> {
+        let (term, infer_cnt) = self.parse_text_with_wild(text)?;
         if infer_cnt == 0 {
             return Ok(term);
         }
         let mut infers = InferResults::new(infer_cnt);
-        let ty = dbg!(type_of_and_infer(term.clone(), &mut infers)?);
+        let ty = type_of_and_infer(term.clone(), &mut infers)?;
         dbg!(type_of_and_infer(ty, &mut infers)?);
         let term = fill_wild(term.clone(), &|t| infers.terms[t].clone());
         Ok(dbg!(term))
