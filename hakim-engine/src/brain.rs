@@ -269,3 +269,10 @@ pub fn type_of(term: TermRef) -> Result<TermRef> {
     deny_wild(&term)?;
     infer::type_of_inner(term, &[], &mut infer::InferResults::new(0))
 }
+
+pub fn get_forall_depth(term: &TermRef) -> usize {
+    match term.as_ref() {
+        Term::Forall(Abstraction { body, .. }) => get_forall_depth(body) + 1,
+        _ => 0,
+    }
+}

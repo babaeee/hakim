@@ -3,23 +3,16 @@ use std::collections::HashMap;
 use crate::{
     app_ref,
     brain::{
-        contains_wild,
+        contains_wild, get_forall_depth,
         infer::{match_and_infer, type_of_and_infer, InferResults},
         type_of,
     },
     engine::Engine,
     interactive::Frame,
-    term_ref, Abstraction, Term, TermRef,
+    term_ref, TermRef,
 };
 
 use super::{Error::*, Result};
-
-pub fn get_forall_depth(term: &TermRef) -> usize {
-    match term.as_ref() {
-        Term::Forall(Abstraction { body, .. }) => get_forall_depth(body) + 1,
-        _ => 0,
-    }
-}
 
 fn parse_other_args(
     args: impl Iterator<Item = String>,

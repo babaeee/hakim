@@ -1,15 +1,37 @@
 use crate::{
-    brain::infer::{match_and_infer, InferResults},
+    brain::{
+        get_forall_depth,
+        infer::{match_and_infer, InferResults},
+        subst,
+    },
     engine::{Engine, Result},
+    term_ref, Abstraction, Term,
 };
 
 pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
     let (qt, infer_cnt) = engine.parse_text_with_wild(query)?;
+    let forall_cnt = get_forall_depth(&qt);
     Ok(engine
         .lib_iter()
         .filter_map(|(name, ty)| {
-            let mut infers = InferResults::new(infer_cnt);
-            match_and_infer(qt.clone(), ty, &mut infers).ok()?;
+            let mut our_infer_cnt = infer_cnt;
+            let their_forall_cnt = get_forall_depth(&ty);
+            if forall_cnt > their_forall_cnt {
+                return None;
+            }
+            let forall_diff = their_forall_cnt - forall_cnt;
+            let mut ty_subst = ty;
+            for _ in 0..forall_diff {
+                if let Term::Forall(Abstraction { body, .. }) = ty_subst.as_ref() {
+                    let w = term_ref!(_ our_infer_cnt);
+                    our_infer_cnt += 1;
+                    ty_subst = subst(body.clone(), w);
+                } else {
+                    return None;
+                }
+            }
+            let mut infers = InferResults::new(our_infer_cnt);
+            match_and_infer(qt.clone(), ty_subst, &mut infers).ok()?;
             Some(name.to_string())
         })
         .collect())
