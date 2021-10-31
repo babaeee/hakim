@@ -48,3 +48,9 @@ fn universes() {
     parse_pretty("U → U1");
     parse_pretty("U3 → U2");
 }
+
+#[test]
+#[ignore = "This is a sample"]
+fn and_or_not() {
+    parse_pretty("∃ x0: ℤ, x0 < 2 ∨ 5 < x0 ∧ x0 < 7");
+}
