@@ -74,7 +74,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "This will overflow its stack :)"]
     fn dont_stack_overflow() {
         check_search("_0 -> _0 -> _0 -> _0", "");
     }

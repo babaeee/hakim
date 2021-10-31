@@ -1,4 +1,7 @@
-use crate::engine::Engine;
+use crate::{
+    brain::infer::{match_and_infer, InferResults},
+    engine::Engine,
+};
 
 use super::type_of;
 
@@ -14,6 +17,17 @@ fn fail_type(exp: &str) {
     let exp_term = eng.parse_text(exp).unwrap();
     match type_of(exp_term) {
         Ok(t) => panic!("We expect fail but type {:?} found for {}", t, exp),
+        Err(_) => (),
+    }
+}
+
+fn fail_match_infer(a: &str, b: &str) {
+    let eng = Engine::default();
+    let (a, c1) = eng.parse_text_with_wild(a).unwrap();
+    let (b, c2) = eng.parse_text_with_wild(b).unwrap();
+    let c = std::cmp::max(c1, c2);
+    match match_and_infer(a, b, &mut InferResults::new(c)) {
+        Ok(_) => panic!("We expect fail but it found match"),
         Err(_) => (),
     }
 }
@@ -74,4 +88,12 @@ fn exists_bad() {
     fail_type("exists x: ℤ, x");
     fail_type("exists x: ℤ, x + 2");
     fail_type("exists x: U, x");
+}
+
+#[test]
+fn infer_stack_overflow() {
+    fail_match_infer(
+        "_0 -> _0 -> _0 -> _0",
+        "(_1 → _2) → ((_2 → _3) → (_1 → _3))",
+    );
 }

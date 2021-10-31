@@ -98,23 +98,30 @@ pub enum Error {
     IsNotFunc { value: TermRef, ty: TermRef },
     ContainsWild,
     IsNotUniverse,
+    LoopOfInference(usize, TermRef),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
 
 use Error::*;
 
-pub fn contains_wild(t: &TermRef) -> bool {
+/// if expression contains some wilds, it will computes predict(i1) || predict(i2) || ... || predict(in)
+/// when ik is id of wilds. In case of no wild, it will return false
+pub fn predict_wild(t: &TermRef, predict: &impl Fn(usize) -> bool) -> bool {
     match t.as_ref() {
         Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => {
             false
         }
-        Term::App { func, op } => contains_wild(func) || contains_wild(op),
+        Term::App { func, op } => predict_wild(func, predict) || predict_wild(op, predict),
         Term::Forall(Abstraction { var_ty, body }) | Term::Fun(Abstraction { var_ty, body }) => {
-            contains_wild(var_ty) || contains_wild(body)
+            predict_wild(var_ty, predict) || predict_wild(body, predict)
         }
-        Term::Wild { .. } => true,
+        Term::Wild { index } => predict(*index),
     }
+}
+
+pub fn contains_wild(t: &TermRef) -> bool {
+    predict_wild(t, &|_| true)
 }
 
 pub fn remove_unused_var(t: &TermRef, depth: usize) -> Option<TermRef> {

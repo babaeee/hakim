@@ -1,4 +1,7 @@
-use super::{fill_wild, increase_foreign_vars, normalize, subst, Error::*, Result, Term, TermRef};
+use super::{
+    fill_wild, increase_foreign_vars, normalize, predict_wild, subst, Error::*, Result, Term,
+    TermRef,
+};
 use crate::Abstraction;
 use crate::{brain::get_universe, term_ref};
 
@@ -30,13 +33,21 @@ impl InferResults {
             self.tys[i - self.n].clone()
         }
     }
-    fn set(&mut self, i: usize, term: TermRef) {
+    #[must_use]
+    fn set(&mut self, i: usize, term: TermRef) -> bool {
         if i < self.n {
             self.terms[i] = term;
         } else {
             self.tys[i - self.n] = term;
         }
         self.relax();
+        self.terms
+            .iter()
+            .enumerate()
+            .all(|(i, x)| *x == term_ref!(_ i) || !predict_wild(x, &|j| i == j))
+            && self.tys.iter().enumerate().all(|(i, x)| {
+                *x == term_ref!(_ i + self.n) || !predict_wild(x, &|j| i + self.n == j)
+            })
     }
     fn type_of(&self, i: usize) -> TermRef {
         if i < self.n {
@@ -77,8 +88,11 @@ fn match_and_infer_without_normalize(
     }
     fn match_wild(i: usize, t: TermRef, infers: &mut InferResults) -> Result<()> {
         if *infers.get(i) == (Term::Wild { index: i }) {
-            infers.set(i, t.clone());
-            Ok(())
+            if infers.set(i, t.clone()) {
+                Ok(())
+            } else {
+                Err(LoopOfInference(i, t))
+            }
         } else {
             match_and_infer_without_normalize(infers.get(i), t, infers)
         }
