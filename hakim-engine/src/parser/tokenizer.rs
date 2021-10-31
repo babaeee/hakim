@@ -10,10 +10,11 @@ pub enum Token {
     Ident(String),
     Abs(AbsSign),
     Sign(String),
-    Number(u32),
+    Number(BigInt),
     Wild(usize),
 }
 
+use num_bigint::BigInt;
 use Token::*;
 
 trait Eater {
@@ -105,7 +106,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             continue;
         }
         if let Some(d) = c.to_digit(10) {
-            let mut num = d;
+            let mut num = d.into();
             while let Some(d) = text.pick_char().and_then(|x| x.to_digit(10)) {
                 text.eat_char();
                 num = num * 10 + d;

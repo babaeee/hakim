@@ -25,10 +25,11 @@ pub enum AstTerm {
     Ident(String),
     App(Box<AstTerm>, Box<AstTerm>),
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
-    Number(u32),
+    Number(BigInt),
     Wild(usize),
 }
 
+use num_bigint::BigInt;
 use AstTerm::*;
 
 trait TokenEater {
@@ -238,10 +239,7 @@ pub fn ast_to_term(
             ast_to_term(*a, globals, name_stack, infer_cnt)?,
             ast_to_term(*b, globals, name_stack, infer_cnt)?
         )),
-        Number(num) => {
-            let num_i32 = num as i32;
-            Ok(term_ref!(n num_i32))
-        }
+        Number(num) => Ok(term_ref!(n num)),
         Wild(i) => {
             *infer_cnt = max(*infer_cnt, i + 1);
             Ok(term_ref!(_ i))

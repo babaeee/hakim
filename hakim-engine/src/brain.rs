@@ -19,7 +19,7 @@ pub enum Term {
     Forall(Abstraction),
     Fun(Abstraction),
     Var { index: usize },
-    Number { value: i32 },
+    Number { value: BigInt },
     App { func: TermRef, op: TermRef },
     Wild { index: usize },
 }
@@ -103,6 +103,7 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+use num_bigint::BigInt;
 use Error::*;
 
 /// if expression contains some wilds, it will computes predict(i1) || predict(i2) || ... || predict(in)

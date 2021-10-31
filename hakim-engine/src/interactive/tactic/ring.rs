@@ -4,14 +4,15 @@ use crate::{brain::Term, interactive::Frame, TermRef};
 #[derive(Debug, Clone)]
 enum ArithTree {
     Atom(TermRef),
-    Const(i32),
+    Const(BigInt),
     Plus(Box<ArithTree>, Box<ArithTree>),
     Mult(Box<ArithTree>, Box<ArithTree>),
 }
 
+use num_bigint::BigInt;
 use ArithTree::*;
 
-type Poly = (i32, Vec<(i32, Vec<TermRef>)>);
+type Poly = (BigInt, Vec<(BigInt, Vec<TermRef>)>);
 
 fn normalize(tree: ArithTree) -> ArithTree {
     match tree {
@@ -37,7 +38,7 @@ fn normalize(tree: ArithTree) -> ArithTree {
 
 fn tree_to_d2(tree: ArithTree) -> Poly {
     match tree {
-        Atom(t) => (0, vec![(1, vec![t])]),
+        Atom(t) => (0.into(), vec![(1.into(), vec![t])]),
         Const(i) => (i, vec![]),
         Plus(t1, t2) => {
             let (c1, r1) = tree_to_d2(*t1);
@@ -45,19 +46,19 @@ fn tree_to_d2(tree: ArithTree) -> Poly {
             (c1 + c2, [r1, r2].concat())
         }
         Mult(t1, t2) => {
-            fn to_mul(x: ArithTree) -> (i32, Vec<TermRef>) {
+            fn to_mul(x: ArithTree) -> (BigInt, Vec<TermRef>) {
                 let (c1, mut r1) = tree_to_d2(x);
                 if r1.is_empty() {
                     return (c1, vec![]);
                 }
-                if r1.len() != 1 || c1 != 0 {
+                if r1.len() != 1 || c1 != 0.into() {
                     panic!("tree is not normalized. this is a bug");
                 }
                 r1.pop().unwrap()
             }
             let (c1, r1) = to_mul(*t1);
             let (c2, r2) = to_mul(*t2);
-            (0, vec![(c1 * c2, [r1, r2].concat())])
+            (0.into(), vec![(c1 * c2, [r1, r2].concat())])
         }
     }
 }
@@ -80,7 +81,7 @@ impl From<TermRef> for ArithTree {
                 },
                 _ => Atom(t),
             },
-            Term::Number { value } => Const(*value),
+            Term::Number { value } => Const(value.clone()),
             _ => Atom(t),
         }
     }

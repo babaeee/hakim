@@ -24,6 +24,11 @@ fn number_ops() {
 }
 
 #[test]
+fn bigint() {
+    parse_pretty("1 < 100000000000000000000000");
+}
+
+#[test]
 fn simple_fun() {
     parse_pretty("λ x0: ℤ, x0 + 2");
     parse_pretty("(λ x0: ℤ, 3 * x0 + 2) 7");
