@@ -15,7 +15,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 extern "C" {
-    fn alert(s: &str);
+    fn panic_handler(s: &str);
     fn ask_question(s: &str) -> String;
 }
 
@@ -31,11 +31,12 @@ pub fn start() {
     use std::sync::Once;
     static SET_HOOK: Once = Once::new();
     SET_HOOK.call_once(|| {
-        panic::set_hook(Box::new(|_| {
-            alert(
+        panic::set_hook(Box::new(|p| {
+            panic_handler(&format!(
                 "Panic on rust side. This is a bug. The page \
-        will no longer work properly. Reload the page.",
-            )
+        will no longer work properly. Reload the page.\n\nMore data:\n{}",
+                p
+            ))
         }));
     });
 }

@@ -46,6 +46,9 @@ undo.onclick = () => {
 window.ask_question = (x) => {
     return window.prompt(x);
 };
+window.panic_handler = (x) => {
+    document.body.innerHTML = `<pre>${x}</pre>`;
+};
 
 const auto_goal = document.createElement('button');
 auto_goal.innerText = 'Automatic proof is available';
