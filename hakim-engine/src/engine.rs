@@ -105,7 +105,7 @@ impl Engine {
     pub fn calc_type(&self, text: &str) -> Result<TermRef> {
         let exp = self.parse_text(text)?;
         let ty = type_of(exp)?;
-        Ok(ty)
+        Ok(normalize(ty))
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {

@@ -44,11 +44,20 @@ pub fn get_eq_params(engine: &Engine, term: TermRef) -> Option<[TermRef; 2]> {
 }
 
 pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+    let mut args = args.peekable();
+    let is_reverse = args.peek() == Some(&"<-".to_string());
+    if is_reverse {
+        args.next();
+    }
     let exp = &get_one_arg(args, "rewrite")?;
     let term = frame.engine.calc_type(exp)?;
     let [op1, op2] = get_eq_params(&frame.engine, term.clone())
         .ok_or(BadHyp("rewrite expect eq but got", term))?;
     let goal = frame.goal.clone();
-    frame.goal = replace_term(goal, op1, op2);
+    frame.goal = if is_reverse {
+        replace_term(goal, op2, op1)
+    } else {
+        replace_term(goal, op1, op2)
+    };
     Ok(vec![frame])
 }

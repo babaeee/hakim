@@ -48,7 +48,8 @@ pub fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec
     let mut other_args = parse_other_args(args, &frame.engine)?;
     let term = frame.engine.parse_text(exp)?;
     let ty = type_of(dbg!(term.clone()))?;
-    let d_forall = get_forall_depth(dbg!(&ty));
+    let goal = frame.goal.clone();
+    let d_forall = get_forall_depth(&ty) - get_forall_depth(&goal);
     let mut twa = term;
     let mut inf_num = 0;
     for i in 0..d_forall {
@@ -61,7 +62,7 @@ pub fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec
     }
     let mut infers = InferResults::new(inf_num);
     let twa_ty = type_of_and_infer(twa, &mut infers)?;
-    match_and_infer(twa_ty, frame.goal.clone(), &mut infers)?;
+    match_and_infer(twa_ty, goal, &mut infers)?;
     let mut v = vec![];
     for i in 0..inf_num {
         let mut frame = frame.clone();
