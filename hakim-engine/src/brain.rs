@@ -121,6 +121,19 @@ pub fn predict_wild(t: &TermRef, predict: &impl Fn(usize) -> bool) -> bool {
     }
 }
 
+/// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)
+/// when ik is unique_name of axioms. In case of no axiom, it will return false
+pub fn predict_axiom(t: &TermRef, predict: &impl Fn(&str) -> bool) -> bool {
+    match t.as_ref() {
+        Term::Wild { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => false,
+        Term::App { func, op } => predict_axiom(func, predict) || predict_axiom(op, predict),
+        Term::Forall(Abstraction { var_ty, body }) | Term::Fun(Abstraction { var_ty, body }) => {
+            predict_axiom(var_ty, predict) || predict_axiom(body, predict)
+        }
+        Term::Axiom { unique_name, .. } => predict(unique_name),
+    }
+}
+
 pub fn contains_wild(t: &TermRef) -> bool {
     predict_wild(t, &|_| true)
 }

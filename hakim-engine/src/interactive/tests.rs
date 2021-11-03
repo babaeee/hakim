@@ -33,14 +33,14 @@ pub fn run_interactive(goal: &str, tactics: &str) -> Session {
     session
 }
 
-fn run_interactive_to_end(goal: &str, tactics: &str) {
+pub fn run_interactive_to_end(goal: &str, tactics: &str) {
     let session = run_interactive(goal, tactics);
     if !session.is_finished() {
         panic!("Goal not solved:\n{}", session.monitor_string());
     }
 }
 
-fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
+pub fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
     let mut session = run_interactive(goal, tactics);
     if session.run_tactic(fail_tactic).is_ok() {
         panic!(
@@ -94,11 +94,6 @@ fn check_undo() {
 }
 
 #[test]
-fn duplicate_hyp() {
-    run_interactive_to_fail(F_EQUAL, "intros x", "intros x");
-}
-
-#[test]
 fn dont_panic1() {
     run_interactive_to_fail(
         F_EQUAL,
@@ -119,57 +114,6 @@ fn dont_panic1() {
         intros y
     "#,
         "apply",
-    );
-}
-
-#[test]
-fn intros_bad_arg() {
-    run_interactive_to_fail(F_EQUAL, "", "intros x 5");
-    run_interactive_to_fail(F_EQUAL, "", "intros -2");
-    run_interactive_to_fail(F_EQUAL, "", "intros (rewrite x)");
-}
-
-#[test]
-fn success_ring1() {
-    run_interactive_to_end(
-        "forall x: ℤ, eq ℤ (x + x) (2 * x)",
-        r#"
-        intros x
-        ring
-        "#,
-    );
-}
-
-#[test]
-fn success_ring2() {
-    run_interactive_to_end(
-        "forall a b: ℤ, eq ℤ (mult (plus a b) (plus a b)) \
-        (plus (mult a a) (plus (mult 2 (mult a b)) (mult b b)))",
-        r#"
-        intros a
-        intros b
-        ring
-        "#,
-    );
-}
-
-#[test]
-fn success_add_hyp() {
-    run_interactive_to_end(
-        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
-        r#"
-        intros a
-        intros b
-        intros c
-        intros d
-        intros a_lt_b
-        intros c_lt_d
-        add_hyp (a + c < b + c)
-        apply (lt_plus_r a b c a_lt_b)
-        add_hyp (b + c < b + d)
-        apply (lt_plus_l c d b c_lt_d)
-        apply (lt_trans (a+c) (b+c) (b+d) H H0)
-        "#,
     );
 }
 

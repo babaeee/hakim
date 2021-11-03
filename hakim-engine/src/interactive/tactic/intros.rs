@@ -33,3 +33,22 @@ pub fn intros(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Ve
     }
     Ok(vec![frame])
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::interactive::tests::run_interactive_to_fail;
+
+    const GOAL: &str = "∀ a b: ℤ, a < b";
+
+    #[test]
+    fn duplicate_hyp() {
+        run_interactive_to_fail(GOAL, "intros x", "intros x");
+    }
+
+    #[test]
+    fn intros_bad_arg() {
+        run_interactive_to_fail(GOAL, "", "intros x 5");
+        run_interactive_to_fail(GOAL, "", "intros -2");
+        run_interactive_to_fail(GOAL, "", "intros (rewrite x)");
+    }
+}
