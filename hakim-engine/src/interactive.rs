@@ -12,7 +12,7 @@ mod tactic;
 
 use tactic::{add_hyp, apply, intros, rewrite, ring};
 
-use self::suggest::{suggest_on_goal_dblclk, suggest_on_hyp_dblclk};
+use self::suggest::{suggest_on_goal_dblclk, suggest_on_hyp_dblclk, suggest_on_hyp_menu};
 
 pub use self::suggest::Suggestion;
 use self::tactic::remove_hyp;
@@ -29,13 +29,15 @@ pub struct Snapshot {
     pub frames: im::Vector<Frame>,
 }
 
+#[derive(Clone)]
 pub struct HistoryRecord {
     tactic: String,
     snapshot: Snapshot,
 }
 
+#[derive(Clone)]
 pub struct Session {
-    history: Vec<HistoryRecord>,
+    history: im::Vector<HistoryRecord>,
 }
 
 fn smart_split(text: &str) -> Vec<String> {
@@ -75,7 +77,9 @@ impl Session {
             snapshot,
             tactic: "Goal".to_string(),
         };
-        Ok(Session { history: vec![hr] })
+        Ok(Session {
+            history: vector![hr],
+        })
     }
 
     pub fn last_snapshot(&self) -> &Snapshot {
@@ -87,7 +91,7 @@ impl Session {
             return self.undo();
         }
         let snapshot = self.last_snapshot().run_tactic(line)?;
-        self.history.push(HistoryRecord {
+        self.history.push_back(HistoryRecord {
             tactic: line.to_string(),
             snapshot,
         });
@@ -128,7 +132,7 @@ impl Session {
         if self.history.len() <= 1 {
             return Err(tactic::Error::CanNotUndo);
         }
-        self.history.pop();
+        self.history.pop_back();
         Ok(())
     }
 
@@ -144,6 +148,11 @@ impl Session {
     pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
         let frame = self.last_snapshot().clone().pop_frame();
         frame.suggest_on_hyp_dblclk(hyp_name)
+    }
+
+    pub fn suggest_on_hyp_menu(&self, hyp_name: &str) -> Vec<Suggestion> {
+        let frame = self.last_snapshot().clone().pop_frame();
+        frame.suggest_on_hyp_menu(hyp_name)
     }
 }
 
@@ -211,6 +220,15 @@ impl Frame {
     pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
         let h = self.hyps.get(hyp_name)?;
         suggest_on_hyp_dblclk(&self.engine, hyp_name, h)
+    }
+
+    pub fn suggest_on_hyp_menu(&self, hyp_name: &str) -> Vec<Suggestion> {
+        let h = if let Some(x) = self.hyps.get(hyp_name) {
+            x
+        } else {
+            return vec![];
+        };
+        suggest_on_hyp_menu(&self.engine, hyp_name, h)
     }
 
     pub fn run_tactic(&self, line: &str) -> Result<Vec<Self>, tactic::Error> {
