@@ -5,7 +5,7 @@ use crate::{
     brain::{
         contains_wild, get_forall_depth,
         infer::{match_and_infer, type_of_and_infer, InferResults},
-        type_of,
+        normalize, type_of,
     },
     engine::Engine,
     interactive::Frame,
@@ -70,7 +70,7 @@ pub fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec
             continue;
         }
         if !contains_wild(&infers.tys[i]) {
-            frame.goal = infers.tys[i].clone();
+            frame.goal = normalize(infers.tys[i].clone());
             v.push(frame);
         } else {
             return Err(CanNotFindInstance(i, ty));
