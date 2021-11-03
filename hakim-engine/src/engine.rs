@@ -1,7 +1,7 @@
 use super::interactive::Session;
 use crate::{
     brain::{
-        self, fill_wild,
+        self,
         infer::{type_of_and_infer, InferResults},
         normalize, type_of, TermRef,
     },
@@ -79,6 +79,10 @@ impl Engine {
         })
     }
 
+    pub fn remove_name_unchecked(&mut self, name: &str) {
+        self.name_dict.remove(name).unwrap();
+    }
+
     fn add_name(&mut self, name: &str, term: TermRef) -> Result<()> {
         if !is_valid_ident(name) {
             return Err(InvalidIdentName(name.to_string()));
@@ -132,7 +136,7 @@ impl Engine {
         let mut infers = InferResults::new(infer_cnt);
         let ty = type_of_and_infer(term.clone(), &mut infers)?;
         dbg!(type_of_and_infer(ty, &mut infers)?);
-        let term = fill_wild(term, &|t| infers.terms[t].clone());
+        let term = infers.fill(term);
         Ok(dbg!(term))
     }
 

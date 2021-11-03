@@ -1,6 +1,6 @@
 use im::vector;
 
-use crate::brain::TermRef;
+use crate::brain::{predict_axiom, TermRef};
 
 use crate::engine::{Engine, Error};
 
@@ -211,6 +211,22 @@ impl Frame {
         self.engine.add_axiom_with_term(name, ty.clone())?;
         self.hyps.insert(name.to_string(), ty);
         Ok(())
+    }
+
+    pub fn remove_hyp_with_name(&mut self, name: String) -> tactic::Result<TermRef> {
+        for (_, hyp) in &self.hyps {
+            if predict_axiom(hyp, &|x| x == name) {
+                return Err(tactic::Error::ContextDependOnHyp(name, hyp.clone()));
+            }
+        }
+        if predict_axiom(&self.goal, &|x| x == name) {
+            return Err(tactic::Error::ContextDependOnHyp(name, self.goal.clone()));
+        }
+        if let Some(hyp) = self.hyps.remove(&name) {
+            self.engine.remove_name_unchecked(&name);
+            return Ok(hyp);
+        }
+        Err(tactic::Error::UnknownHyp(name))
     }
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {

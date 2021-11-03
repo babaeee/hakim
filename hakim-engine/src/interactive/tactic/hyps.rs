@@ -1,5 +1,5 @@
-use super::{get_one_arg, Error::*, Result};
-use crate::{brain::predict_axiom, interactive::Frame};
+use super::{get_one_arg, Result};
+use crate::interactive::Frame;
 
 pub fn add_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "add_hyp")?;
@@ -12,17 +12,7 @@ pub fn add_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<V
 
 pub fn remove_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "remove_hyp")?;
-    if frame.hyps.remove(&exp).is_none() {
-        return Err(UnknownHyp(exp));
-    }
-    for (_, hyp) in &frame.hyps {
-        if predict_axiom(hyp, &|x| x == exp) {
-            return Err(ContextDependOnHyp(exp, hyp.clone()));
-        }
-    }
-    if predict_axiom(&frame.goal, &|x| x == exp) {
-        return Err(ContextDependOnHyp(exp, frame.goal));
-    }
+    frame.remove_hyp_with_name(exp)?;
     Ok(vec![frame])
 }
 
@@ -53,5 +43,18 @@ mod tests {
     #[test]
     fn dont_remove_dependent() {
         run_interactive_to_fail("∀ a: ℤ, a < a + 5", "intros a", "remove_hyp a");
+    }
+
+    #[test]
+    fn remove_hyp_reuse_name() {
+        run_interactive_to_end(
+            "False -> False -> False",
+            r#"
+            intros fp
+            remove_hyp fp
+            intros fp
+            apply fp
+            "#,
+        );
     }
 }
