@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::interactive::Session;
 use crate::{
     brain::{
@@ -124,7 +126,13 @@ impl Engine {
         let ast = parse(text)?;
         let mut name_stack = vec![];
         let mut infer_cnt = 0;
-        let term = ast_to_term(ast, &self.name_dict, &mut name_stack, &mut infer_cnt)?;
+        let term = ast_to_term(
+            ast,
+            &self.name_dict,
+            &mut name_stack,
+            &mut HashMap::default(),
+            &mut infer_cnt,
+        )?;
         Ok((term, infer_cnt))
     }
 

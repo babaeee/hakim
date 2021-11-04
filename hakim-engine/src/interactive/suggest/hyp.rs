@@ -10,7 +10,7 @@ pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Sug
             r.push(Suggestion::new(Rewrite, &format!("rewrite {}", name)));
             r.push(Suggestion::new(
                 Swap,
-                &format!("apply (eq_sym _0 _1 _2) in {}", name),
+                &format!("apply (eq_sym ? ? ?) in {}", name),
             ));
         }
         TermClass::Exists => {

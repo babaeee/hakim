@@ -11,7 +11,7 @@ pub enum Token {
     Abs(AbsSign),
     Sign(String),
     Number(BigInt),
-    Wild(usize),
+    Wild(Option<String>),
 }
 
 use num_bigint::BigInt;
@@ -96,13 +96,25 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             result.push(Ident(ident));
             continue;
         }
-        if c == '_' {
-            let mut num = 0;
-            while let Some(d) = text.pick_char().and_then(|x| x.to_digit(10)) {
+        if c == '?' {
+            let mut name = match text.pick_char() {
+                Some(c) if is_valid_ident_first_char(c) => {
+                    text.eat_char();
+                    c.to_string()
+                }
+                _ => {
+                    result.push(Wild(None));
+                    continue;
+                }
+            };
+            while let Some(d) = text.pick_char() {
+                if !is_valid_ident_char(d) {
+                    break;
+                }
                 text.eat_char();
-                num = num * 10 + d as usize;
+                name.push(d);
             }
-            result.push(Wild(num));
+            result.push(Wild(Some(name)));
             continue;
         }
         if let Some(d) = c.to_digit(10) {

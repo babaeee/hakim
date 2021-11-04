@@ -1,13 +1,9 @@
 use crate::{
-    brain::{
-        infer::{match_and_infer, InferResults},
-        Term, TermRef,
-    },
+    brain::{Term, TermRef},
     interactive::Frame,
     term_ref, Abstraction,
 };
 
-use super::super::Engine;
 use super::{get_one_arg, Error::*, Result};
 
 fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
@@ -35,12 +31,19 @@ fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
     }
 }
 
-pub fn get_eq_params(engine: &Engine, term: TermRef) -> Option<[TermRef; 2]> {
-    let eq_pat = engine.parse_text("eq _2 _0 _1").ok()?;
-    let mut infers = InferResults::new(3);
-    match_and_infer(term, eq_pat, &mut infers).ok()?;
-    let mut iter = infers.terms.into_iter();
-    Some([iter.next().unwrap(), iter.next().unwrap()])
+pub fn get_eq_params(term: &TermRef) -> Option<[TermRef; 3]> {
+    if let Term::App { func, op: op2 } = term.as_ref() {
+        if let Term::App { func, op: op1 } = func.as_ref() {
+            if let Term::App { func, op: ty } = func.as_ref() {
+                if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                    if unique_name == "eq" {
+                        return Some([op1.clone(), op2.clone(), ty.clone()]);
+                    }
+                }
+            }
+        }
+    }
+    None
 }
 
 pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
@@ -51,8 +54,7 @@ pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<V
     }
     let exp = &get_one_arg(args, "rewrite")?;
     let term = frame.engine.calc_type(exp)?;
-    let [op1, op2] = get_eq_params(&frame.engine, term.clone())
-        .ok_or(BadHyp("rewrite expect eq but got", term))?;
+    let [op1, op2, _] = get_eq_params(&term).ok_or(BadHyp("rewrite expect eq but got", term))?;
     let goal = frame.goal.clone();
     frame.goal = if is_reverse {
         replace_term(goal, op2, op1)

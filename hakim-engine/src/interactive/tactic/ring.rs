@@ -120,9 +120,8 @@ fn canonical(x: ArithTree) -> Poly {
 }
 
 pub fn ring(frame: Frame) -> Result<Vec<Frame>> {
-    let goal = frame.goal.clone();
-    let [op1, op2] =
-        get_eq_params(&frame.engine, goal).ok_or(BadGoal("ring only work on equality"))?;
+    let goal = frame.goal;
+    let [op1, op2, _] = get_eq_params(&goal).ok_or(BadGoal("ring only work on equality"))?;
     let d1 = canonical(ArithTree::from(op1));
     let d2 = canonical(ArithTree::from(op2));
     if d1 == d2 {
