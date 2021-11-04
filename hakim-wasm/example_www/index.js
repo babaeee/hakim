@@ -1,4 +1,5 @@
 import { Instance } from "../pkg/hakim_wasm";
+import { createMenu } from "./ctxmenu/menu";
 import "./my.css";
 
 const title = document.createElement('h1');
@@ -86,6 +87,22 @@ const update = () => {
         d.innerText = `${hyp[0]}: ${hyp[1]}`;
         d.addEventListener('dblclick', () => {
             suggestion_on_hyp_dblclk(hyp[0]);
+        });
+        d.addEventListener('contextmenu', (ev) => {
+            const suggs = instance.suggest_menu_hyp(hyp[0]).split(',').filter((x) => x !== '');
+            createMenu(suggs.map((x) => ({
+                label: x,
+                action: () => {
+                    const error = instance.run_suggest_menu_hyp(hyp[0], x);
+                    if (error) {
+                        alert(error);
+                        return;
+                    }
+                    update();
+                    return;
+                },
+            })), monitor, ev);
+            ev.preventDefault();
         });
         monitor.appendChild(d);
     }

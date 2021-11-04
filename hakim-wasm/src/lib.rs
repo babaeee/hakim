@@ -178,6 +178,30 @@ impl Instance {
         self.run_sugg(sugg)
     }
 
+    pub fn suggest_menu_hyp(&mut self, hyp_name: &str) -> Option<String> {
+        let session = &mut self.session.as_ref()?;
+        let sugg = session.suggest_on_hyp_menu(hyp_name);
+        Some(
+            sugg.into_iter()
+                .map(|x| format!("{:?},", x.class))
+                .collect(),
+        )
+    }
+
+    pub fn run_suggest_menu_hyp(&mut self, hyp_name: &str, sugg_class: &str) -> Option<String> {
+        let session = match &mut self.session {
+            Some(s) => s,
+            None => return Some("Session is not started".to_string()),
+        };
+        let suggs = session.suggest_on_hyp_menu(hyp_name);
+        for sugg in suggs {
+            if format!("{:?}", sugg.class) == sugg_class {
+                return self.run_sugg(sugg);
+            }
+        }
+        Some("Sugg not found".to_string())
+    }
+
     pub fn search(&self, query: &str) -> String {
         match self.engine.search(query) {
             Ok(r) => r
