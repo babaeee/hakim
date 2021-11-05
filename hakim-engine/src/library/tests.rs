@@ -1,13 +1,10 @@
 use crate::engine::Engine;
 
 #[test]
-fn arith() {
+fn all() {
     let mut eng = Engine::default();
     eng.load_library("Arith").unwrap();
-}
-
-#[test]
-fn logic() {
-    let mut eng = Engine::default();
     eng.load_library("Logic").unwrap();
+    eng.load_library("Eq").unwrap();
+    eng.load_library("Sigma").unwrap();
 }

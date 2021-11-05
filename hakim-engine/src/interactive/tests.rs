@@ -5,6 +5,8 @@ fn build_engine() -> Engine {
     eng.load_library("Arith").unwrap();
     eng.load_library("Logic").unwrap();
     eng.load_library("Eq").unwrap();
+    eng.load_library("Sigma").unwrap();
+    eng.load_library("Induction").unwrap();
     eng
 }
 
@@ -31,14 +33,14 @@ pub fn run_interactive(goal: &str, tactics: &str) -> Session {
     session
 }
 
-fn run_interactive_to_end(goal: &str, tactics: &str) {
+pub fn run_interactive_to_end(goal: &str, tactics: &str) {
     let session = run_interactive(goal, tactics);
     if !session.is_finished() {
         panic!("Goal not solved:\n{}", session.monitor_string());
     }
 }
 
-fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
+pub fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
     let mut session = run_interactive(goal, tactics);
     if session.run_tactic(fail_tactic).is_ok() {
         panic!(
@@ -92,11 +94,6 @@ fn check_undo() {
 }
 
 #[test]
-fn duplicate_hyp() {
-    run_interactive_to_fail(F_EQUAL, "intros x", "intros x");
-}
-
-#[test]
 fn dont_panic1() {
     run_interactive_to_fail(
         F_EQUAL,
@@ -117,57 +114,6 @@ fn dont_panic1() {
         intros y
     "#,
         "apply",
-    );
-}
-
-#[test]
-fn intros_bad_arg() {
-    run_interactive_to_fail(F_EQUAL, "", "intros x 5");
-    run_interactive_to_fail(F_EQUAL, "", "intros -2");
-    run_interactive_to_fail(F_EQUAL, "", "intros (rewrite x)");
-}
-
-#[test]
-fn success_ring1() {
-    run_interactive_to_end(
-        "forall x: ℤ, eq ℤ (x + x) (2 * x)",
-        r#"
-        intros x
-        ring
-        "#,
-    );
-}
-
-#[test]
-fn success_ring2() {
-    run_interactive_to_end(
-        "forall a b: ℤ, eq ℤ (mult (plus a b) (plus a b)) \
-        (plus (mult a a) (plus (mult 2 (mult a b)) (mult b b)))",
-        r#"
-        intros a
-        intros b
-        ring
-        "#,
-    );
-}
-
-#[test]
-fn success_add_hyp() {
-    run_interactive_to_end(
-        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
-        r#"
-        intros a
-        intros b
-        intros c
-        intros d
-        intros a_lt_b
-        intros c_lt_d
-        add_hyp (a + c < b + c)
-        apply (lt_plus_r a b c a_lt_b)
-        add_hyp (b + c < b + d)
-        apply (lt_plus_l c d b c_lt_d)
-        apply (lt_trans (a+c) (b+c) (b+d) H H0)
-        "#,
     );
 }
 
@@ -285,6 +231,28 @@ fn forall_not_exist() {
         intros exv exv_not_p
         apply exv_not_p
         apply fa
+        "#,
+    );
+}
+
+#[test]
+fn sigma_1_n() {
+    run_interactive_to_end(
+        "∀ n: ℤ, eq ℤ (2 * sigma 0 (n+1) (λ i: ℤ, i)) (n * (n + 1))",
+        r#"
+        apply (simple_induction 0 (λ n: ℤ, eq ℤ (2 * sigma 0 (n+1) (λ i: ℤ, i)) (n * (n + 1))))
+        intros n gam_farz
+        add_hyp (eq ℤ (sigma 0 (n + 1) (λ i: ℤ, i) + sigma (n + 1) ((n + 1) + 1) (λ i: ℤ, i)) (sigma 0 ((n + 1) + 1) (λ i: ℤ, i)))
+        apply sigma_plus
+        rewrite <- H
+        add_hyp (eq ℤ (2 * (sigma 0 (n + 1) (λ x0: ℤ, x0) + sigma (n + 1) ((n + 1) + 1) (λ x0: ℤ, x0))) (n * (n + 1) + 2 * (n + 1)))
+        rewrite (sigma_atom (n+1) (λ x0: ℤ, x0))
+        rewrite <- gam_farz
+        ring
+        rewrite H0
+        ring
+        rewrite (sigma_atom 0 (λ x0: ℤ, x0))
+        ring
         "#,
     );
 }

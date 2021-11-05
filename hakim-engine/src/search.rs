@@ -65,7 +65,7 @@ mod tests {
     #[test]
     fn lt_z() {
         check_search(
-            "∀ a b c: ℤ, _0 < _1 -> _2 + _3 < _4 + _5",
+            "∀ a b c: ℤ, ?x < ?y -> ?a + ?b < ?c + ?d",
             r#"
             lt_plus_r
             lt_plus_l
@@ -75,6 +75,6 @@ mod tests {
 
     #[test]
     fn dont_stack_overflow() {
-        check_search("_0 -> _0 -> _0 -> _0", "");
+        check_search("?x -> ?x -> ?x -> ?x", "");
     }
 }

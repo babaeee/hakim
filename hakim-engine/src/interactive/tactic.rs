@@ -36,6 +36,7 @@ pub enum Error {
     EmptyTactic,
     EngineError(super::Error),
     CanNotFindInstance(usize, TermRef),
+    ContextDependOnHyp(String, TermRef),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

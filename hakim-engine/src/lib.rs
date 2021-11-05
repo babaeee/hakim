@@ -1,9 +1,9 @@
 #![allow(clippy::enum_variant_names)]
 
-pub mod brain;
+pub(crate) mod brain;
 pub mod engine;
 pub mod interactive;
 mod library;
-pub mod parser;
-pub mod search;
-pub use brain::{Abstraction, Term, TermRef};
+pub(crate) mod parser;
+pub(crate) mod search;
+pub(crate) use brain::{Abstraction, Term, TermRef};

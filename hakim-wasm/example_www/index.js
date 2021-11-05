@@ -1,4 +1,5 @@
 import { Instance } from "../pkg/hakim_wasm";
+import { createMenu } from "./ctxmenu/menu";
 import "./my.css";
 
 const title = document.createElement('h1');
@@ -8,6 +9,9 @@ document.body.appendChild(title);
 const instance = new Instance()
 instance.load_library('Arith');
 instance.load_library('Logic');
+instance.load_library('Eq');
+instance.load_library('Induction');
+instance.load_library('Sigma');
 instance.start_session("forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)");
 
 window.instance = instance;
@@ -84,6 +88,22 @@ const update = () => {
         d.addEventListener('dblclick', () => {
             suggestion_on_hyp_dblclk(hyp[0]);
         });
+        d.addEventListener('contextmenu', (ev) => {
+            const suggs = instance.suggest_menu_hyp(hyp[0]).split(',').filter((x) => x !== '');
+            createMenu(suggs.map((x) => ({
+                label: x,
+                action: () => {
+                    const error = instance.run_suggest_menu_hyp(hyp[0], x);
+                    if (error) {
+                        alert(error);
+                        return;
+                    }
+                    update();
+                    return;
+                },
+            })), monitor, ev);
+            ev.preventDefault();
+        });
         monitor.appendChild(d);
     }
     let i = 0;
@@ -153,6 +173,7 @@ const exampleGoals = [
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, P x',
     '∀ a: ℤ, ∃ b: ℤ, a < b',
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False',
+    '∀ n: ℤ, eq ℤ (2 * sigma 0 (n+1) (λ i: ℤ, i)) (n * (n + 1))',
 ];
 
 const exampleSection = document.createElement('div');

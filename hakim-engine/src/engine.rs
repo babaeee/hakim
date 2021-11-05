@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use super::interactive::Session;
 use crate::{
     brain::{
-        self, fill_wild,
+        self,
         infer::{type_of_and_infer, InferResults},
         normalize, type_of, TermRef,
     },
@@ -79,6 +81,10 @@ impl Engine {
         })
     }
 
+    pub fn remove_name_unchecked(&mut self, name: &str) {
+        self.name_dict.remove(name).unwrap();
+    }
+
     fn add_name(&mut self, name: &str, term: TermRef) -> Result<()> {
         if !is_valid_ident(name) {
             return Err(InvalidIdentName(name.to_string()));
@@ -105,7 +111,7 @@ impl Engine {
     pub fn calc_type(&self, text: &str) -> Result<TermRef> {
         let exp = self.parse_text(text)?;
         let ty = type_of(exp)?;
-        Ok(ty)
+        Ok(normalize(ty))
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {
@@ -120,7 +126,13 @@ impl Engine {
         let ast = parse(text)?;
         let mut name_stack = vec![];
         let mut infer_cnt = 0;
-        let term = ast_to_term(ast, &self.name_dict, &mut name_stack, &mut infer_cnt)?;
+        let term = ast_to_term(
+            ast,
+            &self.name_dict,
+            &mut name_stack,
+            &mut HashMap::default(),
+            &mut infer_cnt,
+        )?;
         Ok((term, infer_cnt))
     }
 
@@ -132,7 +144,7 @@ impl Engine {
         let mut infers = InferResults::new(infer_cnt);
         let ty = type_of_and_infer(term.clone(), &mut infers)?;
         dbg!(type_of_and_infer(ty, &mut infers)?);
-        let term = fill_wild(term, &|t| infers.terms[t].clone());
+        let term = infers.fill(term);
         Ok(dbg!(term))
     }
 

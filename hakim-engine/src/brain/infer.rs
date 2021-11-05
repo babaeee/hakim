@@ -56,17 +56,14 @@ impl InferResults {
             todo!();
         }
     }
+
+    pub fn fill(&self, term: TermRef) -> TermRef {
+        fill_wild(term, &|i| self.get(i))
+    }
+
     fn relax(&mut self) {
-        self.terms = self
-            .terms
-            .iter()
-            .map(|x| fill_wild(x.clone(), &|i| self.get(i)))
-            .collect();
-        self.tys = self
-            .tys
-            .iter()
-            .map(|x| fill_wild(x.clone(), &|i| self.get(i)))
-            .collect();
+        self.terms = self.terms.iter().map(|x| self.fill(x.clone())).collect();
+        self.tys = self.tys.iter().map(|x| self.fill(x.clone())).collect();
     }
 }
 

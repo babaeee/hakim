@@ -91,7 +91,7 @@ fn exists_bad() {
 #[test]
 fn infer_stack_overflow() {
     fail_match_infer(
-        "_0 -> _0 -> _0 -> _0",
-        "(_1 → _2) → ((_2 → _3) → (_1 → _3))",
+        "?x -> ?x -> ?x -> ?x",
+        "(?a → ?b) → ((?b → ?c) → (?a → ?c))",
     );
 }

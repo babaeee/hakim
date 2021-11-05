@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::collections::HashMap;
 
 use super::{
     tokenizer::{AbsSign, Token},
@@ -26,7 +26,7 @@ pub enum AstTerm {
     App(Box<AstTerm>, Box<AstTerm>),
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
     Number(BigInt),
-    Wild(usize),
+    Wild(Option<String>),
 }
 
 use num_bigint::BigInt;
@@ -202,6 +202,7 @@ pub fn ast_to_term(
     ast: AstTerm,
     globals: &im::HashMap<String, TermRef>,
     name_stack: &mut Vec<String>,
+    infer_dict: &mut HashMap<String, usize>,
     infer_cnt: &mut usize,
 ) -> Result<TermRef> {
     match ast {
@@ -211,14 +212,14 @@ pub fn ast_to_term(
             ty,
             body,
         } => {
-            let mut ty_term = ast_to_term(*ty, globals, name_stack, infer_cnt)?;
+            let mut ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
             let mut tys = vec![];
             for n in name {
                 tys.push(ty_term.clone());
                 ty_term = increase_foreign_vars(ty_term, 0);
                 name_stack.push(n);
             }
-            let mut r = ast_to_term(*body, globals, name_stack, infer_cnt)?;
+            let mut r = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt)?;
             for ty in tys.into_iter().rev() {
                 name_stack.pop();
                 r = pack_abstraction(sign, ty, r);
@@ -236,17 +237,33 @@ pub fn ast_to_term(
             }
         }
         App(a, b) => Ok(app_ref!(
-            ast_to_term(*a, globals, name_stack, infer_cnt)?,
-            ast_to_term(*b, globals, name_stack, infer_cnt)?
+            ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?,
+            ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt)?
         )),
         Number(num) => Ok(term_ref!(n num)),
-        Wild(i) => {
-            *infer_cnt = max(*infer_cnt, i + 1);
+        Wild(n) => {
+            let i = match n {
+                Some(x) => {
+                    if let Some(k) = infer_dict.get(&x) {
+                        *k
+                    } else {
+                        let i = *infer_cnt;
+                        *infer_cnt += 1;
+                        infer_dict.insert(x, i);
+                        i
+                    }
+                }
+                None => {
+                    let i = *infer_cnt;
+                    *infer_cnt += 1;
+                    i
+                }
+            };
             Ok(term_ref!(_ i))
         }
         BinOp(a, op, b) => {
-            let ta = ast_to_term(*a, globals, name_stack, infer_cnt)?;
-            let tb = ast_to_term(*b, globals, name_stack, infer_cnt)?;
+            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
+            let tb = ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt)?;
             Ok(op.run_on_term(ta, tb))
         }
     }

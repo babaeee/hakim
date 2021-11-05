@@ -1,7 +1,10 @@
-use crate::{engine::Engine, Term, TermRef};
+use crate::{Term, TermRef};
 
 #[cfg(test)]
 mod tests;
+
+mod hyp;
+pub use hyp::{suggest_on_hyp_dblclk, suggest_on_hyp_menu};
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum SuggClass {
@@ -9,6 +12,7 @@ pub enum SuggClass {
     IntrosWithName,
     Destruct,
     Rewrite,
+    Swap,
 }
 
 use SuggClass::*;
@@ -77,26 +81,5 @@ pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
         TermClass::Forall => Suggestion::new(Intros, "intros"),
         TermClass::Exists => Suggestion::newq1(Destruct, "apply ex_intro (3:=$0)", "Enter value"),
         TermClass::Eq | TermClass::Unknown => return None,
-    })
-}
-
-pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &TermRef) -> Option<Suggestion> {
-    let c = detect_class(ty);
-    Some(match c {
-        TermClass::Eq => Suggestion::new(Rewrite, &format!("rewrite {}", name)),
-        TermClass::Exists => {
-            let val_name = engine.generate_name(&format!("{}_value", name));
-            let proof_name = engine.generate_name(&format!("{}_proof", name));
-            Suggestion {
-                class: Destruct,
-                tactic: vec![
-                    format!("apply ex_ind (3:={})", name),
-                    format!("remove_hyp {}", name),
-                    format!("intros {} {}", val_name, proof_name),
-                ],
-                questions: vec![],
-            }
-        }
-        TermClass::Forall | TermClass::Unknown => return None,
     })
 }
