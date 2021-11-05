@@ -6,6 +6,8 @@ pub enum BinOp {
     Lt,
     Mult,
     Plus,
+    Or,
+    And,
 }
 
 #[derive(PartialEq, Eq)]
@@ -25,6 +27,8 @@ impl Display for BinOp {
             Lt => "<",
             Mult => "*",
             Plus => "+",
+            Or => "∨",
+            And => "∧",
         })
     }
 }
@@ -50,6 +54,8 @@ impl BinOp {
             Lt => 70,
             Mult => 40,
             Plus => 50,
+            Or => 85,
+            And => 80,
         }
     }
 
@@ -61,6 +67,8 @@ impl BinOp {
             Lt => No,
             Mult => Comm,
             Plus => Comm,
+            Or => Comm,
+            And => Comm,
         }
     }
 
@@ -70,6 +78,8 @@ impl BinOp {
             "<" => Lt,
             "*" => Mult,
             "+" => Plus,
+            "∨" => Or,
+            "∧" => And,
             _ => return None,
         })
     }
@@ -82,6 +92,8 @@ impl BinOp {
             Lt => app_ref!(lt(), l, r),
             Mult => app_ref!(mult(), l, r),
             Plus => app_ref!(plus(), l, r),
+            Or => app_ref!(or(), l, r),
+            And => app_ref!(and(), l, r),
         }
     }
 
@@ -99,6 +111,8 @@ impl BinOp {
                         "plus" => Some((op.clone(), BinOp::Plus, op2.clone())),
                         "mult" => Some((op.clone(), BinOp::Mult, op2.clone())),
                         "lt" => Some((op.clone(), BinOp::Lt, op2.clone())),
+                        "or" => Some((op.clone(), BinOp::Or, op2.clone())),
+                        "and" => Some((op.clone(), BinOp::And, op2.clone())),
                         _ => None,
                     },
                     _ => None,

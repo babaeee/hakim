@@ -39,3 +39,9 @@ pub fn mult() -> TermRef {
 pub fn ex() -> TermRef {
     term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
 }
+pub fn or() -> TermRef {
+    term_ref!(axiom "or", forall u(), forall u(), u())
+}
+pub fn and() -> TermRef {
+    term_ref!(axiom "and", forall u(), forall u(), u())
+}

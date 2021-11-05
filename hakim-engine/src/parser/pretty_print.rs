@@ -57,6 +57,7 @@ pub fn term_pretty_print(
             op,
             term_pretty_print(r, name_stack, (op.prec() - 1, level.1))
         );
+        dbg!(s.clone());
         return if min(level.0, level.1) < op.prec() {
             format!("({})", s)
         } else {
