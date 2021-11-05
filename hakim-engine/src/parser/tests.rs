@@ -57,7 +57,12 @@ fn universes() {
 }
 
 #[test]
-#[ignore = "This is a sample"]
 fn and_or_not() {
     parse_pretty("∃ x0: ℤ, x0 < 2 ∨ 5 < x0 ∧ x0 < 7");
+}
+
+#[test]
+fn eq() {
+    parse_pretty("2 = 3");
+    parse_pretty("∃ x0: ℤ, x0 = x0 + x0");
 }

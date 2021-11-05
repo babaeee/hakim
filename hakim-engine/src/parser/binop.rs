@@ -1,13 +1,13 @@
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum BinOp {
+    And,
     App,
     Eq,
     Imply,
     Lt,
     Mult,
-    Plus,
     Or,
-    And,
+    Plus,
 }
 
 #[derive(PartialEq, Eq)]
@@ -21,14 +21,14 @@ pub enum Assoc {
 impl Display for BinOp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         f.write_str(match self {
+            And => "∧",
             App => " ",
             Eq => "=",
             Imply => "→",
             Lt => "<",
             Mult => "*",
-            Plus => "+",
             Or => "∨",
-            And => "∧",
+            Plus => "+",
         })
     }
 }
@@ -88,20 +88,26 @@ impl BinOp {
 
     pub fn from_str(op: &str) -> Option<Self> {
         Some(match op {
+            "∧" => And,
+            "=" => Eq,
             "→" => Imply,
             "<" => Lt,
             "*" => Mult,
-            "+" => Plus,
             "∨" => Or,
-            "∧" => And,
+            "+" => Plus,
             _ => return None,
         })
     }
 
-    pub fn run_on_term(&self, l: TermRef, r: TermRef) -> TermRef {
+    pub fn run_on_term(&self, infer_cnt: &mut usize, l: TermRef, r: TermRef) -> TermRef {
         match self {
             App => app_ref!(l, r),
-            Eq => todo!(),
+            Eq => {
+                let i = *infer_cnt;
+                *infer_cnt += 1;
+                let w = term_ref!(_ i);
+                app_ref!(eq(), w, l, r)
+            }
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
             Lt => app_ref!(lt(), l, r),
             Mult => app_ref!(mult(), l, r),

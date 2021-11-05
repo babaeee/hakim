@@ -264,7 +264,7 @@ pub fn ast_to_term(
         BinOp(a, op, b) => {
             let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
             let tb = ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt)?;
-            Ok(op.run_on_term(ta, tb))
+            Ok(op.run_on_term(infer_cnt, ta, tb))
         }
     }
 }

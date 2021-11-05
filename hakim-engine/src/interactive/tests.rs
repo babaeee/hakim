@@ -238,14 +238,14 @@ fn forall_not_exist() {
 #[test]
 fn sigma_1_n() {
     run_interactive_to_end(
-        "∀ n: ℤ, eq ℤ (2 * sigma 0 (n+1) (λ i: ℤ, i)) (n * (n + 1))",
+        "∀ n: ℤ, 2 * sigma 0 (n+1) (λ i: ℤ, i) = n * (n + 1)",
         r#"
         apply (simple_induction 0 (λ n: ℤ, eq ℤ (2 * sigma 0 (n+1) (λ i: ℤ, i)) (n * (n + 1))))
         intros n gam_farz
-        add_hyp (eq ℤ (sigma 0 (n + 1) (λ i: ℤ, i) + sigma (n + 1) ((n + 1) + 1) (λ i: ℤ, i)) (sigma 0 ((n + 1) + 1) (λ i: ℤ, i)))
+        add_hyp (sigma 0 (n + 1) (λ i: ℤ, i) + sigma (n + 1) ((n + 1) + 1) (λ i: ℤ, i) = sigma 0 ((n + 1) + 1) (λ i: ℤ, i))
         apply sigma_plus
         rewrite <- H
-        add_hyp (eq ℤ (2 * (sigma 0 (n + 1) (λ x0: ℤ, x0) + sigma (n + 1) ((n + 1) + 1) (λ x0: ℤ, x0))) (n * (n + 1) + 2 * (n + 1)))
+        add_hyp (2 * (sigma 0 (n + 1) (λ x0: ℤ, x0) + sigma (n + 1) ((n + 1) + 1) (λ x0: ℤ, x0)) = n * (n + 1) + 2 * (n + 1))
         rewrite (sigma_atom (n+1) (λ x0: ℤ, x0))
         rewrite <- gam_farz
         ring
