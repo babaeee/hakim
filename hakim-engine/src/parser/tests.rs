@@ -21,6 +21,8 @@ fn forall_arrow() {
 fn number_ops() {
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, ∀ x2: ℤ, x0 < x1 → x0 + x2 < x1 + x2");
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, (x0 + x1) * (x0 + x1) < x0 * x0 + x1 * x1");
+    parse_pretty("1 + 2 * 3 * 4 + 5 * 6 < 7 + 8 * 9");
+    parse_pretty("(1 * 2 + 3 * 4) * (1 * 2 + 3 * 4)");
 }
 
 #[test]

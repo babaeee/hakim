@@ -42,6 +42,20 @@ use crate::{
 };
 
 impl BinOp {
+    pub fn level_left(&self) -> u8 {
+        match self.assoc() {
+            Left | Comm => self.prec(),
+            No | Right => self.prec() - 1,
+        }
+    }
+
+    pub fn level_right(&self) -> u8 {
+        match self.assoc() {
+            Right => self.prec(),
+            No | Left | Comm => self.prec() - 1,
+        }
+    }
+
     pub fn prec(&self) -> u8 {
         match self {
             App => 0,

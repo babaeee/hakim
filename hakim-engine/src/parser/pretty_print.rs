@@ -51,16 +51,20 @@ pub fn term_pretty_print(
         }
     }
     if let Some((l, op, r)) = BinOp::detect(&term) {
-        let s = format!(
-            "{} {} {}",
-            term_pretty_print(l, name_stack, (level.0, op.prec() - 1)),
-            op,
-            term_pretty_print(r, name_stack, (op.prec() - 1, level.1))
-        );
         return if min(level.0, level.1) < op.prec() {
-            format!("({})", s)
+            format!(
+                "({} {} {})",
+                term_pretty_print(l, name_stack, (200, op.level_left())),
+                op,
+                term_pretty_print(r, name_stack, (op.level_right(), 200))
+            )
         } else {
-            s
+            format!(
+                "{} {} {}",
+                term_pretty_print(l, name_stack, (level.0, op.level_left())),
+                op,
+                term_pretty_print(r, name_stack, (op.level_right(), level.1))
+            )
         };
     }
     match term.as_ref() {
