@@ -1,0 +1,21 @@
+.toolContain {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  margin: 1rem;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background-color: black;
+  justify-content: space-around;
+}
+
+.toolButton {
+  width: 3rem;
+  height: 3rem;
+  font-size: medium;
+  border-radius: 0.5rem;
+  border-color: black;
+  background-color: #ff5050;
+  color: white;
+}
+  

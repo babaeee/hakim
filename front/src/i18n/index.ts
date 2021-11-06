@@ -1,7 +1,7 @@
 import enDict from "./en.yml";
 import faDict from "./fa.yml";
 
-let dict = {};
+let dict: any = {};
 
 export const getLang = () => {
   return localStorage.getItem('lang') || 'en';
@@ -23,11 +23,11 @@ export const init = () => {
   if (lang === 'en') dict = enDict;
 };
 
-export const getText = (id) => {
+export const getText = (id: string): string => {
   return dict[id] || id;
 };
 
-export const g = (c, ...v) => {
+export const g = (c: TemplateStringsArray, ...v: string[]) => {
   const t = c.map((x) => x.split(' ').map(getText).join(' '));
   v.push('');
   const r = t.map((x, i) => x + v[i]).join('');

@@ -1,0 +1,8 @@
+.monitor {
+  flex: 2;
+  border-radius: 1rem;
+  background-color: black;
+  color: white;
+  margin: 1rem;
+  padding: 1rem;
+}
