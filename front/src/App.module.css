@@ -1,0 +1,40 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  background-color: green;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.bottomContainer {
+  display: flex;
+  flex-grow: 1;
+}
+
+.sidebarContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 10px;
+  text-align: center;
+  color: white;
+}
+
+.changeLangButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-color: black;
+  font-size: medium;
+  height: 30px;
+  border-radius: 0.5rem;
+  color: black;
+  background-color: white;
+}
