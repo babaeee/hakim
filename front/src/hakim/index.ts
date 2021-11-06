@@ -42,3 +42,21 @@ const checkErrorAndUpdate = (error?: string) => {
 export const sendTactic = (tactic: string) => {
     checkErrorAndUpdate(instance.run_tactic(tactic));
 };
+
+export type TryAutoResult = {
+    available: false,
+} | {
+    available: true,
+    tactic: string,
+};
+
+export const tryAuto = (): TryAutoResult => {
+    const tactic = instance.try_auto();
+    if (tactic) {
+        return {
+            available: true,
+            tactic,
+        };
+    }
+    return { available: false };
+};

@@ -10,12 +10,35 @@
 }
 
 .toolButton {
-  width: 3rem;
-  height: 3rem;
+  width: 5rem;
+  height: 5rem;
   font-size: medium;
   border-radius: 0.5rem;
   border-color: black;
   background-color: #ff5050;
   color: white;
 }
-  
+
+@keyframes col {
+  0% {
+    background-color:#0f0;
+    border-color: #0f0;
+    color: #f0f;
+  }
+  100% {
+    background-color:#f0f;
+    border-color: #f0f;
+    color: #0f0;
+  }
+}
+
+.autoProof {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+  border-radius: 0.5rem;
+  background-color: greenyellow;
+  animation: col 0.5s infinite alternate-reverse;
+  color: #f0f;
+}

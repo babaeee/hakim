@@ -1,4 +1,5 @@
-import { sendTactic } from "../../hakim";
+import { useEffect, useState } from "react";
+import { sendTactic, subscribe, tryAuto, TryAutoResult } from "../../hakim";
 import { g } from "../../i18n";
 import css from "./toolbar.module.css";
 
@@ -15,11 +16,26 @@ const newAssert = () => {
     sendTactic(`add_hyp (${inp})`);
 };
 
+const AutoProofButton = () => {
+    const [s, setS] = useState({ available: false } as TryAutoResult);
+    useEffect(() => {
+        return subscribe(() => {
+            setS(tryAuto());
+        });
+    }, []);
+    return (
+        <button className={css.toolButton} onClick={() => { }}>
+            {g`auto_proof`}
+            {s.available && <><br /><span className={css.autoProof} onClick={() => sendTactic(s.tactic)}>✓</span></>}
+        </button>
+    );
+};
+
 export const Toolbar = () => {
     return (
         <div className={css.toolContain}>
             <ToolButton onClick={newAssert} label={g`new_assertion`} />
-            <ToolButton onClick={() => { }} label="1" />
+            <AutoProofButton />
             <ToolButton onClick={() => { }} label="1" />
         </div>
     );
