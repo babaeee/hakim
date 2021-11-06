@@ -173,7 +173,7 @@ const exampleGoals = [
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, P x',
     '∀ a: ℤ, ∃ b: ℤ, a < b',
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False',
-    '∀ n: ℤ, eq ℤ (2 * sigma 0 (n+1) (λ i: ℤ, i)) (n * (n + 1))',
+    '∀ n: ℤ, 2 * sigma 0 (n+1) (λ i: ℤ, i) = n * (n + 1)',
 ];
 
 const exampleSection = document.createElement('div');
