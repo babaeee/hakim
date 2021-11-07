@@ -4,7 +4,7 @@ import faDict from "./fa.yml";
 let dict: any = {};
 
 export const getLang = () => {
-  return localStorage.getItem('lang') || 'en';
+  return localStorage.getItem('lang') || 'fa';
 };
 
 export const changeLang = () => {
