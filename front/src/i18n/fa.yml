@@ -1,12 +1,17 @@
 auto_proof: اثبات خودکار
 babaeee_coq: اثبات چک کن ببعییی
 change_lang: تغییر زبان
+exit: خروج
 induction_on: استقرا روی
 input_assertion: ادعای خود را وارد کنید
 loading: در حال بارگیری
 new_assertion: ادعای جدید
 no_action_for_goal: اقدامی برای این نوع هدف تعریف نشده است
 no_more_subgoal: هدف دیگری برای اثبات وجود ندارد.
+or_choose_one_prop: یا یکی از گزاره های زیر را انتخاب کنید
+sandbox_title: زمین بازی
+submit: ارسال
 tactic_intros: معرفی
 tactic_left: چپ
 tactic_right: راست
+type_a_goal_to_proof: یک هدف را برای اثبات کردن تایپ کنید

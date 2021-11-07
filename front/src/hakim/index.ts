@@ -5,9 +5,9 @@ declare let window: Window & {
     panic_handler: (s: string) => void;
 };
 
-//window.ask_question = (x) => {
-//    return window.prompt(x);
-//};
+window.ask_question = (x) => {
+    return window.prompt(x);
+};
 window.panic_handler = (x) => {
     document.body.innerHTML = `<pre>${x}</pre>`;
 };
@@ -16,8 +16,9 @@ window.panic_handler = (x) => {
 const instance = new Instance();
 instance.load_library('Arith');
 instance.load_library('Eq');
-instance.start_session('2 = 3 -> 3 = 2');
-instance.run_tactic('intros');
+instance.load_library('Logic');
+instance.load_library('Induction');
+instance.load_library('Sigma');
 
 export type State = {
     history: string[],

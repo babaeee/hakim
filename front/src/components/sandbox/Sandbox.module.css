@@ -1,0 +1,33 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    margin: 0 4rem;
+}
+
+.title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 10px;
+    text-align: center;
+    color: white;
+}
+
+.text {
+    color: white;
+}
+
+.exampleSection {
+    line-break: loose;
+    line-height: 3rem;
+}
+
+.exampleItem {
+    background-color: yellow;
+    display: inline;
+    margin: 1rem;
+    padding: .5rem;
+    border-radius: .5rem;
+    white-space: nowrap;
+}

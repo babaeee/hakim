@@ -8,6 +8,7 @@ export const getLang = () => {
 };
 
 export const changeLang = () => {
+  console.log('lang changed');
   const to = getLang() === 'fa' ? 'en' : 'fa';
   localStorage.setItem('lang', to);
   window.location.reload();
