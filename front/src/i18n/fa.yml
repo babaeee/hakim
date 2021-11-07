@@ -6,6 +6,7 @@ input_assertion: ادعای خود را وارد کنید
 loading: در حال بارگیری
 new_assertion: ادعای جدید
 no_action_for_goal: اقدامی برای این نوع هدف تعریف نشده است
+no_more_subgoal: هدف دیگری برای اثبات وجود ندارد.
 tactic_intros: معرفی
 tactic_left: چپ
 tactic_right: راست

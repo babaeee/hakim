@@ -1,4 +1,7 @@
-use crate::interactive::{tests::run_interactive, Session};
+use crate::interactive::{
+    tests::{run_interactive, EngineLevel},
+    Session,
+};
 
 use super::{SuggClass, Suggestion};
 
@@ -37,8 +40,8 @@ impl SuggRec {
     }
 }
 
-fn check_hyp_menu(goal: &str, tactics: &str, hyp: &str, recs: Vec<SuggRec>) {
-    let session = run_interactive(goal, tactics);
+fn check_hyp_menu(goal: &str, tactics: &str, hyp: &str, recs: Vec<SuggRec>, level: EngineLevel) {
+    let session = run_interactive(goal, tactics, level);
     let sugg = session.suggest_on_hyp_menu(hyp);
     if sugg.len() != recs.len() {
         panic!(
@@ -52,7 +55,7 @@ fn check_hyp_menu(goal: &str, tactics: &str, hyp: &str, recs: Vec<SuggRec>) {
 }
 
 fn check_goal_dblclk(goal: &str, tactics: &str, rec: SuggRec) {
-    let session = run_interactive(goal, tactics);
+    let session = run_interactive(goal, tactics, EngineLevel::Full);
     let sugg = session.suggest_on_goal_dblclk().unwrap();
     rec.run_sugg(sugg, session);
 }
@@ -82,5 +85,15 @@ fn eq_hyp() {
             "#,
         "eqa1a2",
         SuggRec::vc([SuggClass::Rewrite, SuggClass::Swap]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "2 = 3 -> 3 = 2",
+        r#"
+            intros eq_2_3
+            "#,
+        "eq_2_3",
+        SuggRec::vc([SuggClass::Rewrite, SuggClass::Swap]),
+        EngineLevel::Empty,
     );
 }

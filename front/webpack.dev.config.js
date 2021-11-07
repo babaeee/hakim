@@ -1,6 +1,7 @@
 const path = require('path');
 const { HotModuleReplacementPlugin, ProvidePlugin } = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const ErrorOverlayPlugin = require('error-overlay-webpack-plugin')
 
 const config = {
     mode: "development",
@@ -23,7 +24,6 @@ const config = {
                         loader: "css-loader",
                         options: {
                             url: true,
-                            modules: true,
                         },
                     }
                 ],
@@ -55,6 +55,7 @@ const config = {
         new ProvidePlugin({
             React: 'react'
         }),
+        new ErrorOverlayPlugin(),
     ],
     devtool: "inline-source-map",
     experiments: {

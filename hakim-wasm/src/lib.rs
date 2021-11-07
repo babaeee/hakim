@@ -1,3 +1,4 @@
+use backtrace::Backtrace;
 use serde::{Deserialize, Serialize};
 use std::panic;
 
@@ -34,8 +35,9 @@ pub fn start() {
         panic::set_hook(Box::new(|p| {
             panic_handler(&format!(
                 "Panic on rust side. This is a bug. The page \
-        will no longer work properly. Reload the page.\n\nMore data:\n{}",
-                p
+        will no longer work properly. Reload the page.\n\nMore data:\n{}\nBacktrace:\n{:?}",
+                p,
+                Backtrace::new(),
             ))
         }));
     });
@@ -108,11 +110,11 @@ impl Instance {
     }
 
     pub fn try_auto(&self) -> Option<String> {
-        let s = (&self.session)
-            .as_ref()?
-            .last_snapshot()
-            .clone()
-            .pop_frame();
+        let mut s = (&self.session).as_ref()?.last_snapshot().clone();
+        if s.is_finished() {
+            return None;
+        }
+        let s = s.pop_frame();
         let tac = if s.run_tactic("ring").ok().filter(|x| x.is_empty()).is_some() {
             "ring"
         } else {

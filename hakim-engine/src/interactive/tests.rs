@@ -1,7 +1,16 @@
 use super::{Engine, Session};
 
-fn build_engine() -> Engine {
+#[derive(PartialEq, Eq)]
+pub enum EngineLevel {
+    Empty,
+    Full,
+}
+
+fn build_engine(level: EngineLevel) -> Engine {
     let mut eng = Engine::default();
+    if level == EngineLevel::Empty {
+        return eng;
+    }
     eng.load_library("Arith").unwrap();
     eng.load_library("Logic").unwrap();
     eng.load_library("Eq").unwrap();
@@ -10,8 +19,8 @@ fn build_engine() -> Engine {
     eng
 }
 
-pub fn run_interactive(goal: &str, tactics: &str) -> Session {
-    let eng = build_engine();
+pub fn run_interactive(goal: &str, tactics: &str, level: EngineLevel) -> Session {
+    let eng = build_engine(level);
     let mut session = eng.interactive_session(goal).unwrap();
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
@@ -34,14 +43,14 @@ pub fn run_interactive(goal: &str, tactics: &str) -> Session {
 }
 
 pub fn run_interactive_to_end(goal: &str, tactics: &str) {
-    let session = run_interactive(goal, tactics);
+    let session = run_interactive(goal, tactics, EngineLevel::Full);
     if !session.is_finished() {
         panic!("Goal not solved:\n{}", session.monitor_string());
     }
 }
 
 pub fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
-    let mut session = run_interactive(goal, tactics);
+    let mut session = run_interactive(goal, tactics, EngineLevel::Full);
     if session.run_tactic(fail_tactic).is_ok() {
         panic!(
             "tactic succeed but we need fail. Current monitor:\n{}",
