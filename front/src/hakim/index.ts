@@ -68,16 +68,26 @@ const checkError = (error?: string) => {
 const checkErrorAndUpdate = (error?: string) => {
     if (checkError(error)) {
         emit();
+        return true;
     }
+    return false;
 };
 
 export const sendTactic = (tactic: string) => {
     console.log(`tactic: `, tactic);
-    checkErrorAndUpdate(instance.run_tactic(tactic));
+    return checkErrorAndUpdate(instance.run_tactic(tactic));
+};
+
+export const setGoal = (goal: string) => {
+    return checkErrorAndUpdate(instance.start_session(goal));
 };
 
 export const runSuggMenuHyp = (hypName: string, sugg: string) => {
-    checkErrorAndUpdate(instance.run_suggest_menu_hyp(hypName, sugg));
+    return checkErrorAndUpdate(instance.run_suggest_menu_hyp(hypName, sugg));
+};
+
+export const runSuggDblGoal = () => {
+    return checkErrorAndUpdate(instance.suggest_dblclk_goal());
 };
 
 export const suggMenuHyp = (hypName: string) => {

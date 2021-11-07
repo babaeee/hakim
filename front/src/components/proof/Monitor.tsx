@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { runSuggMenuHyp, sendTactic, State, subscribe, suggMenuHyp } from "../../hakim";
+import { runSuggDblGoal, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuHyp } from "../../hakim";
 import css from "./monitor.module.css";
 import { useMenuState, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import '@szhsin/react-menu/dist/index.css';
@@ -25,7 +25,11 @@ const Hyp = ({ name, ty }: { name: string, ty: string }): JSX.Element => {
     );
 };
 
-export const Monitor = () => {
+type MonitorProps = {
+    onFinish: () => void;
+};
+
+export const Monitor = ({ onFinish }: MonitorProps) => {
     const [s, setS] = useState(undefined as State | undefined);
     useEffect(() => {
         return subscribe((newS) => {
@@ -36,7 +40,10 @@ export const Monitor = () => {
         return <div className={css.monitor}>Loading...</div>;
     }
     if (s.isFinished) {
-        return <div className={css.monitor}>{g`no_more_subgoal`}</div>;
+        return <div className={css.monitor}>
+            {g`no_more_subgoal`}
+            <button onClick={onFinish}>{g`exit`}</button>
+        </div>;
     }
     const { hyps, goals } = s.monitor;
     return (
@@ -45,7 +52,7 @@ export const Monitor = () => {
                 <Hyp name={name} ty={ty} />
             ))}
             {[...goals].reverse().map((goal: any) => (
-                <><hr /><div>{goal}</div></>
+                <><hr /><div onDoubleClick={() => runSuggDblGoal()}>{goal}</div></>
             ))}
         </div>
     )

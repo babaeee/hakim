@@ -1,12 +1,14 @@
-import React from 'react';
-import logo from './logo.svg';
-import css from './App.module.css';
-import { changeLang, g, isRTL } from './i18n';
-import { Monitor } from './components/monitor/Monitor';
-import { History } from './components/history/history';
-import { Toolbar } from './components/toolbar/Toolbar';
+import css from './Proof.module.css';
+import { changeLang, g, isRTL } from '../../i18n';
+import { Monitor } from './Monitor';
+import { History } from './history';
+import { Toolbar } from './Toolbar';
 
-const App = () => {
+type ProofProps = {
+  onFinish: () => void;
+};
+
+export const Proof = ({ onFinish }: ProofProps) => {
   return (
     <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>
       <h1 className={css.title}>
@@ -15,7 +17,7 @@ const App = () => {
       </h1>
       <div className={css.bottomContainer}>
         <Toolbar />
-        <Monitor />
+        <Monitor onFinish={onFinish} />
         <div className={css.sidebarContainer}>
           <History />
           <History />
@@ -23,6 +25,4 @@ const App = () => {
       </div>
     </div>
   );
-}
-
-export default App;
+};
