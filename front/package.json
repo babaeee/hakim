@@ -75,7 +75,8 @@
     "yaml-loader": "^0.6.0"
   },
   "scripts": {
-    "start": "webpack serve --config webpack.dev.config.js"
+    "build": "webpack build --mode production",
+    "start": "webpack serve --mode development"
   },
   "eslintConfig": {
     "extends": [

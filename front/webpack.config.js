@@ -1,10 +1,9 @@
 const path = require('path');
 const { HotModuleReplacementPlugin, ProvidePlugin } = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ErrorOverlayPlugin = require('error-overlay-webpack-plugin')
+const ErrorOverlayPlugin = require('error-overlay-webpack-plugin');
 
 const config = {
-    mode: "development",
     output: {
         publicPath: "/",
     },
@@ -51,13 +50,10 @@ const config = {
         new HtmlWebpackPlugin({
             template: "src/index.html",
         }),
-        new HotModuleReplacementPlugin(),
         new ProvidePlugin({
             React: 'react'
         }),
-        new ErrorOverlayPlugin(),
     ],
-    devtool: "inline-source-map",
     experiments: {
         asyncWebAssembly: true
     },
@@ -70,4 +66,16 @@ const config = {
     },*/
 };
 
-module.exports = config;
+module.exports = (_, argv) => {
+    if (argv.mode === 'development') {
+        config.devtool = "inline-source-map";
+        config.plugins.push(
+            new HotModuleReplacementPlugin(),
+            new ErrorOverlayPlugin(),
+        );
+    }
+    if (argv.mode === 'production') {
+        //...
+    }
+    return config;
+};
