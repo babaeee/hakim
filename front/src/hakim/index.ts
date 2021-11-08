@@ -1,12 +1,12 @@
 import { Instance } from "../../../hakim-wasm/pkg/hakim_wasm";
 
 declare let window: Window & {
-    ask_question: (q: string) => any;
+    ask_question: (q: string) => string;
     panic_handler: (s: string) => void;
 };
 
 window.ask_question = (x) => {
-    return window.prompt(x);
+    return window.prompt(x) || '';
 };
 window.panic_handler = (x) => {
     document.body.innerHTML = `<pre>${x}</pre>`;
@@ -79,6 +79,10 @@ export const sendTactic = (tactic: string) => {
     return checkErrorAndUpdate(instance.run_tactic(tactic));
 };
 
+export const tryTactic = (tactic: string): boolean => {
+    return instance.try_tactic(tactic);
+}
+
 export const setGoal = (goal: string) => {
     return checkErrorAndUpdate(instance.start_session(goal));
 };
@@ -89,6 +93,10 @@ export const runSuggMenuHyp = (hypName: string, sugg: string) => {
 
 export const runSuggDblGoal = () => {
     return checkErrorAndUpdate(instance.suggest_dblclk_goal());
+};
+
+export const runSuggDblHyp = (hyp: string) => {
+    return checkErrorAndUpdate(instance.suggest_dblclk_hyp(hyp));
 };
 
 export const suggMenuHyp = (hypName: string) => {

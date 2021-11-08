@@ -39,6 +39,12 @@ pub enum Error {
     ContextDependOnHyp(String, TermRef),
 }
 
+impl Error {
+    pub fn is_actionable(&self) -> bool {
+        matches!(self, CanNotFindInstance(..))
+    }
+}
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl From<super::Error> for Error {

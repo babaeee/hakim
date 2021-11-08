@@ -123,6 +123,17 @@ impl Instance {
         Some(tac.to_string())
     }
 
+    pub fn try_tactic(&self, tactic: &str) -> bool {
+        let session = match &self.session {
+            Some(s) => s,
+            None => return false,
+        };
+        match session.clone().run_tactic(tactic) {
+            Ok(_) => true,
+            Err(e) => e.is_actionable(),
+        }
+    }
+
     #[wasm_bindgen]
     pub fn run_tactic(&mut self, tactic: &str) -> Option<String> {
         let session = match &mut self.session {
