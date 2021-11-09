@@ -9,7 +9,9 @@ new_assertion: ادعای جدید
 no_action_for_goal: اقدامی برای این نوع هدف تعریف نشده است
 no_more_subgoal: هدف دیگری برای اثبات وجود ندارد.
 or_choose_one_prop: یا یکی از گزاره های زیر را انتخاب کنید
+proof_screen: صفحه اثبات
 sandbox_title: زمین بازی
+search: جستجو
 submit: ارسال
 tactic_intros: معرفی
 tactic_left: چپ

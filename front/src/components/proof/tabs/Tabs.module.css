@@ -1,0 +1,29 @@
+.root {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    margin: 1rem;
+}
+
+.tabs {
+    padding: .1rem;
+}
+
+.tab {
+    background-color: yellow;
+    border-radius: .4rem;
+    margin-left: 1rem;
+}
+
+.tab.selected {
+    background-color: red;
+    color: white;
+}
+
+.body {
+    flex: 1;
+    border-radius: 1rem;
+    background-color: black;
+    color: white;
+    padding: 1rem;
+}

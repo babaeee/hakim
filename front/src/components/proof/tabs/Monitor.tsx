@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { runSuggDblGoal, runSuggDblHyp, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuHyp, tryTactic } from "../../hakim";
-import css from "./monitor.module.css";
+import { runSuggDblGoal, runSuggDblHyp, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuHyp, tryTactic } from "../../../hakim";
+import css from "./Monitor.module.css";
 import { useMenuState, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import '@szhsin/react-menu/dist/index.css';
-import { g } from "../../i18n";
+import { g } from "../../../i18n";
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import classNames from "classnames";
+import { TabsProps } from "./Tabs";
 
 type HypProps = {
     name: string,
@@ -96,11 +97,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     );
 };
 
-type MonitorProps = {
-    onFinish: () => void;
-};
-
-export const Monitor = ({ onFinish }: MonitorProps) => {
+export const Monitor = ({ onFinish }: TabsProps) => {
     const [s, setS] = useState(undefined as State | undefined);
     useEffect(() => {
         return subscribe((newS) => {

@@ -83,6 +83,21 @@ export const tryTactic = (tactic: string): boolean => {
     return instance.try_tactic(tactic);
 }
 
+export type SearchResult = {
+    name: string,
+    ty: string,
+};
+
+export const searchPattern = (expr: string): SearchResult[] => {
+    return instance.search(expr).split('\n').filter((x) => x.trim() !== '').map((x) => {
+        let y = x.split(': ');
+        return {
+            name: y[0],
+            ty: y.slice(1).join(': '),
+        };
+    });
+};
+
 export const setGoal = (goal: string) => {
     return checkErrorAndUpdate(instance.start_session(goal));
 };

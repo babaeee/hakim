@@ -1,18 +1,9 @@
-.monitor {
-  flex: 2;
-  border-radius: 1rem;
-  background-color: black;
-  color: white;
-  margin: 1rem;
-  padding: 1rem;
-}
-
 .hyp {
   touch-action: none;
   user-select: none;
   display: block !important;
-  padding: 10px;
-  margin: 5px;
+  padding: .2rem;
+  margin: .1rem;
   background-color: #1e1e1e;
   border-radius: 10px;
   border: 1.5px dashed #1e1e1e;

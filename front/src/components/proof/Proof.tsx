@@ -1,8 +1,8 @@
 import css from './Proof.module.css';
 import { changeLang, g } from '../../i18n';
-import { Monitor } from './Monitor';
 import { History } from './history';
 import { Toolbar } from './Toolbar';
+import { Tabs } from './tabs/Tabs';
 
 type ProofProps = {
   onFinish: () => void;
@@ -18,7 +18,7 @@ export const Proof = ({ onFinish }: ProofProps) => {
       </h1>
       <div className={css.bottomContainer}>
         <Toolbar />
-        <Monitor onFinish={onFinish} />
+        <Tabs onFinish={onFinish} />
         <div className={css.sidebarContainer}>
           <History />
           <History />
