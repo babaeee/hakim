@@ -17,11 +17,7 @@ const tabs: tabName[] = [
     'proof_screen', 'search',
 ];
 
-export type TabsProps = {
-    onFinish: () => void,
-}
-
-export const Tabs = ({ onFinish }: TabsProps) => {
+export const Tabs = () => {
     const [ct, setCt] = useState(tabs[0]);
     const Comp = tabComponents[ct];
     return (
@@ -34,7 +30,7 @@ export const Tabs = ({ onFinish }: TabsProps) => {
                 >{getText(x)}</button>)}
             </div>
             <div className={css.body}>
-                <Comp onFinish={onFinish} />
+                <Comp />
             </div>
         </div>
     )

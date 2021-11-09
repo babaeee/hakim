@@ -13,7 +13,7 @@ export const History = () => {
     return (
         <div className={css.base}>
             <ul dir="ltr" className={css.scroll}>
-                {s.map((x) => <li key={x}>{x}</li>)}
+                {s.map((x, i) => <li key={i}>{x}</li>)}
             </ul>
             <button onClick={() => sendTactic('Undo')}>{g`undo`}</button>
         </div>

@@ -10,3 +10,15 @@
     max-height: 25vh;
     overflow: auto;
 }
+.lemma {
+    display: inline;
+    background-color: yellow;
+    color: black;
+    border-radius: .4rem;
+    margin: 0 .3rem;
+    padding: .2rem;
+}
+
+.lemmaBox {
+    line-height: 2rem;
+}

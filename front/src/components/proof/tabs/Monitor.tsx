@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { runSuggDblGoal, runSuggDblHyp, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuHyp, tryTactic } from "../../../hakim";
 import css from "./Monitor.module.css";
 import { useMenuState, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import '@szhsin/react-menu/dist/index.css';
 import { g } from "../../../i18n";
-import { DndProvider, useDrag, useDrop } from 'react-dnd'
-import { HTML5Backend } from 'react-dnd-html5-backend'
+import { useDrag, useDrop } from 'react-dnd'
 import classNames from "classnames";
-import { TabsProps } from "./Tabs";
+import { ProofContext } from "../Proof";
 
 type HypProps = {
     name: string,
@@ -97,7 +96,8 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     );
 };
 
-export const Monitor = ({ onFinish }: TabsProps) => {
+export const Monitor = () => {
+    const { onFinish } = useContext(ProofContext);
     const [s, setS] = useState(undefined as State | undefined);
     useEffect(() => {
         return subscribe((newS) => {
@@ -115,15 +115,13 @@ export const Monitor = ({ onFinish }: TabsProps) => {
     }
     const { hyps, goals } = s.monitor;
     return (
-        <DndProvider backend={HTML5Backend}>
-            <div className={css.monitor} dir="ltr">
-                {hyps.map(([name, ty]: any) => (
-                    <Hyp name={name} ty={ty} />
-                ))}
-                {[...goals].reverse().map((goal: any) => (
-                    <><hr /><Goal ty={goal} /></>
-                ))}
-            </div>
-        </DndProvider>
+        <div className={css.monitor} dir="ltr">
+            {hyps.map(([name, ty]: any) => (
+                <Hyp name={name} ty={ty} />
+            ))}
+            {[...goals].reverse().map((goal: any) => (
+                <><hr /><Goal ty={goal} /></>
+            ))}
+        </div>
     )
 };
