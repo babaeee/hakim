@@ -1,4 +1,4 @@
-.history {
+.base {
     flex: 1;
     border-radius: 1rem;
     background-color: black;
@@ -6,4 +6,7 @@
     margin: 1rem;
     padding: 1rem;
 }
-  
+.scroll {
+    max-height: 25vh;
+    overflow: auto;
+}
