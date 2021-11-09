@@ -36,7 +36,12 @@ export const Toolbar = () => {
         <div className={css.toolContain}>
             <ToolButton onClick={newAssert} label={g`new_assertion`} />
             <AutoProofButton />
-            <ToolButton onClick={() => { }} label="1" />
+            <ToolButton onClick={() => {
+                const tactic = window.prompt(g`enter_tactic`);
+                if (tactic) {
+                    sendTactic(tactic);
+                }
+            }} label={g`custom_tactic`} />
         </div>
     );
 };

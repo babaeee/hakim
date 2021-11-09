@@ -1,6 +1,8 @@
 auto_proof: اثبات خودکار
 babaeee_coq: اثبات چک کن ببعییی
 change_lang: تغییر زبان
+custom_tactic: تاکتیک سفارشی
+enter_tactic: تاکتیک خود را وارد کنید
 exit: خروج
 induction_on: استقرا روی
 input_assertion: ادعای خود را وارد کنید
