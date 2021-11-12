@@ -93,7 +93,7 @@ fn eq_hyp() {
             intros eq_2_3
             "#,
         "eq_2_3",
-        SuggRec::vc([SuggClass::Rewrite, SuggClass::Swap]),
+        SuggRec::vc([SuggClass::Rewrite]),
         EngineLevel::Empty,
     );
 }

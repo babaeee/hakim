@@ -16,6 +16,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
+    libs: im::HashMap<String, ()>,
 }
 
 impl Default for Engine {
@@ -30,7 +31,8 @@ impl Default for Engine {
         name_dict.insert("eq".to_string(), prelude::eq());
         name_dict.insert("plus".to_string(), prelude::plus());
         name_dict.insert("mult".to_string(), prelude::mult());
-        Self { name_dict }
+        let libs = im::HashMap::<String, ()>::default();
+        Self { name_dict, libs }
     }
 }
 
@@ -115,7 +117,9 @@ impl Engine {
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {
-        load_library_by_name(self, name)
+        load_library_by_name(self, name)?;
+        self.libs.insert(name.to_string(), ());
+        Ok(())
     }
 
     pub fn search(&self, query: &str) -> Result<Vec<String>> {
@@ -150,5 +154,9 @@ impl Engine {
 
     pub fn interactive_session(&self, goal: &str) -> Result<Session> {
         Session::new(self.clone(), goal)
+    }
+
+    pub(crate) fn has_library(&self, arg: &str) -> bool {
+        self.libs.contains_key(arg)
     }
 }

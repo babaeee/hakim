@@ -8,10 +8,12 @@ pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Sug
     match c {
         TermClass::Eq => {
             r.push(Suggestion::new(Rewrite, &format!("rewrite {}", name)));
-            r.push(Suggestion::new(
-                Swap,
-                &format!("apply (eq_sym ? ? ?) in {}", name),
-            ));
+            if engine.has_library("Eq") {
+                r.push(Suggestion::new(
+                    Swap,
+                    &format!("apply (eq_sym ? ? ?) in {}", name),
+                ));
+            }
         }
         TermClass::Exists => {
             let val_name = engine.generate_name(&format!("{}_value", name));
