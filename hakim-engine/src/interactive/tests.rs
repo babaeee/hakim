@@ -212,9 +212,9 @@ fn exists_destruct() {
         "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
         r#"
         intros P px_p2x exP
-        apply ex_ind (3:=exP)
+        apply (ex_ind ? ? exP)
         intros exP_value exP_proof
-        apply ex_intro (3:=exP_value)
+        apply (ex_intro ? ? exP_value)
         apply px_p2x
         apply exP_proof
         "#,
@@ -227,7 +227,7 @@ fn forall_not_exist() {
         "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
         r#"
         intros A P fa exi
-        apply ex_ind (3:=exi)
+        apply (ex_ind ? ? exi)
         intros exv exv_not_p
         apply (exv_not_p (fa exv))
         "#,
@@ -236,7 +236,7 @@ fn forall_not_exist() {
         "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
         r#"
         intros A P fa exi
-        apply ex_ind (3:=exi)
+        apply (ex_ind ? ? exi)
         intros exv exv_not_p
         apply exv_not_p
         apply fa

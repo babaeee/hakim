@@ -66,7 +66,7 @@ fn exist_goal() {
         "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
         r#"
             intros P px_p2x exP
-            apply ex_ind (3:=exP)
+            apply (ex_ind ? ? exP)
             intros exP_value exP_proof
             "#,
         SuggRec {

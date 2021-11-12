@@ -21,7 +21,7 @@ pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Sug
             r.push(Suggestion {
                 class: Destruct,
                 tactic: vec![
-                    format!("apply ex_ind (3:={})", name),
+                    format!("apply (ex_ind ? ? {})", name),
                     format!("remove_hyp {}", name),
                     format!("intros {} {}", val_name, proof_name),
                 ],
@@ -43,7 +43,7 @@ pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &TermRef) -> Optio
             Suggestion {
                 class: Destruct,
                 tactic: vec![
-                    format!("apply ex_ind (3:={})", name),
+                    format!("apply (ex_ind ? ? {})", name),
                     format!("remove_hyp {}", name),
                     format!("intros {} {}", val_name, proof_name),
                 ],
