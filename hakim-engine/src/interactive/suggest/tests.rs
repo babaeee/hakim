@@ -61,6 +61,20 @@ fn check_goal_dblclk(goal: &str, tactics: &str, rec: SuggRec) {
 }
 
 #[test]
+fn exist_paran() {
+    check_goal_dblclk(
+        "∀ a: ℤ, ∃ b: ℤ, a < b",
+        r#"
+            intros a
+            "#,
+        SuggRec {
+            class: SuggClass::Destruct,
+            ans: vec!["a + 1".to_string()],
+        },
+    );
+}
+
+#[test]
 fn exist_goal() {
     check_goal_dblclk(
         "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",

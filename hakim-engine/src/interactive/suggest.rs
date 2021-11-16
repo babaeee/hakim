@@ -79,7 +79,9 @@ pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
     let c = detect_class(goal);
     Some(match c {
         TermClass::Forall => Suggestion::new(Intros, "intros"),
-        TermClass::Exists => Suggestion::newq1(Destruct, "apply (ex_intro ? ? $0)", "Enter value"),
+        TermClass::Exists => {
+            Suggestion::newq1(Destruct, "apply (ex_intro ? ? ($0))", "Enter value")
+        }
         TermClass::Eq | TermClass::Unknown => return None,
     })
 }
