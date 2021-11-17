@@ -1,15 +1,67 @@
 use crate::{
     app_ref,
     brain::{
-        contains_wild, get_forall_depth,
+        contains_wild, fill_wild, get_forall_depth,
         infer::{match_and_infer, type_of_and_infer, InferResults},
-        normalize, predict_axiom,
+        map_reduce_wild, normalize, predict_axiom, TermRef,
     },
+    engine::Engine,
     interactive::Frame,
     term_ref,
 };
 
 use super::{Error::*, Result};
+
+#[derive(Debug)]
+pub struct FindInstance {
+    infer: InferResults,
+    exp: TermRef,
+    engine: Engine,
+}
+
+impl FindInstance {
+    pub(crate) fn first_needed_wild(&self) -> usize {
+        let mut r = None;
+        for ty in &self.infer.tys {
+            let t = map_reduce_wild(ty, &|x| Some(x), &std::cmp::min);
+            if let Some(tv) = t {
+                if let Some(rv) = r {
+                    if rv > tv {
+                        r = t;
+                    }
+                } else {
+                    r = t;
+                }
+            }
+        }
+        r.unwrap()
+    }
+
+    pub fn question_text(&self) -> String {
+        let mut r = format!("In applying {:?}\n\nWe know:\n", self.exp);
+        for i in 0..self.infer.n {
+            r += &format!(
+                "?w{} = {:?} : {:?}\n",
+                i, self.infer.terms[i], self.infer.tys[i]
+            );
+        }
+        r += &format!("\nEnter value of ?w{}:\n", self.first_needed_wild());
+        r
+    }
+
+    pub fn tactic_by_answer(self, filler: &str) -> Result<String> {
+        let filler = self.engine.parse_text(filler)?;
+        let id = self.first_needed_wild();
+        let exp = fill_wild(self.exp, &|x| {
+            if x == id {
+                filler.clone()
+            } else {
+                term_ref!(_ x)
+            }
+        });
+        Ok(format!("apply ({:?})", exp))
+    }
+}
 
 fn apply_for_hyp(mut frame: Frame, exp: &str, name: String) -> Result<Vec<Frame>> {
     let (term, ic) = frame.engine.parse_text_with_wild(exp)?;
@@ -41,7 +93,7 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
         inf_num += 1;
     }
     let mut infers = InferResults::new(inf_num);
-    let twa_ty = type_of_and_infer(twa, &mut infers)?;
+    let twa_ty = type_of_and_infer(twa.clone(), &mut infers)?;
     match_and_infer(twa_ty, goal, &mut infers)?;
     let mut v = vec![];
     for i in 0..inf_num {
@@ -53,13 +105,17 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
             frame.goal = normalize(infers.tys[i].clone());
             v.push(frame);
         } else {
-            return Err(CanNotFindInstance(i, ty));
+            return Err(CanNotFindInstance(FindInstance {
+                engine: frame.engine,
+                infer: infers,
+                exp: twa,
+            }));
         }
     }
     Ok(v)
 }
 
-pub fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let exp = &args.next().ok_or(BadArgCount {
         expected: 1,
         found: 0,

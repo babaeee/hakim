@@ -99,6 +99,6 @@ pub fn term_pretty_print(
                 s
             }
         }
-        Term::Wild { index } => format!("_{}", index),
+        Term::Wild { index } => format!("?w{}", index),
     }
 }

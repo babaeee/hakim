@@ -8,6 +8,7 @@ use crate::{brain::get_universe, term_ref};
 use std::cmp::max;
 use std::iter::once;
 
+#[derive(Debug)]
 pub struct InferResults {
     pub n: usize,
     pub terms: Vec<TermRef>,

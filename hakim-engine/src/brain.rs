@@ -106,19 +106,34 @@ pub type Result<T> = std::result::Result<T, Error>;
 use num_bigint::BigInt;
 use Error::*;
 
+pub fn map_reduce_wild<T>(
+    t: &TermRef,
+    map: &impl Fn(usize) -> Option<T>,
+    reduce: &impl Fn(T, T) -> T,
+) -> Option<T> {
+    let combine = |a, b| {
+        let a = map_reduce_wild(a, map, reduce);
+        let b = map_reduce_wild(b, map, reduce);
+        match (a, b) {
+            (Some(a), Some(b)) => Some(reduce(a, b)),
+            (Some(a), None) | (None, Some(a)) => Some(a),
+            (None, None) => None,
+        }
+    };
+    match t.as_ref() {
+        Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => None,
+        Term::App { func, op } => combine(func, op),
+        Term::Forall(Abstraction { var_ty, body }) | Term::Fun(Abstraction { var_ty, body }) => {
+            combine(var_ty, body)
+        }
+        Term::Wild { index } => map(*index),
+    }
+}
+
 /// if expression contains some wilds, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is id of wilds. In case of no wild, it will return false
 pub fn predict_wild(t: &TermRef, predict: &impl Fn(usize) -> bool) -> bool {
-    match t.as_ref() {
-        Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => {
-            false
-        }
-        Term::App { func, op } => predict_wild(func, predict) || predict_wild(op, predict),
-        Term::Forall(Abstraction { var_ty, body }) | Term::Fun(Abstraction { var_ty, body }) => {
-            predict_wild(var_ty, predict) || predict_wild(body, predict)
-        }
-        Term::Wild { index } => predict(*index),
-    }
+    map_reduce_wild(t, &|x| if predict(x) { Some(()) } else { None }, &|_, _| ()).is_some()
 }
 
 /// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)

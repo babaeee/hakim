@@ -8,7 +8,7 @@ use crate::engine::{Engine, Error};
 mod tests;
 
 mod suggest;
-mod tactic;
+pub mod tactic;
 
 use tactic::{add_hyp, apply, intros, rewrite, ring};
 

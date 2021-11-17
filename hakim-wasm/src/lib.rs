@@ -4,7 +4,7 @@ use std::panic;
 
 use hakim_engine::{
     engine::Engine,
-    interactive::{Session, Suggestion},
+    interactive::{tactic::Error, Session, Suggestion},
 };
 use wasm_bindgen::prelude::*;
 
@@ -142,6 +142,10 @@ impl Instance {
         };
         match session.run_tactic(tactic) {
             Ok(_) => None,
+            Err(Error::CanNotFindInstance(e)) => {
+                let ans = ask_question(&e.question_text());
+                self.run_tactic(&e.tactic_by_answer(&ans).ok()?)
+            }
             Err(e) => Some(format!("{:?}", e)),
         }
     }

@@ -1,19 +1,19 @@
 use crate::brain::{self, TermRef};
 
 mod rewrite;
-pub use rewrite::rewrite;
+pub(crate) use rewrite::rewrite;
 
 mod ring;
-pub use ring::ring;
+pub(crate) use ring::ring;
 
 mod intros;
-pub use intros::intros;
+pub(crate) use intros::intros;
 
 mod apply;
-pub use apply::apply;
+pub(crate) use apply::apply;
 
 mod hyps;
-pub use hyps::{add_hyp, remove_hyp};
+pub(crate) use hyps::{add_hyp, remove_hyp};
 
 #[derive(Debug)]
 pub enum Error {
@@ -35,7 +35,7 @@ pub enum Error {
     CanNotUndo,
     EmptyTactic,
     EngineError(super::Error),
-    CanNotFindInstance(usize, TermRef),
+    CanNotFindInstance(FindInstance),
     ContextDependOnHyp(String, TermRef),
 }
 
@@ -61,7 +61,12 @@ impl From<brain::Error> for Error {
 
 use Error::*;
 
-pub fn get_one_arg(mut args: impl Iterator<Item = String>, tactic_name: &str) -> Result<String> {
+use self::apply::FindInstance;
+
+pub(crate) fn get_one_arg(
+    mut args: impl Iterator<Item = String>,
+    tactic_name: &str,
+) -> Result<String> {
     let arg1 = args.next().ok_or(BadArgCount {
         tactic_name: tactic_name.to_string(),
         expected: 1,

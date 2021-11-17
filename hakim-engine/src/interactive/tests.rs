@@ -1,3 +1,5 @@
+use crate::interactive::tactic::Error;
+
 use super::{Engine, Session};
 
 #[derive(PartialEq, Eq)]
@@ -159,6 +161,30 @@ fn apply_implicit_fail_instance() {
     );
 }
 // ∀ x0: U, ∀ x1: x0 → U, (∀ x2: x0, x1 x2) → (x0 → ∃ x2: x0, x1 x2)
+
+#[test]
+fn fail_instance_recovery() {
+    let mut se = run_interactive(
+        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
+        r#"
+        intros a b c d a_lt_b c_lt_d
+        add_hyp (a + c < b + c)
+        apply lt_plus_r
+        apply a_lt_b
+        add_hyp (b + c < b + d)
+        apply lt_plus_l
+        apply c_lt_d"#,
+        EngineLevel::Full,
+    );
+    let e = se.run_tactic("apply lt_trans");
+    if let Err(Error::CanNotFindInstance(e)) = e {
+        assert_eq!(e.first_needed_wild(), 1);
+        let tac = e.tactic_by_answer("b + c").unwrap();
+        se.run_tactic(&tac).unwrap();
+        return;
+    }
+    panic!("Expected to not finding instance");
+}
 
 #[test]
 fn exists_simple() {

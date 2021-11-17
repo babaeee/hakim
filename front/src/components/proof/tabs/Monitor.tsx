@@ -96,6 +96,14 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     );
 };
 
+const NextGoal = ({ ty }: { ty: string }) => {
+    return (
+        <div className={css.hyp}>
+            {ty}
+        </div>
+    )
+};
+
 export const Monitor = () => {
     const { onFinish } = useContext(ProofContext);
     const [s, setS] = useState(undefined as State | undefined);
@@ -114,13 +122,15 @@ export const Monitor = () => {
         </div>;
     }
     const { hyps, goals } = s.monitor;
+    const goalsR = [...goals].reverse();
     return (
         <div className={css.monitor} dir="ltr">
             {hyps.map(([name, ty]: any) => (
                 <Hyp name={name} ty={ty} />
             ))}
-            {[...goals].reverse().map((goal: any) => (
-                <><hr /><Goal ty={goal} /></>
+            <hr /><Goal ty={goalsR[0]} />
+            {goalsR.slice(1).map((goal: any) => (
+                <><hr /><NextGoal ty={goal} /></>
             ))}
         </div>
     )
