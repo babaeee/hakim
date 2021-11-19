@@ -2,6 +2,25 @@ use std::cmp::min;
 
 use crate::{parser::binop::BinOp, Abstraction, Term, TermRef};
 
+fn detect_set(t: &TermRef) -> Option<(TermRef, TermRef)> {
+    match t.as_ref() {
+        Term::App { func, op: op2 } => match func.as_ref() {
+            Term::App { func, op: op1 } => match func.as_ref() {
+                Term::Axiom { ty: _, unique_name } => {
+                    if unique_name == "set_from_func" {
+                        Some((op1.clone(), op2.clone()))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 fn detect_exists(t: &TermRef) -> Option<(TermRef, TermRef)> {
     match t.as_ref() {
         Term::App { func, op: op2 } => match func.as_ref() {
@@ -21,18 +40,26 @@ fn detect_exists(t: &TermRef) -> Option<(TermRef, TermRef)> {
     }
 }
 
-fn abstraction_pretty_print(
-    sign: &str,
+fn abstraction_pretty_print_inner(
     abs: &Abstraction,
     name_stack: &mut Vec<(String, usize)>,
-    should_paren: bool,
-) -> String {
+) -> (String, String, String) {
     let Abstraction { var_ty, body } = abs;
     let name = format!("x{}", name_stack.len());
     let var_ty_str = term_pretty_print(var_ty.clone(), name_stack, (200, 200));
     name_stack.push((name.clone(), 0));
     let body_str = term_pretty_print(body.clone(), name_stack, (200, 200));
     name_stack.pop();
+    (name, var_ty_str, body_str)
+}
+
+fn abstraction_pretty_print(
+    sign: &str,
+    abs: &Abstraction,
+    name_stack: &mut Vec<(String, usize)>,
+    should_paren: bool,
+) -> String {
+    let (name, var_ty_str, body_str) = abstraction_pretty_print_inner(abs, name_stack);
     if should_paren {
         format!("({} {}: {}, {})", sign, name, var_ty_str, body_str)
     } else {
@@ -48,6 +75,12 @@ pub fn term_pretty_print(
     if let Some((_, fun)) = detect_exists(&term) {
         if let Term::Fun(x) = fun.as_ref() {
             return abstraction_pretty_print("∃", x, name_stack, level.1 < 200);
+        }
+    }
+    if let Some((_, fun)) = detect_set(&term) {
+        if let Term::Fun(x) = fun.as_ref() {
+            let (name, ty, body) = abstraction_pretty_print_inner(x, name_stack);
+            return format!("{{ {}: {} | {} }}", name, ty, body);
         }
     }
     if let Some((l, op, r)) = BinOp::detect(&term) {

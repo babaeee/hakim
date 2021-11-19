@@ -66,3 +66,8 @@ fn eq() {
     parse_pretty("2 = 3");
     parse_pretty("∃ x0: ℤ, x0 = x0 + x0");
 }
+
+#[test]
+fn sets() {
+    parse_pretty("{ x0: ℤ | x0 < 5 }");
+}
