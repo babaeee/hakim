@@ -48,6 +48,7 @@ jobs:
           npm install -g yarn
           yarn
           yarn build
+          echo "proof.babaeee.ir" > build/CNAME
       
       - name: Deploy to github pages
         if: success()
