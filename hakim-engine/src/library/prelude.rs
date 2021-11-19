@@ -1,4 +1,4 @@
-use crate::{term_ref, TermRef};
+use crate::{app_ref, brain::Term, term_ref, TermRef};
 
 pub fn u() -> TermRef {
     term_ref!(universe 0)
@@ -44,4 +44,12 @@ pub fn or() -> TermRef {
 }
 pub fn and() -> TermRef {
     term_ref!(axiom "and", forall u(), forall u(), u())
+}
+pub fn set() -> TermRef {
+    term_ref!(axiom "set", forall u(), u())
+}
+//∀ x0: U, (x0 → U) → set x0
+pub fn set_from_func() -> TermRef {
+    term_ref!(axiom "set_from_func", forall u(),
+        forall term_ref!(forall v0(), u()), app_ref!(set(), v1()))
 }
