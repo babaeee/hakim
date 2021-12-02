@@ -5,8 +5,9 @@ import css from "./Sandbox.module.css";
 type SanboxProps = {
     onFinish: (goal: string) => void,
 };
-
+//∀ A: U, ∀ a: A, In A (empty A) a -> False
 const exampleGoals = [
+    '∀ A: U, ∀ a: A, In A (empty A) a -> False',
     '∀ a b c d: ℤ, a < b -> c < d -> a + c < b + d',
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, P x',
     '∀ a: ℤ, ∃ b: ℤ, a < b',

@@ -9,24 +9,27 @@ use super::{
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, TermRef},
-    library::prelude::ex,
+    library::prelude::{ex, set_from_func},
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
 
 #[derive(Debug)]
+pub struct AstAbs {
+    name: Vec<String>,
+    ty: Box<AstTerm>,
+    body: Box<AstTerm>,
+}
+
+#[derive(Debug)]
 pub enum AstTerm {
-    Abs {
-        sign: AbsSign,
-        name: Vec<String>,
-        ty: Box<AstTerm>,
-        body: Box<AstTerm>,
-    },
+    Abs(AbsSign, AstAbs),
     Ident(String),
     App(Box<AstTerm>, Box<AstTerm>),
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
     Number(BigInt),
     Wild(Option<String>),
+    Set(AstAbs),
 }
 
 use num_bigint::BigInt;
@@ -69,6 +72,17 @@ trait TokenEater {
         }
     }
 
+    fn eat_set(&mut self) -> Result<AstTerm> {
+        self.eat_sign("{")?;
+        let name = vec![self.eat_ident()?];
+        self.eat_sign(":")?;
+        let ty = Box::new(self.eat_ast()?);
+        self.eat_sign("|")?;
+        let body = Box::new(self.eat_ast()?);
+        self.eat_sign("}")?;
+        Ok(Set(AstAbs { name, ty, body }))
+    }
+
     fn eat_ast_without_app(&mut self) -> Result<AstTerm> {
         match self.peek_token()? {
             Token::Ident(s) => {
@@ -88,12 +102,7 @@ trait TokenEater {
                 let ty = Box::new(self.eat_ast()?);
                 self.eat_sign(",")?;
                 let body = Box::new(self.eat_ast()?);
-                Ok(Abs {
-                    sign,
-                    name,
-                    ty,
-                    body,
-                })
+                Ok(Abs(sign, AstAbs { name, ty, body }))
             }
             Token::Sign(s) => match s.as_str() {
                 "(" => {
@@ -102,6 +111,7 @@ trait TokenEater {
                     self.eat_sign(")")?;
                     Ok(r)
                 }
+                "{" => self.eat_set(),
                 _ => Err(ExpectedExprButGot(Token::Sign(s))),
             },
             Token::Number(x) => {
@@ -206,12 +216,17 @@ pub fn ast_to_term(
     infer_cnt: &mut usize,
 ) -> Result<TermRef> {
     match ast {
-        Abs {
-            sign,
-            name,
-            ty,
-            body,
-        } => {
+        Set(AstAbs { name, ty, body }) => {
+            let ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
+            assert_eq!(name.len(), 1);
+            let name = name.into_iter().next().unwrap();
+            name_stack.push(name);
+            let body = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt)?;
+            name_stack.pop();
+            let fun = pack_abstraction(AbsSign::Fun, ty_term.clone(), body);
+            Ok(app_ref!(set_from_func(), ty_term, fun))
+        }
+        Abs(sign, AstAbs { name, ty, body }) => {
             let mut ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
             let mut tys = vec![];
             for n in name {
