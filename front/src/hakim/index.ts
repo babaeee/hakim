@@ -19,6 +19,7 @@ instance.load_library('Eq');
 instance.load_library('Logic');
 instance.load_library('Induction');
 instance.load_library('Sigma');
+instance.load_library('Set');
 
 export type State = {
     history: string[],

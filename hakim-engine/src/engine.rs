@@ -31,6 +31,9 @@ impl Default for Engine {
         name_dict.insert("eq".to_string(), prelude::eq());
         name_dict.insert("plus".to_string(), prelude::plus());
         name_dict.insert("mult".to_string(), prelude::mult());
+        name_dict.insert("or".to_string(), prelude::or());
+        name_dict.insert("and".to_string(),prelude::and());
+        name_dict.insert("Iff".to_string(),prelude::iff());
         name_dict.insert("set".to_string(), prelude::set());
         name_dict.insert("set_from_func".to_string(), prelude::set_from_func());
         let libs = im::HashMap::<String, ()>::default();

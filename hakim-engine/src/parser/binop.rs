@@ -3,6 +3,7 @@ pub enum BinOp {
     And,
     App,
     Eq,
+    Iff,
     Imply,
     Lt,
     Mult,
@@ -29,6 +30,7 @@ impl Display for BinOp {
             Mult => "*",
             Or => "∨",
             Plus => "+",
+            Iff => "↔",
         })
     }
 }
@@ -65,6 +67,7 @@ impl BinOp {
             App => 0,
             Eq => 70,
             Imply => 99,
+            Iff => 98,
             Lt => 70,
             Mult => 40,
             Plus => 50,
@@ -77,6 +80,7 @@ impl BinOp {
         match self {
             App => Left,
             Eq => No,
+            Iff => Comm,
             Imply => Right,
             Lt => No,
             Mult => Comm,
@@ -90,6 +94,7 @@ impl BinOp {
         Some(match op {
             "∧" => And,
             "=" => Eq,
+            "↔" => Iff,
             "→" => Imply,
             "<" => Lt,
             "*" => Mult,
@@ -108,6 +113,7 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(eq(), w, l, r)
             }
+            Iff => app_ref!(iff(), l, r),
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
             Lt => app_ref!(lt(), l, r),
             Mult => app_ref!(mult(), l, r),
@@ -128,6 +134,7 @@ impl BinOp {
                         _ => None,
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
+                        "iff" => Some((op.clone(), BinOp::Iff, op2.clone())),
                         "plus" => Some((op.clone(), BinOp::Plus, op2.clone())),
                         "mult" => Some((op.clone(), BinOp::Mult, op2.clone())),
                         "lt" => Some((op.clone(), BinOp::Lt, op2.clone())),

@@ -7,4 +7,5 @@ fn all() {
     eng.load_library("Logic").unwrap();
     eng.load_library("Eq").unwrap();
     eng.load_library("Sigma").unwrap();
+    eng.load_library("Set").unwrap();
 }
