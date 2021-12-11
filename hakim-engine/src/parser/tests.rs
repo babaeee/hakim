@@ -68,9 +68,11 @@ fn eq() {
 }
 
 #[test]
-fn iff_check () {
+fn iff_check() {
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, x0 = x1 ↔ x0 + 3 = x1 + 3");
 }
+
+#[test]
 fn sets() {
     parse_pretty("{ x0: ℤ | x0 < 5 }");
 }
