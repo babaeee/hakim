@@ -1,4 +1,4 @@
-use crate::{app_ref, brain::Term, term_ref, TermRef};
+use crate::{app_ref, brain::Term, term, term_ref, TermRef};
 
 pub fn u() -> TermRef {
     term_ref!(universe 0)
@@ -23,6 +23,9 @@ fn v0() -> TermRef {
 }
 fn v1() -> TermRef {
     term_ref!(v 1)
+}
+fn v2() -> TermRef {
+    term_ref!(v 2)
 }
 pub fn eq() -> TermRef {
     term_ref!(axiom "eq" , forall u(), forall v0(), forall v1(), u())
@@ -55,4 +58,23 @@ pub fn set() -> TermRef {
 pub fn set_from_func() -> TermRef {
     term_ref!(axiom "set_from_func", forall u(),
         forall term_ref!(forall v0(), u()), app_ref!(set(), v1()))
+}
+pub fn inset() -> TermRef {
+    term_ref!(axiom "inset", forall u(), forall v0(), forall app_ref!(set(), v1()), u())
+}
+pub fn union() -> TermRef {
+    term_ref!(axiom "union", forall u(), 
+        forall app_ref!(set(), v0()), forall app_ref!(set(), v1()), app_ref!(set(), v2()))
+}
+pub fn intersection() -> TermRef {
+    term_ref!(axiom "intersection", forall u(), 
+        forall app_ref!(set(), v0()), forall app_ref!(set(), v1()), app_ref!(set(), v2()))
+}
+pub fn setminus() -> TermRef {
+    term_ref!(axiom "setminus", forall u(), 
+        forall app_ref!(set(), v0()), forall app_ref!(set(), v1()), app_ref!(set(), v2()))
+}
+pub fn included() -> TermRef {
+    term_ref!(axiom "included", forall u(), 
+        forall app_ref!(set(), v0()), forall app_ref!(set(), v1()), u())
 }

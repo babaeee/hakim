@@ -5,10 +5,15 @@ pub enum BinOp {
     Eq,
     Iff,
     Imply,
+    Included,
+    Intersection,
+    Inset,
     Lt,
     Mult,
     Or,
     Plus,
+    Setminus,
+    Union,
 }
 
 #[derive(PartialEq, Eq)]
@@ -25,17 +30,25 @@ impl Display for BinOp {
             And => "∧",
             App => " ",
             Eq => "=",
+            Iff => "↔",
             Imply => "→",
+            Included => "⊆",
+            Intersection => "∩",
+            Inset => "∈",
             Lt => "<",
             Mult => "*",
             Or => "∨",
             Plus => "+",
-            Iff => "↔",
+            Union => "∪",
+            Setminus => "∖",
         })
     }
 }
 
-use std::fmt::{Display, Formatter};
+use std::{
+    collections::btree_set,
+    fmt::{Display, Formatter},
+};
 
 use Assoc::*;
 use BinOp::*;
@@ -65,28 +78,38 @@ impl BinOp {
     pub fn prec(&self) -> u8 {
         match self {
             App => 0,
+            And => 79,
             Eq => 70,
             Imply => 99,
             Iff => 98,
+            Included => 70,
+            Intersection => 40,
+            Inset => 70,
             Lt => 70,
             Mult => 40,
             Plus => 50,
             Or => 85,
-            And => 80,
+            Union => 50,
+            Setminus => 30,
         }
     }
 
     pub fn assoc(&self) -> Assoc {
         match self {
+            And => Comm,
             App => Left,
             Eq => No,
             Iff => Comm,
             Imply => Right,
+            Included => No,
+            Intersection => Comm,
+            Inset => No,
             Lt => No,
             Mult => Comm,
-            Plus => Comm,
             Or => Comm,
-            And => Comm,
+            Plus => Comm,
+            Union => Comm,
+            Setminus => Comm,
         }
     }
 
@@ -96,16 +119,22 @@ impl BinOp {
             "=" => Eq,
             "↔" => Iff,
             "→" => Imply,
+            "⊆" => Included,
+            "∩" => Intersection,
+            "∈" => Inset,
             "<" => Lt,
             "*" => Mult,
             "∨" => Or,
             "+" => Plus,
+            "∪" => Union,
+            "∖" => Setminus,
             _ => return None,
         })
     }
 
     pub fn run_on_term(&self, infer_cnt: &mut usize, l: TermRef, r: TermRef) -> TermRef {
         match self {
+            And => app_ref!(and(), l, r),
             App => app_ref!(l, r),
             Eq => {
                 let i = *infer_cnt;
@@ -115,11 +144,40 @@ impl BinOp {
             }
             Iff => app_ref!(iff(), l, r),
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
+            Included => {
+                let i = *infer_cnt;
+                *infer_cnt += 1;
+                let w = term_ref!(_ i);
+                app_ref!(included(), w, l, r)
+            }
+            Intersection => {
+                let i = *infer_cnt;
+                *infer_cnt += 1;
+                let w = term_ref!(_ i);
+                app_ref!(intersection(), w, l, r)
+            }
+            Inset => {
+                let i = *infer_cnt;
+                *infer_cnt += 1;
+                let w = term_ref!(_ i);
+                app_ref!(inset(), w, l, r)
+            }
             Lt => app_ref!(lt(), l, r),
             Mult => app_ref!(mult(), l, r),
-            Plus => app_ref!(plus(), l, r),
             Or => app_ref!(or(), l, r),
-            And => app_ref!(and(), l, r),
+            Plus => app_ref!(plus(), l, r),
+            Union => {
+                let i = *infer_cnt;
+                *infer_cnt += 1;
+                let w = term_ref!(_ i);
+                app_ref!(union(), w, l, r)
+            }
+            Setminus => {
+                let i = *infer_cnt;
+                *infer_cnt += 1;
+                let w = term_ref!(_ i);
+                app_ref!(setminus(), w, l, r)
+            }
         }
     }
 
@@ -135,11 +193,16 @@ impl BinOp {
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                         "iff" => Some((op.clone(), BinOp::Iff, op2.clone())),
+                        "included" => Some((op.clone(), BinOp::Included, op2.clone())),
+                        "intersection" => Some((op.clone(), BinOp::Intersection, op2.clone())),
+                        "inset" => Some((op.clone(), BinOp::Inset, op2.clone())),
                         "plus" => Some((op.clone(), BinOp::Plus, op2.clone())),
                         "mult" => Some((op.clone(), BinOp::Mult, op2.clone())),
                         "lt" => Some((op.clone(), BinOp::Lt, op2.clone())),
                         "or" => Some((op.clone(), BinOp::Or, op2.clone())),
                         "and" => Some((op.clone(), BinOp::And, op2.clone())),
+                        "union" => Some((op.clone(), BinOp::Union, op2.clone())),
+                        "setminus" => Some((op.clone(), BinOp::Setminus, op2.clone())),
                         _ => None,
                     },
                     _ => None,
