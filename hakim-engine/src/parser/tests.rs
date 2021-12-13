@@ -75,4 +75,6 @@ fn iff_check() {
 #[test]
 fn sets() {
     parse_pretty("{ x0: ℤ | x0 < 5 }");
+    parse_pretty("2 ∈ { x0: ℤ | x0 < 5 }");
+    parse_pretty("{ x0: ℤ | 5 < x0 } ∩ { x0: ℤ | x0 < 10 }");
 }

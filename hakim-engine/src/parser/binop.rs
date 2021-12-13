@@ -45,10 +45,7 @@ impl Display for BinOp {
     }
 }
 
-use std::{
-    collections::btree_set,
-    fmt::{Display, Formatter},
-};
+use std::fmt::{Display, Formatter};
 
 use Assoc::*;
 use BinOp::*;
@@ -182,38 +179,39 @@ impl BinOp {
     }
 
     pub fn detect(t: &TermRef) -> Option<(TermRef, Self, TermRef)> {
-        match t.as_ref() {
+        Some(match t.as_ref() {
             Term::App { func, op: op2 } => match func.as_ref() {
                 Term::App { func, op } => match func.as_ref() {
                     Term::App { func, op: _ } => match func.as_ref() {
-                        Term::Axiom { ty: _, unique_name } if unique_name == "eq" => {
-                            Some((op.clone(), BinOp::Eq, op2.clone()))
-                        }
-                        _ => None,
+                        Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
+                            "eq" => (op.clone(), BinOp::Eq, op2.clone()),
+                            "inset" => (op.clone(), BinOp::Inset, op2.clone()),
+                            "included" => (op.clone(), BinOp::Included, op2.clone()),
+                            "intersection" => (op.clone(), BinOp::Intersection, op2.clone()),
+                            "union" => (op.clone(), BinOp::Union, op2.clone()),
+                            "setminus" => (op.clone(), BinOp::Setminus, op2.clone()),
+                            _ => return None,
+                        },
+                        _ => return None,
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
-                        "iff" => Some((op.clone(), BinOp::Iff, op2.clone())),
-                        "included" => Some((op.clone(), BinOp::Included, op2.clone())),
-                        "intersection" => Some((op.clone(), BinOp::Intersection, op2.clone())),
-                        "inset" => Some((op.clone(), BinOp::Inset, op2.clone())),
-                        "plus" => Some((op.clone(), BinOp::Plus, op2.clone())),
-                        "mult" => Some((op.clone(), BinOp::Mult, op2.clone())),
-                        "lt" => Some((op.clone(), BinOp::Lt, op2.clone())),
-                        "or" => Some((op.clone(), BinOp::Or, op2.clone())),
-                        "and" => Some((op.clone(), BinOp::And, op2.clone())),
-                        "union" => Some((op.clone(), BinOp::Union, op2.clone())),
-                        "setminus" => Some((op.clone(), BinOp::Setminus, op2.clone())),
-                        _ => None,
+                        "iff" => (op.clone(), BinOp::Iff, op2.clone()),
+                        "plus" => (op.clone(), BinOp::Plus, op2.clone()),
+                        "mult" => (op.clone(), BinOp::Mult, op2.clone()),
+                        "lt" => (op.clone(), BinOp::Lt, op2.clone()),
+                        "or" => (op.clone(), BinOp::Or, op2.clone()),
+                        "and" => (op.clone(), BinOp::And, op2.clone()),
+                        _ => return None,
                     },
-                    _ => None,
+                    _ => return None,
                 },
-                _ => None,
+                _ => return None,
             },
             Term::Forall(Abstraction { body, var_ty }) => {
                 let x = remove_unused_var(body, 0)?;
-                Some((var_ty.clone(), BinOp::Imply, x))
+                (var_ty.clone(), BinOp::Imply, x)
             }
-            _ => None,
-        }
+            _ => return None,
+        })
     }
 }

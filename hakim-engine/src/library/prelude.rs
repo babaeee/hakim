@@ -1,4 +1,4 @@
-use crate::{app_ref, brain::Term, term, term_ref, TermRef};
+use crate::{app_ref, term_ref, TermRef};
 
 pub fn u() -> TermRef {
     term_ref!(universe 0)

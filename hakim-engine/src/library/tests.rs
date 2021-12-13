@@ -1,4 +1,4 @@
-use crate::{brain::TermRef, engine::Engine};
+use crate::engine::Engine;
 
 #[test]
 fn all() {
