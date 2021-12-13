@@ -36,6 +36,8 @@ impl Default for Engine {
         name_dict.insert("Iff".to_string(), prelude::iff());
         name_dict.insert("set".to_string(), prelude::set());
         name_dict.insert("set_from_func".to_string(), prelude::set_from_func());
+        name_dict.insert("set_empty".to_string(), prelude::set_empty());
+        name_dict.insert("set_singleton".to_string(), prelude::set_singleton());
         let libs = im::HashMap::<String, ()>::default();
         Self { name_dict, libs }
     }
@@ -134,7 +136,7 @@ impl Engine {
     pub fn parse_text_with_wild(&self, text: &str) -> Result<(TermRef, usize)> {
         let ast = parse(text)?;
         let mut name_stack = vec![];
-        let mut infer_cnt = 0;
+        let mut infer_cnt = Default::default();
         let term = ast_to_term(
             ast,
             &self.name_dict,
@@ -142,7 +144,7 @@ impl Engine {
             &mut HashMap::default(),
             &mut infer_cnt,
         )?;
-        Ok((term, infer_cnt))
+        Ok((term, infer_cnt.0))
     }
 
     pub fn parse_text(&self, text: &str) -> Result<TermRef> {

@@ -9,7 +9,7 @@ use super::{
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, TermRef},
-    library::prelude::{ex, set_from_func},
+    library::prelude::{ex, set_empty, set_from_func, set_singleton},
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
@@ -22,6 +22,12 @@ pub struct AstAbs {
 }
 
 #[derive(Debug)]
+pub enum AstSet {
+    Abs(AstAbs),
+    Items(Vec<AstTerm>),
+}
+
+#[derive(Debug)]
 pub enum AstTerm {
     Abs(AbsSign, AstAbs),
     Ident(String),
@@ -29,15 +35,19 @@ pub enum AstTerm {
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
     Number(BigInt),
     Wild(Option<String>),
-    Set(AstAbs),
+    Set(AstSet),
 }
 
 use num_bigint::BigInt;
 use AstTerm::*;
 
 trait TokenEater {
-    fn peek_token(&self) -> Result<Token>;
     fn eat_token(&mut self) -> Result<Token>;
+    fn look_ahead(&self, i: usize) -> Result<Token>;
+
+    fn peek_token(&self) -> Result<Token> {
+        self.look_ahead(0)
+    }
 
     fn eat_ident(&mut self) -> Result<String> {
         let t = self.peek_token()?;
@@ -74,13 +84,29 @@ trait TokenEater {
 
     fn eat_set(&mut self) -> Result<AstTerm> {
         self.eat_sign("{")?;
-        let name = vec![self.eat_ident()?];
-        self.eat_sign(":")?;
-        let ty = Box::new(self.eat_ast()?);
-        self.eat_sign("|")?;
-        let body = Box::new(self.eat_ast()?);
-        self.eat_sign("}")?;
-        Ok(Set(AstAbs { name, ty, body }))
+        if self.look_ahead(1) == Ok(Token::Sign(":".to_string())) {
+            let name = vec![self.eat_ident()?];
+            self.eat_sign(":")?;
+            let ty = Box::new(self.eat_ast()?);
+            self.eat_sign("|")?;
+            let body = Box::new(self.eat_ast()?);
+            self.eat_sign("}")?;
+            Ok(Set(AstSet::Abs(AstAbs { name, ty, body })))
+        } else {
+            let mut r = vec![];
+            loop {
+                if self.peek_token()? == Token::Sign("}".to_string()) {
+                    self.eat_token()?;
+                    break Ok(Set(AstSet::Items(r)));
+                }
+                r.push(self.eat_ast()?);
+                if self.peek_token()? == Token::Sign("}".to_string()) {
+                    self.eat_token()?;
+                    break Ok(Set(AstSet::Items(r)));
+                }
+                self.eat_sign(",")?;
+            }
+        }
     }
 
     fn eat_ast_without_app(&mut self) -> Result<AstTerm> {
@@ -180,8 +206,8 @@ trait TokenEater {
 }
 
 impl TokenEater for &[Token] {
-    fn peek_token(&self) -> Result<Token> {
-        Ok(self.get(0).ok_or(UnexpectedEOF)?.clone())
+    fn look_ahead(&self, i: usize) -> Result<Token> {
+        Ok(self.get(i).ok_or(UnexpectedEOF)?.clone())
     }
 
     fn eat_token(&mut self) -> Result<Token> {
@@ -208,15 +234,26 @@ pub fn pack_abstraction(sign: AbsSign, ty: TermRef, body: TermRef) -> TermRef {
     }
 }
 
+#[derive(Default)]
+pub struct InferGenerator(pub usize);
+
+impl InferGenerator {
+    pub fn generate(&mut self) -> usize {
+        let i = self.0;
+        self.0 += 1;
+        i
+    }
+}
+
 pub fn ast_to_term(
     ast: AstTerm,
     globals: &im::HashMap<String, TermRef>,
     name_stack: &mut Vec<String>,
     infer_dict: &mut HashMap<String, usize>,
-    infer_cnt: &mut usize,
+    infer_cnt: &mut InferGenerator,
 ) -> Result<TermRef> {
     match ast {
-        Set(AstAbs { name, ty, body }) => {
+        Set(AstSet::Abs(AstAbs { name, ty, body })) => {
             let ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
             assert_eq!(name.len(), 1);
             let name = name.into_iter().next().unwrap();
@@ -225,6 +262,18 @@ pub fn ast_to_term(
             name_stack.pop();
             let fun = pack_abstraction(AbsSign::Fun, ty_term.clone(), body);
             Ok(app_ref!(set_from_func(), ty_term, fun))
+        }
+        Set(AstSet::Items(items)) => {
+            let w = term_ref!(_ infer_cnt.generate());
+            if items.is_empty() {
+                return Ok(app_ref!(set_empty(), w));
+            }
+            if items.len() != 1 {
+                todo!();
+            }
+            let exp = items.into_iter().next().unwrap();
+            let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt)?;
+            Ok(app_ref!(set_singleton(), w, term))
         }
         Abs(sign, AstAbs { name, ty, body }) => {
             let mut ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
@@ -262,17 +311,12 @@ pub fn ast_to_term(
                     if let Some(k) = infer_dict.get(&x) {
                         *k
                     } else {
-                        let i = *infer_cnt;
-                        *infer_cnt += 1;
+                        let i = infer_cnt.generate();
                         infer_dict.insert(x, i);
                         i
                     }
                 }
-                None => {
-                    let i = *infer_cnt;
-                    *infer_cnt += 1;
-                    i
-                }
+                None => infer_cnt.generate(),
             };
             Ok(term_ref!(_ i))
         }

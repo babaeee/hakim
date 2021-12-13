@@ -57,6 +57,8 @@ use crate::{
     term_ref, Abstraction, Term, TermRef,
 };
 
+use super::ast::InferGenerator;
+
 impl BinOp {
     pub fn level_left(&self) -> u8 {
         match self.assoc() {
@@ -129,33 +131,29 @@ impl BinOp {
         })
     }
 
-    pub fn run_on_term(&self, infer_cnt: &mut usize, l: TermRef, r: TermRef) -> TermRef {
+    pub fn run_on_term(&self, infer_cnt: &mut InferGenerator, l: TermRef, r: TermRef) -> TermRef {
         match self {
             And => app_ref!(and(), l, r),
             App => app_ref!(l, r),
             Eq => {
-                let i = *infer_cnt;
-                *infer_cnt += 1;
+                let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
                 app_ref!(eq(), w, l, r)
             }
             Iff => app_ref!(iff(), l, r),
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
             Included => {
-                let i = *infer_cnt;
-                *infer_cnt += 1;
+                let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
                 app_ref!(included(), w, l, r)
             }
             Intersection => {
-                let i = *infer_cnt;
-                *infer_cnt += 1;
+                let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
                 app_ref!(intersection(), w, l, r)
             }
             Inset => {
-                let i = *infer_cnt;
-                *infer_cnt += 1;
+                let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
                 app_ref!(inset(), w, l, r)
             }
@@ -164,14 +162,12 @@ impl BinOp {
             Or => app_ref!(or(), l, r),
             Plus => app_ref!(plus(), l, r),
             Union => {
-                let i = *infer_cnt;
-                *infer_cnt += 1;
+                let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
                 app_ref!(union(), w, l, r)
             }
             Setminus => {
-                let i = *infer_cnt;
-                *infer_cnt += 1;
+                let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
                 app_ref!(setminus(), w, l, r)
             }

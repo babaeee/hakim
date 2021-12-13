@@ -7,7 +7,8 @@ type SanboxProps = {
 };
 //∀ A: U, ∀ a: A, In A (empty A) a -> False
 const exampleGoals = [
-    '∀ A: U, ∀ a: A, a ∈ (empty A) -> False',
+    '∀ A: U, ∀ a: A, a ∈ {} -> False',
+    '∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S -> { a } ∪ S ∖ { a } = S',
     '∀ a b c d: ℤ, a < b -> c < d -> a + c < b + d',
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> A -> ∃ x: A, P x',
     '∀ a: ℤ, ∃ b: ℤ, a < b',

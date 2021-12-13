@@ -2,7 +2,33 @@ use std::cmp::min;
 
 use crate::{parser::binop::BinOp, Abstraction, Term, TermRef};
 
-fn detect_set(t: &TermRef) -> Option<(TermRef, TermRef)> {
+fn detect_set_items(t: &TermRef) -> Option<Vec<TermRef>> {
+    match t.as_ref() {
+        Term::App { func, op: op2 } => match func.as_ref() {
+            Term::App { func, op: _ } => match func.as_ref() {
+                Term::Axiom { ty: _, unique_name } => {
+                    if unique_name == "set_singleton" {
+                        Some(vec![op2.clone()])
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            Term::Axiom { ty: _, unique_name } => {
+                if unique_name == "set_empty" {
+                    Some(vec![])
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn detect_set_fn(t: &TermRef) -> Option<(TermRef, TermRef)> {
     match t.as_ref() {
         Term::App { func, op: op2 } => match func.as_ref() {
             Term::App { func, op: op1 } => match func.as_ref() {
@@ -77,11 +103,18 @@ pub fn term_pretty_print(
             return abstraction_pretty_print("∃", x, name_stack, level.1 < 200);
         }
     }
-    if let Some((_, fun)) = detect_set(&term) {
+    if let Some((_, fun)) = detect_set_fn(&term) {
         if let Term::Fun(x) = fun.as_ref() {
             let (name, ty, body) = abstraction_pretty_print_inner(x, name_stack);
             return format!("{{ {}: {} | {} }}", name, ty, body);
         }
+    }
+    if let Some(exp) = detect_set_items(&term) {
+        let r = exp
+            .into_iter()
+            .map(|x| term_pretty_print(x, name_stack, (200, 200)))
+            .collect::<Vec<_>>();
+        return format!("{{{}}}", r.join(", "));
     }
     if let Some((l, op, r)) = BinOp::detect(&term) {
         return if min(level.0, level.1) < op.prec() {

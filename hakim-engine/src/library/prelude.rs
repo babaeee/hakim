@@ -59,6 +59,12 @@ pub fn set_from_func() -> TermRef {
     term_ref!(axiom "set_from_func", forall u(),
         forall term_ref!(forall v0(), u()), app_ref!(set(), v1()))
 }
+pub fn set_empty() -> TermRef {
+    term_ref!(axiom "set_empty", forall u(), app_ref!(set(), v0()))
+}
+pub fn set_singleton() -> TermRef {
+    term_ref!(axiom "set_singleton", forall u(), forall v0(), app_ref!(set(), v1()))
+}
 pub fn inset() -> TermRef {
     term_ref!(axiom "inset", forall u(), forall v0(), forall app_ref!(set(), v1()), u())
 }
