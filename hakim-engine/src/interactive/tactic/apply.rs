@@ -84,7 +84,7 @@ fn apply_for_hyp(mut frame: Frame, exp: &str, name: String) -> Result<Vec<Frame>
 
 fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
     let (term, mut inf_num) = frame.engine.parse_text_with_wild(exp)?;
-    let ty = type_of_and_infer(dbg!(term.clone()), &mut InferResults::new(inf_num))?;
+    let ty = type_of_and_infer(term.clone(), &mut InferResults::new(inf_num))?;
     let goal = frame.goal.clone();
     let d_forall = get_forall_depth(&ty) - get_forall_depth(&goal);
     let mut twa = term;

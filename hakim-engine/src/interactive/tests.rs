@@ -18,6 +18,7 @@ fn build_engine(level: EngineLevel) -> Engine {
     eng.load_library("Eq").unwrap();
     eng.load_library("Sigma").unwrap();
     eng.load_library("Induction").unwrap();
+    eng.load_library("Set").unwrap();
     eng
 }
 
@@ -289,5 +290,21 @@ fn sigma_1_n() {
         rewrite (sigma_atom 0 (λ x0: ℤ, x0))
         ring
         "#,
+    );
+}
+
+#[test]
+fn set_lemma() {
+    run_interactive_to_end(
+        "∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S -> { a } ∪ (S ∖ { a }) = S",
+        r#"
+        intros T a S H
+        apply minus_of_subset
+        apply included_intro
+        intros a2 a2_in_a
+        apply (singleton_intro ? ? ?) in a2_in_a
+        rewrite <- a2_in_a
+        apply H
+    "#,
     );
 }
