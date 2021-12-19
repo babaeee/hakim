@@ -1,11 +1,18 @@
 use crate::engine::Engine;
 
+const LIB_NAMES: [&str; 6] = ["Arith", "Logic", "Eq", "Sigma", "Set", "Induction"];
+
 #[test]
 fn all() {
     let mut eng = Engine::default();
-    eng.load_library("Arith").unwrap();
-    eng.load_library("Logic").unwrap();
-    eng.load_library("Eq").unwrap();
-    eng.load_library("Sigma").unwrap();
-    eng.load_library("Set").unwrap();
+    for lib in LIB_NAMES {
+        eng.load_library(lib).unwrap();
+    }
+}
+
+#[test]
+fn any() {
+    for lib in LIB_NAMES {
+        Engine::default().load_library(lib).unwrap();
+    }
 }
