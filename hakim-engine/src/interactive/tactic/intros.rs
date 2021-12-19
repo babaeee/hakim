@@ -49,13 +49,19 @@ pub fn intros(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Ve
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::run_interactive_to_fail;
+    use crate::interactive::tests::{run_interactive, run_interactive_to_fail, EngineLevel};
 
     const GOAL: &str = "∀ a b: ℤ, a < b";
 
     #[test]
     fn duplicate_hyp() {
         run_interactive_to_fail(GOAL, "intros x", "intros x");
+    }
+
+    #[test]
+    fn unnamed_intros() {
+        run_interactive(GOAL, "intros", EngineLevel::Empty);
+        run_interactive("∀ a b: ℤ, a < b -> b < a", "intros", EngineLevel::Empty);
     }
 
     #[test]

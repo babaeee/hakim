@@ -106,6 +106,19 @@ fn check_undo() {
 }
 
 #[test]
+fn bad_tactic() {
+    run_interactive_to_fail(F_EQUAL, "", "intrs");
+    run_interactive_to_fail(F_EQUAL, "", "intros p1 p2 p3 p4 p5 p6 bad_p");
+    run_interactive_to_fail(
+        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
+        r#"
+        intros a b c d a_lt_b c_lt_d
+        "#,
+        "add_hyp a b",
+    );
+}
+
+#[test]
 fn dont_panic1() {
     run_interactive_to_fail(
         F_EQUAL,

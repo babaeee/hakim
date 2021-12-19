@@ -83,7 +83,7 @@ trait TokenEater {
     }
 
     fn eat_set(&mut self) -> Result<AstTerm> {
-        self.eat_sign("{")?;
+        // we already eated Sign("{")
         if self.look_ahead(1) == Ok(Token::Sign(":".to_string())) {
             let name = vec![self.eat_ident()?];
             self.eat_sign(":")?;
@@ -110,19 +110,16 @@ trait TokenEater {
     }
 
     fn eat_ast_without_app(&mut self) -> Result<AstTerm> {
-        match self.peek_token()? {
+        match self.eat_token()? {
             Token::Ident(s) => {
                 let ident = Ident(s);
-                self.eat_token()?;
                 Ok(ident)
             }
             Token::Wild(i) => {
                 let t = Wild(i);
-                self.eat_token()?;
                 Ok(t)
             }
             Token::Abs(sign) => {
-                self.eat_token()?;
                 let name = self.eat_ident_vec()?;
                 self.eat_sign(":")?;
                 let ty = Box::new(self.eat_ast()?);
@@ -132,7 +129,6 @@ trait TokenEater {
             }
             Token::Sign(s) => match s.as_str() {
                 "(" => {
-                    self.eat_token()?;
                     let r = self.eat_ast()?;
                     self.eat_sign(")")?;
                     Ok(r)
@@ -140,10 +136,7 @@ trait TokenEater {
                 "{" => self.eat_set(),
                 _ => Err(ExpectedExprButGot(Token::Sign(s))),
             },
-            Token::Number(x) => {
-                self.eat_token()?;
-                Ok(Number(x))
-            }
+            Token::Number(x) => Ok(Number(x)),
         }
     }
 

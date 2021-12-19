@@ -7,6 +7,13 @@ fn parse_pretty(exp: &str) {
     assert_eq!(exp, pretty);
 }
 
+fn parse_error(exp: &str) {
+    let eng = Engine::default();
+    if eng.parse_text(exp).is_ok() {
+        panic!("test passed unexpectedly")
+    }
+}
+
 #[test]
 fn simple_forall() {
     parse_pretty("∀ x0: U, x0");
@@ -83,4 +90,20 @@ fn sets() {
 #[test]
 fn pretty_names() {
     parse_pretty("∀ salam: ℤ, ∀ x2: ℤ, salam < x2");
+}
+
+#[test]
+fn basic_fails() {
+    parse_error("(2+3");
+    parse_error("()");
+    parse_error("(2+)+3");
+    parse_error("forall");
+    parse_error("forall x");
+    parse_error("forall x:");
+    parse_error("forall x: ℤ");
+    parse_error("forall x: ℤ,");
+    parse_error("forall 2: 5");
+    parse_error("{2: ℤ}");
+    parse_error("forall x ℤ");
+    parse_error("forall x -> ℤ");
 }
