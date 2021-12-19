@@ -18,6 +18,9 @@ fn run_sentence(engine: &mut Engine, s: &str) -> engine::Result<()> {
             return engine.add_axiom(name.trim(), body);
         }
     }
+    if let Some(r) = s.strip_prefix("Import ") {
+        return engine.load_library(r);
+    }
     Err(Error::InvalidSentence(s.to_string()))
 }
 

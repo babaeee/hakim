@@ -13,13 +13,18 @@ window.panic_handler = (x) => {
 };
 
 
+const checkError = (error?: string) => {
+    if (error) {
+        alert(error);
+        return false;
+    }
+    return true;
+};
+
 const instance = new Instance();
-instance.load_library('Arith');
-instance.load_library('Eq');
-instance.load_library('Logic');
-instance.load_library('Induction');
-instance.load_library('Sigma');
-instance.load_library('Set');
+if (!checkError(instance.load_library('All'))) {
+    document.body.innerHTML = '';
+}
 
 export type State = {
     history: string[],
@@ -57,14 +62,6 @@ export const subscribe = (f: EventListener) => {
     return () => {
         listeners = listeners.filter((x) => x !== f);
     };
-};
-
-const checkError = (error?: string) => {
-    if (error) {
-        alert(error);
-        return false;
-    }
-    return true;
 };
 
 const checkErrorAndUpdate = (error?: string) => {

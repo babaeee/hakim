@@ -124,6 +124,9 @@ impl Engine {
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {
+        if self.has_library(name) {
+            return Ok(());
+        }
         load_library_by_name(self, name)?;
         self.libs.insert(name.to_string(), ());
         Ok(())
