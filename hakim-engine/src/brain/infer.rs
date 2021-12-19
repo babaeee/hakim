@@ -186,7 +186,11 @@ pub fn type_of_inner(
     let r = match term.as_ref() {
         Term::Axiom { ty, .. } => ty.clone(),
         Term::Universe { index } => TermRef::new(Term::Universe { index: index + 1 }),
-        Term::Forall(Abstraction { var_ty, body }) => {
+        Term::Forall(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        }) => {
             let vtt = get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
             let new_var_stack = var_ty_stack
                 .iter()
@@ -196,7 +200,11 @@ pub fn type_of_inner(
             let body_ty = get_universe(type_of_inner(body.clone(), &new_var_stack, infers)?)?;
             term_ref!(universe max(vtt, body_ty))
         }
-        Term::Fun(Abstraction { var_ty, body }) => {
+        Term::Fun(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        }) => {
             get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
             let new_var_stack = var_ty_stack
                 .iter()
@@ -218,7 +226,11 @@ pub fn type_of_inner(
             let func_type = type_of_inner(func.clone(), var_ty_stack, infers)?;
             let func_type = normalize(func_type);
             let (var_ty, body) = match func_type.as_ref() {
-                Term::Forall(Abstraction { var_ty, body }) => (var_ty, body),
+                Term::Forall(Abstraction {
+                    var_ty,
+                    body,
+                    hint_name: _,
+                }) => (var_ty, body),
                 _ => {
                     return Err(IsNotFunc {
                         value: func.clone(),

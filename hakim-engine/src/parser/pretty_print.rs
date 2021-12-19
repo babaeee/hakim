@@ -70,13 +70,34 @@ fn abstraction_pretty_print_inner(
     abs: &Abstraction,
     name_stack: &mut Vec<(String, usize)>,
 ) -> (String, String, String) {
-    let Abstraction { var_ty, body } = abs;
-    let name = format!("x{}", name_stack.len());
+    let Abstraction {
+        var_ty,
+        body,
+        hint_name,
+    } = abs;
+    let name = if let Some(hint) = hint_name {
+        generate_name(name_stack, hint)
+    } else {
+        generate_name(name_stack, "x")
+    };
     let var_ty_str = term_pretty_print(var_ty.clone(), name_stack, (200, 200));
     name_stack.push((name.clone(), 0));
     let body_str = term_pretty_print(body.clone(), name_stack, (200, 200));
     name_stack.pop();
     (name, var_ty_str, body_str)
+}
+
+fn generate_name(name_stack: &[(String, usize)], hint: &str) -> String {
+    if name_stack.iter().all(|x| x.0 != hint) {
+        return hint.to_string();
+    }
+    for i in 0.. {
+        let hint = format!("{}{}", hint, i);
+        if name_stack.iter().all(|x| x.0 != hint) {
+            return hint;
+        }
+    }
+    unreachable!();
 }
 
 fn abstraction_pretty_print(

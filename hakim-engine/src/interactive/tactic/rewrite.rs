@@ -1,12 +1,30 @@
 use crate::{
     brain::{Term, TermRef},
     interactive::Frame,
-    term_ref, Abstraction,
+    Abstraction,
 };
 
 use super::{get_one_arg, Error::*, Result};
 
 fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
+    fn for_abs(
+        Abstraction {
+            var_ty,
+            body,
+            hint_name,
+        }: &Abstraction,
+        find: TermRef,
+        replace: TermRef,
+    ) -> Abstraction {
+        let var_ty = replace_term(var_ty.clone(), find.clone(), replace.clone());
+        let body = replace_term(body.clone(), find, replace);
+        let hint_name = hint_name.clone();
+        Abstraction {
+            var_ty,
+            body,
+            hint_name,
+        }
+    }
     if exp == find {
         return replace;
     }
@@ -16,14 +34,8 @@ fn replace_term(exp: TermRef, find: TermRef, replace: TermRef) -> TermRef {
         | Term::Var { .. }
         | Term::Wild { .. }
         | Term::Number { .. } => exp,
-        Term::Forall(Abstraction { var_ty, body }) => term_ref!(forall
-            replace_term(var_ty.clone(), find.clone(), replace.clone()),
-            replace_term(body.clone(), find, replace)
-        ),
-        Term::Fun(Abstraction { var_ty, body }) => term_ref!(fun
-            replace_term(var_ty.clone(), find.clone(), replace.clone()),
-            replace_term(body.clone(), find, replace)
-        ),
+        Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a, find, replace))),
+        Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a, find, replace))),
         Term::App { func, op } => TermRef::new(Term::App {
             func: replace_term(func.clone(), find.clone(), replace.clone()),
             op: replace_term(op.clone(), find, replace),

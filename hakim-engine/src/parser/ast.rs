@@ -8,7 +8,7 @@ use super::{
 
 use crate::{
     app_ref,
-    brain::{increase_foreign_vars, TermRef},
+    brain::{increase_foreign_vars, Abstraction, Term, TermRef},
     library::prelude::{ex, set_empty, set_from_func, set_singleton},
     parser::binop::{Assoc, BinOp},
     term_ref,
@@ -226,11 +226,11 @@ pub fn tokens_to_ast(mut tokens: &[Token]) -> Result<AstTerm> {
     }
 }
 
-pub fn pack_abstraction(sign: AbsSign, ty: TermRef, body: TermRef) -> TermRef {
+pub fn pack_abstraction(sign: AbsSign, abs: Abstraction) -> TermRef {
     match sign {
-        AbsSign::Forall => term_ref!(forall ty, body),
-        AbsSign::Fun => term_ref!(fun ty, body),
-        AbsSign::Exists => app_ref!(ex(), ty, term_ref!(fun ty, body)),
+        AbsSign::Forall => TermRef::new(Term::Forall(abs)),
+        AbsSign::Fun => TermRef::new(Term::Fun(abs)),
+        AbsSign::Exists => app_ref!(ex(), abs.var_ty, pack_abstraction(AbsSign::Fun, abs)),
     }
 }
 
@@ -254,14 +254,19 @@ pub fn ast_to_term(
 ) -> Result<TermRef> {
     match ast {
         Set(AstSet::Abs(AstAbs { name, ty, body })) => {
-            let ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
+            let var_ty = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
             assert_eq!(name.len(), 1);
             let name = name.into_iter().next().unwrap();
             name_stack.push(name);
             let body = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt)?;
-            name_stack.pop();
-            let fun = pack_abstraction(AbsSign::Fun, ty_term.clone(), body);
-            Ok(app_ref!(set_from_func(), ty_term, fun))
+            let name = name_stack.pop().unwrap();
+            let abs = Abstraction {
+                var_ty: var_ty.clone(),
+                body,
+                hint_name: Some(name),
+            };
+            let fun = pack_abstraction(AbsSign::Fun, abs);
+            Ok(app_ref!(set_from_func(), var_ty, fun))
         }
         Set(AstSet::Items(items)) => {
             let w = term_ref!(_ infer_cnt.generate());
@@ -284,9 +289,14 @@ pub fn ast_to_term(
                 name_stack.push(n);
             }
             let mut r = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt)?;
-            for ty in tys.into_iter().rev() {
-                name_stack.pop();
-                r = pack_abstraction(sign, ty, r);
+            for var_ty in tys.into_iter().rev() {
+                let name = name_stack.pop().unwrap();
+                let abs = Abstraction {
+                    var_ty,
+                    body: r,
+                    hint_name: Some(name),
+                };
+                r = pack_abstraction(sign, abs);
             }
             Ok(r)
         }

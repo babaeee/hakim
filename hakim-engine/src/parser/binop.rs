@@ -203,7 +203,11 @@ impl BinOp {
                 },
                 _ => return None,
             },
-            Term::Forall(Abstraction { body, var_ty }) => {
+            Term::Forall(Abstraction {
+                body,
+                var_ty,
+                hint_name: _,
+            }) => {
                 let x = remove_unused_var(body, 0)?;
                 (var_ty.clone(), BinOp::Imply, x)
             }

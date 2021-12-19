@@ -6,10 +6,18 @@ pub mod infer;
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Eq, PartialOrd, Ord)]
 pub struct Abstraction {
     pub var_ty: TermRef,
+    pub hint_name: Option<String>,
     pub body: TermRef,
+}
+
+// we implement this manually to ignore hint_name, so (forall a: T, a) is equal to (forall b: T, b)
+impl PartialEq for Abstraction {
+    fn eq(&self, other: &Self) -> bool {
+        self.var_ty == other.var_ty && self.body == other.body
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -45,8 +53,8 @@ macro_rules! term_ref {
 
 #[macro_export]
 macro_rules! term {
-    {forall $ty:expr , $($i:tt)*} => (crate::Term::Forall(crate::Abstraction { var_ty: term_ref!($ty), body: (term_ref!($( $i)*)) }));
-    {fun $ty:expr , $($i:tt)*} => (crate::Term::Fun(crate::Abstraction { var_ty: term_ref!($ty), body: (term_ref!($( $i)*)) }));
+    {forall $ty:expr , $($i:tt)*} => (crate::Term::Forall(crate::Abstraction { var_ty: term_ref!($ty), hint_name: None, body: (term_ref!($( $i)*)) }));
+    {fun $ty:expr , $($i:tt)*} => (crate::Term::Fun(crate::Abstraction { var_ty: term_ref!($ty), hint_name: None, body: (term_ref!($( $i)*)) }));
     {axiom $name:expr , $($i:tt)*} => (crate::Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
     {universe $input:expr} => (crate::Term::Universe { index: ($input) });
     {v $input:expr} => (crate::Term::Var { index: ($input) });
@@ -123,9 +131,16 @@ pub fn map_reduce_wild<T>(
     match t.as_ref() {
         Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => None,
         Term::App { func, op } => combine(func, op),
-        Term::Forall(Abstraction { var_ty, body }) | Term::Fun(Abstraction { var_ty, body }) => {
-            combine(var_ty, body)
-        }
+        Term::Forall(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        })
+        | Term::Fun(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        }) => combine(var_ty, body),
         Term::Wild { index } => map(*index),
     }
 }
@@ -142,9 +157,16 @@ pub fn predict_axiom(t: &TermRef, predict: &impl Fn(&str) -> bool) -> bool {
     match t.as_ref() {
         Term::Wild { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => false,
         Term::App { func, op } => predict_axiom(func, predict) || predict_axiom(op, predict),
-        Term::Forall(Abstraction { var_ty, body }) | Term::Fun(Abstraction { var_ty, body }) => {
-            predict_axiom(var_ty, predict) || predict_axiom(body, predict)
-        }
+        Term::Forall(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        })
+        | Term::Fun(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        }) => predict_axiom(var_ty, predict) || predict_axiom(body, predict),
         Term::Axiom { unique_name, .. } => predict(unique_name),
     }
 }
@@ -154,10 +176,21 @@ pub fn contains_wild(t: &TermRef) -> bool {
 }
 
 pub fn remove_unused_var(t: &TermRef, depth: usize) -> Option<TermRef> {
-    fn for_abs(Abstraction { var_ty, body }: &Abstraction, depth: usize) -> Option<Abstraction> {
+    fn for_abs(
+        Abstraction {
+            var_ty,
+            body,
+            hint_name,
+        }: &Abstraction,
+        depth: usize,
+    ) -> Option<Abstraction> {
+        let var_ty = remove_unused_var(var_ty, depth)?;
+        let body = remove_unused_var(body, depth + 1)?;
+        let hint_name = hint_name.clone();
         Some(Abstraction {
-            var_ty: remove_unused_var(var_ty, depth)?,
-            body: remove_unused_var(body, depth + 1)?,
+            var_ty,
+            body,
+            hint_name,
         })
     }
     Some(match t.as_ref() {
@@ -199,15 +232,28 @@ fn deny_wild(t: &TermRef) -> Result<()> {
 }
 
 pub fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
+    fn for_abs(
+        Abstraction {
+            body,
+            var_ty,
+            hint_name,
+        }: &Abstraction,
+        f: &impl Fn(usize) -> TermRef,
+    ) -> Abstraction {
+        let body = fill_wild(body.clone(), f);
+        let var_ty = fill_wild(var_ty.clone(), f);
+        let hint_name = hint_name.clone();
+        Abstraction {
+            var_ty,
+            hint_name,
+            body,
+        }
+    }
     match t.as_ref() {
         Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => t,
         Term::App { func, op } => app_ref!(fill_wild(func.clone(), f), fill_wild(op.clone(), f)),
-        Term::Forall(Abstraction { var_ty, body }) => {
-            term_ref!(forall fill_wild(var_ty.clone(), f), fill_wild(body.clone(), f))
-        }
-        Term::Fun(Abstraction { var_ty, body }) => {
-            term_ref!(fun fill_wild(var_ty.clone(), f), fill_wild(body.clone(), f))
-        }
+        Term::Forall(abs) => TermRef::new(Term::Forall(for_abs(abs, f))),
+        Term::Fun(abs) => TermRef::new(Term::Fun(for_abs(abs, f))),
         Term::Wild { index } => f(*index),
     }
 }
@@ -217,6 +263,7 @@ pub fn normalize(t: TermRef) -> TermRef {
         Abstraction {
             var_ty: normalize(a.var_ty),
             body: normalize(a.body),
+            hint_name: a.hint_name,
         }
     }
     match t.as_ref() {
@@ -248,6 +295,15 @@ pub fn normalize(t: TermRef) -> TermRef {
 }
 
 pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
+    fn for_abs(abs: Abstraction, to_put: TermRef, i: usize) -> Abstraction {
+        let var_ty = inner(abs.var_ty, to_put.clone(), i);
+        let body = inner(abs.body, to_put, i + 1);
+        Abstraction {
+            var_ty,
+            body,
+            hint_name: abs.hint_name,
+        }
+    }
     fn inner(exp: TermRef, to_put: TermRef, i: usize) -> TermRef {
         match exp.as_ref() {
             Term::Var { index } if *index == i => to_put,
@@ -256,14 +312,8 @@ pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
             | Term::Universe { .. }
             | Term::Number { .. }
             | Term::Wild { .. } => exp,
-            Term::Forall(Abstraction { var_ty, body }) => term_ref!(forall
-                inner(var_ty.clone(), to_put.clone(), i),
-                inner(body.clone(), to_put, i + 1)
-            ),
-            Term::Fun(Abstraction { var_ty, body }) => term_ref!(fun
-                inner(var_ty.clone(), to_put.clone(), i),
-                inner(body.clone(), to_put, i + 1)
-            ),
+            Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a.clone(), to_put, i))),
+            Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a.clone(), to_put, i))),
             Term::App { func, op } => TermRef::new(Term::App {
                 func: inner(func.clone(), to_put.clone(), i),
                 op: inner(op.clone(), to_put, i),
@@ -274,6 +324,23 @@ pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
 }
 
 pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
+    fn for_abs(
+        Abstraction {
+            var_ty,
+            body,
+            hint_name,
+        }: &Abstraction,
+        depth: usize,
+    ) -> Abstraction {
+        let var_ty = increase_foreign_vars(var_ty.clone(), depth);
+        let body = increase_foreign_vars(body.clone(), depth + 1);
+        let hint_name = hint_name.clone();
+        Abstraction {
+            var_ty,
+            body,
+            hint_name,
+        }
+    }
     match term.as_ref() {
         Term::Var { index } if *index >= depth => TermRef::new(Term::Var { index: index + 1 }),
         Term::Axiom { .. }
@@ -281,16 +348,8 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
         | Term::Number { .. }
         | Term::Var { .. }
         | Term::Wild { .. } => term,
-        Term::Forall(Abstraction { var_ty, body }) => {
-            let var_ty = increase_foreign_vars(var_ty.clone(), depth);
-            let body = increase_foreign_vars(body.clone(), depth + 1);
-            term_ref!(forall var_ty, body)
-        }
-        Term::Fun(Abstraction { var_ty, body }) => {
-            let var_ty = increase_foreign_vars(var_ty.clone(), depth);
-            let body = increase_foreign_vars(body.clone(), depth + 1);
-            term_ref!(fun var_ty, body)
-        }
+        Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a, depth))),
+        Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a, depth))),
         Term::App { func, op } => {
             let func = increase_foreign_vars(func.clone(), depth);
             let op = increase_foreign_vars(op.clone(), depth);

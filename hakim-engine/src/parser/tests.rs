@@ -79,3 +79,8 @@ fn sets() {
     parse_pretty("{ x0: ℤ | 5 < x0 } ∩ { x0: ℤ | x0 < 10 }");
     parse_pretty("{2} ∩ {}");
 }
+
+#[test]
+fn pretty_names() {
+    parse_pretty("∀ salam: ℤ, ∀ x2: ℤ, salam < x2");
+}
