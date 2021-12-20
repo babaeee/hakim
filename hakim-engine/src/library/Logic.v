@@ -4,4 +4,5 @@ Axiom False_ind: False -> ∀ A: U, A.
 Axiom imply_refl: ∀ A: U, A -> A.
 Axiom imply_trans: ∀ A B C: U, (A -> B) -> (B -> C) -> (A -> C).
 Axiom imply_iff: ∀ A B: U, (A -> B) ∧ (B -> A) -> A ↔ B.
-Axiom iff_imply: ∀ A B: U, A ↔ B -> (A -> B) ∧ (B -> A). 
+Axiom iff_imply: ∀ A B: U, A ↔ B -> (A -> B) ∧ (B -> A).
+Axiom p_or_not_p: ∀ A: U, A ∨ (A → False).

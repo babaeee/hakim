@@ -12,6 +12,7 @@ pub enum SuggClass {
     IntrosWithName,
     Destruct,
     Rewrite,
+    Contradiction,
     Pattern(&'static str, &'static str),
 }
 
@@ -43,6 +44,7 @@ impl Suggestion {
 }
 
 enum SetTermClass {
+    Empty,
     Singleton,
     Unknown,
 }
@@ -50,6 +52,7 @@ enum SetTermClass {
 enum TermClass {
     Forall,
     Exists,
+    False,
     Eq,
     SetMember(SetTermClass),
     SetIncluded(SetTermClass, SetTermClass),
@@ -57,22 +60,34 @@ enum TermClass {
 }
 
 fn detect_set_class(t: &Term) -> SetTermClass {
-    if let Term::App { func, op: _ } = t {
-        if let Term::App { func, op: _ } = func.as_ref() {
-            if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                return match unique_name.as_str() {
+    match dbg!(t) {
+        Term::App { func, op: _ } => match func.as_ref() {
+            Term::App { func, op: _ } => match func.as_ref() {
+                Term::Axiom { unique_name, .. } => match unique_name.as_str() {
                     "set_singleton" => SetTermClass::Singleton,
                     _ => SetTermClass::Unknown,
-                };
-            }
-        }
+                },
+                _ => SetTermClass::Unknown,
+            },
+            Term::Axiom { unique_name, .. } => match unique_name.as_str() {
+                "set_empty" => SetTermClass::Empty,
+                _ => SetTermClass::Unknown,
+            },
+            _ => SetTermClass::Unknown,
+        },
+        _ => SetTermClass::Unknown,
     }
-    SetTermClass::Unknown
 }
 
 fn detect_class(t: &TermRef) -> TermClass {
     match t.as_ref() {
         Term::Forall(_) => return TermClass::Forall,
+        Term::Axiom { unique_name, .. } => {
+            return match unique_name.as_str() {
+                "False" => TermClass::False,
+                _ => TermClass::Unknown,
+            }
+        }
         Term::App { func, op: op1 } => {
             if let Term::App { func, op: op2 } = func.as_ref() {
                 if let Term::App { func, op: _ } = func.as_ref() {

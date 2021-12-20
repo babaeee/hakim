@@ -113,6 +113,19 @@ fn exist_goal() {
 }
 
 #[test]
+fn false_hyp() {
+    check_hyp_menu(
+        "False -> 2 = 3",
+        r#"
+            intros in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([SuggClass::Contradiction]),
+        EngineLevel::Full,
+    );
+}
+
+#[test]
 fn eq_hyp() {
     check_hyp_menu(
         "∀ x0: U, ∀ x1: U, ∀ x2: x0 → x1, ∀ x3: x0, ∀ x4: x0, eq x0 x3 x4 → eq x1 (x2 x3) (x2 x4)",
@@ -136,6 +149,15 @@ fn eq_hyp() {
 
 #[test]
 fn set_hyp() {
+    check_hyp_menu(
+        "2 ∈ {} -> False",
+        r#"
+            intros in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([SuggClass::Contradiction]),
+        EngineLevel::Full,
+    );
     check_hyp_menu(
         "∀ t: U, ∀ s: set t, ∀ a b: t, a ∈ {b} -> a = b",
         r#"

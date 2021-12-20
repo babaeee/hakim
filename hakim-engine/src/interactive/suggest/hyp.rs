@@ -24,6 +24,14 @@ pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Sug
                             &format!("apply (singleton_unfold ? ? ?) in {}", name),
                         ));
                     }
+                    SetTermClass::Empty => r.push(Suggestion {
+                        class: Contradiction,
+                        tactic: vec![
+                            format!("apply (empty_intro ? ?) in {}", name),
+                            format!("apply (False_ind {} ?)", name),
+                        ],
+                        questions: vec![],
+                    }),
                     SetTermClass::Unknown => {}
                 }
             }
@@ -33,6 +41,14 @@ pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Sug
                 r.push(Suggestion::new(
                     Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
                     &format!("apply (included_unfold ? ? ?) in {}", name),
+                ));
+            }
+        }
+        TermClass::False => {
+            if engine.has_library("Logic") {
+                r.push(Suggestion::new(
+                    Contradiction,
+                    &format!("apply (False_ind {} ?)", name),
                 ));
             }
         }
