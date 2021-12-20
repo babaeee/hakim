@@ -112,10 +112,33 @@ export const runSuggDblHyp = (hyp: string) => {
     return checkErrorAndUpdate(instance.suggest_dblclk_hyp(hyp));
 };
 
+const parenSplit = (txt: string): string[] => {
+    const r = [];
+    let cur = "";
+    let depth = 0;
+    for (const c of txt) {
+        if (c === '(') {
+            depth += 1;
+            if (depth === 1) continue;
+        }
+        if (c === ')') {
+            depth -= 1;
+            if (depth === 0) {
+                r.push(cur);
+                cur = "";
+            }
+        }
+        if (depth > 0) {
+            cur += c;
+        }
+    }
+    return r;
+}
+
 export const suggMenuHyp = (hypName: string) => {
     const suggs = instance.suggest_menu_hyp(hypName);
     if (!suggs) return [];
-    return suggs.split(',').filter((x) => x !== '');
+    return parenSplit(suggs);
 };
 
 export type TryAutoResult = {

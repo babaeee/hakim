@@ -200,7 +200,7 @@ impl Instance {
         let sugg = session.suggest_on_hyp_menu(hyp_name);
         Some(
             sugg.into_iter()
-                .map(|x| format!("{:?},", x.class))
+                .map(|x| format!("({:?})", x.class))
                 .collect(),
         )
     }
@@ -216,7 +216,7 @@ impl Instance {
                 return self.run_sugg(sugg);
             }
         }
-        Some("Sugg not found".to_string())
+        Some(format!("Sugg {} not found", sugg_class))
     }
 
     pub fn search(&self, query: &str) -> String {

@@ -1,6 +1,6 @@
 use crate::{engine::Engine, TermRef};
 
-use super::{detect_class, SuggClass::*, Suggestion, TermClass};
+use super::{detect_class, SetTermClass, SuggClass::*, Suggestion, TermClass};
 
 pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Suggestion> {
     let c = detect_class(ty);
@@ -10,8 +10,29 @@ pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Sug
             r.push(Suggestion::new(Rewrite, &format!("rewrite {}", name)));
             if engine.has_library("Eq") {
                 r.push(Suggestion::new(
-                    Swap,
+                    Pattern("a = b", "b = a"),
                     &format!("apply (eq_sym ? ? ?) in {}", name),
+                ));
+            }
+        }
+        TermClass::SetMember(x) => {
+            if engine.has_library("Set") {
+                match x {
+                    SetTermClass::Singleton => {
+                        r.push(Suggestion::new(
+                            Pattern("a ∈ {b}", "a = b"),
+                            &format!("apply (singleton_unfold ? ? ?) in {}", name),
+                        ));
+                    }
+                    SetTermClass::Unknown => {}
+                }
+            }
+        }
+        TermClass::SetIncluded(..) => {
+            if engine.has_library("Set") {
+                r.push(Suggestion::new(
+                    Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
+                    &format!("apply (included_unfold ? ? ?) in {}", name),
                 ));
             }
         }
@@ -50,6 +71,6 @@ pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &TermRef) -> Optio
                 questions: vec![],
             }
         }
-        TermClass::Forall | TermClass::Unknown => return None,
+        _ => return None,
     })
 }

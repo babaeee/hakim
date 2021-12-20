@@ -98,7 +98,7 @@ fn eq_hyp() {
             intros A B f a1 a2 eqa1a2
             "#,
         "eqa1a2",
-        SuggRec::vc([SuggClass::Rewrite, SuggClass::Swap]),
+        SuggRec::vc([SuggClass::Rewrite, SuggClass::Pattern("a = b", "b = a")]),
         EngineLevel::Full,
     );
     check_hyp_menu(
@@ -109,5 +109,18 @@ fn eq_hyp() {
         "eq_2_3",
         SuggRec::vc([SuggClass::Rewrite]),
         EngineLevel::Empty,
+    );
+}
+
+#[test]
+fn set_hyp() {
+    check_hyp_menu(
+        "∀ t: U, ∀ s: set t, ∀ a b: t, a ∈ {b} -> a = b",
+        r#"
+            intros t s a b in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([SuggClass::Pattern("a ∈ {b}", "a = b")]),
+        EngineLevel::Full,
     );
 }

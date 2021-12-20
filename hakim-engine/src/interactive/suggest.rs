@@ -12,7 +12,7 @@ pub enum SuggClass {
     IntrosWithName,
     Destruct,
     Rewrite,
-    Swap,
+    Pattern(&'static str, &'static str),
 }
 
 use SuggClass::*;
@@ -42,22 +42,47 @@ impl Suggestion {
     }
 }
 
+enum SetTermClass {
+    Singleton,
+    Unknown,
+}
+
 enum TermClass {
     Forall,
     Exists,
     Eq,
+    SetMember(SetTermClass),
+    SetIncluded(SetTermClass, SetTermClass),
     Unknown,
+}
+
+fn detect_set_class(t: &Term) -> SetTermClass {
+    if let Term::App { func, op: _ } = t {
+        if let Term::App { func, op: _ } = func.as_ref() {
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                return match unique_name.as_str() {
+                    "set_singleton" => SetTermClass::Singleton,
+                    _ => SetTermClass::Unknown,
+                };
+            }
+        }
+    }
+    SetTermClass::Unknown
 }
 
 fn detect_class(t: &TermRef) -> TermClass {
     match t.as_ref() {
         Term::Forall(_) => return TermClass::Forall,
-        Term::App { func, op: _ } => {
-            if let Term::App { func, op: _ } = func.as_ref() {
+        Term::App { func, op: op1 } => {
+            if let Term::App { func, op: op2 } = func.as_ref() {
                 if let Term::App { func, op: _ } = func.as_ref() {
                     if let Term::Axiom { unique_name, .. } = func.as_ref() {
                         return match unique_name.as_str() {
                             "eq" => TermClass::Eq,
+                            "inset" => TermClass::SetMember(detect_set_class(op1)),
+                            "included" => {
+                                TermClass::SetIncluded(detect_set_class(op1), detect_set_class(op2))
+                            }
                             _ => TermClass::Unknown,
                         };
                     }
@@ -82,6 +107,6 @@ pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
         TermClass::Exists => {
             Suggestion::newq1(Destruct, "apply (ex_intro ? ? ($0))", "Enter value")
         }
-        TermClass::Eq | TermClass::Unknown => return None,
+        _ => return None,
     })
 }
