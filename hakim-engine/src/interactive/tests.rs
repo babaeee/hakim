@@ -313,9 +313,9 @@ fn set_lemma() {
         r#"
         intros T a S H
         apply minus_of_subset
-        apply included_intro
+        apply included_fold
         intros a2 a2_in_a
-        apply (singleton_intro ? ? ?) in a2_in_a
+        apply (singleton_unfold ? ? ?) in a2_in_a
         rewrite <- a2_in_a
         apply H
     "#,

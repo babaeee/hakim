@@ -75,6 +75,28 @@ fn exist_paran() {
 }
 
 #[test]
+fn exists_hyp() {
+    check_hyp_menu(
+        "(∃ x: ℤ, x < x) -> False",
+        r#"
+            intros f
+            "#,
+        "f",
+        SuggRec::vc([SuggClass::Destruct]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "(∃ x: ℤ, x < x) -> False",
+        r#"
+            intros f
+            "#,
+        "f",
+        SuggRec::vc([]),
+        EngineLevel::Empty,
+    );
+}
+
+#[test]
 fn exist_goal() {
     check_goal_dblclk(
         "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
@@ -121,6 +143,24 @@ fn set_hyp() {
             "#,
         "in_set_proof",
         SuggRec::vc([SuggClass::Pattern("a ∈ {b}", "a = b")]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "∀ t: U, ∀ s: set t, ∀ a: t, a ∈ s -> {a} ⊆ s",
+        r#"
+            intros t s a in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "∀ t: U, ∀ A B: set t, A ⊆ B -> False",
+        r#"
+            intros t A B incl
+            "#,
+        "incl",
+        SuggRec::vc([SuggClass::Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b")]),
         EngineLevel::Full,
     );
 }

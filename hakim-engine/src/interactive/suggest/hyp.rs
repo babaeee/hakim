@@ -37,17 +37,19 @@ pub fn suggest_on_hyp_menu(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Sug
             }
         }
         TermClass::Exists => {
-            let val_name = engine.generate_name(&format!("{}_value", name));
-            let proof_name = engine.generate_name(&format!("{}_proof", name));
-            r.push(Suggestion {
-                class: Destruct,
-                tactic: vec![
-                    format!("apply (ex_ind ? ? {})", name),
-                    format!("remove_hyp {}", name),
-                    format!("intros {} {}", val_name, proof_name),
-                ],
-                questions: vec![],
-            });
+            if engine.has_library("Logic") {
+                let val_name = engine.generate_name(&format!("{}_value", name));
+                let proof_name = engine.generate_name(&format!("{}_proof", name));
+                r.push(Suggestion {
+                    class: Destruct,
+                    tactic: vec![
+                        format!("apply (ex_ind ? ? {})", name),
+                        format!("remove_hyp {}", name),
+                        format!("intros {} {}", val_name, proof_name),
+                    ],
+                    questions: vec![],
+                });
+            }
         }
         TermClass::Forall | TermClass::Unknown => (),
     }
