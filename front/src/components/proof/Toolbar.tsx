@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { normalPrompt } from "../../dialog";
 import { sendTactic, subscribe, tryAuto, TryAutoResult } from "../../hakim";
 import { g } from "../../i18n";
 import css from "./toolbar.module.css";
@@ -11,8 +12,8 @@ export const ToolButton = ({ label, onClick }: { label: string, onClick: any }) 
     );
 }
 
-const newAssert = () => {
-    const inp = window.prompt(g`input_assertion`);
+const newAssert = async () => {
+    const inp = await normalPrompt(g`input_assertion`);
     sendTactic(`add_hyp (${inp})`);
 };
 

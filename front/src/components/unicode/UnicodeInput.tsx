@@ -5,6 +5,7 @@ type Props = {
     onChange: (x: string) => any,
     onEnter: () => any,
     enableHelp: (x: boolean) => any,
+    className?: string,
 };
 
 const transform = (s: string | undefined) => {
@@ -17,9 +18,9 @@ const transform = (s: string | undefined) => {
     return s;
 }
 
-export const UnicodeInput = ({ value, onChange, enableHelp, onEnter }: Props) => {
+export const UnicodeInput = ({ value, onChange, enableHelp, onEnter, className }: Props) => {
     return (
-        <input type="text" value={value} onChange={(e) => {
+        <input className={className} type="text" value={value} onChange={(e) => {
             const txt = transform(e.target.value);
             enableHelp(txt.endsWith(';'));
             onChange(txt);
