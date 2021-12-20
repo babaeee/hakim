@@ -29,6 +29,7 @@ impl Default for Engine {
         name_dict.insert("ℤ".to_string(), prelude::z());
         name_dict.insert("False".to_string(), prelude::false_ty());
         name_dict.insert("eq".to_string(), prelude::eq());
+        name_dict.insert("ex".to_string(), prelude::ex());
         name_dict.insert("plus".to_string(), prelude::plus());
         name_dict.insert("mult".to_string(), prelude::mult());
         name_dict.insert("or".to_string(), prelude::or());

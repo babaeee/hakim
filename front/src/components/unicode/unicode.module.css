@@ -1,0 +1,9 @@
+.helpItem {
+    display: inline;
+    background-color: purple;
+    color: white;
+    border-radius: .4rem;
+    margin: 0 .3rem;
+    padding: .2rem;
+    white-space: nowrap;
+}
