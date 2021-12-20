@@ -6,4 +6,5 @@ export const convertTable: [string, string][] = [
     ['\\/', '∨'],
     ['/\\', '∧'],
     ['->', '→'],
+    ['Z', 'ℤ'],
 ];
