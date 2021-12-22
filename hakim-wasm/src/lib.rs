@@ -94,14 +94,16 @@ impl Instance {
                 let goals = snapshot
                     .frames
                     .iter()
-                    .map(|x| format!("{:?}", x.goal))
+                    .map(|x| x.engine.pretty_print(&x.goal))
                     .collect();
-                let hyps = snapshot
-                    .pop_frame()
-                    .hyps
-                    .into_iter()
-                    .map(|(k, v)| (k, format!("{:?}", v)))
-                    .collect();
+                let hyps = {
+                    let frame = snapshot.pop_frame();
+                    frame
+                        .hyps
+                        .into_iter()
+                        .map(|(k, v)| (k, frame.engine.pretty_print(&v)))
+                        .collect()
+                };
                 Monitor::Monitor { goals, hyps }
             }
             None => Monitor::SessionIsNotStarted,

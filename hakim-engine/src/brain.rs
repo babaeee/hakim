@@ -36,10 +36,9 @@ pub type TermRef = Rc<Term>;
 
 impl Debug for Term {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut name_stack = vec![];
         f.write_str(&term_pretty_print(
-            Rc::new(self.clone()),
-            &mut name_stack,
+            self,
+            &mut (vec![], |_| true),
             (200, 200),
         ))
     }

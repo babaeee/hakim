@@ -5,10 +5,10 @@ use crate::{
     brain::{
         self,
         infer::{type_of_and_infer, InferResults},
-        normalize, type_of, TermRef,
+        normalize, type_of, Term, TermRef,
     },
     library::{load_library_by_name, prelude},
-    parser::{self, ast_to_term, is_valid_ident, parse},
+    parser::{self, ast_to_term, is_valid_ident, parse, term_pretty_print},
     search::search,
     term_ref,
 };
@@ -169,5 +169,13 @@ impl Engine {
 
     pub(crate) fn has_library(&self, arg: &str) -> bool {
         self.libs.contains_key(arg)
+    }
+
+    pub fn pretty_print(&self, term: &Term) -> String {
+        term_pretty_print(
+            term,
+            &mut (vec![], |x| !self.name_dict.contains_key(x)),
+            (200, 200),
+        )
     }
 }

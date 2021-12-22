@@ -2,8 +2,8 @@ use std::cmp::min;
 
 use crate::{parser::binop::BinOp, Abstraction, Term, TermRef};
 
-fn detect_set_items(t: &TermRef) -> Option<Vec<TermRef>> {
-    match t.as_ref() {
+fn detect_set_items(t: &Term) -> Option<Vec<TermRef>> {
+    match t {
         Term::App { func, op: op2 } => match func.as_ref() {
             Term::App { func, op: _ } => match func.as_ref() {
                 Term::Axiom { ty: _, unique_name } => {
@@ -28,8 +28,8 @@ fn detect_set_items(t: &TermRef) -> Option<Vec<TermRef>> {
     }
 }
 
-fn detect_set_fn(t: &TermRef) -> Option<(TermRef, TermRef)> {
-    match t.as_ref() {
+fn detect_set_fn(t: &Term) -> Option<(TermRef, TermRef)> {
+    match t {
         Term::App { func, op: op2 } => match func.as_ref() {
             Term::App { func, op: op1 } => match func.as_ref() {
                 Term::Axiom { ty: _, unique_name } => {
@@ -47,8 +47,8 @@ fn detect_set_fn(t: &TermRef) -> Option<(TermRef, TermRef)> {
     }
 }
 
-fn detect_exists(t: &TermRef) -> Option<(TermRef, TermRef)> {
-    match t.as_ref() {
+fn detect_exists(t: &Term) -> Option<(TermRef, TermRef)> {
+    match t {
         Term::App { func, op: op2 } => match func.as_ref() {
             Term::App { func, op: op1 } => match func.as_ref() {
                 Term::Axiom { ty: _, unique_name } => {
@@ -68,7 +68,7 @@ fn detect_exists(t: &TermRef) -> Option<(TermRef, TermRef)> {
 
 fn abstraction_pretty_print_inner(
     abs: &Abstraction,
-    name_stack: &mut Vec<(String, usize)>,
+    names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
 ) -> (String, String, String) {
     let Abstraction {
         var_ty,
@@ -76,24 +76,28 @@ fn abstraction_pretty_print_inner(
         hint_name,
     } = abs;
     let name = if let Some(hint) = hint_name {
-        generate_name(name_stack, hint)
+        generate_name(names, hint)
     } else {
-        generate_name(name_stack, "x")
+        generate_name(names, "x")
     };
-    let var_ty_str = term_pretty_print(var_ty.clone(), name_stack, (200, 200));
-    name_stack.push((name.clone(), 0));
-    let body_str = term_pretty_print(body.clone(), name_stack, (200, 200));
-    name_stack.pop();
+    let var_ty_str = term_pretty_print(var_ty, names, (200, 200));
+    names.0.push((name.clone(), 0));
+    let body_str = term_pretty_print(body, names, (200, 200));
+    names.0.pop();
     (name, var_ty_str, body_str)
 }
 
-fn generate_name(name_stack: &[(String, usize)], hint: &str) -> String {
-    if name_stack.iter().all(|x| x.0 != hint) {
+fn check_name(names: &(Vec<(String, usize)>, impl Fn(&str) -> bool), name: &str) -> bool {
+    names.1(name) && names.0.iter().all(|x| x.0 != name)
+}
+
+fn generate_name(names: &(Vec<(String, usize)>, impl Fn(&str) -> bool), hint: &str) -> String {
+    if check_name(names, hint) {
         return hint.to_string();
     }
     for i in 0.. {
         let hint = format!("{}{}", hint, i);
-        if name_stack.iter().all(|x| x.0 != hint) {
+        if check_name(names, &hint) {
             return hint;
         }
     }
@@ -103,7 +107,7 @@ fn generate_name(name_stack: &[(String, usize)], hint: &str) -> String {
 fn abstraction_pretty_print(
     sign: &str,
     abs: &Abstraction,
-    name_stack: &mut Vec<(String, usize)>,
+    name_stack: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
     should_paren: bool,
 ) -> String {
     let (name, var_ty_str, body_str) = abstraction_pretty_print_inner(abs, name_stack);
@@ -115,46 +119,46 @@ fn abstraction_pretty_print(
 }
 
 pub fn term_pretty_print(
-    term: TermRef,
-    name_stack: &mut Vec<(String, usize)>,
+    term: &Term,
+    names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
     level: (u8, u8),
 ) -> String {
-    if let Some((_, fun)) = detect_exists(&term) {
+    if let Some((_, fun)) = detect_exists(term) {
         if let Term::Fun(x) = fun.as_ref() {
-            return abstraction_pretty_print("∃", x, name_stack, level.1 < 200);
+            return abstraction_pretty_print("∃", x, names, level.1 < 200);
         }
     }
-    if let Some((_, fun)) = detect_set_fn(&term) {
+    if let Some((_, fun)) = detect_set_fn(term) {
         if let Term::Fun(x) = fun.as_ref() {
-            let (name, ty, body) = abstraction_pretty_print_inner(x, name_stack);
+            let (name, ty, body) = abstraction_pretty_print_inner(x, names);
             return format!("{{ {}: {} | {} }}", name, ty, body);
         }
     }
-    if let Some(exp) = detect_set_items(&term) {
+    if let Some(exp) = detect_set_items(term) {
         let r = exp
             .into_iter()
-            .map(|x| term_pretty_print(x, name_stack, (200, 200)))
+            .map(|x| term_pretty_print(&x, names, (200, 200)))
             .collect::<Vec<_>>();
         return format!("{{{}}}", r.join(", "));
     }
-    if let Some((l, op, r)) = BinOp::detect(&term) {
+    if let Some((l, op, r)) = BinOp::detect(term) {
         return if min(level.0, level.1) < op.prec() {
             format!(
                 "({} {} {})",
-                term_pretty_print(l, name_stack, (200, op.level_left())),
+                term_pretty_print(&l, names, (200, op.level_left())),
                 op,
-                term_pretty_print(r, name_stack, (op.level_right(), 200))
+                term_pretty_print(&r, names, (op.level_right(), 200))
             )
         } else {
             format!(
                 "{} {} {}",
-                term_pretty_print(l, name_stack, (level.0, op.level_left())),
+                term_pretty_print(&l, names, (level.0, op.level_left())),
                 op,
-                term_pretty_print(r, name_stack, (op.level_right(), level.1))
+                term_pretty_print(&r, names, (op.level_right(), level.1))
             )
         };
     }
-    match term.as_ref() {
+    match term {
         Term::Axiom { unique_name, .. } => unique_name.to_string(),
         Term::Universe { index } => {
             if *index == 0 {
@@ -163,22 +167,22 @@ pub fn term_pretty_print(
                 format!("U{}", index)
             }
         }
-        Term::Forall(abs) => abstraction_pretty_print("∀", abs, name_stack, level.1 < 200),
-        Term::Fun(abs) => abstraction_pretty_print("λ", abs, name_stack, level.1 < 200),
+        Term::Forall(abs) => abstraction_pretty_print("∀", abs, names, level.1 < 200),
+        Term::Fun(abs) => abstraction_pretty_print("λ", abs, names, level.1 < 200),
         Term::Var { index } => {
-            if let Some(x) = name_stack.iter_mut().rev().nth(*index) {
+            if let Some(x) = names.0.iter_mut().rev().nth(*index) {
                 x.1 += 1;
                 x.0.clone()
             } else {
-                format!("f{}", index - name_stack.len())
+                format!("f{}", index - names.0.len())
             }
         }
         Term::Number { value } => value.to_string(),
         Term::App { func, op } => {
             let s = format!(
                 "{} {}",
-                term_pretty_print(func.clone(), name_stack, (1, 1)),
-                term_pretty_print(op.clone(), name_stack, (0, 0))
+                term_pretty_print(func, names, (1, 1)),
+                term_pretty_print(op, names, (0, 0))
             );
             if min(level.0, level.1) < 1 {
                 format!("({})", s)
