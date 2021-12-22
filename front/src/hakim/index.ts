@@ -100,8 +100,12 @@ export const setGoal = (goal: string) => {
     return checkErrorAndUpdate(instance.start_session(goal));
 };
 
-export const runSuggMenuHyp = (hypName: string, sugg: string) => {
-    return checkErrorAndUpdate(instance.run_suggest_menu_hyp(hypName, sugg));
+export const runSuggMenuHyp = (hypName: string, i: number) => {
+    return checkErrorAndUpdate(instance.run_suggest_menu_hyp(hypName, i));
+};
+
+export const runSuggMenuGoal = (i: number) => {
+    return checkErrorAndUpdate(instance.run_suggest_menu_goal(i));
 };
 
 export const runSuggDblGoal = () => {
@@ -137,6 +141,12 @@ const parenSplit = (txt: string): string[] => {
 
 export const suggMenuHyp = (hypName: string) => {
     const suggs = instance.suggest_menu_hyp(hypName);
+    if (!suggs) return [];
+    return parenSplit(suggs);
+};
+
+export const suggMenuGoal = () => {
+    const suggs = instance.suggest_menu_goal();
     if (!suggs) return [];
     return parenSplit(suggs);
 };

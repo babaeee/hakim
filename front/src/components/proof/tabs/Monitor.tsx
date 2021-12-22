@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { runSuggDblGoal, runSuggDblHyp, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuHyp, tryTactic } from "../../../hakim";
+import { runSuggDblGoal, runSuggDblHyp, runSuggMenuGoal, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuGoal, suggMenuHyp, tryTactic } from "../../../hakim";
 import css from "./Monitor.module.css";
 import { useMenuState, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import '@szhsin/react-menu/dist/index.css';
@@ -50,7 +50,7 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 {name}: {ty}
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
-                    {suggs.map((x) => <MenuItem onClick={() => runSuggMenuHyp(name, x)}>{x}</MenuItem>)}
+                    {suggs.map((x, i) => <MenuItem onClick={() => runSuggMenuHyp(name, i)}>{x}</MenuItem>)}
                 </ControlledMenu>
             </div>
         </div>
@@ -83,14 +83,14 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             })}
             onDoubleClick={() => runSuggDblGoal()} onContextMenu={e => {
                 e.preventDefault();
-                setSuggs(['gav']);
+                setSuggs(suggMenuGoal());
                 setAnchorPoint({ x: e.clientX, y: e.clientY });
                 toggleMenu(true);
             }}>
             {ty}
             <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                 onClose={() => toggleMenu(false)}>
-                {suggs.map((x) => <MenuItem onClick={() => alert(x)}>{x}</MenuItem>)}
+                {suggs.map((x, i) => <MenuItem onClick={() => runSuggMenuGoal(i)}>{x}</MenuItem>)}
             </ControlledMenu>
         </div>
     );

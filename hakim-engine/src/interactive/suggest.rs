@@ -4,7 +4,7 @@ use crate::{Term, TermRef};
 mod tests;
 
 mod hyp;
-pub use hyp::{suggest_on_hyp_dblclk, suggest_on_hyp_menu};
+pub use hyp::{suggest_on_hyp, suggest_on_hyp_dblclk};
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum SuggClass {
@@ -23,6 +23,7 @@ pub struct Suggestion {
     pub class: SuggClass,
     pub tactic: Vec<String>,
     pub questions: Vec<String>,
+    pub is_default: bool,
 }
 
 impl Suggestion {
@@ -31,14 +32,25 @@ impl Suggestion {
             class,
             tactic: vec![t.to_string()],
             questions: vec![],
+            is_default: false,
         }
     }
 
-    fn newq1(class: SuggClass, t: &str, q: &str) -> Self {
+    fn new_default(class: SuggClass, t: &str) -> Self {
+        Self {
+            class,
+            tactic: vec![t.to_string()],
+            questions: vec![],
+            is_default: true,
+        }
+    }
+
+    fn newq1default(class: SuggClass, t: &str, q: &str) -> Self {
         Self {
             class,
             tactic: vec![t.to_string()],
             questions: vec![q.to_string()],
+            is_default: true,
         }
     }
 }
@@ -79,8 +91,8 @@ fn detect_set_class(t: &Term) -> SetTermClass {
     }
 }
 
-fn detect_class(t: &TermRef) -> TermClass {
-    match t.as_ref() {
+fn detect_class(t: &Term) -> TermClass {
+    match t {
         Term::Forall(_) => return TermClass::Forall,
         Term::Axiom { unique_name, .. } => {
             return match unique_name.as_str() {
@@ -115,13 +127,41 @@ fn detect_class(t: &TermRef) -> TermClass {
     TermClass::Unknown
 }
 
-pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
+pub fn suggest_on_goal(goal: &Term) -> Vec<Suggestion> {
     let c = detect_class(goal);
-    Some(match c {
-        TermClass::Forall => Suggestion::new(Intros, "intros"),
-        TermClass::Exists => {
-            Suggestion::newq1(Destruct, "apply (ex_intro ? ? ($0))", "Enter value")
+    let mut r = vec![];
+    match c {
+        TermClass::Forall => {
+            r.push(Suggestion::new_default(Intros, "intros"));
+            r.push(Suggestion {
+                class: IntrosWithName,
+                tactic: vec!["intros $0".to_string()],
+                questions: vec!["Enter name".to_string()],
+                is_default: false,
+            });
         }
-        _ => return None,
-    })
+        TermClass::Exists => r.push(Suggestion::newq1default(
+            Destruct,
+            "apply (ex_intro ? ? ($0))",
+            "Enter value",
+        )),
+        TermClass::SetIncluded(_, _) => {
+            r.push(Suggestion::new_default(
+                Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
+                "apply included_fold",
+            ));
+        }
+        _ => {}
+    }
+    r
+}
+
+pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
+    let suggs = suggest_on_goal(goal);
+    for sugg in suggs {
+        if sugg.is_default {
+            return Some(sugg);
+        }
+    }
+    None
 }

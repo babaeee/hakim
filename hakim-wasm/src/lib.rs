@@ -197,28 +197,54 @@ impl Instance {
         self.run_sugg(sugg)
     }
 
+    pub fn suggest_menu_goal(&mut self) -> Option<String> {
+        let session = &mut self.session.as_ref()?;
+        let sugg = session.suggest_on_goal_menu();
+        Some(
+            sugg.into_iter()
+                .map(|x| {
+                    if x.is_default {
+                        format!("(★{:?})", x.class)
+                    } else {
+                        format!("({:?})", x.class)
+                    }
+                })
+                .collect(),
+        )
+    }
+
     pub fn suggest_menu_hyp(&mut self, hyp_name: &str) -> Option<String> {
         let session = &mut self.session.as_ref()?;
         let sugg = session.suggest_on_hyp_menu(hyp_name);
         Some(
             sugg.into_iter()
-                .map(|x| format!("({:?})", x.class))
+                .map(|x| {
+                    if x.is_default {
+                        format!("(★{:?})", x.class)
+                    } else {
+                        format!("({:?})", x.class)
+                    }
+                })
                 .collect(),
         )
     }
 
-    pub fn run_suggest_menu_hyp(&mut self, hyp_name: &str, sugg_class: &str) -> Option<String> {
+    pub fn run_suggest_menu_hyp(&mut self, hyp_name: &str, i: usize) -> Option<String> {
         let session = match &mut self.session {
             Some(s) => s,
             None => return Some("Session is not started".to_string()),
         };
-        let suggs = session.suggest_on_hyp_menu(hyp_name);
-        for sugg in suggs {
-            if format!("{:?}", sugg.class) == sugg_class {
-                return self.run_sugg(sugg);
-            }
-        }
-        Some(format!("Sugg {} not found", sugg_class))
+        let sugg = session.suggest_on_hyp_menu(hyp_name);
+        self.run_sugg(sugg.into_iter().nth(i)?)
+    }
+
+    pub fn run_suggest_menu_goal(&mut self, i: usize) -> Option<String> {
+        let session = match &mut self.session {
+            Some(s) => s,
+            None => return Some("Session is not started".to_string()),
+        };
+        let sugg = session.suggest_on_goal_menu();
+        self.run_sugg(sugg.into_iter().nth(i)?)
     }
 
     pub fn search(&self, query: &str) -> String {
