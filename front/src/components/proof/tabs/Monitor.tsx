@@ -69,7 +69,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             canDrop: (x: any) => tryTactic(`apply ${x.name}`),
             collect: (monitor) => ({
                 isOver: !!monitor.isOver(),
-                canDrop: !!monitor.canDrop()
+                canDrop: !!monitor.canDrop(),
             }),
         }),
         [],
@@ -96,9 +96,9 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     );
 };
 
-const NextGoal = ({ ty }: { ty: string }) => {
+const NextGoal = ({ ty, i }: { ty: string, i: number }) => {
     return (
-        <div className={css.hyp}>
+        <div className={css.hyp} onDoubleClick={() => sendTactic(`Switch ${i + 1}`)}>
             {ty}
         </div>
     )
@@ -129,8 +129,8 @@ export const Monitor = () => {
                 <Hyp name={name} ty={ty} />
             ))}
             <hr /><Goal ty={goalsR[0]} />
-            {goalsR.slice(1).map((goal: any) => (
-                <><hr /><NextGoal ty={goal} /></>
+            {goalsR.slice(1).map((goal: any, i: number) => (
+                <><hr /><NextGoal ty={goal} i={i} /></>
             ))}
         </div>
     )

@@ -307,6 +307,26 @@ fn sigma_1_n() {
 }
 
 #[test]
+fn switch() {
+    run_interactive_to_end(
+        "∀ a: ℤ, ∃ b: ℤ, a < b",
+        r#"
+        intros a
+        apply (ex_intro ? ? (a + 1))
+        add_hyp (a = a+0)
+        ring
+        rewrite H
+        add_hyp ((a+0)+1 = a+1)
+        Switch 1
+        rewrite H0
+        apply lt_plus_l
+        apply lt_0_1
+        ring
+        "#,
+    );
+}
+
+#[test]
 fn set_lemma() {
     run_interactive_to_end(
         "∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S -> { a } ∪ (S ∖ { a }) = S",

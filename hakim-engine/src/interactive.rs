@@ -90,6 +90,18 @@ impl Session {
         if line.trim() == "Undo" {
             return self.undo();
         }
+        if let Some(x) = line.strip_prefix("Switch ") {
+            let t: usize = x.parse().map_err(|_| tactic::Error::BadArg {
+                arg: x.to_string(),
+                tactic_name: "Switch".to_string(),
+            })?;
+            let snapshot = self.last_snapshot().switch_frame(t);
+            self.history.push_back(HistoryRecord {
+                tactic: line.to_string(),
+                snapshot,
+            });
+            return Ok(());
+        }
         let snapshot = self.last_snapshot().run_tactic(line)?;
         self.history.push_back(HistoryRecord {
             tactic: line.to_string(),
@@ -199,6 +211,14 @@ impl Snapshot {
 
     pub fn pop_frame(&mut self) -> Frame {
         self.frames.pop_back().unwrap()
+    }
+
+    fn switch_frame(&self, i: usize) -> Self {
+        let mut result = self.clone();
+        result
+            .frames
+            .swap(result.frames.len() - 1, result.frames.len() - 1 - i);
+        result
     }
 
     pub fn is_finished(&self) -> bool {
