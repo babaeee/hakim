@@ -26,6 +26,16 @@ if (!checkError(instance.load_library('All'))) {
     document.body.innerHTML = '';
 }
 
+const prevBackup = localStorage.getItem('wasmState');
+
+if (prevBackup) {
+    instance.from_backup(prevBackup);
+}
+
+export const toBackup = () => {
+    return instance.to_backup();
+};
+
 export type State = {
     history: string[],
 } & ({ isFinished: true } | {

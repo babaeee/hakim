@@ -13,7 +13,7 @@ use crate::{
     term_ref,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
     libs: im::HashMap<String, ()>,
@@ -66,6 +66,7 @@ impl From<brain::Error> for Error {
     }
 }
 
+use serde::{Deserialize, Serialize};
 use Error::*;
 
 pub type Result<T> = std::result::Result<T, Error>;

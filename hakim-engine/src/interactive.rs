@@ -1,4 +1,5 @@
 use im::vector;
+use serde::{Deserialize, Serialize};
 
 use crate::brain::{predict_axiom, TermRef};
 
@@ -19,25 +20,25 @@ use self::suggest::{
 pub use self::suggest::Suggestion;
 use self::tactic::remove_hyp;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Frame {
     pub goal: TermRef,
     pub hyps: im::HashMap<String, TermRef>,
     pub engine: Engine,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
     pub frames: im::Vector<Frame>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct HistoryRecord {
     tactic: String,
     snapshot: Snapshot,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Session {
     history: im::Vector<HistoryRecord>,
 }

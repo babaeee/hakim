@@ -6,7 +6,7 @@ pub mod infer;
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Eq, PartialOrd, Ord)]
+#[derive(Clone, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Abstraction {
     pub var_ty: TermRef,
     pub hint_name: Option<String>,
@@ -20,7 +20,7 @@ impl PartialEq for Abstraction {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Term {
     Axiom { ty: TermRef, unique_name: String },
     Universe { index: usize },
@@ -111,6 +111,7 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 use num_bigint::BigInt;
+use serde::{Deserialize, Serialize};
 use Error::*;
 
 pub fn map_reduce_wild<T>(

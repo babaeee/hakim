@@ -21,7 +21,7 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Instance {
     engine: Engine,
     session: Option<Session>,
@@ -63,6 +63,16 @@ impl Instance {
             engine,
             session: None,
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn to_backup(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn from_backup(&mut self, json: &str) {
+        *self = serde_json::from_str(json).unwrap();
     }
 
     #[wasm_bindgen]

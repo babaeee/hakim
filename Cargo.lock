@@ -175,8 +175,9 @@ dependencies = [
 name = "hakim-engine"
 version = "0.1.0"
 dependencies = [
- "im",
+ "im-rc",
  "num-bigint",
+ "serde",
 ]
 
 [[package]]
@@ -187,20 +188,22 @@ dependencies = [
  "console_error_panic_hook",
  "hakim-engine",
  "serde",
+ "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-test",
  "wee_alloc",
 ]
 
 [[package]]
-name = "im"
+name = "im-rc"
 version = "15.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "111c1983f3c5bb72732df25cddacee9b546d08325fb584b5ebd38148be7b0246"
+checksum = "3ca8957e71f04a205cb162508f9326aea04676c8dfd0711220190d6b83664f3f"
 dependencies = [
  "bitmaps",
  "rand_core",
  "rand_xoshiro",
+ "serde",
  "sized-chunks",
  "typenum",
  "version_check",
@@ -304,6 +307,7 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits",
+ "serde",
 ]
 
 [[package]]
