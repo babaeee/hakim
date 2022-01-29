@@ -11,11 +11,11 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-wasm-bindgen = { version = "0.2.63", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.63" }
 hakim-engine = { path = "../hakim-engine" }
 serde = { version = "1.0", features = ["derive"] }
 backtrace = "0.3"
-serde_json = "1"
+serde-wasm-bindgen = "0.4.2"
 
 
 # The `console_error_panic_hook` crate provides better debugging of panics by

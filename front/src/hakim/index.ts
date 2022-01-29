@@ -3,6 +3,8 @@ import { Instance } from "../../../hakim-wasm/pkg/hakim_wasm";
 declare let window: Window & {
     ask_question: (q: string) => string;
     panic_handler: (s: string) => void;
+    instance: Instance;
+    hardReset: () => void;
 };
 
 window.ask_question = (x) => {
@@ -26,14 +28,27 @@ if (!checkError(instance.load_library('All'))) {
     document.body.innerHTML = '';
 }
 
+window.instance = instance;
+
+const hardReset = () => {
+    localStorage.clear();
+    window.onbeforeunload = null;
+    window.location.reload();
+};
+
+window.hardReset = hardReset;
+
 const prevBackup = localStorage.getItem('wasmState');
 
 if (prevBackup) {
-    instance.from_backup(prevBackup);
+    if (!instance.from_backup(JSON.parse(prevBackup))) {
+        window.alert('backup version is incompatible. reloading...');
+        hardReset();
+    }
 }
 
 export const toBackup = () => {
-    return instance.to_backup();
+    return JSON.stringify(instance.to_backup());
 };
 
 export type State = {
