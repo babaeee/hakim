@@ -2,29 +2,57 @@ use std::cmp::min;
 
 use crate::{parser::binop::BinOp, Abstraction, Term, TermRef};
 
-fn detect_set_items(t: &Term) -> Option<Vec<TermRef>> {
-    match t {
-        Term::App { func, op: op2 } => match func.as_ref() {
-            Term::App { func, op: _ } => match func.as_ref() {
-                Term::Axiom { ty: _, unique_name } => {
-                    if unique_name == "set_singleton" {
-                        Some(vec![op2.clone()])
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            Term::Axiom { ty: _, unique_name } => {
-                if unique_name == "set_empty" {
-                    Some(vec![])
-                } else {
-                    None
+fn detect_set_singleton(t: &Term) -> Option<TermRef> {
+    if let Term::App { func, op: op2 } = t {
+        if let Term::App { func, op: _ } = func.as_ref() {
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                if unique_name == "set_singleton" {
+                    return Some(op2.clone());
                 }
             }
-            _ => None,
-        },
-        _ => None,
+        }
+    }
+    None
+}
+
+fn detect_set_items(mut t: &Term) -> Option<Vec<TermRef>> {
+    let mut r = vec![];
+    loop {
+        if let Some(item) = detect_set_singleton(t) {
+            r.push(item);
+            return Some(r);
+        }
+        match t {
+            Term::App { func, op: op2 } => match func.as_ref() {
+                Term::App { func, op: op1 } => match func.as_ref() {
+                    Term::App { func, op: _ } => match func.as_ref() {
+                        Term::Axiom { ty: _, unique_name } => {
+                            if unique_name == "union" {
+                                if let Some(item) = detect_set_singleton(op2) {
+                                    r.push(item);
+                                    t = op1;
+                                    continue;
+                                }
+                                return None;
+                            } else {
+                                return None;
+                            }
+                        }
+                        _ => return None,
+                    },
+                    _ => return None,
+                },
+                Term::Axiom { ty: _, unique_name } => {
+                    if unique_name == "set_empty" {
+                        return Some(r);
+                    } else {
+                        return None;
+                    }
+                }
+                _ => return None,
+            },
+            _ => return None,
+        }
     }
 }
 
@@ -137,6 +165,7 @@ pub fn term_pretty_print(
     if let Some(exp) = detect_set_items(term) {
         let r = exp
             .into_iter()
+            .rev()
             .map(|x| term_pretty_print(&x, names, (200, 200)))
             .collect::<Vec<_>>();
         return format!("{{{}}}", r.join(", "));

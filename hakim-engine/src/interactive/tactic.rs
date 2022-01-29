@@ -37,6 +37,7 @@ pub enum Error {
     EngineError(super::Error),
     CanNotFindInstance(FindInstance),
     ContextDependOnHyp(String, TermRef),
+    TermIsNotType(TermRef),
 }
 
 impl Error {

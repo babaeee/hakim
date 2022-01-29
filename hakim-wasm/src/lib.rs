@@ -66,13 +66,20 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn to_backup(&self) -> String {
-        serde_json::to_string(self).unwrap()
+    pub fn to_backup(&self) -> JsValue {
+        let serializer = serde_wasm_bindgen::Serializer::json_compatible();
+        self.serialize(&serializer).unwrap()
     }
 
     #[wasm_bindgen]
-    pub fn from_backup(&mut self, json: &str) {
-        *self = serde_json::from_str(json).unwrap();
+    pub fn from_backup(&mut self, json: JsValue) -> bool {
+        match serde_wasm_bindgen::from_value(json) {
+            Ok(x) => {
+                *self = x;
+                true
+            }
+            Err(_) => false,
+        }
     }
 
     #[wasm_bindgen]
@@ -118,7 +125,7 @@ impl Instance {
             }
             None => Monitor::SessionIsNotStarted,
         };
-        JsValue::from_serde(&monitor).unwrap()
+        serde_wasm_bindgen::to_value(&monitor).unwrap()
     }
 
     pub fn try_auto(&self) -> Option<String> {
@@ -168,7 +175,7 @@ impl Instance {
             Some(s) => s,
             None => return JsValue::UNDEFINED,
         };
-        JsValue::from_serde(&session.get_history()).unwrap()
+        serde_wasm_bindgen::to_value(&session.get_history()).unwrap()
     }
 
     fn run_sugg(&mut self, sugg: Suggestion) -> Option<String> {

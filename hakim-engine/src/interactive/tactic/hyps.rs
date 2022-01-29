@@ -1,9 +1,16 @@
-use super::{get_one_arg, Result};
-use crate::interactive::Frame;
+use super::{get_one_arg, Error, Result};
+use crate::{
+    brain::{type_of, Term},
+    interactive::Frame,
+};
 
 pub fn add_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "add_hyp")?;
     let term = frame.engine.parse_text(&exp)?;
+    let ty = type_of(term.clone())?;
+    if !matches!(ty.as_ref(), Term::Universe { .. }) {
+        return Err(Error::TermIsNotType(term));
+    }
     let mut frame2 = frame.clone();
     frame.add_hyp_with_name(&frame.engine.generate_name("H"), term.clone())?;
     frame2.goal = term;
@@ -43,6 +50,11 @@ mod tests {
     #[test]
     fn dont_remove_dependent() {
         run_interactive_to_fail("∀ a: ℤ, a < a + 5", "intros a", "remove_hyp a");
+    }
+
+    #[test]
+    fn dont_add_non_type() {
+        run_interactive_to_fail("False", "", "add_hyp 2");
     }
 
     #[test]
