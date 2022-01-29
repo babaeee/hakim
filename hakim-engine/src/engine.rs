@@ -5,15 +5,15 @@ use crate::{
     brain::{
         self,
         infer::{type_of_and_infer, InferResults},
-        normalize, type_of, TermRef,
+        normalize, type_of, Term, TermRef,
     },
     library::{load_library_by_name, prelude},
-    parser::{self, ast_to_term, is_valid_ident, parse},
+    parser::{self, ast_to_term, is_valid_ident, parse, term_pretty_print},
     search::search,
     term_ref,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
     libs: im::HashMap<String, ()>,
@@ -29,6 +29,7 @@ impl Default for Engine {
         name_dict.insert("ℤ".to_string(), prelude::z());
         name_dict.insert("False".to_string(), prelude::false_ty());
         name_dict.insert("eq".to_string(), prelude::eq());
+        name_dict.insert("ex".to_string(), prelude::ex());
         name_dict.insert("plus".to_string(), prelude::plus());
         name_dict.insert("mult".to_string(), prelude::mult());
         name_dict.insert("or".to_string(), prelude::or());
@@ -65,6 +66,7 @@ impl From<brain::Error> for Error {
     }
 }
 
+use serde::{Deserialize, Serialize};
 use Error::*;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -124,6 +126,9 @@ impl Engine {
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {
+        if self.has_library(name) {
+            return Ok(());
+        }
         load_library_by_name(self, name)?;
         self.libs.insert(name.to_string(), ());
         Ok(())
@@ -154,9 +159,9 @@ impl Engine {
         }
         let mut infers = InferResults::new(infer_cnt);
         let ty = type_of_and_infer(term.clone(), &mut infers)?;
-        dbg!(type_of_and_infer(ty, &mut infers)?);
+        type_of_and_infer(ty, &mut infers)?;
         let term = infers.fill(term);
-        Ok(dbg!(term))
+        Ok(term)
     }
 
     pub fn interactive_session(&self, goal: &str) -> Result<Session> {
@@ -165,5 +170,13 @@ impl Engine {
 
     pub(crate) fn has_library(&self, arg: &str) -> bool {
         self.libs.contains_key(arg)
+    }
+
+    pub fn pretty_print(&self, term: &Term) -> String {
+        term_pretty_print(
+            term,
+            &mut (vec![], |x| !self.name_dict.contains_key(x)),
+            (200, 200),
+        )
     }
 }

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { runSuggDblGoal, runSuggDblHyp, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuHyp, tryTactic } from "../../../hakim";
+import { runSuggDblGoal, runSuggDblHyp, runSuggMenuGoal, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuGoal, suggMenuHyp, tryTactic } from "../../../hakim";
 import css from "./Monitor.module.css";
 import { useMenuState, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import '@szhsin/react-menu/dist/index.css';
@@ -50,7 +50,7 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 {name}: {ty}
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
-                    {suggs.map((x) => <MenuItem onClick={() => runSuggMenuHyp(name, x)}>{x}</MenuItem>)}
+                    {suggs.map((x, i) => <MenuItem onClick={() => runSuggMenuHyp(name, i)}>{x}</MenuItem>)}
                 </ControlledMenu>
             </div>
         </div>
@@ -69,7 +69,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             canDrop: (x: any) => tryTactic(`apply ${x.name}`),
             collect: (monitor) => ({
                 isOver: !!monitor.isOver(),
-                canDrop: !!monitor.canDrop()
+                canDrop: !!monitor.canDrop(),
             }),
         }),
         [],
@@ -83,22 +83,22 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             })}
             onDoubleClick={() => runSuggDblGoal()} onContextMenu={e => {
                 e.preventDefault();
-                setSuggs(['gav']);
+                setSuggs(suggMenuGoal());
                 setAnchorPoint({ x: e.clientX, y: e.clientY });
                 toggleMenu(true);
             }}>
             {ty}
             <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                 onClose={() => toggleMenu(false)}>
-                {suggs.map((x) => <MenuItem onClick={() => alert(x)}>{x}</MenuItem>)}
+                {suggs.map((x, i) => <MenuItem onClick={() => runSuggMenuGoal(i)}>{x}</MenuItem>)}
             </ControlledMenu>
         </div>
     );
 };
 
-const NextGoal = ({ ty }: { ty: string }) => {
+const NextGoal = ({ ty, i }: { ty: string, i: number }) => {
     return (
-        <div className={css.hyp}>
+        <div className={css.hyp} onDoubleClick={() => sendTactic(`Switch ${i + 1}`)}>
             {ty}
         </div>
     )
@@ -129,8 +129,8 @@ export const Monitor = () => {
                 <Hyp name={name} ty={ty} />
             ))}
             <hr /><Goal ty={goalsR[0]} />
-            {goalsR.slice(1).map((goal: any) => (
-                <><hr /><NextGoal ty={goal} /></>
+            {goalsR.slice(1).map((goal: any, i: number) => (
+                <><hr /><NextGoal ty={goal} i={i} /></>
             ))}
         </div>
     )

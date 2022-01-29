@@ -21,7 +21,7 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Instance {
     engine: Engine,
     session: Option<Session>,
@@ -66,6 +66,16 @@ impl Instance {
     }
 
     #[wasm_bindgen]
+    pub fn to_backup(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn from_backup(&mut self, json: &str) {
+        *self = serde_json::from_str(json).unwrap();
+    }
+
+    #[wasm_bindgen]
     pub fn load_library(&mut self, name: &str) -> Option<String> {
         if self.session.is_some() {
             return Some("Can not load library while session is alive".to_string());
@@ -94,14 +104,16 @@ impl Instance {
                 let goals = snapshot
                     .frames
                     .iter()
-                    .map(|x| format!("{:?}", x.goal))
+                    .map(|x| x.engine.pretty_print(&x.goal))
                     .collect();
-                let hyps = snapshot
-                    .pop_frame()
-                    .hyps
-                    .into_iter()
-                    .map(|(k, v)| (k, format!("{:?}", v)))
-                    .collect();
+                let hyps = {
+                    let frame = snapshot.pop_frame();
+                    frame
+                        .hyps
+                        .into_iter()
+                        .map(|(k, v)| (k, frame.engine.pretty_print(&v)))
+                        .collect()
+                };
                 Monitor::Monitor { goals, hyps }
             }
             None => Monitor::SessionIsNotStarted,
@@ -195,28 +207,54 @@ impl Instance {
         self.run_sugg(sugg)
     }
 
+    pub fn suggest_menu_goal(&mut self) -> Option<String> {
+        let session = &mut self.session.as_ref()?;
+        let sugg = session.suggest_on_goal_menu();
+        Some(
+            sugg.into_iter()
+                .map(|x| {
+                    if x.is_default {
+                        format!("(★{:?})", x.class)
+                    } else {
+                        format!("({:?})", x.class)
+                    }
+                })
+                .collect(),
+        )
+    }
+
     pub fn suggest_menu_hyp(&mut self, hyp_name: &str) -> Option<String> {
         let session = &mut self.session.as_ref()?;
         let sugg = session.suggest_on_hyp_menu(hyp_name);
         Some(
             sugg.into_iter()
-                .map(|x| format!("{:?},", x.class))
+                .map(|x| {
+                    if x.is_default {
+                        format!("(★{:?})", x.class)
+                    } else {
+                        format!("({:?})", x.class)
+                    }
+                })
                 .collect(),
         )
     }
 
-    pub fn run_suggest_menu_hyp(&mut self, hyp_name: &str, sugg_class: &str) -> Option<String> {
+    pub fn run_suggest_menu_hyp(&mut self, hyp_name: &str, i: usize) -> Option<String> {
         let session = match &mut self.session {
             Some(s) => s,
             None => return Some("Session is not started".to_string()),
         };
-        let suggs = session.suggest_on_hyp_menu(hyp_name);
-        for sugg in suggs {
-            if format!("{:?}", sugg.class) == sugg_class {
-                return self.run_sugg(sugg);
-            }
-        }
-        Some("Sugg not found".to_string())
+        let sugg = session.suggest_on_hyp_menu(hyp_name);
+        self.run_sugg(sugg.into_iter().nth(i)?)
+    }
+
+    pub fn run_suggest_menu_goal(&mut self, i: usize) -> Option<String> {
+        let session = match &mut self.session {
+            Some(s) => s,
+            None => return Some("Session is not started".to_string()),
+        };
+        let sugg = session.suggest_on_goal_menu();
+        self.run_sugg(sugg.into_iter().nth(i)?)
     }
 
     pub fn search(&self, query: &str) -> String {

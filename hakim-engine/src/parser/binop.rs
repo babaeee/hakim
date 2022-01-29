@@ -174,8 +174,8 @@ impl BinOp {
         }
     }
 
-    pub fn detect(t: &TermRef) -> Option<(TermRef, Self, TermRef)> {
-        Some(match t.as_ref() {
+    pub fn detect(t: &Term) -> Option<(TermRef, Self, TermRef)> {
+        Some(match t {
             Term::App { func, op: op2 } => match func.as_ref() {
                 Term::App { func, op } => match func.as_ref() {
                     Term::App { func, op: _ } => match func.as_ref() {
@@ -203,7 +203,11 @@ impl BinOp {
                 },
                 _ => return None,
             },
-            Term::Forall(Abstraction { body, var_ty }) => {
+            Term::Forall(Abstraction {
+                body,
+                var_ty,
+                hint_name: _,
+            }) => {
                 let x = remove_unused_var(body, 0)?;
                 (var_ty.clone(), BinOp::Imply, x)
             }

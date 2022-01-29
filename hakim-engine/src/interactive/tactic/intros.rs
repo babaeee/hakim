@@ -9,7 +9,11 @@ use super::{Error::*, Result};
 pub fn intros_one(frame: &mut Frame, name: &str) -> Result<()> {
     let goal = frame.goal.clone();
     match goal.as_ref() {
-        Term::Forall(Abstraction { var_ty, body }) => {
+        Term::Forall(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        }) => {
             frame.add_hyp_with_name(name, var_ty.clone())?;
             frame.goal = subst(body.clone(), term_ref!(axiom name, var_ty));
             Ok(())
@@ -21,8 +25,17 @@ pub fn intros_one(frame: &mut Frame, name: &str) -> Result<()> {
 pub fn intros(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     if args.peek().is_none() {
-        while let Term::Forall(Abstraction { var_ty, body }) = frame.goal.clone().as_ref() {
-            let name = frame.engine.generate_name("H");
+        while let Term::Forall(Abstraction {
+            var_ty,
+            body,
+            hint_name,
+        }) = frame.goal.clone().as_ref()
+        {
+            let name = if let Some(name) = hint_name {
+                frame.engine.generate_name(name)
+            } else {
+                frame.engine.generate_name("H")
+            };
             frame.add_hyp_with_name(&name, var_ty.clone())?;
             frame.goal = subst(body.clone(), term_ref!(axiom name, var_ty));
         }
@@ -36,13 +49,19 @@ pub fn intros(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Ve
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::run_interactive_to_fail;
+    use crate::interactive::tests::{run_interactive, run_interactive_to_fail, EngineLevel};
 
     const GOAL: &str = "∀ a b: ℤ, a < b";
 
     #[test]
     fn duplicate_hyp() {
         run_interactive_to_fail(GOAL, "intros x", "intros x");
+    }
+
+    #[test]
+    fn unnamed_intros() {
+        run_interactive(GOAL, "intros", EngineLevel::Empty);
+        run_interactive("∀ a b: ℤ, a < b -> b < a", "intros", EngineLevel::Empty);
     }
 
     #[test]

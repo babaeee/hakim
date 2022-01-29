@@ -30,6 +30,9 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
                     return None;
                 }
             }
+            if let Term::Wild { .. } = ty_subst.as_ref() {
+                return None;
+            }
             let mut infers = InferResults::new(our_infer_cnt);
             match_and_infer(qt.clone(), ty_subst, &mut infers).ok()?;
             Some(name.to_string())

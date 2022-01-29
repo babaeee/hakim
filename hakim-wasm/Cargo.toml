@@ -2,7 +2,7 @@
 name = "hakim-wasm"
 version = "0.1.0"
 authors = ["hkalbasi <hamidrezakalbasi@protonmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -15,6 +15,7 @@ wasm-bindgen = { version = "0.2.63", features = ["serde-serialize"] }
 hakim-engine = { path = "../hakim-engine" }
 serde = { version = "1.0", features = ["derive"] }
 backtrace = "0.3"
+serde_json = "1"
 
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
@@ -32,7 +33,3 @@ wee_alloc = { version = "0.4.5", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
-
-[profile.release]
-# Tell `rustc` to optimize for small code size.
-opt-level = "s"

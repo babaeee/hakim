@@ -1,4 +1,5 @@
 use im::vector;
+use serde::{Deserialize, Serialize};
 
 use crate::brain::{predict_axiom, TermRef};
 
@@ -12,30 +13,32 @@ pub mod tactic;
 
 use tactic::{add_hyp, apply, intros, rewrite, ring};
 
-use self::suggest::{suggest_on_goal_dblclk, suggest_on_hyp_dblclk, suggest_on_hyp_menu};
+use self::suggest::{
+    suggest_on_goal, suggest_on_goal_dblclk, suggest_on_hyp, suggest_on_hyp_dblclk,
+};
 
 pub use self::suggest::Suggestion;
 use self::tactic::remove_hyp;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Frame {
     pub goal: TermRef,
     pub hyps: im::HashMap<String, TermRef>,
     pub engine: Engine,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
     pub frames: im::Vector<Frame>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct HistoryRecord {
     tactic: String,
     snapshot: Snapshot,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Session {
     history: im::Vector<HistoryRecord>,
 }
@@ -90,6 +93,18 @@ impl Session {
         if line.trim() == "Undo" {
             return self.undo();
         }
+        if let Some(x) = line.strip_prefix("Switch ") {
+            let t: usize = x.parse().map_err(|_| tactic::Error::BadArg {
+                arg: x.to_string(),
+                tactic_name: "Switch".to_string(),
+            })?;
+            let snapshot = self.last_snapshot().switch_frame(t);
+            self.history.push_back(HistoryRecord {
+                tactic: line.to_string(),
+                snapshot,
+            });
+            return Ok(());
+        }
         let snapshot = self.last_snapshot().run_tactic(line)?;
         self.history.push_back(HistoryRecord {
             tactic: line.to_string(),
@@ -143,6 +158,11 @@ impl Session {
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
         let frame = self.last_snapshot().clone().pop_frame();
         frame.suggest_on_goal_dblclk()
+    }
+
+    pub fn suggest_on_goal_menu(&self) -> Vec<Suggestion> {
+        let frame = self.last_snapshot().clone().pop_frame();
+        frame.suggest_on_goal_menu()
     }
 
     pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
@@ -201,6 +221,14 @@ impl Snapshot {
         self.frames.pop_back().unwrap()
     }
 
+    fn switch_frame(&self, i: usize) -> Self {
+        let mut result = self.clone();
+        result
+            .frames
+            .swap(result.frames.len() - 1, result.frames.len() - 1 - i);
+        result
+    }
+
     pub fn is_finished(&self) -> bool {
         self.frames.is_empty()
     }
@@ -233,6 +261,10 @@ impl Frame {
         suggest_on_goal_dblclk(&self.goal)
     }
 
+    pub fn suggest_on_goal_menu(&self) -> Vec<Suggestion> {
+        suggest_on_goal(&self.goal)
+    }
+
     pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
         let h = self.hyps.get(hyp_name)?;
         suggest_on_hyp_dblclk(&self.engine, hyp_name, h)
@@ -244,7 +276,7 @@ impl Frame {
         } else {
             return vec![];
         };
-        suggest_on_hyp_menu(&self.engine, hyp_name, h)
+        suggest_on_hyp(&self.engine, hyp_name, h)
     }
 
     pub fn run_tactic(&self, line: &str) -> Result<Vec<Self>, tactic::Error> {

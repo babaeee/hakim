@@ -1,10 +1,21 @@
 use crate::engine::Engine;
 
 fn parse_pretty(exp: &str) {
+    parse_not_pretty(exp, exp);
+}
+
+fn parse_not_pretty(exp: &str, pretty: &str) {
     let eng = Engine::default();
     let exp_term = eng.parse_text(exp).unwrap();
-    let pretty = format!("{:?}", exp_term);
-    assert_eq!(exp, pretty);
+    let exp_pretty = format!("{:?}", exp_term);
+    assert_eq!(exp_pretty, pretty);
+}
+
+fn parse_error(exp: &str) {
+    let eng = Engine::default();
+    if eng.parse_text(exp).is_ok() {
+        panic!("test passed unexpectedly")
+    }
 }
 
 #[test]
@@ -79,4 +90,26 @@ fn sets() {
     parse_pretty("{ x0: ℤ | 5 < x0 } ∩ { x0: ℤ | x0 < 10 }");
     parse_pretty("{2} ∩ {}");
     parse_pretty("{1, 2, 3}");
+}
+
+#[test]
+fn pretty_names() {
+    parse_pretty("∀ salam: ℤ, ∀ x2: ℤ, salam < x2");
+    parse_not_pretty("∀ x: U, x → ∀ x: ℤ, x < x", "∀ x: U, x → ∀ x0: ℤ, x0 < x0");
+}
+
+#[test]
+fn basic_fails() {
+    parse_error("(2+3");
+    parse_error("()");
+    parse_error("(2+)+3");
+    parse_error("forall");
+    parse_error("forall x");
+    parse_error("forall x:");
+    parse_error("forall x: ℤ");
+    parse_error("forall x: ℤ,");
+    parse_error("forall 2: 5");
+    parse_error("{2: ℤ}");
+    parse_error("forall x ℤ");
+    parse_error("forall x -> ℤ");
 }

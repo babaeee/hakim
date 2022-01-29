@@ -75,6 +75,28 @@ fn exist_paran() {
 }
 
 #[test]
+fn exists_hyp() {
+    check_hyp_menu(
+        "(∃ x: ℤ, x < x) -> False",
+        r#"
+            intros f
+            "#,
+        "f",
+        SuggRec::vc([SuggClass::Destruct]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "(∃ x: ℤ, x < x) -> False",
+        r#"
+            intros f
+            "#,
+        "f",
+        SuggRec::vc([]),
+        EngineLevel::Empty,
+    );
+}
+
+#[test]
 fn exist_goal() {
     check_goal_dblclk(
         "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
@@ -91,6 +113,19 @@ fn exist_goal() {
 }
 
 #[test]
+fn false_hyp() {
+    check_hyp_menu(
+        "False -> 2 = 3",
+        r#"
+            intros in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([SuggClass::Contradiction]),
+        EngineLevel::Full,
+    );
+}
+
+#[test]
 fn eq_hyp() {
     check_hyp_menu(
         "∀ x0: U, ∀ x1: U, ∀ x2: x0 → x1, ∀ x3: x0, ∀ x4: x0, eq x0 x3 x4 → eq x1 (x2 x3) (x2 x4)",
@@ -98,7 +133,7 @@ fn eq_hyp() {
             intros A B f a1 a2 eqa1a2
             "#,
         "eqa1a2",
-        SuggRec::vc([SuggClass::Rewrite, SuggClass::Swap]),
+        SuggRec::vc([SuggClass::Rewrite, SuggClass::Pattern("a = b", "b = a")]),
         EngineLevel::Full,
     );
     check_hyp_menu(
@@ -109,5 +144,45 @@ fn eq_hyp() {
         "eq_2_3",
         SuggRec::vc([SuggClass::Rewrite]),
         EngineLevel::Empty,
+    );
+}
+
+#[test]
+fn set_hyp() {
+    check_hyp_menu(
+        "2 ∈ {} -> False",
+        r#"
+            intros in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([SuggClass::Contradiction]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "∀ t: U, ∀ s: set t, ∀ a b: t, a ∈ {b} -> a = b",
+        r#"
+            intros t s a b in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([SuggClass::Pattern("a ∈ {b}", "a = b")]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "∀ t: U, ∀ s: set t, ∀ a: t, a ∈ s -> {a} ⊆ s",
+        r#"
+            intros t s a in_set_proof
+            "#,
+        "in_set_proof",
+        SuggRec::vc([]),
+        EngineLevel::Full,
+    );
+    check_hyp_menu(
+        "∀ t: U, ∀ A B: set t, A ⊆ B -> False",
+        r#"
+            intros t A B incl
+            "#,
+        "incl",
+        SuggRec::vc([SuggClass::Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b")]),
+        EngineLevel::Full,
     );
 }

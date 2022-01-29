@@ -23,7 +23,7 @@ impl FindInstance {
     pub(crate) fn first_needed_wild(&self) -> usize {
         let mut r = None;
         for ty in &self.infer.tys {
-            let t = map_reduce_wild(ty, &|x| Some(x), &std::cmp::min);
+            let t = map_reduce_wild(ty, &Some, &std::cmp::min);
             if let Some(tv) = t {
                 if let Some(rv) = r {
                     if rv > tv {

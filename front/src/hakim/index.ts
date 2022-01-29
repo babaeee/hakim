@@ -13,13 +13,28 @@ window.panic_handler = (x) => {
 };
 
 
+const checkError = (error?: string) => {
+    if (error) {
+        alert(error);
+        return false;
+    }
+    return true;
+};
+
 const instance = new Instance();
-instance.load_library('Arith');
-instance.load_library('Eq');
-instance.load_library('Logic');
-instance.load_library('Induction');
-instance.load_library('Sigma');
-instance.load_library('Set');
+if (!checkError(instance.load_library('All'))) {
+    document.body.innerHTML = '';
+}
+
+const prevBackup = localStorage.getItem('wasmState');
+
+if (prevBackup) {
+    instance.from_backup(prevBackup);
+}
+
+export const toBackup = () => {
+    return instance.to_backup();
+};
 
 export type State = {
     history: string[],
@@ -59,14 +74,6 @@ export const subscribe = (f: EventListener) => {
     };
 };
 
-const checkError = (error?: string) => {
-    if (error) {
-        alert(error);
-        return false;
-    }
-    return true;
-};
-
 const checkErrorAndUpdate = (error?: string) => {
     if (checkError(error)) {
         emit();
@@ -103,8 +110,12 @@ export const setGoal = (goal: string) => {
     return checkErrorAndUpdate(instance.start_session(goal));
 };
 
-export const runSuggMenuHyp = (hypName: string, sugg: string) => {
-    return checkErrorAndUpdate(instance.run_suggest_menu_hyp(hypName, sugg));
+export const runSuggMenuHyp = (hypName: string, i: number) => {
+    return checkErrorAndUpdate(instance.run_suggest_menu_hyp(hypName, i));
+};
+
+export const runSuggMenuGoal = (i: number) => {
+    return checkErrorAndUpdate(instance.run_suggest_menu_goal(i));
 };
 
 export const runSuggDblGoal = () => {
@@ -115,10 +126,39 @@ export const runSuggDblHyp = (hyp: string) => {
     return checkErrorAndUpdate(instance.suggest_dblclk_hyp(hyp));
 };
 
+const parenSplit = (txt: string): string[] => {
+    const r = [];
+    let cur = "";
+    let depth = 0;
+    for (const c of txt) {
+        if (c === '(') {
+            depth += 1;
+            if (depth === 1) continue;
+        }
+        if (c === ')') {
+            depth -= 1;
+            if (depth === 0) {
+                r.push(cur);
+                cur = "";
+            }
+        }
+        if (depth > 0) {
+            cur += c;
+        }
+    }
+    return r;
+}
+
 export const suggMenuHyp = (hypName: string) => {
     const suggs = instance.suggest_menu_hyp(hypName);
     if (!suggs) return [];
-    return suggs.split(',').filter((x) => x !== '');
+    return parenSplit(suggs);
+};
+
+export const suggMenuGoal = () => {
+    const suggs = instance.suggest_menu_goal();
+    if (!suggs) return [];
+    return parenSplit(suggs);
 };
 
 export type TryAutoResult = {

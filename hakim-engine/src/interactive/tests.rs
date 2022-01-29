@@ -106,6 +106,19 @@ fn check_undo() {
 }
 
 #[test]
+fn bad_tactic() {
+    run_interactive_to_fail(F_EQUAL, "", "intrs");
+    run_interactive_to_fail(F_EQUAL, "", "intros p1 p2 p3 p4 p5 p6 bad_p");
+    run_interactive_to_fail(
+        "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
+        r#"
+        intros a b c d a_lt_b c_lt_d
+        "#,
+        "add_hyp a b",
+    );
+}
+
+#[test]
 fn dont_panic1() {
     run_interactive_to_fail(
         F_EQUAL,
@@ -294,15 +307,35 @@ fn sigma_1_n() {
 }
 
 #[test]
+fn switch() {
+    run_interactive_to_end(
+        "∀ a: ℤ, ∃ b: ℤ, a < b",
+        r#"
+        intros a
+        apply (ex_intro ? ? (a + 1))
+        add_hyp (a = a+0)
+        ring
+        rewrite H
+        add_hyp ((a+0)+1 = a+1)
+        Switch 1
+        rewrite H0
+        apply lt_plus_l
+        apply lt_0_1
+        ring
+        "#,
+    );
+}
+
+#[test]
 fn set_lemma() {
     run_interactive_to_end(
         "∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S -> { a } ∪ (S ∖ { a }) = S",
         r#"
         intros T a S H
         apply minus_of_subset
-        apply included_intro
+        apply included_fold
         intros a2 a2_in_a
-        apply (singleton_intro ? ? ?) in a2_in_a
+        apply (singleton_unfold ? ? ?) in a2_in_a
         rewrite <- a2_in_a
         apply H
     "#,
