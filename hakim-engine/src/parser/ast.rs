@@ -274,7 +274,7 @@ pub fn ast_to_term(
             //push remain element in form {a1} ∪ {a2} ...
             for exp in items_iter {
                 let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt)?;
-                bag = app_ref!(union(), bag, app_ref!(set_singleton(), w, term));
+                bag = app_ref!(union(), w, bag, app_ref!(set_singleton(), w, term));
             }
             Ok(bag)
         }
