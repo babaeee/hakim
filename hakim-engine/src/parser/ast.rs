@@ -9,7 +9,7 @@ use super::{
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, Abstraction, Term, TermRef},
-    library::prelude::{ex, set_empty, set_from_func, set_singleton},
+    library::prelude::{ex, set_empty, set_from_func, set_singleton, union},
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
@@ -266,12 +266,17 @@ pub fn ast_to_term(
             if items.is_empty() {
                 return Ok(app_ref!(set_empty(), w));
             }
-            if items.len() != 1 {
-                todo!();
-            }
-            let exp = items.into_iter().next().unwrap();
+            let mut items_iter = items.into_iter();
+            let exp = items_iter.next().unwrap();
             let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt)?;
-            Ok(app_ref!(set_singleton(), w, term))
+            let mut bag = app_ref!(set_singleton(), w, term);
+
+            //push remain element in form {a1} ∪ {a2} ...
+            for exp in items_iter {
+                let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt)?;
+                bag = app_ref!(union(), bag, app_ref!(set_singleton(), w, term));
+            }
+            Ok(bag)
         }
         Abs(sign, AstAbs { name, ty, body }) => {
             let mut ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
