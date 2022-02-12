@@ -1,5 +1,5 @@
 use crate::parser::term_pretty_print;
-use std::{cmp::Ordering, fmt::Debug, rc::Rc};
+use std::{cmp::Ordering, fmt::Debug, hash::Hash, rc::Rc};
 
 pub mod infer;
 
@@ -20,7 +20,15 @@ impl PartialEq for Abstraction {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+// we implement this manually to ignore hint_name, so (forall a: T, a) is equal to (forall b: T, b)
+impl Hash for Abstraction {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.var_ty.hash(state);
+        self.body.hash(state);
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Term {
     Axiom { ty: TermRef, unique_name: String },
     Universe { index: usize },
