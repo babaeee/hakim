@@ -47,7 +47,7 @@ pub fn start() {
 enum Monitor {
     SessionIsNotStarted,
     Finished,
-    Monitor {
+    Running {
         hyps: Vec<(String, String)>,
         goals: Vec<String>,
     },
@@ -121,7 +121,7 @@ impl Instance {
                         .map(|(k, v)| (k, frame.engine.pretty_print(&v)))
                         .collect()
                 };
-                Monitor::Monitor { goals, hyps }
+                Monitor::Running { goals, hyps }
             }
             None => Monitor::SessionIsNotStarted,
         };
@@ -134,12 +134,15 @@ impl Instance {
             return None;
         }
         let s = s.pop_frame();
-        let tac = if s.run_tactic("ring").ok().filter(|x| x.is_empty()).is_some() {
-            "ring"
-        } else {
-            return None;
-        };
-        Some(tac.to_string())
+        let mut r = None;
+        const AUTO_TAC: [&str; 2] = ["ring", "auto_set"];
+        for tac in AUTO_TAC {
+            if s.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
+                r = Some(tac.to_string());
+                break;
+            }
+        }
+        r
     }
 
     pub fn try_tactic(&self, tactic: &str) -> bool {
