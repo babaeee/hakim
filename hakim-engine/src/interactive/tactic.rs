@@ -15,6 +15,9 @@ pub(crate) use apply::apply;
 mod hyps;
 pub(crate) use hyps::{add_hyp, remove_hyp};
 
+mod auto_set;
+pub(crate) use auto_set::auto_set;
+
 #[derive(Debug)]
 pub enum Error {
     UnknownTactic(String),
