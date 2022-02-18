@@ -72,7 +72,7 @@ const calcState = (): State => {
     if (monitor === 'Finished') {
         return { history, isFinished: true };
     }
-    return { history, monitor: monitor.Monitor, isFinished: false };
+    return { history, monitor: monitor.Running, isFinished: false };
 };
 
 export const emit = () => {
