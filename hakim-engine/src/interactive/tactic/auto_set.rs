@@ -3,10 +3,10 @@ use crate::{
     brain::{Term, TermRef},
     interactive::Frame,
     library::prelude::set,
-    term_ref, Abstraction,
+    term_ref,
 };
 
-use super::{get_one_arg, Error::*, Result};
+use super::{Error::*, Result};
 
 #[derive(Debug, Clone)]
 enum EnsembleTree {
@@ -25,22 +25,22 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 struct Identifier {
     map: HashMap<TermRef, u16>,
-    idCounter: u16,
+    id_counter: u16,
 }
 impl Identifier {
     pub fn new() -> Identifier {
         Identifier {
             map: HashMap::new(),
-            idCounter: 1,
+            id_counter: 1,
         }
     }
     pub fn get(&mut self, v: &TermRef) -> u16 {
         match self.map.get(v) {
             Some(&x) => x,
             None => {
-                self.map.insert(v.clone(), self.idCounter);
-                self.idCounter += 1;
-                return self.idCounter - 1;
+                self.map.insert(v.clone(), self.id_counter);
+                self.id_counter += 1;
+                return self.id_counter - 1;
             }
         }
     }
@@ -61,8 +61,8 @@ fn add_hyp(
         0
     };
     match h.clone() {
-        Inset(x, X) => {
-            match *X {
+        Inset(x, set_x) => {
+            match *set_x {
                 Intersection(..) | Setminus(..) => add(ahyps),
                 Union(..) => add(bhyps),
                 Set(i) => {
@@ -80,8 +80,8 @@ fn add_hyp(
                 _ => -1, //false input
             }
         }
-        Outset(x, X) => {
-            match *X {
+        Outset(x, set_x) => {
+            match *set_x {
                 Union(..) => add(ahyps),
                 Intersection(..) | Setminus(..) => add(bhyps),
                 Set(i) => {
@@ -141,8 +141,9 @@ fn from_prop_type(
     if let Term::Forall(a) = t.as_ref() {
         if let Term::Axiom { unique_name, .. } = a.body.as_ref() {
             if unique_name == "False" {
-                if let Some((Inset(x, A), ty)) = from_prop_type(&a.var_ty, elements_id, sets_id) {
-                    return Some((Outset(x, A), ty));
+                if let Some((Inset(x, set_a), ty)) = from_prop_type(&a.var_ty, elements_id, sets_id)
+                {
+                    return Some((Outset(x, set_a), ty));
                 }
             }
             //the Included -> false or eq -> false type prop is one work
@@ -186,7 +187,6 @@ fn dfs(
     bhyps: &mut VecDeque<EnsembleTree>,
 ) -> i32 {
     println!("{} {:?}", element_in_goal, goal);
-    // pass to dfs main x; Inset() ? Outset()
     let mut ans = 0;
     let mut step1 = |h, g, x| {
         let c = add_hyp(h, false, simple_hyps, ahyps, bhyps);
@@ -198,17 +198,17 @@ fn dfs(
         }
     };
     match goal.clone() {
-        Inset(x, X) => {
-            if let Union(A, B) = *X {
-                step1(&Outset(x, B), &Inset(x, A), x);
+        Inset(x, set_x) => {
+            if let Union(set_a, set_b) = *set_x {
+                step1(&Outset(x, set_b), &Inset(x, set_a), x);
             }
         }
-        Outset(x, A) => {
-            step1(&Inset(x, A), &Set(0), x);
+        Outset(x, set_a) => {
+            step1(&Inset(x, set_a), &Set(0), x);
         }
-        Included(A, B) => {
+        Included(set_a, set_b) => {
             //bigest u16 value for new id
-            step1(&Inset(65535, A), &Inset(65535, B), 65535);
+            step1(&Inset(65535, set_a), &Inset(65535, set_b), 65535);
         }
         _ => (),
     }
@@ -231,18 +231,21 @@ fn dfs(
                 ans = c1;
             }
         };
-        if let Inset(x, X) = h {
-            if let Intersection(A, B) = *X {
-                step2(&Inset(x, A.clone()), &Inset(x, B.clone()));
-            } else if let Setminus(A, B) = *X {
-                step2(&Inset(x, A.clone()), &Outset(x, B));
+        if let Inset(x, set_x) = h {
+            if let Intersection(set_a, set_b) = *set_x {
+                step2(&Inset(x, set_a.clone()), &Inset(x, set_b.clone()));
+            } else if let Setminus(set_a, set_b) = *set_x {
+                step2(&Inset(x, set_a.clone()), &Outset(x, set_b));
             }
-        } else if let Outset(x, X) = h {
-            if let Union(A, B) = *X {
-                step2(&Outset(x, A), &Outset(x, B));
+        } else if let Outset(x, set_x) = h {
+            if let Union(set_a, set_b) = *set_x {
+                step2(&Outset(x, set_a), &Outset(x, set_b));
             }
-        } else if let Eq(A, B) = h {
-            step2(&Included(A.clone(), B.clone()), &Included(B, A));
+        } else if let Eq(set_a, set_b) = h {
+            step2(
+                &Included(set_a.clone(), set_b.clone()),
+                &Included(set_b, set_a),
+            );
         }
     }
     if ans != 0 {
@@ -257,12 +260,12 @@ fn dfs(
         }
     };
     match goal.clone() {
-        Inset(x, X) => match *X {
-            Intersection(A, B) => {
-                step3(&Inset(x, A), &Inset(x, B), x);
+        Inset(x, set_x) => match *set_x {
+            Intersection(set_a, set_b) => {
+                step3(&Inset(x, set_a), &Inset(x, set_b), x);
             }
-            Setminus(A, B) => {
-                step3(&Inset(x, A), &Outset(x, B), x);
+            Setminus(set_a, set_b) => {
+                step3(&Inset(x, set_a), &Outset(x, set_b), x);
             }
             Set(i) => {
                 if let Some(counter) = simple_hyps.get(&(x, i)) {
@@ -270,13 +273,17 @@ fn dfs(
                         return 1;
                     }
                 }
+                //set element_in_goal
+                if x != element_in_goal {
+                    ans = dfs(goal, x, simple_hyps, ahyps, bhyps);
+                }
             }
             _ => (),
         },
-        Eq(A, B) => {
+        Eq(set_a, set_b) => {
             step3(
-                &Included(A.clone(), B.clone()),
-                &Included(B, A),
+                &Included(set_a.clone(), set_b.clone()),
+                &Included(set_b, set_a),
                 element_in_goal,
             );
         }
@@ -307,24 +314,28 @@ fn dfs(
                 ans = c;
             }
         };
-        if let Inset(x, X) = h {
-            if let Union(A, B) = *X.clone() {
-                step4(&Inset(x, A), &Inset(x, B));
+        if let Inset(x, set_x) = h {
+            if let Union(set_a, set_b) = *set_x {
+                step4(&Inset(x, set_a), &Inset(x, set_b));
             }
-        } else if let Outset(x, X) = h {
-            if let Intersection(A, B) = *X.clone() {
-                step4(&Outset(x, A), &Outset(x, B));
-            } else if let Setminus(A, B) = *X.clone() {
-                step4(&Outset(x, A), &Inset(x, B));
+        } else if let Outset(x, set_x) = h {
+            if let Intersection(set_a, set_b) = *set_x.clone() {
+                step4(&Outset(x, set_a), &Outset(x, set_b));
+            } else if let Setminus(set_a, set_b) = *set_x.clone() {
+                step4(&Outset(x, set_a), &Inset(x, set_b));
             }
-        } else if let Included(A, B) = h {
+        } else if let Included(set_a, set_b) = h {
             //can we add element_in_goal ∈ A too but no need
-            step4(&Inset(element_in_goal, B), &Outset(element_in_goal, A));
+            //println!("incl {} {:?} {:?}", element_in_goal, set_b, set_a);
+            step4(
+                &Inset(element_in_goal, set_b),
+                &Outset(element_in_goal, set_a),
+            );
         }
     }
     return ans;
 }
-pub fn auto_set(mut frame: Frame) -> Result<Vec<Frame>> {
+pub fn auto_set(frame: Frame) -> Result<Vec<Frame>> {
     let mut elements_id: Identifier = Identifier::new();
     let mut sets_id: Identifier = Identifier::new();
 

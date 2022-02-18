@@ -344,9 +344,9 @@ fn set_lemma() {
 #[test]
 fn auto_set_from() {
     run_interactive_to_end(
-        "∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∪ B -> ( a ∈ B -> False ) -> a ∈ A",
+        "∀ T: U, ∀ a: T, ∀ A B C: set T, a ∈ A -> A ⊆ B -> B ⊆ C -> a ∈ C",
         r#"
-        intros T a A B H1 H2
+        intros T a A B C H1 H2 H3
         auto_set
     "#,
     );
