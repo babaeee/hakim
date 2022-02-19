@@ -1,3 +1,4 @@
+use super::{Error::*, Result};
 use crate::{
     app_ref,
     brain::{Term, TermRef},
@@ -5,21 +6,22 @@ use crate::{
     library::prelude::set,
     term_ref,
 };
-
-use super::{Error::*, Result};
+use typed_arena::Arena;
 
 #[derive(Debug, Clone)]
-enum EnsembleTree {
+enum EnsembleTree<'a> {
     Set(u16),
-    Union(Box<EnsembleTree>, Box<EnsembleTree>),
-    Intersection(Box<EnsembleTree>, Box<EnsembleTree>),
-    Setminus(Box<EnsembleTree>, Box<EnsembleTree>),
-    Eq(Box<EnsembleTree>, Box<EnsembleTree>),
-    Included(Box<EnsembleTree>, Box<EnsembleTree>),
-    Inset(u16, Box<EnsembleTree>),
-    Outset(u16, Box<EnsembleTree>),
+    Union(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
+    Intersection(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
+    Setminus(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
+    Eq(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
+    Included(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
+    Inset(u16, &'a EnsembleTree<'a>),
+    Outset(u16, &'a EnsembleTree<'a>),
 }
 use EnsembleTree::*;
+
+type EnsembleArena<'a> = &'a Arena<EnsembleTree<'a>>;
 
 use std::collections::HashMap;
 use std::collections::VecDeque;
@@ -40,110 +42,128 @@ impl Identifier {
             None => {
                 self.map.insert(v.clone(), self.id_counter);
                 self.id_counter += 1;
-                return self.id_counter - 1;
+                self.id_counter - 1
             }
         }
     }
 }
-fn add_hyp(
-    h: &EnsembleTree,
-    undo: bool,
-    simple_hyps: &mut HashMap<(u16, u16), i32>,
-    ahyps: &mut VecDeque<EnsembleTree>,
-    bhyps: &mut VecDeque<EnsembleTree>,
-) -> i32 {
-    let add = |hyps: &mut VecDeque<EnsembleTree>| -> i32 {
-        if undo {
-            hyps.pop_back();
-        } else {
-            hyps.push_back(h.clone());
+struct Hyps<'a> {
+    simple_hyps: HashMap<(u16, u16), i32>,
+    ahyps: VecDeque<&'a EnsembleTree<'a>>,
+    bhyps: VecDeque<&'a EnsembleTree<'a>>,
+}
+impl<'a> Hyps<'a> {
+    pub fn new() -> Hyps<'a> {
+        //map simple form of x ∈ A to (x, A) -> {number of existen prop of this type}
+        //minus number mean we have prop of x ∉ A
+        let simple_hyps: HashMap<(u16, u16), i32> = HashMap::new();
+        //hypothiss that generate two goal
+        let bhyps: VecDeque<&EnsembleTree> = VecDeque::new();
+        //hyps that not
+        let ahyps: VecDeque<&EnsembleTree> = VecDeque::new();
+        Hyps {
+            simple_hyps,
+            ahyps,
+            bhyps,
         }
-        0
-    };
-    match h.clone() {
-        Inset(x, set_x) => {
-            match *set_x {
-                Intersection(..) | Setminus(..) => add(ahyps),
-                Union(..) => add(bhyps),
-                Set(i) => {
-                    let counter = simple_hyps.entry((x, i)).or_insert(0);
-                    if undo {
-                        (*counter) -= 1;
-                    } else {
-                        if *counter < 0 {
-                            return 1; //found Contradiction
-                        }
-                        (*counter) += 1;
-                    }
-                    0
-                }
-                _ => -1, //false input
+    }
+    fn add_hyp(&mut self, h: &'a EnsembleTree<'a>, undo: bool) -> i32 {
+        let add = |hyps: &mut VecDeque<&EnsembleTree<'a>>| -> i32 {
+            if undo {
+                hyps.pop_back();
+            } else {
+                hyps.push_back(h);
             }
-        }
-        Outset(x, set_x) => {
-            match *set_x {
-                Union(..) => add(ahyps),
-                Intersection(..) | Setminus(..) => add(bhyps),
-                Set(i) => {
-                    let counter = simple_hyps.entry((x, i)).or_insert(0);
-                    if undo {
-                        (*counter) += 1;
-                    } else {
-                        if *counter > 0 {
-                            return 1; //found Contradiction
+            0
+        };
+        match h {
+            Inset(x, set_x) => {
+                match *set_x {
+                    Intersection(..) | Setminus(..) => add(&mut self.ahyps),
+                    Union(..) => add(&mut self.bhyps),
+                    Set(i) => {
+                        let counter = self.simple_hyps.entry((*x, *i)).or_insert(0);
+                        if undo {
+                            (*counter) -= 1;
+                        } else {
+                            if *counter < 0 {
+                                return 1; //found Contradiction
+                            }
+                            (*counter) += 1;
                         }
-                        (*counter) -= 1;
+                        0
                     }
-                    0
+                    _ => -1, //false input
                 }
-                _ => -1, //false input
             }
+            Outset(x, set_x) => {
+                match *set_x {
+                    Union(..) => add(&mut self.ahyps),
+                    Intersection(..) | Setminus(..) => add(&mut self.bhyps),
+                    Set(i) => {
+                        let counter = self.simple_hyps.entry((*x, *i)).or_insert(0);
+                        if undo {
+                            (*counter) += 1;
+                        } else {
+                            if *counter > 0 {
+                                return 1; //found Contradiction
+                            }
+                            (*counter) -= 1;
+                        }
+                        0
+                    }
+                    _ => -1, //false input
+                }
+            }
+            Eq(..) => add(&mut self.ahyps),
+            Included(..) => add(&mut self.bhyps),
+            _ => -1,
         }
-        Eq(..) => add(ahyps),
-        Included(..) => add(bhyps),
-        _ => -1,
     }
 }
-fn from_set_type(t: &TermRef, sets_id: &mut Identifier) -> EnsembleTree {
+fn from_set_type<'a>(
+    t: &TermRef,
+    arena: EnsembleArena<'a>,
+    sets_id: &mut Identifier,
+) -> &'a EnsembleTree<'a> {
     if let Term::App { func, op: op2 } = t.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
             if let Term::App { func, op: _ } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "union" {
-                        return Union(
-                            Box::new(from_set_type(op1, sets_id)),
-                            Box::new(from_set_type(op2, sets_id)),
-                        );
+                        let set_a = from_set_type(op1, arena, sets_id);
+                        let set_b = from_set_type(op2, arena, sets_id);
+                        return arena.alloc(Union(set_a, set_b));
                     }
                     if unique_name == "intersection" {
-                        return Intersection(
-                            Box::new(from_set_type(op1, sets_id)),
-                            Box::new(from_set_type(op2, sets_id)),
-                        );
+                        let set_a = from_set_type(op1, arena, sets_id);
+                        let set_b = from_set_type(op2, arena, sets_id);
+                        return arena.alloc(Intersection(set_a, set_b));
                     }
                     if unique_name == "setminus" {
-                        return Setminus(
-                            Box::new(from_set_type(op1, sets_id)),
-                            Box::new(from_set_type(op2, sets_id)),
-                        );
+                        let set_a = from_set_type(op1, arena, sets_id);
+                        let set_b = from_set_type(op2, arena, sets_id);
+                        return arena.alloc(Setminus(set_a, set_b));
                     }
                 }
             }
         }
     }
-    Set(sets_id.get(t))
+    return arena.alloc(Set(sets_id.get(t)));
 }
-fn from_prop_type(
-    t: &TermRef,
+fn from_prop_type<'a>(
+    t: TermRef,
+    arena: EnsembleArena<'a>,
     elements_id: &mut Identifier,
     sets_id: &mut Identifier,
-) -> Option<(EnsembleTree, TermRef)> {
+) -> Option<(&'a EnsembleTree<'a>, TermRef)> {
     if let Term::Forall(a) = t.as_ref() {
         if let Term::Axiom { unique_name, .. } = a.body.as_ref() {
             if unique_name == "False" {
-                if let Some((Inset(x, set_a), ty)) = from_prop_type(&a.var_ty, elements_id, sets_id)
+                if let Some((Inset(x, set_a), ty)) =
+                    from_prop_type(a.var_ty.clone(), arena, elements_id, sets_id)
                 {
-                    return Some((Outset(x, set_a), ty));
+                    return Some((arena.alloc(Outset(*x, set_a)), ty));
                 }
             }
             //the Included -> false or eq -> false type prop is one work
@@ -155,23 +175,22 @@ fn from_prop_type(
             if let Term::App { func, op: ty } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "inset" {
-                        let tree =
-                            Inset(elements_id.get(op1), Box::new(from_set_type(op2, sets_id)));
-                        return Some((tree, term_ref!(app_ref!(set(), ty))));
+                        let tree = Inset(elements_id.get(op1), from_set_type(op2, arena, sets_id));
+                        return Some((arena.alloc(tree), term_ref!(app_ref!(set(), ty))));
                     }
                     if unique_name == "included" {
                         let tree = Included(
-                            Box::new(from_set_type(op1, sets_id)),
-                            Box::new(from_set_type(op2, sets_id)),
+                            from_set_type(op1, arena, sets_id),
+                            from_set_type(op2, arena, sets_id),
                         );
-                        return Some((tree, term_ref!(app_ref!(set(), ty))));
+                        return Some((arena.alloc(tree), term_ref!(app_ref!(set(), ty))));
                     }
                     if unique_name == "eq" {
                         let tree = Eq(
-                            Box::new(from_set_type(op1, sets_id)),
-                            Box::new(from_set_type(op2, sets_id)),
+                            from_set_type(op1, arena, sets_id),
+                            from_set_type(op2, arena, sets_id),
                         );
-                        return Some((tree, ty.clone()));
+                        return Some((arena.alloc(tree), ty.clone()));
                     }
                 }
             }
@@ -179,82 +198,110 @@ fn from_prop_type(
     }
     None
 }
-fn dfs(
-    goal: &EnsembleTree,
+fn dfs<'a>(
+    goal: &'a EnsembleTree<'a>,
+    arena: EnsembleArena<'a>,
     element_in_goal: u16,
-    simple_hyps: &mut HashMap<(u16, u16), i32>,
-    ahyps: &mut VecDeque<EnsembleTree>,
-    bhyps: &mut VecDeque<EnsembleTree>,
+    hyps: &mut Hyps<'a>,
 ) -> i32 {
-    println!("{} {:?}", element_in_goal, goal);
+    //println!("{} {:?}", element_in_goal, goal);
     let mut ans = 0;
     let mut step1 = |h, g, x| {
-        let c = add_hyp(h, false, simple_hyps, ahyps, bhyps);
+        let c = hyps.add_hyp(h, false);
         if c == 0 {
-            ans = dfs(g, x, simple_hyps, ahyps, bhyps);
-            add_hyp(h, true, simple_hyps, ahyps, bhyps);
+            ans = dfs(g, arena, x, hyps);
+            hyps.add_hyp(h, true);
         } else {
             ans = c;
         }
     };
-    match goal.clone() {
+    match goal {
         Inset(x, set_x) => {
-            if let Union(set_a, set_b) = *set_x {
-                step1(&Outset(x, set_b), &Inset(x, set_a), x);
+            match set_x {
+                Union(set_a, set_b) => {
+                    step1(
+                        arena.alloc(Outset(*x, set_b)),
+                        arena.alloc(Inset(*x, set_a)),
+                        *x,
+                    );
+                }
+                Set(i) => {
+                    if let Some(counter) = hyps.simple_hyps.get(&(*x, *i)) {
+                        if *counter > 0 {
+                            return 1;
+                        }
+                    }
+                    //set element_in_goal
+                    if *x != element_in_goal {
+                        ans = dfs(goal, arena, *x, hyps);
+                    }
+                }
+                _ => (),
             }
         }
         Outset(x, set_a) => {
-            step1(&Inset(x, set_a), &Set(0), x);
+            step1(arena.alloc(Inset(*x, set_a)), arena.alloc(Set(0)), *x);
         }
         Included(set_a, set_b) => {
             //bigest u16 value for new id
-            step1(&Inset(65535, set_a), &Inset(65535, set_b), 65535);
+            step1(
+                arena.alloc(Inset(65535, set_a)),
+                arena.alloc(Inset(65535, set_b)),
+                65535,
+            );
         }
         _ => (),
     }
     if ans != 0 {
         return ans;
     }
-    if let Some(h) = ahyps.pop_front() {
-        let mut step2 = |h1, h2| -> () {
-            let c1 = add_hyp(h1, false, simple_hyps, ahyps, bhyps);
+    if let Some(h) = hyps.ahyps.pop_front() {
+        let mut step2 = |h1, h2| {
+            let c1 = hyps.add_hyp(h1, false);
             if c1 == 0 {
-                let c2 = add_hyp(h2, false, simple_hyps, ahyps, bhyps);
+                let c2 = hyps.add_hyp(h2, false);
                 if c2 == 0 {
-                    ans = dfs(goal, element_in_goal, simple_hyps, ahyps, bhyps);
-                    add_hyp(h2, true, simple_hyps, ahyps, bhyps);
+                    ans = dfs(goal, arena, element_in_goal, hyps);
+                    hyps.add_hyp(h2, true);
                 } else {
                     ans = c2;
                 }
-                add_hyp(h1, true, simple_hyps, ahyps, bhyps);
+                hyps.add_hyp(h1, true);
             } else {
                 ans = c1;
             }
         };
         if let Inset(x, set_x) = h {
             if let Intersection(set_a, set_b) = *set_x {
-                step2(&Inset(x, set_a.clone()), &Inset(x, set_b.clone()));
+                step2(arena.alloc(Inset(*x, set_a)), arena.alloc(Inset(*x, set_b)));
             } else if let Setminus(set_a, set_b) = *set_x {
-                step2(&Inset(x, set_a.clone()), &Outset(x, set_b));
+                step2(
+                    arena.alloc(Inset(*x, set_a)),
+                    arena.alloc(Outset(*x, set_b)),
+                );
             }
         } else if let Outset(x, set_x) = h {
             if let Union(set_a, set_b) = *set_x {
-                step2(&Outset(x, set_a), &Outset(x, set_b));
+                step2(
+                    arena.alloc(Outset(*x, set_a)),
+                    arena.alloc(Outset(*x, set_b)),
+                );
             }
         } else if let Eq(set_a, set_b) = h {
             step2(
-                &Included(set_a.clone(), set_b.clone()),
-                &Included(set_b, set_a),
+                arena.alloc(Included(set_a, set_b)),
+                arena.alloc(Included(set_b, set_a)),
             );
         }
+        hyps.ahyps.push_front(h);
     }
     if ans != 0 {
         return ans;
     }
     let mut step3 = |g1, g2, x| {
-        let c = dfs(g1, x, simple_hyps, ahyps, bhyps);
+        let c = dfs(g1, arena, x, hyps);
         if c == 1 {
-            ans = dfs(g2, x, simple_hyps, ahyps, bhyps);
+            ans = dfs(g2, arena, x, hyps);
         } else {
             ans = c;
         }
@@ -262,28 +309,25 @@ fn dfs(
     match goal.clone() {
         Inset(x, set_x) => match *set_x {
             Intersection(set_a, set_b) => {
-                step3(&Inset(x, set_a), &Inset(x, set_b), x);
+                step3(
+                    arena.alloc(Inset(x, set_a)),
+                    arena.alloc(Inset(x, set_b)),
+                    x,
+                );
             }
             Setminus(set_a, set_b) => {
-                step3(&Inset(x, set_a), &Outset(x, set_b), x);
-            }
-            Set(i) => {
-                if let Some(counter) = simple_hyps.get(&(x, i)) {
-                    if *counter > 0 {
-                        return 1;
-                    }
-                }
-                //set element_in_goal
-                if x != element_in_goal {
-                    ans = dfs(goal, x, simple_hyps, ahyps, bhyps);
-                }
+                step3(
+                    arena.alloc(Inset(x, set_a)),
+                    arena.alloc(Outset(x, set_b)),
+                    x,
+                );
             }
             _ => (),
         },
         Eq(set_a, set_b) => {
             step3(
-                &Included(set_a.clone(), set_b.clone()),
-                &Included(set_b, set_a),
+                arena.alloc(Included(set_a, set_b)),
+                arena.alloc(Included(set_b, set_a)),
                 element_in_goal,
             );
         }
@@ -292,18 +336,18 @@ fn dfs(
     if ans != 0 {
         return ans;
     }
-    if let Some(h) = bhyps.pop_front() {
+    if let Some(h) = hyps.bhyps.pop_front() {
         let mut step4 = |h1, h2| {
-            let c = add_hyp(h1, false, simple_hyps, ahyps, bhyps);
+            let c = hyps.add_hyp(h1, false);
             if c == 0 {
-                let c = dfs(goal, element_in_goal, simple_hyps, ahyps, bhyps);
-                add_hyp(h1, true, simple_hyps, ahyps, bhyps);
+                let c = dfs(goal, arena, element_in_goal, hyps);
+                hyps.add_hyp(h1, true);
 
                 if c == 1 {
-                    let c = add_hyp(h2, false, simple_hyps, ahyps, bhyps);
+                    let c = hyps.add_hyp(h2, false);
                     if c == 0 {
-                        ans = dfs(goal, element_in_goal, simple_hyps, ahyps, bhyps);
-                        add_hyp(h2, true, simple_hyps, ahyps, bhyps);
+                        ans = dfs(goal, arena, element_in_goal, hyps);
+                        hyps.add_hyp(h2, true);
                     } else {
                         ans = c;
                     }
@@ -316,48 +360,51 @@ fn dfs(
         };
         if let Inset(x, set_x) = h {
             if let Union(set_a, set_b) = *set_x {
-                step4(&Inset(x, set_a), &Inset(x, set_b));
+                step4(arena.alloc(Inset(*x, set_a)), arena.alloc(Inset(*x, set_b)));
             }
         } else if let Outset(x, set_x) = h {
-            if let Intersection(set_a, set_b) = *set_x.clone() {
-                step4(&Outset(x, set_a), &Outset(x, set_b));
-            } else if let Setminus(set_a, set_b) = *set_x.clone() {
-                step4(&Outset(x, set_a), &Inset(x, set_b));
+            if let Intersection(set_a, set_b) = set_x {
+                step4(
+                    arena.alloc(Outset(*x, set_a)),
+                    arena.alloc(Outset(*x, set_b)),
+                );
+            } else if let Setminus(set_a, set_b) = set_x {
+                step4(
+                    arena.alloc(Outset(*x, set_a)),
+                    arena.alloc(Inset(*x, set_b)),
+                );
             }
         } else if let Included(set_a, set_b) = h {
             //can we add element_in_goal ∈ A too but no need
             //println!("incl {} {:?} {:?}", element_in_goal, set_b, set_a);
             step4(
-                &Inset(element_in_goal, set_b),
-                &Outset(element_in_goal, set_a),
+                arena.alloc(Inset(element_in_goal, set_b)),
+                arena.alloc(Outset(element_in_goal, set_a)),
             );
         }
+        hyps.bhyps.push_front(h);
     }
-    return ans;
+    ans
 }
 pub fn auto_set(frame: Frame) -> Result<Vec<Frame>> {
+    let arena = &Arena::with_capacity(32);
     let mut elements_id: Identifier = Identifier::new();
     let mut sets_id: Identifier = Identifier::new();
 
-    if let Some((goal, goal_ty)) = from_prop_type(&frame.goal, &mut elements_id, &mut sets_id) {
-        //map simple form of x ∈ A to (x, A) -> {number of existen prop of this type}
-        //minus number mean we have prop of x ∉ A
-        let mut simple_hyps: HashMap<(u16, u16), i32> = HashMap::new();
-        //hypothiss that generate two goal
-        let mut bhyps: VecDeque<EnsembleTree> = VecDeque::new();
-        //hyps that not
-        let mut ahyps: VecDeque<EnsembleTree> = VecDeque::new();
+    if let Some((goal, goal_ty)) = from_prop_type(frame.goal, arena, &mut elements_id, &mut sets_id)
+    {
+        let mut hyps = Hyps::new();
 
         for val in frame.hyps.values() {
-            if let Some((x, ty)) = from_prop_type(val, &mut elements_id, &mut sets_id) {
-                if goal_ty == ty
-                    && add_hyp(&x, false, &mut simple_hyps, &mut ahyps, &mut bhyps) != 0
-                {
+            if let Some((x, ty)) =
+                from_prop_type(val.clone(), arena, &mut elements_id, &mut sets_id)
+            {
+                if goal_ty == ty && hyps.add_hyp(x, false) != 0 {
                     return Err(BadHyp("can,t match", val.clone()));
                 }
             }
         }
-        let ans = dfs(&goal, 65535, &mut simple_hyps, &mut ahyps, &mut bhyps);
+        let ans = dfs(goal, arena, 65535, &mut hyps);
         if ans == 1 {
             return Ok(vec![]);
         } else if ans == 0 {
