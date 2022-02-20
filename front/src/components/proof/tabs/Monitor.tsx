@@ -79,6 +79,16 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
     const [suggs, setSuggs] = useState([] as string[]);
     const { setReplaceMode, replaceMode } = useContext(ProofContext);
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 'z') {
+                sendTactic('Undo');
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    });
     const [{ isOver, canDrop }, drop] = useDrop(
         () => ({
             accept: 'Hyp',
