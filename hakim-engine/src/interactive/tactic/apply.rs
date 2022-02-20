@@ -10,7 +10,7 @@ use crate::{
     term_ref,
 };
 
-use super::{Error::*, Result};
+use super::{next_arg, Error::*, Result};
 
 #[derive(Debug)]
 pub struct FindInstance {
@@ -116,12 +116,7 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
 }
 
 pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
-    let exp = &args.next().ok_or(BadArgCount {
-        expected: 1,
-        found: 0,
-        tactic_name: "apply".to_string(),
-    })?;
-
+    let exp = &next_arg(&mut args, "apply")?;
     if let Some(in_kw) = args.next() {
         if in_kw != "in" {
             return Err(BadArg {

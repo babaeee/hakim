@@ -25,7 +25,7 @@ export const UnicodeInput = ({ value, onChange, enableHelp, onEnter, className }
             enableHelp(txt.endsWith(';'));
             onChange(txt);
         }} onKeyPress={(e) => {
-            if (e.code === 'Enter') {
+            if (e.code === 'Enter' || e.code === 'NumpadEnter') {
                 onEnter();
             }
         }} />

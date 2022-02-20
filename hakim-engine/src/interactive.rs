@@ -11,7 +11,7 @@ mod tests;
 mod suggest;
 pub mod tactic;
 
-use tactic::{add_hyp, apply, intros, rewrite, ring};
+use tactic::{add_hyp, apply, intros, replace, rewrite, ring};
 
 use self::suggest::{
     suggest_on_goal, suggest_on_goal_dblclk, suggest_on_hyp, suggest_on_hyp_dblclk,
@@ -287,6 +287,7 @@ impl Frame {
         match name.as_str() {
             "intros" => intros(frame, parts),
             "rewrite" => rewrite(frame, parts),
+            "replace" => replace(frame, parts),
             "apply" => apply(frame, parts),
             "add_hyp" => add_hyp(frame, parts),
             "remove_hyp" => remove_hyp(frame, parts),

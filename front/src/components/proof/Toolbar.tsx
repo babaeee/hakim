@@ -32,11 +32,14 @@ const AutoProofButton = () => {
     );
 };
 
-export const Toolbar = () => {
+export const Toolbar = ({ enableReplaceMode }: { enableReplaceMode: () => void }) => {
     return (
         <div className={css.toolContain}>
             <ToolButton onClick={newAssert} label={g`new_assertion`} />
             <AutoProofButton />
+            <ToolButton label={g`replace`} onClick={() => {
+                enableReplaceMode();
+            }} />
             <ToolButton onClick={() => {
                 const tactic = window.prompt(g`enter_tactic`);
                 if (tactic) {

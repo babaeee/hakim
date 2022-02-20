@@ -1,6 +1,7 @@
 auto_proof: اثبات خودکار
 babaeee_coq: اثبات چک کن ببعییی
 change_lang: تغییر زبان
+choose_for_replace: قسمتی را برای جایگزینی انتخاب کنید
 custom_tactic: تاکتیک سفارشی
 enter_tactic: تاکتیک خود را وارد کنید
 exit: خروج
@@ -12,6 +13,9 @@ no_action_for_goal: اقدامی برای این نوع هدف تعریف نشد
 no_more_subgoal: هدف دیگری برای اثبات وجود ندارد.
 or_choose_one_prop: یا یکی از گزاره های زیر را انتخاب کنید
 proof_screen: صفحه اثبات
+replace: جایگزینی
+replace_with_what1: می خواهید
+replace_with_what2: را با چه چیزی جایگزین کنید؟
 sandbox_title: زمین بازی
 search: جستجو
 submit: ارسال

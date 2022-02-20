@@ -31,7 +31,7 @@ export const getText = (id: string): string => {
 export const g = (c: TemplateStringsArray, ...v: string[]) => {
   const t = c.map((x) => x.split(' ').map(getText).join(' '));
   v.push('');
-  const r = t.map((x, i) => x + v[i]).join('');
+  const r = t.map((x, i) => `${x}\u2068${v[i]}\u2069`).join('');
   return r;
 };
 

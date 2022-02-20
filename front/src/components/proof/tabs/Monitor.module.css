@@ -10,6 +10,10 @@
   transition: border-color .3s;
 }
 
+.selectEnable {
+  user-select: text;
+}
+
 .hyp.drop {
   border-color: white;
 }

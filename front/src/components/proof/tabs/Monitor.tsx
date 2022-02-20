@@ -7,6 +7,7 @@ import { g } from "../../../i18n";
 import { useDrag, useDrop } from 'react-dnd'
 import classNames from "classnames";
 import { ProofContext } from "../Proof";
+import { normalPrompt } from "../../../dialog";
 
 type HypProps = {
     name: string,
@@ -17,6 +18,7 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
     const { toggleMenu, ...menuProps } = useMenuState();
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
     const [suggs, setSuggs] = useState([] as string[]);
+    const { setReplaceMode, replaceMode } = useContext(ProofContext);
     const [, drag] = useDrag(() => ({
         type: 'Hyp',
         item: () => ({ name }),
@@ -36,8 +38,8 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
         [name],
     );
     return (
-        <div ref={drop}>
-            <div ref={drag} className={classNames({
+        <div ref={!replaceMode ? drop : undefined}>
+            <div ref={!replaceMode ? drag : undefined} className={classNames({
                 [css.hyp]: true,
                 [css.drop]: canDrop,
                 [css.over]: isOver,
@@ -46,8 +48,22 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 setSuggs(suggMenuHyp(name));
                 setAnchorPoint({ x: e.clientX, y: e.clientY });
                 toggleMenu(true);
-            }} onDoubleClick={() => runSuggDblHyp(name)}>
-                {name}: {ty}
+            }}
+                onDoubleClick={() => runSuggDblHyp(name)}>
+                {name}: <span className={classNames({ [css.selectEnable]: replaceMode })}
+                    onMouseUp={async (e) => {
+                        const sel = window.getSelection();
+                        if (!sel) return;
+                        if (sel.toString() === '') return;
+                        if (!(sel.anchorNode?.parentElement === e.target)) return;
+                        const range = sel.getRangeAt(0);
+                        const start = range.startOffset;
+                        const end = range.endOffset;
+                        const userInp = await normalPrompt(g`replace_with_what1 ${ty.slice(start, end)} replace_with_what2`);
+                        sendTactic(`add_hyp ((${ty.slice(start, end)}) = (${userInp}))`);
+                        setReplaceMode(false);
+                    }}
+                >{ty}</span>
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
                     {suggs.map((x, i) => <MenuItem onClick={() => runSuggMenuHyp(name, i)}>{x}</MenuItem>)}
@@ -62,6 +78,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     const { toggleMenu, ...menuProps } = useMenuState();
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
     const [suggs, setSuggs] = useState([] as string[]);
+    const { setReplaceMode, replaceMode } = useContext(ProofContext);
     const [{ isOver, canDrop }, drop] = useDrop(
         () => ({
             accept: 'Hyp',
@@ -75,12 +92,33 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
         [],
     );
     return (
-        <div ref={drop}
+        <div ref={!replaceMode ? drop : undefined}
             className={classNames({
                 [css.hyp]: true,
+                [css.selectEnable]: replaceMode,
                 [css.drop]: canDrop,
                 [css.over]: isOver,
             })}
+            onMouseUp={async (e) => {
+                const sel = window.getSelection();
+                if (!sel) return;
+                if (sel.toString() === '') return;
+                if (!(sel.anchorNode?.parentElement === e.target)) return;
+                const range = sel.getRangeAt(0);
+                const start = range.startOffset;
+                const end = range.endOffset;
+                const len = end - start;
+                const text = ty.slice(start, end);
+                let cnt = 1;
+                for (let i = 0; i < start; i += 1) {
+                    if (ty.slice(i, i + len) === text) {
+                        cnt += 1;
+                    }
+                }
+                const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`);
+                sendTactic(`replace #${cnt} (${text}) with (${userInp})`);
+                setReplaceMode(false);
+            }}
             onDoubleClick={() => runSuggDblGoal()} onContextMenu={e => {
                 e.preventDefault();
                 setSuggs(suggMenuGoal());

@@ -1,7 +1,7 @@
 use crate::brain::{self, TermRef};
 
 mod rewrite;
-pub(crate) use rewrite::rewrite;
+pub(crate) use rewrite::{replace, rewrite};
 
 mod ring;
 pub(crate) use ring::ring;
@@ -24,15 +24,8 @@ pub enum Error {
     UnknownHyp(String),
     BadHyp(&'static str, TermRef),
     BadGoal(&'static str),
-    BadArgCount {
-        tactic_name: String,
-        expected: usize,
-        found: usize,
-    },
-    BadArg {
-        tactic_name: String,
-        arg: String,
-    },
+    BadArgCount { tactic_name: String },
+    BadArg { tactic_name: String, arg: String },
     BrainError(brain::Error),
     CanNotSolve(&'static str),
     CanNotUndo,
@@ -67,21 +60,25 @@ use Error::*;
 
 use self::apply::FindInstance;
 
+pub(crate) fn next_arg(
+    args: &mut impl Iterator<Item = String>,
+    tactic_name: &'static str,
+) -> Result<String> {
+    let arg = args.next().ok_or(BadArgCount {
+        tactic_name: tactic_name.to_string(),
+    })?;
+    Ok(arg)
+}
+
 pub(crate) fn get_one_arg(
     mut args: impl Iterator<Item = String>,
-    tactic_name: &str,
+    tactic_name: &'static str,
 ) -> Result<String> {
-    let arg1 = args.next().ok_or(BadArgCount {
-        tactic_name: tactic_name.to_string(),
-        expected: 1,
-        found: 0,
-    })?;
+    let arg1 = next_arg(&mut args, tactic_name)?;
     let c = args.count();
     if c > 0 {
         return Err(BadArgCount {
             tactic_name: tactic_name.to_string(),
-            expected: 1,
-            found: c + 1,
         });
     }
     Ok(arg1)
