@@ -115,7 +115,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
                         cnt += 1;
                     }
                 }
-                const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`);
+                const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`, text);
                 sendTactic(`replace #${cnt} (${text}) with (${userInp})`);
                 setReplaceMode(false);
             }}

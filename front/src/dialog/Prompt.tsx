@@ -7,10 +7,11 @@ import css from "./dialog.module.css";
 type Props = {
   msg: string,
   onDone: (r: string) => any,
+  defaultValue: string,
 };
 
-export const NormalPrompt = ({ msg, onDone }: Props) => {
-  const [value, setValue] = useState('');
+export const NormalPrompt = ({ msg, onDone, defaultValue }: Props) => {
+  const [value, setValue] = useState(defaultValue);
   const [help, setHelp] = useState(false);
   return (
     <div>
