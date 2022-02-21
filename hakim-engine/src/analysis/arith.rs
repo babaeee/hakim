@@ -143,6 +143,14 @@ impl Poly {
         canonical(a, arena)
     }
 
+    pub fn constant(&self) -> &BigInt {
+        &self.0
+    }
+
+    pub fn variables(&self) -> &[(BigInt, Vec<TermRef>)] {
+        &self.1
+    }
+
     pub fn is_zero(&self) -> bool {
         self.0 == 0.into() && self.1.is_empty()
     }
