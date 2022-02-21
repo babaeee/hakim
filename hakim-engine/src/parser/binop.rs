@@ -2,6 +2,7 @@
 pub enum BinOp {
     And,
     App,
+    Divide,
     Eq,
     Iff,
     Imply,
@@ -29,6 +30,7 @@ impl Display for BinOp {
         f.write_str(match self {
             And => "∧",
             App => " ",
+            Divide => "|",
             Eq => "=",
             Iff => "↔",
             Imply => "→",
@@ -78,6 +80,7 @@ impl BinOp {
         match self {
             App => 0,
             And => 79,
+            Divide => 70,
             Eq => 70,
             Imply => 99,
             Iff => 98,
@@ -97,6 +100,7 @@ impl BinOp {
         match self {
             And => Comm,
             App => Left,
+            Divide => No,
             Eq => No,
             Iff => Comm,
             Imply => Right,
@@ -115,6 +119,7 @@ impl BinOp {
     pub fn from_str(op: &str) -> Option<Self> {
         Some(match op {
             "∧" => And,
+            "|" => Divide,
             "=" => Eq,
             "↔" => Iff,
             "→" => Imply,
@@ -135,6 +140,7 @@ impl BinOp {
         match self {
             And => app_ref!(and(), l, r),
             App => app_ref!(l, r),
+            Divide => app_ref!(divide(), l, r),
             Eq => {
                 let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
