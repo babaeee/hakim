@@ -60,6 +60,9 @@ fn tree_to_d2(tree: &ArithTree<'_>) -> Poly {
             }
             let (c1, r1) = to_mul(t1);
             let (c2, r2) = to_mul(t2);
+            if r1.is_empty() && r2.is_empty() {
+                return Poly(c1 * c2, vec![]);
+            }
             Poly(0.into(), vec![(c1 * c2, [r1, r2].concat())])
         }
     }
@@ -128,7 +131,6 @@ fn sorter(x: Poly) -> Poly {
 fn canonical<'a>(x: &'a ArithTree<'a>, arena: ArithArena<'a>) -> Poly {
     let x = normalize(x, arena);
     let x = tree_to_d2(x);
-
     sorter(x)
 }
 
@@ -153,5 +155,16 @@ impl Poly {
 
     pub fn is_zero(&self) -> bool {
         self.0 == 0.into() && self.1.is_empty()
+    }
+
+    pub fn negate(&mut self) {
+        self.0 = -std::mem::take(&mut self.0);
+        for x in &mut self.1 {
+            x.0 = -std::mem::take(&mut x.0);
+        }
+    }
+
+    pub fn add(&mut self, num: BigInt) {
+        self.0 += num;
     }
 }
