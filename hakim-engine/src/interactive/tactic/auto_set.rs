@@ -204,22 +204,21 @@ fn dfs<'a>(
     element_in_goal: u16,
     hyps: &mut Hyps<'a>,
 ) -> i32 {
-    //println!("{} {:?}", element_in_goal, goal);
-    let mut ans = 0;
+    println!("{} {:?}", element_in_goal, goal);
     let mut step1 = |h, g, x| {
         let c = hyps.add_hyp(h, false);
         if c == 0 {
-            ans = dfs(g, arena, x, hyps);
+            let c = dfs(g, arena, x, hyps);
             hyps.add_hyp(h, true);
-        } else {
-            ans = c;
+            return c;
         }
+        c
     };
     match goal {
         Inset(x, set_x) => {
             match set_x {
                 Union(set_a, set_b) => {
-                    step1(
+                    return step1(
                         arena.alloc(Outset(*x, set_b)),
                         arena.alloc(Inset(*x, set_a)),
                         *x,
@@ -233,18 +232,18 @@ fn dfs<'a>(
                     }
                     //set element_in_goal
                     if *x != element_in_goal {
-                        ans = dfs(goal, arena, *x, hyps);
+                        return dfs(goal, arena, *x, hyps);
                     }
                 }
                 _ => (),
             }
         }
         Outset(x, set_a) => {
-            step1(arena.alloc(Inset(*x, set_a)), arena.alloc(Set(0)), *x);
+            return step1(arena.alloc(Inset(*x, set_a)), arena.alloc(Set(0)), *x);
         }
         Included(set_a, set_b) => {
             //bigest u16 value for new id
-            step1(
+            return step1(
                 arena.alloc(Inset(65535, set_a)),
                 arena.alloc(Inset(65535, set_b)),
                 65535,
@@ -252,71 +251,63 @@ fn dfs<'a>(
         }
         _ => (),
     }
-    if ans != 0 {
-        return ans;
-    }
     if let Some(h) = hyps.ahyps.pop_front() {
         let mut step2 = |h1, h2| {
             let c1 = hyps.add_hyp(h1, false);
             if c1 == 0 {
-                let c2 = hyps.add_hyp(h2, false);
+                let mut c2 = hyps.add_hyp(h2, false);
                 if c2 == 0 {
-                    ans = dfs(goal, arena, element_in_goal, hyps);
+                    c2 = dfs(goal, arena, element_in_goal, hyps);
                     hyps.add_hyp(h2, true);
-                } else {
-                    ans = c2;
                 }
                 hyps.add_hyp(h1, true);
-            } else {
-                ans = c1;
+                return c2;
             }
+            c1
         };
         if let Inset(x, set_x) = h {
             if let Intersection(set_a, set_b) = *set_x {
-                step2(arena.alloc(Inset(*x, set_a)), arena.alloc(Inset(*x, set_b)));
+                return step2(arena.alloc(Inset(*x, set_a)), arena.alloc(Inset(*x, set_b)));
             } else if let Setminus(set_a, set_b) = *set_x {
-                step2(
+                return step2(
                     arena.alloc(Inset(*x, set_a)),
                     arena.alloc(Outset(*x, set_b)),
                 );
             }
         } else if let Outset(x, set_x) = h {
             if let Union(set_a, set_b) = *set_x {
-                step2(
+                return step2(
                     arena.alloc(Outset(*x, set_a)),
                     arena.alloc(Outset(*x, set_b)),
                 );
             }
         } else if let Eq(set_a, set_b) = h {
-            step2(
+            return step2(
                 arena.alloc(Included(set_a, set_b)),
                 arena.alloc(Included(set_b, set_a)),
             );
         }
         hyps.ahyps.push_front(h);
     }
-    if ans != 0 {
-        return ans;
-    }
+
     let mut step3 = |g1, g2, x| {
         let c = dfs(g1, arena, x, hyps);
         if c == 1 {
-            ans = dfs(g2, arena, x, hyps);
-        } else {
-            ans = c;
+            return dfs(g2, arena, x, hyps);
         }
+        c
     };
     match goal.clone() {
         Inset(x, set_x) => match *set_x {
             Intersection(set_a, set_b) => {
-                step3(
+                return step3(
                     arena.alloc(Inset(x, set_a)),
                     arena.alloc(Inset(x, set_b)),
                     x,
                 );
             }
             Setminus(set_a, set_b) => {
-                step3(
+                return step3(
                     arena.alloc(Inset(x, set_a)),
                     arena.alloc(Outset(x, set_b)),
                     x,
@@ -325,7 +316,7 @@ fn dfs<'a>(
             _ => (),
         },
         Eq(set_a, set_b) => {
-            step3(
+            return step3(
                 arena.alloc(Included(set_a, set_b)),
                 arena.alloc(Included(set_b, set_a)),
                 element_in_goal,
@@ -333,43 +324,42 @@ fn dfs<'a>(
         }
         _ => (),
     }
-    if ans != 0 {
-        return ans;
-    }
     if let Some(h) = hyps.bhyps.pop_front() {
         let mut step4 = |h1, h2| {
-            let c = hyps.add_hyp(h1, false);
-            if c == 0 {
-                let c = dfs(goal, arena, element_in_goal, hyps);
+            let mut c = hyps.add_hyp(h1, false);
+            if c == 0 || c == 1 {
+                if c == 0 {
+                    c = dfs(goal, arena, element_in_goal, hyps);
+                }
                 hyps.add_hyp(h1, true);
 
                 if c == 1 {
-                    let c = hyps.add_hyp(h2, false);
-                    if c == 0 {
-                        ans = dfs(goal, arena, element_in_goal, hyps);
+                    c = hyps.add_hyp(h2, false);
+                    if c == 0 || c == 1 {
+                        if c == 0 {
+                            c = dfs(goal, arena, element_in_goal, hyps);
+                        }
                         hyps.add_hyp(h2, true);
-                    } else {
-                        ans = c;
+                        return c;
                     }
-                } else {
-                    ans = c;
+                    return c;
                 }
-            } else {
-                ans = c;
+                return c;
             }
+            c
         };
         if let Inset(x, set_x) = h {
             if let Union(set_a, set_b) = *set_x {
-                step4(arena.alloc(Inset(*x, set_a)), arena.alloc(Inset(*x, set_b)));
+                return step4(arena.alloc(Inset(*x, set_a)), arena.alloc(Inset(*x, set_b)));
             }
         } else if let Outset(x, set_x) = h {
             if let Intersection(set_a, set_b) = set_x {
-                step4(
+                return step4(
                     arena.alloc(Outset(*x, set_a)),
                     arena.alloc(Outset(*x, set_b)),
                 );
             } else if let Setminus(set_a, set_b) = set_x {
-                step4(
+                return step4(
                     arena.alloc(Outset(*x, set_a)),
                     arena.alloc(Inset(*x, set_b)),
                 );
@@ -377,14 +367,14 @@ fn dfs<'a>(
         } else if let Included(set_a, set_b) = h {
             //can we add element_in_goal ∈ A too but no need
             //println!("incl {} {:?} {:?}", element_in_goal, set_b, set_a);
-            step4(
+            return step4(
                 arena.alloc(Inset(element_in_goal, set_b)),
                 arena.alloc(Outset(element_in_goal, set_a)),
             );
         }
         hyps.bhyps.push_front(h);
     }
-    ans
+    return 0; //date no compelete
 }
 pub fn auto_set(frame: Frame) -> Result<Vec<Frame>> {
     let arena = &Arena::with_capacity(32);

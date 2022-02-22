@@ -34,6 +34,8 @@ fn detect_set_items(mut t: &Term) -> Option<Vec<TermRef>> {
                                     continue;
                                 }
                                 return None;
+                            } else {
+                                return None;
                             }
                         }
                         _ => return None,

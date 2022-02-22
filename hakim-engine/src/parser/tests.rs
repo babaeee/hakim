@@ -113,3 +113,7 @@ fn basic_fails() {
     parse_error("forall x ℤ");
     parse_error("forall x -> ℤ");
 }
+#[test]
+fn divid_and_mod() {
+    parse_pretty("∀ a: ℤ, ∀ b: ℤ, a mod b | a");
+}

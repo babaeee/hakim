@@ -87,3 +87,6 @@ pub fn included() -> TermRef {
 pub fn divide() -> TermRef {
     term_ref!(axiom "divide", forall z(), forall z(), u())
 }
+pub fn mod_of() -> TermRef {
+    term_ref!(axiom "mod", forall z(), forall z(), z())
+}
