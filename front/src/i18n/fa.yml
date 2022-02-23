@@ -4,7 +4,12 @@ change_lang: تغییر زبان
 choose_for_replace: قسمتی را برای جایگزینی انتخاب کنید
 custom_tactic: تاکتیک سفارشی
 enter_tactic: تاکتیک خود را وارد کنید
+enter_a_name: یک نام وارد کنید
+enter_value_that_satisfy: مقداری که در عبارت صدق می کند را وارد کنید
+enter_value_of1: مقدار
+enter_value_of2: را وارد کنید
 exit: خروج
+in_applying: در حین اعمال کردن
 induction_on: استقرا روی
 input_assertion: ادعای خود را وارد کنید
 loading: در حال بارگیری
@@ -23,3 +28,5 @@ tactic_intros: معرفی
 tactic_left: چپ
 tactic_right: راست
 type_a_goal_to_proof: یک هدف را برای اثبات کردن تایپ کنید
+we_know: ما می دانیم
+with_type: با تایپ

@@ -1,14 +1,16 @@
 import { Instance } from "../../../hakim-wasm/pkg/hakim_wasm";
+import { normalPrompt } from "../dialog";
+import { fromRust } from "../i18n";
 
 declare let window: Window & {
-    ask_question: (q: string) => string;
+    ask_question: (q: string) => Promise<string>;
     panic_handler: (s: string) => void;
     instance: Instance;
     hardReset: () => void;
 };
 
 window.ask_question = (x) => {
-    return window.prompt(x) || '';
+    return normalPrompt(fromRust(x));
 };
 window.panic_handler = (x) => {
     document.body.innerHTML = `<pre>${x}</pre>`;
@@ -24,9 +26,6 @@ const checkError = (error?: string) => {
 };
 
 const instance = new Instance();
-if (!checkError(instance.load_library('All'))) {
-    document.body.innerHTML = '';
-}
 
 window.instance = instance;
 
@@ -89,8 +88,8 @@ export const subscribe = (f: EventListener) => {
     };
 };
 
-const checkErrorAndUpdate = (error?: string) => {
-    if (checkError(error)) {
+const checkErrorAndUpdate = async (error: () => Promise<string | undefined>) => {
+    if (checkError(await error())) {
         emit();
         return true;
     }
@@ -99,7 +98,7 @@ const checkErrorAndUpdate = (error?: string) => {
 
 export const sendTactic = (tactic: string) => {
     console.log(`tactic: `, tactic);
-    return checkErrorAndUpdate(instance.run_tactic(tactic));
+    return checkErrorAndUpdate(() => instance.run_tactic(tactic));
 };
 
 export const tryTactic = (tactic: string): boolean => {
@@ -121,24 +120,24 @@ export const searchPattern = (expr: string): SearchResult[] => {
     });
 };
 
-export const setGoal = (goal: string) => {
-    return checkErrorAndUpdate(instance.start_session(goal));
+export const setGoal = (goal: string, libs: string = 'All') => {
+    return checkErrorAndUpdate(() => Promise.resolve(instance.start_session(goal, libs)));
 };
 
 export const runSuggMenuHyp = (hypName: string, i: number) => {
-    return checkErrorAndUpdate(instance.run_suggest_menu_hyp(hypName, i));
+    return checkErrorAndUpdate(() => instance.run_suggest_menu_hyp(hypName, i));
 };
 
 export const runSuggMenuGoal = (i: number) => {
-    return checkErrorAndUpdate(instance.run_suggest_menu_goal(i));
+    return checkErrorAndUpdate(() => instance.run_suggest_menu_goal(i));
 };
 
 export const runSuggDblGoal = () => {
-    return checkErrorAndUpdate(instance.suggest_dblclk_goal());
+    return checkErrorAndUpdate(() => instance.suggest_dblclk_goal());
 };
 
 export const runSuggDblHyp = (hyp: string) => {
-    return checkErrorAndUpdate(instance.suggest_dblclk_hyp(hyp));
+    return checkErrorAndUpdate(() => instance.suggest_dblclk_hyp(hyp));
 };
 
 const parenSplit = (txt: string): string[] => {

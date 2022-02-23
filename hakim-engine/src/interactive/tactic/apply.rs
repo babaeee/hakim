@@ -3,7 +3,7 @@ use crate::{
     brain::{
         contains_wild, fill_wild, get_forall_depth,
         infer::{match_and_infer, type_of_and_infer, InferResults},
-        map_reduce_wild, normalize, predict_axiom, TermRef,
+        map_reduce_wild, normalize, predict_axiom, Term, TermRef,
     },
     engine::Engine,
     interactive::Frame,
@@ -16,6 +16,7 @@ use super::{next_arg, Error::*, Result};
 pub struct FindInstance {
     infer: InferResults,
     exp: TermRef,
+    ty: TermRef,
     engine: Engine,
 }
 
@@ -38,14 +39,24 @@ impl FindInstance {
     }
 
     pub fn question_text(&self) -> String {
-        let mut r = format!("In applying {:?}\n\nWe know:\n", self.exp);
+        let mut r = format!(
+            "$in_applying \u{2068}{:?}\u{2069}\n$with_type \u{2068}{:?}\u{2069}\n$we_know:\n",
+            self.exp, self.ty
+        );
         for i in 0..self.infer.n {
-            r += &format!(
-                "?w{} = {:?} : {:?}\n",
-                i, self.infer.terms[i], self.infer.tys[i]
-            );
+            r += &if (Term::Wild { index: i }) == *self.infer.terms[i].as_ref() {
+                format!("\u{2068}?w{} : {:?}\u{2069}\n", i, self.infer.tys[i])
+            } else {
+                format!(
+                    "\u{2068}?w{} = {:?} : {:?}\u{2069}\n",
+                    i, self.infer.terms[i], self.infer.tys[i]
+                )
+            };
         }
-        r += &format!("\nEnter value of ?w{}:\n", self.first_needed_wild());
+        r += &format!(
+            "\n$enter_value_of1 \u{2068}?w{}\u{2069} $enter_value_of2:\n",
+            self.first_needed_wild()
+        );
         r
     }
 
@@ -94,7 +105,7 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
     }
     let mut infers = InferResults::new(inf_num);
     let twa_ty = type_of_and_infer(twa.clone(), &mut infers)?;
-    match_and_infer(twa_ty, goal, &mut infers)?;
+    match_and_infer(twa_ty.clone(), goal, &mut infers)?;
     let mut v = vec![];
     for i in 0..inf_num {
         let mut frame = frame.clone();
@@ -109,6 +120,7 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
                 engine: frame.engine,
                 infer: infers,
                 exp: twa,
+                ty: twa_ty,
             }));
         }
     }

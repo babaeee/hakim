@@ -85,6 +85,10 @@ impl Session {
         })
     }
 
+    pub fn initial_engine(&self) -> Engine {
+        self.history[0].snapshot.frames[0].engine.clone()
+    }
+
     pub fn last_snapshot(&self) -> &Snapshot {
         &self.history.last().unwrap().snapshot
     }

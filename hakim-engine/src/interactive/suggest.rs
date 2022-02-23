@@ -136,14 +136,14 @@ pub fn suggest_on_goal(goal: &Term) -> Vec<Suggestion> {
             r.push(Suggestion {
                 class: IntrosWithName,
                 tactic: vec!["intros $0".to_string()],
-                questions: vec!["Enter name".to_string()],
+                questions: vec!["$enter_a_name:".to_string()],
                 is_default: false,
             });
         }
         TermClass::Exists => r.push(Suggestion::newq1default(
             Destruct,
             "apply (ex_intro ? ? ($0))",
-            "Enter value",
+            "$enter_value_that_satisfy:",
         )),
         TermClass::SetIncluded(_, _) => {
             r.push(Suggestion::new_default(

@@ -35,4 +35,8 @@ export const g = (c: TemplateStringsArray, ...v: string[]) => {
   return r;
 };
 
+export const fromRust = (s: string) => {
+  return s.replace(/\$\w+/g, (x) => getText(x.slice(1)));
+};
+
 init();

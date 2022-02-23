@@ -26,3 +26,7 @@
     width: 80%;
     margin: 1rem;
 }
+
+.myP {
+    white-space: pre-line;
+}

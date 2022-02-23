@@ -16,7 +16,9 @@ hakim-engine = { path = "../hakim-engine" }
 serde = { version = "1.0", features = ["derive"] }
 backtrace = "0.3"
 serde-wasm-bindgen = "0.4.2"
-
+js-sys = "0.3.56"
+async-recursion = "1.0.0"
+wasm-bindgen-futures = "0.4.29"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
