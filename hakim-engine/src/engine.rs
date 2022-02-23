@@ -54,6 +54,7 @@ pub enum Error {
     InvalidSentence(String),
     ParserError(parser::Error),
     BrainError(brain::Error),
+    InvalidTypeForAxiom(String),
 }
 
 impl From<parser::Error> for Error {
@@ -111,13 +112,16 @@ impl Engine {
 
     pub fn add_axiom_with_term(&mut self, name: &str, term: TermRef) -> Result<()> {
         let term = normalize(term);
+        let ty = type_of(term.clone())?;
+        if !matches!(ty.as_ref(), Term::Universe { index: _ }) {
+            return Err(InvalidTypeForAxiom(name.to_string()));
+        }
         let axiom = term_ref!(axiom name, term);
         self.add_name(name, axiom)
     }
 
     pub fn add_axiom(&mut self, name: &str, ty: &str) -> Result<()> {
         let parsed = self.parse_text(ty)?;
-        type_of(parsed.clone()).unwrap();
         self.add_axiom_with_term(name, parsed)
     }
 

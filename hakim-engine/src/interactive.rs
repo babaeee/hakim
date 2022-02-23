@@ -11,7 +11,7 @@ mod tests;
 mod suggest;
 pub mod tactic;
 
-use tactic::{add_hyp, apply, intros, replace, rewrite, ring};
+use tactic::{add_hyp, apply, intros, lia, replace, rewrite, ring};
 
 use self::suggest::{
     suggest_on_goal, suggest_on_goal_dblclk, suggest_on_hyp, suggest_on_hyp_dblclk,
@@ -292,6 +292,7 @@ impl Frame {
             "add_hyp" => add_hyp(frame, parts),
             "remove_hyp" => remove_hyp(frame, parts),
             "ring" => ring(frame),
+            "lia" => lia(frame),
             "auto_set" => auto_set(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }

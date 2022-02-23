@@ -405,3 +405,24 @@ pub fn auto_set(frame: Frame) -> Result<Vec<Frame>> {
     }
     Err(BadGoal("can,t solve this type"))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::interactive::tests::run_interactive_to_end;
+
+    #[test]
+    fn success1() {
+        run_interactive_to_end(
+            "∀ T: U, ∀ a: T, ∀ A B C: set T, a ∈ C ∩ B -> a ∈ A ∩ C -> a ∈ C ∩ B ∩ A",
+            "intros\nauto_set",
+        );
+    }
+
+    #[test]
+    fn success2() {
+        run_interactive_to_end(
+            "∀ T: U, ∀ a: T, ∀ A B C D E F: set T, a ∈ C -> a ∈ E -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))",
+            "intros\nauto_set",
+        );
+    }
+}

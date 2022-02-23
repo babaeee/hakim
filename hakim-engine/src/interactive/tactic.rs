@@ -6,6 +6,9 @@ pub(crate) use rewrite::{replace, rewrite};
 mod ring;
 pub(crate) use ring::ring;
 
+mod lia;
+pub(crate) use lia::lia;
+
 mod intros;
 pub(crate) use intros::intros;
 

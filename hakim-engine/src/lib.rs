@@ -1,5 +1,6 @@
 #![allow(clippy::enum_variant_names)]
 
+pub(crate) mod analysis;
 pub(crate) mod brain;
 pub mod engine;
 pub mod interactive;
