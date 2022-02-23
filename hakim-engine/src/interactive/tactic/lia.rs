@@ -1,7 +1,7 @@
 use super::{Error::*, Result};
 use crate::{
     analysis::{
-        arith::Poly,
+        arith::{LinearPoly, Poly},
         logic::{LogicArena, LogicBuilder, LogicTree},
     },
     brain::{Term, TermRef},
@@ -23,9 +23,59 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> &LogicTree<'_, Poly> {
 }
 
 fn check_contradiction(polies: &[Poly]) -> bool {
-    polies
-        .iter()
-        .any(|x| x.variables().is_empty() && *x.constant() <= 0.into())
+    let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
+    let mut lower_bounds = vec![None; var_cnt];
+    let mut upper_bounds = vec![None; var_cnt];
+    for poly in linear_polies {
+        match poly.variables() {
+            [] => {
+                if *poly.constant() <= 0.into() {
+                    return true;
+                }
+            }
+            [(a, x)] => {
+                let b = -poly.constant();
+                // ax > b
+                match a.cmp(&0.into()) {
+                    std::cmp::Ordering::Less => {
+                        // x < b / a
+                        let mut ub = &b / a;
+                        if b % a == 0.into() {
+                            ub -= 1i32;
+                        }
+                        if let Some(prev_ub) = &upper_bounds[*x] {
+                            if ub <= *prev_ub {
+                                continue;
+                            }
+                        }
+                        upper_bounds[*x] = Some(ub);
+                    }
+                    std::cmp::Ordering::Equal => {
+                        panic!("Bug in the poly normalizer");
+                    }
+                    std::cmp::Ordering::Greater => {
+                        // x > b / a
+                        let lb = b / a + 1i32;
+                        if let Some(prev_lb) = &lower_bounds[*x] {
+                            if lb <= *prev_lb {
+                                continue;
+                            }
+                        }
+                        lower_bounds[*x] = Some(lb);
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+    for (lb, ub) in lower_bounds.iter().zip(upper_bounds.iter()) {
+        if let (Some(lb), Some(ub)) = dbg!(lb, ub) {
+            if lb > ub {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn negator(mut poly: Poly) -> Poly {
@@ -49,11 +99,43 @@ pub fn lia(frame: Frame) -> Result<Vec<Frame>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::run_interactive_to_end;
+    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail};
+
+    fn success(goal: &str) {
+        run_interactive_to_end(goal, "intros\nlia");
+    }
+
+    fn fail(goal: &str) {
+        run_interactive_to_fail(goal, "intros", "lia");
+    }
 
     #[test]
     fn success_lia_goal() {
         run_interactive_to_end("forall x: ℤ, x < x + 1", "intros\nlia");
+    }
+
+    #[test]
+    fn success_lia_one_var() {
+        run_interactive_to_end(
+            "forall x: ℤ, 2 * x < 5 -> 6 * x < 10 + 2 * x",
+            "intros\nlia",
+        );
+    }
+
+    #[test]
+    fn success_lia_use_integer() {
+        success("forall x: ℤ, 4 < 2 * x -> 5 < 2 * x");
+        success("forall x: ℤ, 2 * x < 6 -> 2 * x < 5");
+    }
+
+    #[test]
+    fn fail_simple() {
+        fail("forall x: ℤ, 2 < x");
+    }
+
+    #[test]
+    fn fail_tight() {
+        fail("forall x: ℤ, 5 < 2 * x -> 6 < 2 * x");
     }
 
     #[test]

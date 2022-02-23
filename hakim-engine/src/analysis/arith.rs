@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{brain::Term, TermRef};
 use num_bigint::BigInt;
 use typed_arena::Arena;
@@ -15,6 +17,48 @@ use ArithTree::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Poly(BigInt, Vec<(BigInt, Vec<TermRef>)>);
 type ArithArena<'a> = &'a Arena<ArithTree<'a>>;
+
+#[derive(Debug, Default)]
+pub struct LinearPolyBuilder(HashMap<Vec<TermRef>, usize>);
+pub struct LinearPoly(BigInt, Vec<(BigInt, usize)>);
+
+impl LinearPoly {
+    pub fn from_slice(s: &[Poly]) -> (usize, Vec<LinearPoly>) {
+        let mut builder = LinearPolyBuilder::default();
+        let r = s.iter().cloned().map(|x| builder.convert_poly(x)).collect();
+        (builder.0.len(), r)
+    }
+
+    pub fn variables(&self) -> &[(BigInt, usize)] {
+        &self.1
+    }
+
+    pub fn constant(&self) -> &BigInt {
+        &self.0
+    }
+}
+
+impl LinearPolyBuilder {
+    fn get_id(&mut self, terms: Vec<TermRef>) -> usize {
+        if let Some(id) = self.0.get(&terms) {
+            *id
+        } else {
+            let id = self.0.len();
+            self.0.insert(terms, id);
+            id
+        }
+    }
+
+    pub fn convert_poly(&mut self, poly: Poly) -> LinearPoly {
+        LinearPoly(
+            poly.0,
+            poly.1
+                .into_iter()
+                .map(|(c, t)| (c, self.get_id(t)))
+                .collect(),
+        )
+    }
+}
 
 fn normalize<'a>(tree: &'a ArithTree<'a>, arena: ArithArena<'a>) -> &'a ArithTree<'a> {
     match tree {
@@ -154,7 +198,7 @@ impl Poly {
     }
 
     pub fn is_zero(&self) -> bool {
-        self.0 == 0.into() && self.1.is_empty()
+        *self.constant() == 0.into() && self.variables().is_empty()
     }
 
     pub fn negate(&mut self) {
