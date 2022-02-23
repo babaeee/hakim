@@ -5,6 +5,10 @@
     margin: 0 4rem;
 }
 
+.unicodeHelp {
+    margin: 1rem;
+}
+
 .title {
     display: flex;
     justify-content: center;

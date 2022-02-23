@@ -20,7 +20,7 @@ const transform = (s: string | undefined) => {
 
 export const UnicodeInput = ({ value, onChange, enableHelp, onEnter, className }: Props) => {
     return (
-        <input className={className} type="text" value={value} onChange={(e) => {
+        <input dir="ltr" className={className} type="text" value={value} onChange={(e) => {
             const txt = transform(e.target.value);
             enableHelp(txt.endsWith(';'));
             onChange(txt);

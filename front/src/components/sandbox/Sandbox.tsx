@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { g } from "../../i18n";
+import { UnicodeHelp } from "../unicode/UnicodeHelp";
+import { UnicodeInput } from "../unicode/UnicodeInput";
 import css from "./Sandbox.module.css";
 
 type SanboxProps = {
@@ -20,12 +22,15 @@ const exampleGoals = [
 
 export const Sandbox = ({ onFinish }: SanboxProps) => {
     const [text, setText] = useState("");
+    const [help, setHelp] = useState(false);
+    const done = () => onFinish(text);
     return (
         <div className={css.main}>
             <h1 className={css.title}>{g`sandbox_title`}</h1>
             <p className={css.text}>{g`type_a_goal_to_proof`}</p>
-            <input dir="ltr" type="text" onChange={(ev) => setText(ev.target.value)} value={text} />
-            <button onClick={() => onFinish(text)}>{g`submit`}</button>
+            <UnicodeInput value={text} onChange={setText} enableHelp={setHelp} onEnter={done} />
+            <button onClick={done}>{g`submit`}</button>
+            {help && <div className={css.unicodeHelp} dir="ltr"><UnicodeHelp /></div>}
             <p className={css.text}>{g`or_choose_one_prop`}</p>
             <ul dir="ltr" className={css.exampleSection}>
                 {exampleGoals.map((g) => <><li key={g} onClick={() => onFinish(g)} className={css.exampleItem}>{g}</li>{' '}</>)}
