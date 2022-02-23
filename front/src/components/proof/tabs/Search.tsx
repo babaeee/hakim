@@ -10,7 +10,7 @@ export const Search = () => {
     const [value, setValue] = useState('');
     const [help, setHelp] = useState(false);
     const [searchResult, setSearchResult] = useState([] as SearchResult[]);
-    const { appendLemma } = useContext(ProofContext);
+    const { appendLemma, lemmaBox } = useContext(ProofContext);
     const work = () => {
         const r = searchPattern(value);
         setSearchResult(r);
@@ -23,7 +23,10 @@ export const Search = () => {
                 <UnicodeHelp />
             </div>}
             {!help && <div className={css.searchResult}>
-                {searchResult.map(({ name, ty }) => <div key={name} onClick={() => appendLemma(name)}>{name}: {ty}</div>)}
+                {searchResult
+                    .filter((x) => lemmaBox.find((y) => y.name === x.name) === undefined)
+                    .map((x) => <div key={x.name} onClick={() => appendLemma(x)}>{x.name}: {x.ty}</div>)
+                }
             </div>}
         </div>
     )

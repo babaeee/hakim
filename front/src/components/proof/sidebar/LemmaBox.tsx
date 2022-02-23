@@ -3,13 +3,13 @@ import { useDrag } from "react-dnd";
 import { ProofContext } from "../Proof";
 import css from "./Sidebar.module.css";
 
-const Lemma = ({ name }: { name: string }) => {
+const Lemma = ({ name, ty }: { name: string, ty: string }) => {
     const [, drag] = useDrag(() => ({
         type: 'Hyp',
         item: () => ({ name }),
     }), [name]);
     return (
-        <div ref={drag} className={css.lemma}>{name}</div>
+        <div ref={drag} dir="ltr" className={css.lemma} title={ty}>{name}</div>
     );
 };
 
@@ -18,7 +18,7 @@ export const LemmaBox = () => {
     return (
         <div className={css.base}>
             <div className={css.lemmaBox}>
-                {lemmaBox.map((x) => <Fragment key={x}><Lemma name={x} /> </Fragment>)}
+                {lemmaBox.map(({ name, ty }) => <Fragment key={name}><Lemma name={name} ty={ty} /> </Fragment>)}
             </div>
         </div>
     );

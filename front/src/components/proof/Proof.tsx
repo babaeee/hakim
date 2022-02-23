@@ -12,10 +12,15 @@ type ProofProps = {
   onFinish: () => void;
 };
 
+type Lemma = {
+  name: string,
+  ty: string,
+};
+
 type ProofContextType = {
   onFinish: () => void,
-  lemmaBox: string[],
-  appendLemma: (lemma: string) => void,
+  lemmaBox: Lemma[],
+  appendLemma: (lemma: Lemma) => void,
   replaceMode: boolean,
   setReplaceMode: (m: boolean) => void,
 };
@@ -23,12 +28,12 @@ type ProofContextType = {
 export const ProofContext = createContext({} as ProofContextType);
 
 export const Proof = ({ onFinish }: ProofProps) => {
-  const [lemmaBox, setLemmaBox] = useState([] as string[]);
+  const [lemmaBox, setLemmaBox] = useState([] as Lemma[]);
   const [replaceMode, setReplaceMode] = useState(false);
   const ctx: ProofContextType = {
     lemmaBox,
     appendLemma: (lemma) => {
-      if (lemmaBox.find((x) => x === lemma)) {
+      if (lemmaBox.find((x) => x.name === lemma.name)) {
         return;
       }
       setLemmaBox([...lemmaBox, lemma]);
