@@ -264,7 +264,7 @@ fn sigma_1_n() {
     run_interactive_to_end(
         "∀ n: ℤ, 0 < n + 1 -> 2 * sigma 0 (n+1) (λ i: ℤ, i) = n * (n + 1)",
         r#"
-        apply (simple_induction 0 (λ n: ℤ, eq ℤ (2 * sigma 0 (n+1) (λ i: ℤ, i)) (n * (n + 1))))
+        apply simple_induction
         intros n n_pos gam_farz
         add_hyp (sigma 0 (n + 1) (λ i: ℤ, i) + sigma (n + 1) ((n + 1) + 1) (λ i: ℤ, i) = sigma 0 ((n + 1) + 1) (λ i: ℤ, i))
         apply sigma_plus

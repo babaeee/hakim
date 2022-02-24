@@ -151,7 +151,7 @@ pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Res
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{run_interactive, run_interactive_to_end};
+    use crate::interactive::tests::{run_interactive, run_interactive_to_end, EngineLevel};
 
     #[test]
     fn infer_tohi_type() {
@@ -161,7 +161,7 @@ mod tests {
             apply included_fold
             intros a
             "#,
-            crate::interactive::tests::EngineLevel::Full,
+            EngineLevel::Full,
         );
     }
 
