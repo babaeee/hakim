@@ -316,13 +316,3 @@ fn set_lemma() {
     "#,
     );
 }
-#[test]
-fn auto_set_from() {
-    run_interactive_to_end(
-        "∀ T: U, ∀ a: T, ∀ A B C D E F: set T, a ∈ C -> a ∈ E -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))",
-        r#"
-        intros T a A B C D E F H1 H2
-        auto_set
-    "#,
-    );
-}
