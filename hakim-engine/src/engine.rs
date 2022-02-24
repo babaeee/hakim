@@ -55,6 +55,7 @@ pub enum Error {
     ParserError(parser::Error),
     BrainError(brain::Error),
     InvalidTypeForAxiom(String),
+    GoalWithWildCard(TermRef),
 }
 
 impl From<parser::Error> for Error {

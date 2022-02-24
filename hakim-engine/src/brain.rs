@@ -123,7 +123,7 @@ use serde::{Deserialize, Serialize};
 use Error::*;
 
 pub fn map_reduce_wild<T>(
-    t: &TermRef,
+    t: &Term,
     map: &impl Fn(usize) -> Option<T>,
     reduce: &impl Fn(T, T) -> T,
 ) -> Option<T> {
@@ -136,7 +136,7 @@ pub fn map_reduce_wild<T>(
             (None, None) => None,
         }
     };
-    match t.as_ref() {
+    match t {
         Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => None,
         Term::App { func, op } => combine(func, op),
         Term::Forall(Abstraction {
@@ -155,7 +155,7 @@ pub fn map_reduce_wild<T>(
 
 /// if expression contains some wilds, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is id of wilds. In case of no wild, it will return false
-pub fn predict_wild(t: &TermRef, predict: &impl Fn(usize) -> bool) -> bool {
+pub fn predict_wild(t: &Term, predict: &impl Fn(usize) -> bool) -> bool {
     map_reduce_wild(t, &|x| if predict(x) { Some(()) } else { None }, &|_, _| ()).is_some()
 }
 
@@ -179,7 +179,7 @@ pub fn predict_axiom(t: &TermRef, predict: &impl Fn(&str) -> bool) -> bool {
     }
 }
 
-pub fn contains_wild(t: &TermRef) -> bool {
+pub fn contains_wild(t: &Term) -> bool {
     predict_wild(t, &|_| true)
 }
 

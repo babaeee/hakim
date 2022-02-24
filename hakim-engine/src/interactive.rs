@@ -1,7 +1,7 @@
 use im::vector;
 use serde::{Deserialize, Serialize};
 
-use crate::brain::{predict_axiom, TermRef};
+use crate::brain::{contains_wild, predict_axiom, TermRef};
 
 use crate::engine::{Engine, Error};
 
@@ -183,6 +183,9 @@ impl Session {
 impl Snapshot {
     pub fn new(engine: Engine, goal: &str) -> Result<Snapshot, Error> {
         let goal_term = engine.parse_text(goal)?;
+        if contains_wild(&goal_term) {
+            return Err(Error::GoalWithWildCard(goal_term));
+        }
         let frame = Frame {
             hyps: Default::default(),
             goal: goal_term,

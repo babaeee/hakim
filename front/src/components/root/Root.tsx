@@ -34,8 +34,8 @@ export const Root = () => {
     return (
         <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>
             {s.mode === 'sandbox'
-                ? <Sandbox onFinish={(goal) => {
-                    if (setGoal(goal)) setS({ mode: 'proof' });
+                ? <Sandbox onFinish={async (goal) => {
+                    if (await setGoal(goal)) setS({ mode: 'proof' });
                 }} />
                 : <Proof onFinish={() => {
                     setS({ mode: 'sandbox' });

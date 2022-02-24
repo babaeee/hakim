@@ -148,3 +148,58 @@ pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Res
         apply_for_goal(frame, exp)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::interactive::tests::{run_interactive, run_interactive_to_end};
+
+    #[test]
+    fn infer_tohi_type() {
+        run_interactive(
+            "{} ⊆ {2}",
+            r#"
+            apply included_fold
+            intros a
+            "#,
+            crate::interactive::tests::EngineLevel::Full,
+        );
+    }
+
+    #[test]
+    fn exists_destruct() {
+        run_interactive_to_end(
+            "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
+            r#"
+            intros P px_p2x exP
+            apply (ex_ind ? ? exP)
+            intros exP_value exP_proof
+            apply (ex_intro ? ? exP_value)
+            apply px_p2x
+            apply exP_proof
+        "#,
+        )
+    }
+
+    #[test]
+    fn forall_not_exist() {
+        run_interactive_to_end(
+            "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
+            r#"
+            intros A P fa exi
+            apply (ex_ind ? ? exi)
+            intros exv exv_not_p
+            apply (exv_not_p (fa exv))
+        "#,
+        );
+        run_interactive_to_end(
+            "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
+            r#"
+            intros A P fa exi
+            apply (ex_ind ? ? exi)
+            intros exv exv_not_p
+            apply exv_not_p
+            apply fa
+        "#,
+        );
+    }
+}

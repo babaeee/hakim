@@ -2,6 +2,7 @@ use super::{
     fill_wild, increase_foreign_vars, normalize, predict_wild, subst, Error::*, Result, Term,
     TermRef,
 };
+use crate::library::prelude;
 use crate::Abstraction;
 use crate::{brain::get_universe, term_ref};
 
@@ -41,7 +42,11 @@ impl InferResults {
         } else {
             self.tys[i - self.n] = term;
         }
-        self.relax();
+        // TODO: We should build the graph of dependencies between variables to just
+        // update things that will change, not everything
+        for _ in 0..self.n {
+            self.relax();
+        }
         self.terms
             .iter()
             .enumerate()
@@ -54,7 +59,8 @@ impl InferResults {
         if i < self.n {
             self.tys[i].clone()
         } else {
-            todo!();
+            // TODO: this can be more general
+            prelude::u()
         }
     }
 

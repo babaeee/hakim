@@ -106,6 +106,19 @@ fn check_undo() {
 }
 
 #[test]
+fn dont_start_with_wild() {
+    let eng = build_engine(EngineLevel::Full);
+    assert!(matches!(
+        eng.interactive_session("?"),
+        Err(super::Error::GoalWithWildCard(_))
+    ));
+    assert!(matches!(
+        eng.interactive_session("{} ⊆ {}"),
+        Err(super::Error::GoalWithWildCard(_))
+    ));
+}
+
+#[test]
 fn bad_tactic() {
     run_interactive_to_fail(F_EQUAL, "", "intrs");
     run_interactive_to_fail(F_EQUAL, "", "intros p1 p2 p3 p4 p5 p6 bad_p");
@@ -244,44 +257,6 @@ fn exists_number() {
         apply lt_0_1
         "#,
     )
-}
-
-#[test]
-fn exists_destruct() {
-    run_interactive_to_end(
-        "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",
-        r#"
-        intros P px_p2x exP
-        apply (ex_ind ? ? exP)
-        intros exP_value exP_proof
-        apply (ex_intro ? ? exP_value)
-        apply px_p2x
-        apply exP_proof
-        "#,
-    )
-}
-
-#[test]
-fn forall_not_exist() {
-    run_interactive_to_end(
-        "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
-        r#"
-        intros A P fa exi
-        apply (ex_ind ? ? exi)
-        intros exv exv_not_p
-        apply (exv_not_p (fa exv))
-        "#,
-    );
-    run_interactive_to_end(
-        "∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False",
-        r#"
-        intros A P fa exi
-        apply (ex_ind ? ? exi)
-        intros exv exv_not_p
-        apply exv_not_p
-        apply fa
-        "#,
-    );
 }
 
 #[test]
