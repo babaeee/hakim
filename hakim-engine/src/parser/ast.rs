@@ -87,7 +87,7 @@ trait TokenEater {
         if self.look_ahead(1) == Ok(Token::Sign(":".to_string())) {
             let name = vec![self.eat_ident()?];
             self.eat_sign(":")?;
-            let ty = Box::new(self.eat_ast()?);
+            let ty = Box::new(self.eat_ast_with_disallowed_sign(|x| x == "|")?);
             self.eat_sign("|")?;
             let body = Box::new(self.eat_ast()?);
             self.eat_sign("}")?;
@@ -141,6 +141,10 @@ trait TokenEater {
     }
 
     fn eat_ast(&mut self) -> Result<AstTerm> {
+        self.eat_ast_with_disallowed_sign(|_| false)
+    }
+
+    fn eat_ast_with_disallowed_sign(&mut self, disallow_sign: fn(&str) -> bool) -> Result<AstTerm> {
         fn build_ast(a: AstTerm, op: BinOp, b: AstTerm) -> AstTerm {
             if op == BinOp::App {
                 App(Box::new(a), Box::new(b))
@@ -175,6 +179,9 @@ trait TokenEater {
                 }
             };
             if let Token::Sign(s) = t {
+                if disallow_sign(&s) {
+                    break;
+                }
                 if let Some(op) = BinOp::from_str(&s) {
                     self.eat_token()?;
                     push_to_stack(&mut stack, op, cur);
