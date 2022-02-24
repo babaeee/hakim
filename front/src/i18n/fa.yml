@@ -2,7 +2,9 @@ auto_proof: اثبات خودکار
 babaeee_coq: اثبات چک کن ببعییی
 change_lang: تغییر زبان
 choose_for_replace: قسمتی را برای جایگزینی انتخاب کنید
+contradiction: تناقض
 custom_tactic: تاکتیک سفارشی
+destruct: شکستن
 enter_tactic: تاکتیک خود را وارد کنید
 enter_a_name: یک نام وارد کنید
 enter_value_that_satisfy: مقداری که در عبارت صدق می کند را وارد کنید
@@ -12,12 +14,15 @@ exit: خروج
 in_applying: در حین اعمال کردن
 induction_on: استقرا روی
 input_assertion: ادعای خود را وارد کنید
+intros: معرفی
+intros_with_name: معرفی با نام
 loading: در حال بارگیری
 new_assertion: ادعای جدید
 no_action_for_goal: اقدامی برای این نوع هدف تعریف نشده است
 no_more_subgoal: هدف دیگری برای اثبات وجود ندارد.
 or_choose_one_prop: یا یکی از گزاره های زیر را انتخاب کنید
 proof_screen: صفحه اثبات
+rewrite: بازنویسی
 replace: جایگزینی
 replace_with_what1: می خواهید
 replace_with_what2: را با چه چیزی جایگزین کنید؟

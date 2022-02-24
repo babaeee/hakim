@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::Term;
 
 #[cfg(test)]
@@ -14,6 +16,19 @@ pub enum SuggClass {
     Rewrite,
     Contradiction,
     Pattern(&'static str, &'static str),
+}
+
+impl Display for SuggClass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        match self {
+            Intros => write!(f, "$intros"),
+            IntrosWithName => write!(f, "$intros_with_name"),
+            Destruct => write!(f, "$destruct"),
+            Rewrite => write!(f, "$rewrite"),
+            Contradiction => write!(f, "$contradiction"),
+            Pattern(a, b) => write!(f, "{a} ⇒ {b}"),
+        }
+    }
 }
 
 use SuggClass::*;

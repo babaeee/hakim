@@ -160,7 +160,7 @@ const parenSplit = (txt: string): string[] => {
             cur += c;
         }
     }
-    return r;
+    return r.map((x) => fromRust(x));
 }
 
 export const suggMenuHyp = (hypName: string) => {
