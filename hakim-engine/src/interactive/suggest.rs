@@ -1,4 +1,4 @@
-use crate::{Term, TermRef};
+use crate::Term;
 
 #[cfg(test)]
 mod tests;
@@ -156,7 +156,7 @@ pub fn suggest_on_goal(goal: &Term) -> Vec<Suggestion> {
     r
 }
 
-pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
+pub fn suggest_on_goal_dblclk(goal: &Term) -> Option<Suggestion> {
     let suggs = suggest_on_goal(goal);
     for sugg in suggs {
         if sugg.is_default {

@@ -59,8 +59,8 @@ fn replace_term(
     }
 }
 
-pub fn get_eq_params(term: &TermRef) -> Option<[TermRef; 3]> {
-    if let Term::App { func, op: op2 } = term.as_ref() {
+pub fn get_eq_params(term: &Term) -> Option<[TermRef; 3]> {
+    if let Term::App { func, op: op2 } = term {
         if let Term::App { func, op: op1 } = func.as_ref() {
             if let Term::App { func, op: ty } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {

@@ -93,8 +93,8 @@ fn match_and_infer_without_normalize(
         match_and_infer_without_normalize(a1.var_ty, a2.var_ty, infers)?;
         match_and_infer_without_normalize(a1.body, a2.body, infers)
     }
-    fn is_wild(t: &TermRef) -> Option<usize> {
-        if let Term::Wild { index } = t.as_ref() {
+    fn is_wild(t: &Term) -> Option<usize> {
+        if let Term::Wild { index } = t {
             Some(*index)
         } else {
             None
@@ -107,8 +107,8 @@ fn match_and_infer_without_normalize(
             match_and_infer_without_normalize(infers.get(i), t, infers)
         }
     }
-    fn func_is_wild(t: &TermRef) -> bool {
-        if let Term::App { func, .. } = t.as_ref() {
+    fn func_is_wild(t: &Term) -> bool {
+        if let Term::App { func, .. } = t {
             if is_wild(func).is_some() {
                 true
             } else {
