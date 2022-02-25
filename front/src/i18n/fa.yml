@@ -3,6 +3,7 @@ babaeee_coq: اثبات چک کن ببعییی
 change_lang: تغییر زبان
 choose_for_replace: قسمتی را برای جایگزینی انتخاب کنید
 contradiction: تناقض
+copy: رونوشت
 custom_tactic: تاکتیک سفارشی
 destruct: شکستن
 enter_tactic: تاکتیک خود را وارد کنید

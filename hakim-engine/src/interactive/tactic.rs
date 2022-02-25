@@ -73,16 +73,38 @@ pub(crate) fn next_arg(
     Ok(arg)
 }
 
+pub(crate) fn next_arg_constant(
+    args: &mut impl Iterator<Item = String>,
+    tactic_name: &'static str,
+    expected: &'static str,
+) -> Result<()> {
+    let v = next_arg(args, tactic_name)?;
+    if v != expected {
+        return Err(BadArg {
+            arg: v,
+            tactic_name: tactic_name.to_string(),
+        });
+    }
+    Ok(())
+}
+
+pub(crate) fn deny_arg(
+    mut args: impl Iterator<Item = String>,
+    tactic_name: &'static str,
+) -> Result<()> {
+    if args.next().is_some() {
+        return Err(BadArgCount {
+            tactic_name: tactic_name.to_string(),
+        });
+    }
+    Ok(())
+}
+
 pub(crate) fn get_one_arg(
     mut args: impl Iterator<Item = String>,
     tactic_name: &'static str,
 ) -> Result<String> {
     let arg1 = next_arg(&mut args, tactic_name)?;
-    let c = args.count();
-    if c > 0 {
-        return Err(BadArgCount {
-            tactic_name: tactic_name.to_string(),
-        });
-    }
+    deny_arg(args, tactic_name)?;
     Ok(arg1)
 }

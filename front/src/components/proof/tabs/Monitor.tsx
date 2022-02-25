@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { runSuggDblGoal, runSuggDblHyp, runSuggMenuGoal, runSuggMenuHyp, sendTactic, State, subscribe, suggMenuGoal, suggMenuHyp, tryTactic } from "../../../hakim";
+import { runSuggDblGoal, runSuggDblHyp, sendTactic, State, subscribe, suggMenuGoal, suggMenuHyp, tryTactic } from "../../../hakim";
 import css from "./Monitor.module.css";
 import { useMenuState, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import '@szhsin/react-menu/dist/index.css';
@@ -14,12 +14,60 @@ type HypProps = {
     ty: string,
 };
 
+type Sugg = {
+    label: string,
+    action: () => void,
+    disabled?: boolean,
+};
+
+type onSelectLogicType = (x: {
+    ty: string,
+    setSuggs: (x: Sugg[]) => void,
+    setAnchorPoint: (a: { x: number, y: number }) => void,
+    toggleMenu: (x: boolean) => void,
+    replaceTactic: (x: { cnt: number, text: string, userInp: string }) => string,
+}) => (e: any) => Promise<void>;
+const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggleMenu, replaceTactic }) => async (e) => {
+    const sel = window.getSelection();
+    if (!sel) return;
+    if (sel.toString() === '') return;
+    if (!(sel.anchorNode?.parentElement === e.target)) return;
+    const range = sel.getRangeAt(0);
+    const start = range.startOffset;
+    const end = range.endOffset;
+    const len = end - start;
+    const text = ty.slice(start, end);
+    let cnt = 1;
+    for (let i = 0; i < start; i += 1) {
+        if (ty.slice(i, i + len) === text) {
+            cnt += 1;
+        }
+    }
+    setSuggs([{
+        label: text,
+        disabled: true,
+        action: () => { },
+    }, {
+        label: g`copy`,
+        action: async () => {
+            await navigator.clipboard.writeText(text);
+        },
+    }, {
+        label: g`replace`,
+        action: async () => {
+            const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`, text);
+            sendTactic(replaceTactic({ cnt, text, userInp }));
+        },
+    }]);
+    setAnchorPoint({ x: e.clientX, y: e.clientY });
+    toggleMenu(true);
+};
+
 const Hyp = ({ name, ty }: HypProps): JSX.Element => {
     const { toggleMenu, ...menuProps } = useMenuState();
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
-    const [suggs, setSuggs] = useState([] as string[]);
-    const { setReplaceMode, replaceMode } = useContext(ProofContext);
-    const [, drag] = useDrag(() => ({
+    const [suggs, setSuggs] = useState([] as Sugg[]);
+    const [, drag, preview] = useDrag(() => ({
         type: 'Hyp',
         item: () => ({ name }),
     }), [name, ty]);
@@ -38,8 +86,8 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
         [name],
     );
     return (
-        <div ref={!replaceMode ? drop : undefined}>
-            <div ref={!replaceMode ? drag : undefined} className={classNames({
+        <div ref={drop}>
+            <div ref={preview} className={classNames({
                 [css.hyp]: true,
                 [css.drop]: canDrop,
                 [css.over]: isOver,
@@ -50,23 +98,16 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 toggleMenu(true);
             }}
                 onDoubleClick={() => runSuggDblHyp(name)}>
-                {name}: <span className={classNames({ [css.selectEnable]: replaceMode })}
-                    onMouseUp={async (e) => {
-                        const sel = window.getSelection();
-                        if (!sel) return;
-                        if (sel.toString() === '') return;
-                        if (!(sel.anchorNode?.parentElement === e.target)) return;
-                        const range = sel.getRangeAt(0);
-                        const start = range.startOffset;
-                        const end = range.endOffset;
-                        const userInp = await normalPrompt(g`replace_with_what1 ${ty.slice(start, end)} replace_with_what2`);
-                        sendTactic(`add_hyp ((${ty.slice(start, end)}) = (${userInp}))`);
-                        setReplaceMode(false);
-                    }}
+                <span ref={drag} className={css.dragHandler}>&#x25CE;</span>{' '}
+                {name}: <span
+                    onMouseUp={onSelectLogic({
+                        ty, setAnchorPoint, setSuggs, toggleMenu,
+                        replaceTactic: ({ cnt, text, userInp }) => `replace #${cnt} (${text}) with (${userInp}) in ${name}`,
+                    })}
                 >{ty}</span>
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
-                    {suggs.map((x, i) => <MenuItem onClick={() => runSuggMenuHyp(name, i)}>{x}</MenuItem>)}
+                    {suggs.map((x, i) => <MenuItem disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
                 </ControlledMenu>
             </div>
         </div>
@@ -77,8 +118,7 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
 const Goal = ({ ty }: { ty: string }): JSX.Element => {
     const { toggleMenu, ...menuProps } = useMenuState();
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
-    const [suggs, setSuggs] = useState([] as string[]);
-    const { setReplaceMode, replaceMode } = useContext(ProofContext);
+    const [suggs, setSuggs] = useState([] as Sugg[]);
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey && event.key === 'z') {
@@ -102,34 +142,24 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
         [],
     );
     return (
-        <div ref={!replaceMode ? drop : undefined}
+        <div ref={drop}
             className={classNames({
                 [css.hyp]: true,
-                [css.selectEnable]: replaceMode,
                 [css.drop]: canDrop,
                 [css.over]: isOver,
             })}
-            onMouseUp={async (e) => {
-                const sel = window.getSelection();
-                if (!sel) return;
-                if (sel.toString() === '') return;
-                if (!(sel.anchorNode?.parentElement === e.target)) return;
-                const range = sel.getRangeAt(0);
-                const start = range.startOffset;
-                const end = range.endOffset;
-                const len = end - start;
-                const text = ty.slice(start, end);
-                let cnt = 1;
-                for (let i = 0; i < start; i += 1) {
-                    if (ty.slice(i, i + len) === text) {
-                        cnt += 1;
-                    }
+            onMouseUp={onSelectLogic({
+                ty, setAnchorPoint, setSuggs, toggleMenu,
+                replaceTactic: ({ cnt, text, userInp }) => `replace #${cnt} (${text}) with (${userInp})`,
+            })}
+            onDoubleClick={() => runSuggDblGoal()}
+            onMouseDown={(e) => {
+                // prevent text select in double clicks
+                if (e.detail === 2) {
+                    e.preventDefault();
                 }
-                const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`, text);
-                sendTactic(`replace #${cnt} (${text}) with (${userInp})`);
-                setReplaceMode(false);
             }}
-            onDoubleClick={() => runSuggDblGoal()} onContextMenu={e => {
+            onContextMenu={e => {
                 e.preventDefault();
                 setSuggs(suggMenuGoal());
                 setAnchorPoint({ x: e.clientX, y: e.clientY });
@@ -138,7 +168,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             {ty}
             <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                 onClose={() => toggleMenu(false)}>
-                {suggs.map((x, i) => <MenuItem onClick={() => runSuggMenuGoal(i)}>{x}</MenuItem>)}
+                {suggs.map((x) => <MenuItem disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
             </ControlledMenu>
         </div>
     );
