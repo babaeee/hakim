@@ -22,32 +22,59 @@ impl<'a, T> Default for LogicTree<'a, T> {
 
 pub type LogicArena<'a, T> = &'a Arena<LogicTree<'a, T>>;
 
+struct Hyps<'a, T> {
+    simple_hyps: Vec<T>,
+    ahyps: Vec<&'a LogicTree<'a, T>>,
+    bhyps: Vec<&'a LogicTree<'a, T>>,
+}
+impl<'a, T: Clone> Hyps<'a, T> {
+    pub fn new() -> Hyps<'a, T> {
+        let simple_hyps: Vec<T> = Vec::new();
+        //hypothis that generate two goal
+        let bhyps: Vec<&LogicTree<T>> = Vec::new();
+        //hyps that not
+        let ahyps: Vec<&LogicTree<T>> = Vec::new();
+        Hyps {
+            simple_hyps,
+            ahyps,
+            bhyps,
+        }
+    }
+    fn add_hyp(&mut self, h: &'a LogicTree<'a, T>, undo: bool) {
+        let add = |hyps: &mut Vec<&LogicTree<'a, T>>| {
+            if undo {
+                hyps.pop();
+            } else {
+                hyps.push(h);
+            }
+        };
+        match h {
+            And(..) => add(&mut self.ahyps),
+            Or(..) => add(&mut self.bhyps),
+            Not(x) => match x {
+                Or(..) => add(&mut self.ahyps),
+                And(..) => add(&mut self.bhyps),
+                Atom(..) => todo!(),
+                Not(x) => self.add_hyp(x, undo),
+                Unknown => (),
+            },
+            Atom(t) => {
+                if undo {
+                    self.simple_hyps.pop();
+                } else {
+                    self.simple_hyps.push(t.clone());
+                }
+            }
+            Unknown => (),
+        }
+    }
+}
+
 pub struct LogicBuilder<'a, T> {
     arena: Arena<LogicTree<'a, T>>,
     root: Cell<LogicTree<'a, T>>,
     f: fn(t: TermRef, arena: LogicArena<'a, T>) -> &'a LogicTree<'a, T>,
 }
-
-fn logic_to_vec<T: Clone>(tree: &LogicTree<'_, T>, negator: fn(T) -> T) -> Vec<T> {
-    fn f<T: Clone>(tree: &LogicTree<'_, T>, negator: fn(T) -> T, r: &mut Vec<T>) {
-        match tree {
-            Atom(t) => r.push(t.clone()),
-            Unknown => (),
-            And(x, y) => {
-                f(x, negator, r);
-                f(y, negator, r);
-            }
-            Or(_, _) => todo!(),
-            Not(Atom(t)) => r.push(negator(t.clone())),
-            Not(Unknown) => (),
-            Not(_) => todo!(),
-        }
-    }
-    let mut r = vec![];
-    f(tree, negator, &mut r);
-    r
-}
-
 impl<'a, T: Clone> LogicBuilder<'a, T> {
     pub fn new(f: fn(t: TermRef, arena: LogicArena<'a, T>) -> &'a LogicTree<'a, T>) -> Self {
         let arena = Arena::new();
@@ -92,10 +119,57 @@ impl<'a, T: Clone> LogicBuilder<'a, T> {
         }
         (self.f)(term, &self.arena)
     }
-
+    fn dfs(
+        &'a mut self,
+        hyps: &'a mut Hyps<'a, T>,
+        checker: fn(&[T]) -> bool,
+        negator: fn(T) -> T,
+    ) -> bool {
+        let mut step1 = |h1, h2| {
+            hyps.add_hyp(h1, false);
+            hyps.add_hyp(h2, false);
+            let c = self.dfs(hyps, checker, negator);
+            hyps.add_hyp(h2, true);
+            hyps.add_hyp(h1, true);
+            c
+        };
+        if let Some(h) = hyps.ahyps.pop() {
+            match h {
+                And(x, y) => return step1(x, y),
+                Not(Atom(..)) => todo!(),
+                Not(Or(x, y)) => {
+                    return step1(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+                }
+                _ => (),
+            }
+            hyps.ahyps.push(h);
+        }
+        let mut step2 = |h1, h2| {
+            let mut ans = false;
+            hyps.add_hyp(h1, false);
+            if self.dfs(hyps, checker, negator) {
+                hyps.add_hyp(h2, false);
+                ans = self.dfs(hyps, checker, negator);
+                hyps.add_hyp(h2, true);
+            }
+            hyps.add_hyp(h1, true);
+            return ans;
+        };
+        if let Some(h) = hyps.bhyps.pop() {
+            if let Or(x, y) = h {
+                return step2(x, y);
+            }
+            if let Not(And(x, y)) = h {
+                return step2(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+            }
+            hyps.bhyps.push(h);
+        }
+        return checker(&hyps.simple_hyps);
+    }
     pub fn check_contradiction(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> bool {
         let root = self.root.take();
-        let vec = logic_to_vec(&root, negator);
-        checker(&vec)
+        let mut hyps = Hyps::new();
+        hyps.add_hyp(&root, false);
+        return self.dfs(&mut hyps, checker, negator);
     }
 }
