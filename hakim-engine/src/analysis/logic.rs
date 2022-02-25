@@ -171,14 +171,15 @@ impl<'a, T: Clone> LogicBuilder<'a, T> {
             self.hyps.ahyps.push(h);
         }
         let step2 = |h1, h2| {
-            let mut ans = false;
             self.hyps.add_hyp(h1, false, negator);
-            if self.dfs(checker, negator) {
+            let mut ans = self.dfs(checker, negator);
+            self.hyps.add_hyp(h1, true, negator);
+
+            if ans {
                 self.hyps.add_hyp(h2, false, negator);
                 ans = self.dfs(checker, negator);
                 self.hyps.add_hyp(h2, true, negator);
             }
-            self.hyps.add_hyp(h1, true, negator);
             ans
         };
         if let Some(h) = self.hyps.bhyps.pop() {
