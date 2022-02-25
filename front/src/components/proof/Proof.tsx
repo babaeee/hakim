@@ -21,15 +21,12 @@ type ProofContextType = {
   onFinish: () => void,
   lemmaBox: Lemma[],
   appendLemma: (lemma: Lemma) => void,
-  replaceMode: boolean,
-  setReplaceMode: (m: boolean) => void,
 };
 
 export const ProofContext = createContext({} as ProofContextType);
 
 export const Proof = ({ onFinish }: ProofProps) => {
   const [lemmaBox, setLemmaBox] = useState([] as Lemma[]);
-  const [replaceMode, setReplaceMode] = useState(false);
   const ctx: ProofContextType = {
     lemmaBox,
     appendLemma: (lemma) => {
@@ -39,8 +36,6 @@ export const Proof = ({ onFinish }: ProofProps) => {
       setLemmaBox([...lemmaBox, lemma]);
     },
     onFinish,
-    replaceMode,
-    setReplaceMode,
   };
   return (
     <DndProvider backend={HTML5Backend}><ProofContext.Provider value={ctx}>
@@ -50,11 +45,8 @@ export const Proof = ({ onFinish }: ProofProps) => {
           <button className={css.changeLangButton} onClick={changeLang}>{g`change_lang`}</button>
           <button className={css.changeLangButton} onClick={onFinish}>{g`exit`}</button>
         </h1>
-        {replaceMode && <p>{g`choose_for_replace`}</p>}
         <div className={css.bottomContainer}>
-          <Toolbar enableReplaceMode={() => {
-            setReplaceMode(true);
-          }} />
+          <Toolbar />
           <Tabs />
           <div className={css.sidebarContainer}>
             <History />

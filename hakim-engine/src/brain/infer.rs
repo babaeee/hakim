@@ -35,8 +35,12 @@ impl InferResults {
             self.tys[i - self.n].clone()
         }
     }
-    #[must_use]
-    fn set(&mut self, i: usize, term: TermRef) -> bool {
+    fn is_unknown(&self, i: usize) -> bool {
+        *self.get(i) == Term::Wild { index: i }
+    }
+
+    fn set(&mut self, i: usize, term: TermRef) -> Result<()> {
+        let term_clone = term.clone();
         if i < self.n {
             self.terms[i] = term;
         } else {
@@ -47,13 +51,19 @@ impl InferResults {
         for _ in 0..self.n {
             self.relax();
         }
-        self.terms
+        let has_loop = self
+            .terms
             .iter()
             .enumerate()
             .all(|(i, x)| *x == term_ref!(_ i) || !predict_wild(x, &|j| i == j))
             && self.tys.iter().enumerate().all(|(i, x)| {
                 *x == term_ref!(_ i + self.n) || !predict_wild(x, &|j| i + self.n == j)
-            })
+            });
+        if has_loop {
+            Ok(())
+        } else {
+            Err(LoopOfInference(i, term_clone))
+        }
     }
     fn type_of(&self, i: usize) -> TermRef {
         if i < self.n {
@@ -83,26 +93,22 @@ fn match_and_infer_without_normalize(
         match_and_infer_without_normalize(a1.var_ty, a2.var_ty, infers)?;
         match_and_infer_without_normalize(a1.body, a2.body, infers)
     }
-    fn is_wild(t: &TermRef) -> Option<usize> {
-        if let Term::Wild { index } = t.as_ref() {
+    fn is_wild(t: &Term) -> Option<usize> {
+        if let Term::Wild { index } = t {
             Some(*index)
         } else {
             None
         }
     }
     fn match_wild(i: usize, t: TermRef, infers: &mut InferResults) -> Result<()> {
-        if *infers.get(i) == (Term::Wild { index: i }) {
-            if infers.set(i, t.clone()) {
-                Ok(())
-            } else {
-                Err(LoopOfInference(i, t))
-            }
+        if infers.is_unknown(i) {
+            infers.set(i, t)
         } else {
             match_and_infer_without_normalize(infers.get(i), t, infers)
         }
     }
-    fn func_is_wild(t: &TermRef) -> bool {
-        if let Term::App { func, .. } = t.as_ref() {
+    fn func_is_wild(t: &Term) -> bool {
+        if let Term::App { func, .. } = t {
             if is_wild(func).is_some() {
                 true
             } else {
@@ -112,15 +118,86 @@ fn match_and_infer_without_normalize(
             false
         }
     }
+    fn match_wild_func(wild_func: &Term, exp: TermRef, infers: &mut InferResults) -> Result<()> {
+        // here we handle matching ?w f1 with an expression containing f1. This is
+        // useful in infering induction. Since ?w can not contain foriegn variables, it
+        // can be determined uniquely.
+        if let Term::App { func, op } = wild_func {
+            let wild = if let Term::Wild { index } = func.as_ref() {
+                if !infers.is_unknown(*index) {
+                    return Ok(());
+                } else {
+                    *index
+                }
+            } else {
+                return Ok(());
+            };
+            let var = if let Term::Var { index } = op.as_ref() {
+                *index
+            } else {
+                return Ok(());
+            };
+            let var_ty = if let Term::Forall(x) = infers.type_of(wild).as_ref() {
+                x.var_ty.clone()
+            } else {
+                // I think it should always infer the type of functions.
+                panic!("Fail in inference");
+            };
+            let fbody = if var == 0 {
+                exp
+            } else {
+                replace_var(exp, 0, var)
+            };
+            infers.set(wild, term_ref!(fun var_ty, fbody))?;
+        }
+        fn replace_var(exp: TermRef, depth: usize, var: usize) -> TermRef {
+            fn for_abs(abs: Abstraction, depth: usize, var: usize) -> Abstraction {
+                let var_ty = replace_var(abs.var_ty, depth, var);
+                let body = replace_var(abs.body, depth + 1, var + 1);
+                Abstraction {
+                    var_ty,
+                    body,
+                    hint_name: abs.hint_name,
+                }
+            }
+            match exp.as_ref() {
+                Term::Var { index } => {
+                    let i = *index;
+                    TermRef::new(Term::Var {
+                        index: if i == var {
+                            depth
+                        } else if depth <= i && i < var {
+                            i + 1
+                        } else {
+                            i
+                        },
+                    })
+                }
+                Term::Axiom { .. }
+                | Term::Universe { .. }
+                | Term::Number { .. }
+                | Term::Wild { .. } => exp,
+                Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a.clone(), depth, var))),
+                Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a.clone(), depth, var))),
+                Term::App { func, op } => TermRef::new(Term::App {
+                    func: replace_var(func.clone(), depth, var),
+                    op: replace_var(op.clone(), depth, var),
+                }),
+            }
+        }
+        Ok(())
+    }
     if let Some(i) = is_wild(&t1) {
         return match_wild(i, t2, infers);
     }
     if let Some(i) = is_wild(&t2) {
         return match_wild(i, t1, infers);
     }
-    if func_is_wild(&t1) || func_is_wild(&t2) {
-        dbg!((t1, t2));
-        return Ok(());
+    if func_is_wild(&t1) {
+        return match_wild_func(&t1, t2, infers);
+    }
+    if func_is_wild(&t2) {
+        return match_wild_func(&t2, t1, infers);
     }
     match (t1.as_ref(), t2.as_ref()) {
         (

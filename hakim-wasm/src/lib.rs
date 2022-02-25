@@ -243,9 +243,9 @@ impl Instance {
             sugg.into_iter()
                 .map(|x| {
                     if x.is_default {
-                        format!("(★{:?})", x.class)
+                        format!("(★{})", x.class)
                     } else {
-                        format!("({:?})", x.class)
+                        format!("({})", x.class)
                     }
                 })
                 .collect(),
@@ -259,9 +259,9 @@ impl Instance {
             sugg.into_iter()
                 .map(|x| {
                     if x.is_default {
-                        format!("(★{:?})", x.class)
+                        format!("(★{})", x.class)
                     } else {
-                        format!("({:?})", x.class)
+                        format!("({})", x.class)
                     }
                 })
                 .collect(),

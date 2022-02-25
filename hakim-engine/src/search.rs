@@ -5,10 +5,23 @@ use crate::{
         subst,
     },
     engine::{Engine, Result},
+    parser::is_valid_ident,
     term_ref, Abstraction, Term,
 };
 
+fn search_with_name(engine: &Engine, name: &str) -> Vec<String> {
+    engine
+        .lib_iter()
+        .map(|(a, _)| a)
+        .filter(|x| x.contains(name))
+        .map(|x| x.to_string())
+        .collect()
+}
+
 pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
+    if is_valid_ident(query) {
+        return Ok(search_with_name(engine, query));
+    }
     let (qt, infer_cnt) = engine.parse_text_with_wild(query)?;
     let forall_cnt = get_forall_depth(&qt);
     Ok(engine

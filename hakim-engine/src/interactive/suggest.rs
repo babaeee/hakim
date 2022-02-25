@@ -1,4 +1,6 @@
-use crate::{Term, TermRef};
+use std::fmt::Display;
+
+use crate::Term;
 
 #[cfg(test)]
 mod tests;
@@ -14,6 +16,19 @@ pub enum SuggClass {
     Rewrite,
     Contradiction,
     Pattern(&'static str, &'static str),
+}
+
+impl Display for SuggClass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        match self {
+            Intros => write!(f, "$intros"),
+            IntrosWithName => write!(f, "$intros_with_name"),
+            Destruct => write!(f, "$destruct"),
+            Rewrite => write!(f, "$rewrite"),
+            Contradiction => write!(f, "$contradiction"),
+            Pattern(a, b) => write!(f, "{a} ⇒ {b}"),
+        }
+    }
 }
 
 use SuggClass::*;
@@ -156,7 +171,7 @@ pub fn suggest_on_goal(goal: &Term) -> Vec<Suggestion> {
     r
 }
 
-pub fn suggest_on_goal_dblclk(goal: &TermRef) -> Option<Suggestion> {
+pub fn suggest_on_goal_dblclk(goal: &Term) -> Option<Suggestion> {
     let suggs = suggest_on_goal(goal);
     for sugg in suggs {
         if sugg.is_default {

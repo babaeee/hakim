@@ -1,8 +1,8 @@
-use crate::{engine::Engine, TermRef};
+use crate::{brain::Term, engine::Engine};
 
 use super::{detect_class, SetTermClass, SuggClass::*, Suggestion, TermClass};
 
-pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Suggestion> {
+pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &Term) -> Vec<Suggestion> {
     let c = detect_class(ty);
     let mut r = vec![];
     match c {
@@ -77,7 +77,7 @@ pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &TermRef) -> Vec<Suggesti
     r
 }
 
-pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &TermRef) -> Option<Suggestion> {
+pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &Term) -> Option<Suggestion> {
     let suggs = suggest_on_hyp(engine, name, ty);
     for sugg in suggs {
         if sugg.is_default {

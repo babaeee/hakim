@@ -161,8 +161,8 @@ pub fn predict_wild(t: &Term, predict: &impl Fn(usize) -> bool) -> bool {
 
 /// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is unique_name of axioms. In case of no axiom, it will return false
-pub fn predict_axiom(t: &TermRef, predict: &impl Fn(&str) -> bool) -> bool {
-    match t.as_ref() {
+pub fn predict_axiom(t: &Term, predict: &impl Fn(&str) -> bool) -> bool {
+    match t {
         Term::Wild { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => false,
         Term::App { func, op } => predict_axiom(func, predict) || predict_axiom(op, predict),
         Term::Forall(Abstraction {
@@ -183,7 +183,7 @@ pub fn contains_wild(t: &Term) -> bool {
     predict_wild(t, &|_| true)
 }
 
-pub fn remove_unused_var(t: &TermRef, depth: usize) -> Option<TermRef> {
+pub fn remove_unused_var(t: TermRef, depth: usize) -> Option<TermRef> {
     fn for_abs(
         Abstraction {
             var_ty,
@@ -192,8 +192,8 @@ pub fn remove_unused_var(t: &TermRef, depth: usize) -> Option<TermRef> {
         }: &Abstraction,
         depth: usize,
     ) -> Option<Abstraction> {
-        let var_ty = remove_unused_var(var_ty, depth)?;
-        let body = remove_unused_var(body, depth + 1)?;
+        let var_ty = remove_unused_var(var_ty.clone(), depth)?;
+        let body = remove_unused_var(body.clone(), depth + 1)?;
         let hint_name = hint_name.clone();
         Some(Abstraction {
             var_ty,
@@ -202,12 +202,10 @@ pub fn remove_unused_var(t: &TermRef, depth: usize) -> Option<TermRef> {
         })
     }
     Some(match t.as_ref() {
-        Term::Axiom { .. } | Term::Universe { .. } | Term::Wild { .. } | Term::Number { .. } => {
-            t.clone()
-        }
+        Term::Axiom { .. } | Term::Universe { .. } | Term::Wild { .. } | Term::Number { .. } => t,
         Term::App { func, op } => {
-            let func = remove_unused_var(func, depth)?;
-            let op = remove_unused_var(op, depth)?;
+            let func = remove_unused_var(func.clone(), depth)?;
+            let op = remove_unused_var(op.clone(), depth)?;
             app_ref!(func, op)
         }
         Term::Forall(x) => TermRef::new(Term::Forall(for_abs(x, depth)?)),
@@ -231,7 +229,7 @@ fn get_universe(t: TermRef) -> Result<usize> {
     }
 }
 
-fn deny_wild(t: &TermRef) -> Result<()> {
+fn deny_wild(t: &Term) -> Result<()> {
     if contains_wild(t) {
         Err(ContainsWild)
     } else {
@@ -284,7 +282,7 @@ pub fn normalize(t: TermRef) -> TermRef {
         Term::Fun(x) => {
             if let Term::App { func, op } = x.body.as_ref() {
                 if **op == (Term::Var { index: 0 }) {
-                    if let Some(x) = remove_unused_var(func, 0) {
+                    if let Some(x) = remove_unused_var(func.clone(), 0) {
                         return normalize(x);
                     }
                 }
@@ -371,8 +369,8 @@ pub fn type_of(term: TermRef) -> Result<TermRef> {
     infer::type_of_inner(term, &[], &mut infer::InferResults::new(0))
 }
 
-pub fn get_forall_depth(term: &TermRef) -> usize {
-    match term.as_ref() {
+pub fn get_forall_depth(term: &Term) -> usize {
+    match term {
         Term::Forall(Abstraction { body, .. }) => get_forall_depth(body) + 1,
         _ => 0,
     }

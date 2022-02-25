@@ -222,7 +222,7 @@ impl BinOp {
                 var_ty,
                 hint_name: _,
             }) => {
-                let x = remove_unused_var(body, 0)?;
+                let x = remove_unused_var(body.clone(), 0)?;
                 (var_ty.clone(), BinOp::Imply, x)
             }
             _ => return None,

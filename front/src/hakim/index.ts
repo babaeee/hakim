@@ -160,19 +160,25 @@ const parenSplit = (txt: string): string[] => {
             cur += c;
         }
     }
-    return r;
+    return r.map((x) => fromRust(x));
 }
 
 export const suggMenuHyp = (hypName: string) => {
     const suggs = instance.suggest_menu_hyp(hypName);
     if (!suggs) return [];
-    return parenSplit(suggs);
+    return parenSplit(suggs).map((x, i) => ({
+        label: x,
+        action: () => runSuggMenuHyp(hypName, i),
+    }));
 };
 
 export const suggMenuGoal = () => {
     const suggs = instance.suggest_menu_goal();
     if (!suggs) return [];
-    return parenSplit(suggs);
+    return parenSplit(suggs).map((x, i) => ({
+        label: x,
+        action: () => runSuggMenuGoal(i),
+    }));
 };
 
 export type TryAutoResult = {
