@@ -11,6 +11,19 @@ use crate::{
 fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> &LogicTree<'_, Poly> {
     if let Term::App { func, op: op2 } = term.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
+            if let Term::App { func, op: _ } = func.as_ref() {
+                if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                    if unique_name == "eq" {
+                        let mut d1 = Poly::from_subtract(op2.clone(), op1.clone());
+                        d1.add(1.into());
+                        let mut d2 = Poly::from_subtract(op1.clone(), op2.clone());
+                        d2.add(1.into());
+                        let l1 = arena.alloc(LogicTree::Atom(d1));
+                        let l2 = arena.alloc(LogicTree::Atom(d2));
+                        return arena.alloc(LogicTree::And(l1, l2));
+                    }
+                }
+            }
             if let Term::Axiom { unique_name, .. } = func.as_ref() {
                 if unique_name == "lt" {
                     let d = Poly::from_subtract(op2.clone(), op1.clone());
@@ -125,9 +138,19 @@ mod tests {
 
     #[test]
     fn lia_and_logic_simple() {
-        // success("forall x: ℤ, x < 5 ∨ x < 10 -> x < 20");
-         fail("forall x: ℤ, x < 5 ∨ x < 100 -> x < 20");
-        //success("forall x: ℤ, x < 5 ∧ x < 100 -> x < 20");
+        success("forall x: ℤ, x < 5 ∨ x < 10 -> x < 20");
+        fail("forall x: ℤ, x < 5 ∨ x < 100 -> x < 20");
+        success("forall x: ℤ, x < 5 ∧ x < 100 -> x < 20");
+        success("forall x: ℤ, x < 4 -> x < 20 ∧ (x < 100 ∨ x < 3) ∧ x < 6");
+        success("forall x: ℤ, x < 4 -> x < 20 ∧ x < 100 ∨ x < 3 ∧ x < 6");
+        fail("forall x: ℤ, x < 4 -> x < 20 ∧ (x < 100 ∨ x < 6) ∧ x < 3");
+        success("forall x: ℤ, x = 1 ∨ x = 2 ∨ x = 3 -> x < 4 ∧ 0 < x ∧ (x = 3 ∨ x < 3)");
+    }
+
+    #[test]
+    fn lia_equality() {
+        success("forall x: ℤ, x = 3 ∨ x = 4 -> x < 5");
+        success("forall x: ℤ, 3 < x ∧ x < 5 -> x = 4");
     }
 
     #[test]
