@@ -123,6 +123,13 @@ mod tests {
     }
 
     #[test]
+    fn lia_and_logic_simple() {
+        success("forall x: ℤ, x < 5 ∨ x < 10 -> x < 20");
+        fail("forall x: ℤ, x < 5 ∨ x < 100 -> x < 20");
+        success("forall x: ℤ, x < 5 ∧ x < 100 -> x < 20");
+    }
+
+    #[test]
     fn success_lia_use_integer() {
         success("forall x: ℤ, 4 < 2 * x -> 5 < 2 * x");
         success("forall x: ℤ, 2 * x < 6 -> 2 * x < 5");
