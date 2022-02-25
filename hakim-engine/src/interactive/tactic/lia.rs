@@ -23,6 +23,7 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> &LogicTree<'_, Poly> {
 }
 
 fn check_contradiction(polies: &[Poly]) -> bool {
+    dbg!(polies);
     let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
     let mut lower_bounds = vec![None; var_cnt];
     let mut upper_bounds = vec![None; var_cnt];
@@ -44,7 +45,7 @@ fn check_contradiction(polies: &[Poly]) -> bool {
                             ub -= 1i32;
                         }
                         if let Some(prev_ub) = &upper_bounds[*x] {
-                            if ub <= *prev_ub {
+                            if ub >= *prev_ub {
                                 continue;
                             }
                         }
