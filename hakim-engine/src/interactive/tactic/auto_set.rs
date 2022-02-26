@@ -1,6 +1,6 @@
 use super::{Error::*, Result};
 use crate::{
-    analysis::logic::{LogicArena, LogicBuilder, LogicTree},
+    analysis::logic::{LogicArena, LogicBuilder, LogicValue},
     app_ref,
     brain::{Term, TermRef},
     interactive::Frame,
@@ -151,7 +151,7 @@ fn from_prop_type<'a>(
 fn convert(
     term: TermRef,
     logic_arena: LogicArena<'_, EnsembleStatement>,
-) -> &LogicTree<'_, EnsembleStatement> {
+) -> LogicValue<'_, EnsembleStatement> {
     let my_arena = Arena::new();
     let exp = if let Some(x) = from_prop_type(
         term,
@@ -161,12 +161,12 @@ fn convert(
     ) {
         x.0
     } else {
-        return logic_arena.alloc(LogicTree::Unknown);
+        return LogicValue::unknown();
     };
     fn f<'a>(
         exp: &EnsembleTree<'_>,
         arena: LogicArena<'a, EnsembleStatement>,
-    ) -> &'a LogicTree<'a, EnsembleStatement> {
+    ) -> LogicValue<'a, EnsembleStatement> {
         match exp {
             Empty | Singleton(_) | Set(_) | Union(_, _) | Intersection(_, _) | Setminus(_, _) => {
                 unreachable!()
@@ -174,60 +174,55 @@ fn convert(
             Eq(x, y) => {
                 let l = f(&Included(x, y), arena);
                 let r = f(&Included(y, x), arena);
-                arena.alloc(LogicTree::And(l, r))
+                l.and(r, arena)
             }
-            Included(Empty, _) => arena.alloc(LogicTree::Atom(EnsembleStatement::True)),
+            Included(Empty, _) => LogicValue::True,
             Included(Singleton(a), x) => f(&Inset(a.clone(), x), arena),
             Included(x, Intersection(a, b)) => {
                 let l = f(&Included(x, a), arena);
                 let r = f(&Included(x, b), arena);
-                arena.alloc(LogicTree::And(l, r))
+                l.and(r, arena)
             }
             Included(Union(a, b), x) => {
                 let l = f(&Included(a, x), arena);
                 let r = f(&Included(b, x), arena);
-                arena.alloc(LogicTree::And(l, r))
+                l.and(dbg!(r), arena)
             }
-            Included(Set(a), Set(b)) => arena.alloc(LogicTree::Atom(EnsembleStatement::IsSubset(
-                a.clone(),
-                b.clone(),
-            ))),
+            Included(Set(a), Set(b)) => {
+                LogicValue::from(EnsembleStatement::IsSubset(a.clone(), b.clone()))
+            }
             Included(_, Union(..) | Setminus(..) | Empty | Singleton(_))
-            | Included(Intersection(..) | Setminus(..), _) => arena.alloc(LogicTree::Unknown),
+            | Included(Intersection(..) | Setminus(..), _) => LogicValue::unknown(),
             Included(..) => unreachable!(),
-            Inset(_, Empty) => arena.alloc(LogicTree::Atom(EnsembleStatement::False)),
+            Inset(_, Empty) => LogicValue::False,
             Inset(a, Singleton(b)) => {
                 if a == b {
-                    arena.alloc(LogicTree::Atom(EnsembleStatement::True))
+                    LogicValue::True
                 } else {
-                    arena.alloc(LogicTree::Unknown)
+                    LogicValue::unknown()
                 }
             }
             Inset(x, Union(a, b)) => {
                 let l = f(&Inset(x.clone(), a), arena);
                 let r = f(&Inset(x.clone(), b), arena);
-                arena.alloc(LogicTree::Or(l, r))
+                l.or(r, arena)
             }
             Inset(x, Intersection(a, b)) => {
                 let l = f(&Inset(x.clone(), a), arena);
                 let r = f(&Inset(x.clone(), b), arena);
-                arena.alloc(LogicTree::And(l, r))
+                l.and(r, arena)
             }
             Inset(x, Setminus(a, b)) => {
                 let l = f(&Inset(x.clone(), a), arena);
                 let r = f(&Inset(x.clone(), b), arena);
-                let r = arena.alloc(LogicTree::Not(r));
-                arena.alloc(LogicTree::And(l, r))
+                l.and(r.not(arena), arena)
             }
-            Inset(x, Set(a)) => arena.alloc(LogicTree::Atom(EnsembleStatement::IsMember(
-                x.clone(),
-                a.clone(),
-            ))),
+            Inset(x, Set(a)) => LogicValue::from(EnsembleStatement::IsMember(x.clone(), a.clone())),
             Inset(..) => unreachable!(),
             Outset(_, _) => todo!(),
         }
     }
-    dbg!(f(exp, logic_arena))
+    f(exp, logic_arena)
 }
 
 enum InternedStatement {

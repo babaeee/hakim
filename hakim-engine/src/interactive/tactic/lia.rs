@@ -2,13 +2,13 @@ use super::{Error::*, Result};
 use crate::{
     analysis::{
         arith::{LinearPoly, Poly},
-        logic::{LogicArena, LogicBuilder, LogicTree},
+        logic::{LogicArena, LogicBuilder, LogicValue},
     },
     brain::{Term, TermRef},
     interactive::Frame,
 };
 
-fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> &LogicTree<'_, Poly> {
+fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
     if let Term::App { func, op: op2 } = term.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
             if let Term::App { func, op: _ } = func.as_ref() {
@@ -18,21 +18,21 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> &LogicTree<'_, Poly> {
                         d1.add(1.into());
                         let mut d2 = Poly::from_subtract(op1.clone(), op2.clone());
                         d2.add(1.into());
-                        let l1 = arena.alloc(LogicTree::Atom(d1));
-                        let l2 = arena.alloc(LogicTree::Atom(d2));
-                        return arena.alloc(LogicTree::And(l1, l2));
+                        let l1 = LogicValue::from(d1);
+                        let l2 = LogicValue::from(d2);
+                        return l1.and(l2, arena);
                     }
                 }
             }
             if let Term::Axiom { unique_name, .. } = func.as_ref() {
                 if unique_name == "lt" {
                     let d = Poly::from_subtract(op2.clone(), op1.clone());
-                    return arena.alloc(LogicTree::Atom(d));
+                    return LogicValue::from(d);
                 }
             }
         }
     }
-    arena.alloc(LogicTree::Unknown)
+    LogicValue::unknown()
 }
 
 fn check_contradiction(polies: &[Poly]) -> bool {
@@ -162,6 +162,16 @@ mod tests {
     fn success_lia_use_integer() {
         success("forall x: ℤ, 4 < 2 * x -> 5 < 2 * x");
         success("forall x: ℤ, 2 * x < 6 -> 2 * x < 5");
+    }
+
+    #[test]
+    fn logic_unknown() {
+        success("∀ P: U, 2 = 2 ∨ P");
+        fail("∀ P: U, 2 = 2 ∧ P");
+        success("∀ P: U, forall x: ℤ, 2 * x < 6 ∧ P -> 2 * x < 5");
+        fail("∀ P: U, forall x: ℤ, 2 * x < 6 ∨ P -> 2 * x < 5");
+        success("∀ P: U, forall x: ℤ, 2 * x < 6 -> 2 * x < 5 ∨ P");
+        fail("∀ P: U, forall x: ℤ, 2 * x < 6 -> 2 * x < 5 ∧ P");
     }
 
     #[test]
