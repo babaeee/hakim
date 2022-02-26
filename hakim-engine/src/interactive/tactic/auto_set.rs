@@ -391,6 +391,14 @@ mod tests {
     }
 
     #[test]
+    fn with_logic() {
+        success(
+            "∀ T: U, ∀ a: T, ∀ A1 A2 B1 B2: set T,\
+            a ∈ A1 ∩ B1 ∨ a ∈ A2 ∩ B2 -> a ∈ A1 ∪ A2 ∧ a ∈ B1 ∪ B2",
+        );
+    }
+
+    #[test]
     fn empty() {
         success("∀ T: U, ∀ a: T, a ∈ {} -> False");
         success("∀ T: U, ∀ A: set T, {} ⊆ A");
