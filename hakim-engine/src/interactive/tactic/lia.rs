@@ -151,6 +151,9 @@ mod tests {
     fn lia_equality() {
         success("forall x: ℤ, x = 3 ∨ x = 4 -> x < 5");
         success("forall x: ℤ, 3 < x ∧ x < 5 -> x = 4");
+        success("forall x: ℤ, 0 < x + 1 -> x = 0 ∨ 0 < x");
+        success("forall x: ℤ, 0 < x ∨ 0 = x ∨ x < 0");
+        fail("forall x: ℤ, 0 < x ∨ x < 0");
     }
 
     #[test]
