@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::fmt::Debug;
 
 use typed_arena::Arena;
 
@@ -50,7 +51,7 @@ struct Hyps<'a, T> {
     ahyps: CellVec<&'a LogicTree<'a, T>>,
     bhyps: CellVec<&'a LogicTree<'a, T>>,
 }
-impl<'a, T: Clone> Hyps<'a, T> {
+impl<'a, T: Clone + Debug> Hyps<'a, T> {
     pub fn new() -> Hyps<'a, T> {
         let simple_hyps: CellVec<T> = Vec::new().into();
         //hypothis that generate two goal
@@ -68,12 +69,29 @@ impl<'a, T: Clone> Hyps<'a, T> {
             if undo {
                 hyps.pop();
             } else {
+                //                dbg!(h);
                 hyps.push(h);
             }
         };
         match h {
-            And(..) => add(&self.ahyps),
-            Or(..) => add(&self.bhyps),
+            And(x, y) => {
+                if let Unknown = x {
+                    self.add_hyp(y, undo, negator);
+                } else if let Unknown = y {
+                    self.add_hyp(x, undo, negator);
+                } else {
+                    add(&self.ahyps);
+                }
+            }
+            Or(x, y) => {
+                if let Unknown = x {
+                    self.add_hyp(y, undo, negator);
+                } else if let Unknown = y {
+                    self.add_hyp(x, undo, negator);
+                } else {
+                    add(&self.bhyps);
+                }
+            }
             Not(x) => match x {
                 Or(..) => add(&self.ahyps),
                 And(..) => add(&self.bhyps),
@@ -105,7 +123,7 @@ pub struct LogicBuilder<'a, T> {
     root: Cell<LogicTree<'a, T>>,
     f: fn(t: TermRef, arena: LogicArena<'a, T>) -> &'a LogicTree<'a, T>,
 }
-impl<'a, T: Clone> LogicBuilder<'a, T> {
+impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
     pub fn new(f: fn(t: TermRef, arena: LogicArena<'a, T>) -> &'a LogicTree<'a, T>) -> Self {
         let arena = Arena::new();
         Self {
@@ -151,8 +169,22 @@ impl<'a, T: Clone> LogicBuilder<'a, T> {
         (self.f)(term, &self.arena)
     }
     fn dfs(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> bool {
+        /*        println!("bhyps");
+                let tmp = self.hyps.bhyps.0.take();
+                for a in &tmp {
+                    print!("{:?} ", a);
+                }
+                println!();
+                self.hyps.bhyps.0.set(tmp);
+        */
+        let mut ans = false;
+        let mut found = false;
+
         let step1 = |h1, h2| {
+            //            dbg!("step1");
+            //            dbg!("h1");
             self.hyps.add_hyp(h1, false, negator);
+            //            dbg!("h2");
             self.hyps.add_hyp(h2, false, negator);
             let c = self.dfs(checker, negator);
             self.hyps.add_hyp(h2, true, negator);
@@ -161,21 +193,32 @@ impl<'a, T: Clone> LogicBuilder<'a, T> {
         };
         if let Some(h) = self.hyps.ahyps.pop() {
             match h {
-                And(x, y) => return step1(x, y),
+                And(x, y) => {
+                    ans = step1(x, y);
+                    found = true;
+                }
                 Not(Atom(..)) => todo!(),
                 Not(Or(x, y)) => {
-                    return step1(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+                    ans = step1(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+                    found = true;
                 }
                 _ => (),
             }
             self.hyps.ahyps.push(h);
         }
+        if found {
+            return ans;
+        }
+
         let step2 = |h1, h2| {
+            //            dbg!("step2");
+            //            dbg!("h1");
             self.hyps.add_hyp(h1, false, negator);
             let mut ans = self.dfs(checker, negator);
             self.hyps.add_hyp(h1, true, negator);
 
             if ans {
+                //                dbg!("h2");
                 self.hyps.add_hyp(h2, false, negator);
                 ans = self.dfs(checker, negator);
                 self.hyps.add_hyp(h2, true, negator);
@@ -184,17 +227,22 @@ impl<'a, T: Clone> LogicBuilder<'a, T> {
         };
         if let Some(h) = self.hyps.bhyps.pop() {
             if let Or(x, y) = h {
-                return step2(x, y);
+                ans = step2(x, y);
+                found = true;
             }
             if let Not(And(x, y)) = h {
-                return step2(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+                ans = step2(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+                found = true;
             }
             self.hyps.bhyps.push(h);
         }
+        if found {
+            return ans;
+        }
         let sh = self.hyps.simple_hyps.0.take();
-        let r = checker(&sh);
+        ans = checker(&sh);
         self.hyps.simple_hyps.0.set(sh);
-        r
+        ans
     }
     pub fn check_contradiction(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> bool {
         let root = self.arena.alloc(self.root.take());

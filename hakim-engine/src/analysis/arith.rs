@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use crate::{brain::Term, TermRef};
 use num_bigint::BigInt;
@@ -14,8 +15,18 @@ pub enum ArithTree<'a> {
 
 use ArithTree::*;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Poly(BigInt, Vec<(BigInt, Vec<TermRef>)>);
+impl Debug for Poly {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} ", self.0)?;
+        for (a, x) in &self.1 {
+            write!(f, "+ {} * {:?}", a, x)?;
+        }
+        Ok(())
+    }
+}
+
 type ArithArena<'a> = &'a Arena<ArithTree<'a>>;
 
 #[derive(Debug, Default)]
