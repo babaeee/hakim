@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use typed_arena::Arena;
 
-use crate::brain::{Term, TermRef};
+use crate::brain::{remove_unused_var, Abstraction, Term, TermRef};
 
 #[derive(Debug, Clone)]
 pub enum LogicTree<'a, T> {
@@ -151,6 +151,19 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
     }
 
     fn convert_term(&'a self, term: TermRef) -> &'a LogicTree<'a, T> {
+        if let Term::Forall(Abstraction {
+            var_ty,
+            body,
+            hint_name: _,
+        }) = term.as_ref()
+        {
+            if let Some(body) = remove_unused_var(body.clone(), 0) {
+                let op1 = self.convert_term(var_ty.clone());
+                let op2 = self.convert_term(body);
+                let op1 = self.arena.alloc(Not(op1));
+                return self.arena.alloc(Or(op1, op2));
+            }
+        }
         if let Term::App { func, op: op2 } = term.as_ref() {
             if let Term::App { func, op: op1 } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {

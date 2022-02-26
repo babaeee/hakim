@@ -431,4 +431,16 @@ mod tests {
         a ∈ C -> a ∈ E -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))",
         );
     }
+
+    #[test]
+    fn imp_and_subset() {
+        success(
+            "∀ T: U, ∀ A B C D: set T, A ⊆ B -> (A ⊆ B -> B ⊆ C) ->\
+        (B ⊆ C -> C ⊆ D) -> A ⊆ D",
+        );
+        fail(
+            "∀ T: U, ∀ A B C D: set T, (A ⊆ B -> B ⊆ C) ->\
+        (B ⊆ C -> C ⊆ D) -> A ⊆ D",
+        );
+    }
 }

@@ -154,6 +154,8 @@ mod tests {
         success("forall x: ℤ, 0 < x + 1 -> x = 0 ∨ 0 < x");
         success("forall x: ℤ, 0 < x ∨ 0 = x ∨ x < 0");
         fail("forall x: ℤ, 0 < x ∨ x < 0");
+        success("forall x y: ℤ, (x < 10 -> y = 2) -> x = 5 -> y = 2");
+        fail("forall x y: ℤ, (x = 5 -> y = 2) -> x < 10 -> y = 2");
     }
 
     #[test]
