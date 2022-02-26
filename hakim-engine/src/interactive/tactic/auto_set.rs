@@ -12,6 +12,8 @@ use typed_arena::Arena;
 #[derive(Debug, Clone)]
 enum EnsembleTree<'a> {
     Set(TermRef),
+    Empty,
+    Singleton(TermRef),
     Union(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
     Intersection(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
     Setminus(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
@@ -30,6 +32,8 @@ enum EnsembleStatement {
     IsNotMember(TermRef, TermRef),
     IsSubset(TermRef, TermRef),
     IsNotSubset(TermRef, TermRef),
+    True,
+    False,
 }
 
 use std::collections::HashMap;
@@ -62,7 +66,17 @@ fn from_set_type<'a>(
     sets_id: &mut Identifier,
 ) -> &'a EnsembleTree<'a> {
     if let Term::App { func, op: op2 } = t.as_ref() {
+        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+            if unique_name == "set_empty" {
+                return arena.alloc(EnsembleTree::Empty);
+            }
+        }
         if let Term::App { func, op: op1 } = func.as_ref() {
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                if unique_name == "set_singleton" {
+                    return arena.alloc(EnsembleTree::Singleton(op2.clone()));
+                }
+            }
             if let Term::App { func, op: _ } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "union" {
@@ -154,19 +168,16 @@ fn convert(
         arena: LogicArena<'a, EnsembleStatement>,
     ) -> &'a LogicTree<'a, EnsembleStatement> {
         match exp {
-            Set(_) => unreachable!(),
-            Union(_, _) => unreachable!(),
-            Intersection(_, _) => unreachable!(),
-            Setminus(_, _) => unreachable!(),
+            Empty | Singleton(_) | Set(_) | Union(_, _) | Intersection(_, _) | Setminus(_, _) => {
+                unreachable!()
+            }
             Eq(x, y) => {
                 let l = f(&Included(x, y), arena);
                 let r = f(&Included(y, x), arena);
                 arena.alloc(LogicTree::And(l, r))
             }
-            Included(_, Union(..) | Setminus(..))
-            | Included(Intersection(..) | Setminus(..), _) => {
-                arena.alloc(LogicTree::Unknown) // TODO: what to do?
-            }
+            Included(Empty, _) => arena.alloc(LogicTree::Atom(EnsembleStatement::True)),
+            Included(Singleton(a), x) => f(&Inset(a.clone(), x), arena),
             Included(x, Intersection(a, b)) => {
                 let l = f(&Included(x, a), arena);
                 let r = f(&Included(x, b), arena);
@@ -181,7 +192,17 @@ fn convert(
                 a.clone(),
                 b.clone(),
             ))),
+            Included(_, Union(..) | Setminus(..) | Empty | Singleton(_))
+            | Included(Intersection(..) | Setminus(..), _) => arena.alloc(LogicTree::Unknown),
             Included(..) => unreachable!(),
+            Inset(_, Empty) => arena.alloc(LogicTree::Atom(EnsembleStatement::False)),
+            Inset(a, Singleton(b)) => {
+                if a == b {
+                    arena.alloc(LogicTree::Atom(EnsembleStatement::True))
+                } else {
+                    arena.alloc(LogicTree::Unknown)
+                }
+            }
             Inset(x, Union(a, b)) => {
                 let l = f(&Inset(x.clone(), a), arena);
                 let r = f(&Inset(x.clone(), b), arena);
@@ -214,12 +235,15 @@ enum InternedStatement {
     IsNotMember(usize, usize),
     IsSubset(usize, usize),
     IsNotSubset(usize, usize),
+    False,
+    True,
 }
 
 impl InternedStatement {
-    fn intern_array(a: &[EnsembleStatement]) -> Vec<Self> {
+    fn intern_array(a: &[EnsembleStatement]) -> (usize, Vec<Self>) {
         let mut interner = Identifier::new();
-        a.iter()
+        let r = a
+            .iter()
             .map(|x| match x {
                 EnsembleStatement::IsMember(a, b) => {
                     let a = interner.get(a);
@@ -241,27 +265,18 @@ impl InternedStatement {
                     let b = interner.get(b);
                     Self::IsNotSubset(a, b)
                 }
+                EnsembleStatement::False => Self::False,
+                EnsembleStatement::True => Self::True,
             })
-            .collect()
+            .collect();
+        (interner.id_counter, r)
     }
 }
 
 fn check_contradiction(a: &[EnsembleStatement]) -> bool {
     use InternedStatement::*;
-    let a = InternedStatement::intern_array(a);
-    let cnt_vars = a
-        .iter()
-        .map(|x| match x {
-            IsMember(a, b) | IsNotMember(a, b) | IsSubset(a, b) | IsNotSubset(a, b) => {
-                std::cmp::max(*a, *b)
-            }
-        })
-        .max();
-    let mut cnt_vars = if let Some(x) = cnt_vars {
-        x
-    } else {
-        return false;
-    };
+    dbg!(a);
+    let (mut cnt_vars, a) = InternedStatement::intern_array(a);
     let mut m = HashMap::<(usize, usize), bool>::new();
     let mut edges = vec![vec![]; cnt_vars];
     for x in &a {
@@ -287,6 +302,8 @@ fn check_contradiction(a: &[EnsembleStatement]) -> bool {
                 m.insert((new_var, *a), true);
                 m.insert((new_var, *b), false);
             }
+            True => (),
+            False => return true,
         }
     }
     for _ in 0..cnt_vars {
@@ -306,11 +323,14 @@ fn check_contradiction(a: &[EnsembleStatement]) -> bool {
 }
 
 fn negator(x: EnsembleStatement) -> EnsembleStatement {
+    use EnsembleStatement::*;
     match x {
-        EnsembleStatement::IsMember(a, b) => EnsembleStatement::IsNotMember(a, b),
-        EnsembleStatement::IsNotMember(a, b) => EnsembleStatement::IsMember(a, b),
-        EnsembleStatement::IsSubset(a, b) => EnsembleStatement::IsNotSubset(a, b),
-        EnsembleStatement::IsNotSubset(a, b) => EnsembleStatement::IsSubset(a, b),
+        IsMember(a, b) => IsNotMember(a, b),
+        IsNotMember(a, b) => IsMember(a, b),
+        IsSubset(a, b) => IsNotSubset(a, b),
+        IsNotSubset(a, b) => IsSubset(a, b),
+        True => False,
+        False => True,
     }
 }
 
@@ -353,6 +373,7 @@ mod tests {
     fn union() {
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∪ B → a ∈ A ∨ a ∈ B");
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∨ a ∈ B → a ∈ A ∪ B");
+        fail("∀ T: U, ∀ A B C: set T, A ⊆ C ∪ B -> A ⊆ C ∨ A ⊆ B");
     }
 
     #[test]
@@ -361,12 +382,45 @@ mod tests {
         fail("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A → a ∈ A ∩ B");
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∩ B → a ∈ B");
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∧ a ∈ B → a ∈ A ∩ B");
-        success("∀ T: U, ∀ A B C: set T, A ⊆ C ∩ B -> A ⊆ C");
+        success("∀ T: U, ∀ A B C: set T, A ⊆ C ∩ B -> A ⊆ C ∧ A ⊆ B");
     }
 
     #[test]
-    #[ignore]
-    fn success2() {
-        success("∀ T: U, ∀ a: T, ∀ A B C D E F: set T, a ∈ C -> a ∈ E -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))");
+    fn intersect_union() {
+        success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∩ B -> a ∈ A ∪ B ");
+    }
+
+    #[test]
+    fn empty() {
+        success("∀ T: U, ∀ a: T, a ∈ {} -> False");
+        success("∀ T: U, ∀ A: set T, {} ⊆ A");
+    }
+
+    #[test]
+    fn singleton() {
+        success("2 ∈ {2}");
+        success("2 ∈ {1, 2, 3}");
+        success("∀ T: U, ∀ a: T, a ∈ {a}");
+        fail("∀ T: U, ∀ a b: T, a ∈ {b}");
+        success("∀ T: U, ∀ a b: T, a ∈ {a, b}");
+        success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A -> {a} ⊆ A");
+        success("∀ T: U, ∀ a b: T, ∀ A B: set T, a ∈ A -> b ∈ A -> {a, b} ⊆ A");
+        success("{2} ⊆ {2}");
+        success("{2} ⊆ {2, 3}");
+        fail("{2, 3} ⊆ {2}");
+        success("{2, 3} ⊆ {2, 3}");
+        success("{2, 3} ⊆ {2, 5, 3}");
+    }
+
+    #[test]
+    fn a_random_test() {
+        success(
+            "∀ T: U, ∀ a: T, ∀ A B C D E F: set T,\
+        a ∈ C -> a ∈ E -> a ∈ F -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))",
+        );
+        fail(
+            "∀ T: U, ∀ a: T, ∀ A B C D E F: set T,\
+        a ∈ C -> a ∈ E -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))",
+        );
     }
 }
