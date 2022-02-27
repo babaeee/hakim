@@ -1,4 +1,4 @@
-use super::{Error::*, Result};
+use super::{apply::apply, intros::intros, Error::*, Result};
 use crate::{
     analysis::logic::{LogicArena, LogicBuilder, LogicValue},
     app_ref,
@@ -274,7 +274,6 @@ impl InternedStatement {
 
 fn check_contradiction(a: &[EnsembleStatement]) -> bool {
     use InternedStatement::*;
-    dbg!(a);
     let (mut cnt_vars, a) = InternedStatement::intern_array(a);
     let mut m = HashMap::<(usize, usize), bool>::new();
     let mut edges = vec![vec![]; cnt_vars];
@@ -382,7 +381,37 @@ fn negator(x: EnsembleStatement) -> EnsembleStatement {
     }
 }
 
+fn pre_process_frame(frame: Frame) -> Frame {
+    let mut intros_flag = false;
+    let frame = match apply(frame.clone(), vec!["included_fold".to_string()].into_iter()) {
+        Ok(x) if x.len() == 1 => {
+            intros_flag = true;
+            x.into_iter().next().unwrap()
+        }
+        _ => frame,
+    };
+    let frame = match apply(
+        frame.clone(),
+        vec!["set_equality_forall".to_string()].into_iter(),
+    ) {
+        Ok(x) if x.len() == 1 => {
+            intros_flag = true;
+            x.into_iter().next().unwrap()
+        }
+        _ => frame,
+    };
+    if intros_flag {
+        match intros(frame.clone(), vec![].into_iter()) {
+            Ok(x) if x.len() == 1 => x.into_iter().next().unwrap(),
+            _ => frame,
+        }
+    } else {
+        frame
+    }
+}
+
 pub fn auto_set(frame: Frame) -> Result<Vec<Frame>> {
+    let frame = pre_process_frame(frame);
     let logic_builder = LogicBuilder::new(convert);
     logic_builder.and_not_term(frame.goal);
     for (_, hyp) in frame.hyps {
@@ -422,6 +451,7 @@ mod tests {
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∪ B → a ∈ A ∨ a ∈ B");
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∨ a ∈ B → a ∈ A ∪ B");
         fail("∀ T: U, ∀ A B C: set T, A ⊆ C ∪ B -> A ⊆ C ∨ A ⊆ B");
+        success("∀ T: U, ∀ A B: set T, A ⊆ A ∪ B");
     }
 
     #[test]
@@ -497,6 +527,11 @@ mod tests {
             "∀ T: U, ∀ a: T, ∀ A B C D E F: set T,\
         a ∈ C -> a ∈ E -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))",
         );
+    }
+
+    #[test]
+    fn remove_element() {
+        success("∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S → {a} ∪ S ∖ {a} = S")
     }
 
     #[test]
