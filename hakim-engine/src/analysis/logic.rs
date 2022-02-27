@@ -74,24 +74,8 @@ impl<'a, T: Clone + Debug> Hyps<'a, T> {
             }
         };
         match h {
-            And(x, y) => {
-                if let Unknown = x {
-                    self.add_hyp(y, undo, negator);
-                } else if let Unknown = y {
-                    self.add_hyp(x, undo, negator);
-                } else {
-                    add(&self.ahyps);
-                }
-            }
-            Or(x, y) => {
-                if let Unknown = x {
-                    self.add_hyp(y, undo, negator);
-                } else if let Unknown = y {
-                    self.add_hyp(x, undo, negator);
-                } else {
-                    add(&self.bhyps);
-                }
-            }
+            And(..) => add(&self.ahyps),
+            Or(..) => add(&self.bhyps),
             Not(x) => match x {
                 Or(..) => add(&self.ahyps),
                 And(..) => add(&self.bhyps),
