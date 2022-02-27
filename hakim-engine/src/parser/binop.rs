@@ -56,7 +56,7 @@ use BinOp::*;
 
 use crate::{
     app_ref,
-    brain::{increase_foreign_vars, remove_unused_var},
+    brain::{increase_foreign_vars, increase_wild_scope, remove_unused_var},
     library::prelude::*,
     term_ref, Abstraction, Term, TermRef,
 };
@@ -151,7 +151,11 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(eq(), w, l, r)
             }
-            Iff => app_ref!(iff(), l, r),
+            Iff => app_ref!(
+                and(),
+                term_ref!(forall l, increase_wild_scope(increase_foreign_vars(r.clone(), 0))),
+                term_ref!(forall r, increase_wild_scope(increase_foreign_vars(l, 0)))
+            ),
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
             Included => {
                 let i = infer_cnt.generate();

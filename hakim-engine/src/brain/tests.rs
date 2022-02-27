@@ -95,3 +95,11 @@ fn infer_stack_overflow() {
         "(?a → ?b) → ((?b → ?c) → (?a → ?c))",
     );
 }
+
+#[test]
+fn iff_fail() {
+    check_type(
+        "∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∪ y ↔ a ∈ x ∨ a ∈ y",
+        "U1",
+    );
+}

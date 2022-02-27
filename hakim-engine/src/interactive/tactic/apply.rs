@@ -24,7 +24,7 @@ impl FindInstance {
     pub(crate) fn first_needed_wild(&self) -> usize {
         let mut r = None;
         for ty in &self.infer.tys {
-            let t = map_reduce_wild(ty, &Some, &std::cmp::min);
+            let t = map_reduce_wild(ty, &|x, _| Some(x), &std::cmp::min);
             if let Some(tv) = t {
                 if let Some(rv) = r {
                     if rv > tv {
@@ -44,7 +44,7 @@ impl FindInstance {
             self.exp, self.ty
         );
         for i in 0..self.infer.n {
-            r += &if (Term::Wild { index: i }) == *self.infer.terms[i].as_ref() {
+            r += &if let Term::Wild { index: i, scope: _ } = *self.infer.terms[i].as_ref() {
                 format!("\u{2068}?w{} : {:?}\u{2069}\n", i, self.infer.tys[i])
             } else {
                 format!(
@@ -63,7 +63,7 @@ impl FindInstance {
     pub fn tactic_by_answer(self, filler: &str) -> Result<String> {
         let filler = self.engine.parse_text(filler)?;
         let id = self.first_needed_wild();
-        let exp = fill_wild(self.exp, &|x| {
+        let exp = fill_wild(self.exp, &|x, _| {
             if x == id {
                 filler.clone()
             } else {

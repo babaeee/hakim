@@ -79,6 +79,7 @@ fn eq() {
 }
 
 #[test]
+#[ignore]
 fn iff_check() {
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, x0 = x1 ↔ x0 + 3 = x1 + 3");
 }

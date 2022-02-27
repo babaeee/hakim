@@ -48,9 +48,6 @@ pub fn or() -> TermRef {
 pub fn and() -> TermRef {
     term_ref!(axiom "and", forall u(), forall u(), u())
 }
-pub fn iff() -> TermRef {
-    term_ref!(axiom "iff", forall u(), forall u(), u())
-}
 pub fn set() -> TermRef {
     term_ref!(axiom "set", forall u(), u())
 }
