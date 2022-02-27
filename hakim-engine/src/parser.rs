@@ -2,10 +2,12 @@ mod ast;
 mod binop;
 mod pretty_print;
 mod tokenizer;
+mod wild;
 
 pub use self::ast::{ast_to_term, AstTerm};
 pub use self::pretty_print::term_pretty_print;
 pub use self::tokenizer::is_valid_ident;
+pub use self::wild::{fix_wild_scope, InferGenerator};
 
 use self::{
     ast::tokens_to_ast,

@@ -16,7 +16,3 @@ Axiom empty_finite : ∀ A: U, (finite A) (set_empty A).
 Axiom finite_add : ∀ A: U, ∀ x: set A, (finite A) x -> ∀ a: A, (a ∈ x -> False) -> (finite A) (x ∪ {a}).
 
 Axiom finite_included : ∀ A: U, ∀ x y: set A, (finite A) y -> x ⊆ y -> (finite A) x.
-
-
-Axiom set_induction : ∀ A: U, P: (set A) -> U, False.
- -> (∀ x: set A, (finite A) x -> P x -> ∀ a: A, (a ∈ x -> False) -> P (x ∪ {a})) -> ∀ e: set A, (finite A) e -> P e.

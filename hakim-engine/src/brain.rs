@@ -108,7 +108,7 @@ macro_rules! app {
 
 #[derive(Debug)]
 pub enum Error {
-    BadTerm,
+    ForiegnVariableInTerm(usize),
     TypeMismatch(TermRef, TermRef),
     IsNotFunc { value: TermRef, ty: TermRef },
     ContainsWild,
@@ -243,17 +243,22 @@ fn deny_wild(t: &Term) -> Result<()> {
     }
 }
 
-pub fn fill_wild(t: TermRef, f: &impl Fn(usize, usize) -> TermRef) -> TermRef {
+pub fn fill_wild_with_depth(
+    t: TermRef,
+    f: &impl Fn(usize, usize, usize) -> TermRef,
+    depth: usize,
+) -> TermRef {
     fn for_abs(
         Abstraction {
             body,
             var_ty,
             hint_name,
         }: &Abstraction,
-        f: &impl Fn(usize, usize) -> TermRef,
+        f: &impl Fn(usize, usize, usize) -> TermRef,
+        depth: usize,
     ) -> Abstraction {
-        let body = fill_wild(body.clone(), f);
-        let var_ty = fill_wild(var_ty.clone(), f);
+        let body = fill_wild_with_depth(body.clone(), f, depth + 1);
+        let var_ty = fill_wild_with_depth(var_ty.clone(), f, depth);
         let hint_name = hint_name.clone();
         Abstraction {
             var_ty,
@@ -263,20 +268,18 @@ pub fn fill_wild(t: TermRef, f: &impl Fn(usize, usize) -> TermRef) -> TermRef {
     }
     match t.as_ref() {
         Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => t,
-        Term::App { func, op } => app_ref!(fill_wild(func.clone(), f), fill_wild(op.clone(), f)),
-        Term::Forall(abs) => TermRef::new(Term::Forall(for_abs(abs, f))),
-        Term::Fun(abs) => TermRef::new(Term::Fun(for_abs(abs, f))),
-        Term::Wild { index, scope } => f(*index, *scope),
+        Term::App { func, op } => app_ref!(
+            fill_wild_with_depth(func.clone(), f, depth),
+            fill_wild_with_depth(op.clone(), f, depth)
+        ),
+        Term::Forall(abs) => TermRef::new(Term::Forall(for_abs(abs, f, depth))),
+        Term::Fun(abs) => TermRef::new(Term::Fun(for_abs(abs, f, depth))),
+        Term::Wild { index, scope } => f(*index, *scope, depth),
     }
 }
 
-pub fn increase_wild_scope(t: TermRef) -> TermRef {
-    fill_wild(t, &|index, scope| {
-        TermRef::new(Term::Wild {
-            index,
-            scope: scope + 1,
-        })
-    })
+pub fn fill_wild(t: TermRef, f: &impl Fn(usize, usize) -> TermRef) -> TermRef {
+    fill_wild_with_depth(t, &|a, b, _| f(a, b), 0)
 }
 
 pub fn normalize(t: TermRef) -> TermRef {

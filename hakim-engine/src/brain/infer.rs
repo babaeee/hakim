@@ -330,7 +330,7 @@ pub fn type_of_inner(
             .iter()
             .rev()
             .nth(*index)
-            .ok_or(BadTerm)?
+            .ok_or_else(|| ForiegnVariableInTerm(index - var_ty_stack.len()))?
             .clone(),
         Term::Number { .. } => term_ref!(axiom "ℤ".to_string(), universe 0),
         Term::App { func, op } => {

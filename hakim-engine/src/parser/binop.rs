@@ -56,12 +56,12 @@ use BinOp::*;
 
 use crate::{
     app_ref,
-    brain::{increase_foreign_vars, increase_wild_scope, remove_unused_var},
+    brain::{increase_foreign_vars, remove_unused_var},
     library::prelude::*,
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::ast::InferGenerator;
+use super::InferGenerator;
 
 impl BinOp {
     pub fn level_left(&self) -> u8 {
@@ -153,8 +153,8 @@ impl BinOp {
             }
             Iff => app_ref!(
                 and(),
-                term_ref!(forall l, increase_wild_scope(increase_foreign_vars(r.clone(), 0))),
-                term_ref!(forall r, increase_wild_scope(increase_foreign_vars(l, 0)))
+                term_ref!(forall l, increase_foreign_vars(r.clone(), 0)),
+                term_ref!(forall r, increase_foreign_vars(l, 0))
             ),
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
             Included => {

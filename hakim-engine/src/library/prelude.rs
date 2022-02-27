@@ -18,6 +18,9 @@ pub fn z() -> TermRef {
 pub fn false_ty() -> TermRef {
     term_ref!(axiom "False" , u())
 }
+pub fn true_ty() -> TermRef {
+    term_ref!(axiom "True" , u())
+}
 fn v0() -> TermRef {
     term_ref!(v 0)
 }

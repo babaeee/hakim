@@ -3,7 +3,30 @@ use crate::{
     engine::Engine,
 };
 
-use super::type_of;
+use super::{infer::type_of_and_infer, type_of, Error};
+
+fn wild_need_local(exp: &str) {
+    let eng = Engine::default();
+    let (term, cnt) = eng.parse_text_with_wild(exp).unwrap();
+    let mut infers = InferResults::new(cnt);
+    let ty = match type_of_and_infer(term.clone(), &mut infers) {
+        Ok(x) => x,
+        Err(Error::WildNeedLocalVar(_)) => return,
+        Err(e) => panic!("Expected WildNeedLocalVar error but got {:?}", e),
+    };
+    match type_of_and_infer(ty.clone(), &mut infers) {
+        Ok(x) => panic!(
+            "There should be a wild bound to a local, but nothing found\n\
+        exp: {:?}\nexp filled: {:?}\nty: {:?}\n ty of ty: {:?}",
+            term.clone(),
+            infers.fill(term),
+            ty,
+            x
+        ),
+        Err(Error::WildNeedLocalVar(_)) => (),
+        Err(e) => panic!("Expected WildNeedLocalVar error but got {:?}", e),
+    }
+}
 
 fn check_type(exp: &str, ty: &str) {
     let eng = Engine::default();
@@ -102,4 +125,10 @@ fn iff_fail() {
         "∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∪ y ↔ a ∈ x ∨ a ∈ y",
         "U1",
     );
+}
+
+#[test]
+fn local_wild() {
+    wild_need_local("∀ f: U1 -> U, ?x ∧ f ∀ T: U, ∀ a b: T, eq ?x a b");
+    check_type("∀ T: U, ∀ a b: T, eq ?x a b -> eq ?x b a", "U1");
 }
