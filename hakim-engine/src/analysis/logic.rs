@@ -15,9 +15,67 @@ pub enum LogicTree<'a, T> {
 }
 use LogicTree::*;
 
-impl<'a, T> Default for LogicTree<'a, T> {
-    fn default() -> Self {
-        Unknown
+#[derive(Debug)]
+pub enum LogicValue<'a, T> {
+    Exp(LogicTree<'a, T>),
+    True,
+    False,
+}
+
+mod logic_value_impls {
+    use super::{
+        LogicArena, LogicTree,
+        LogicValue::{self, *},
+    };
+
+    impl<'a, T> From<T> for LogicValue<'a, T> {
+        fn from(v: T) -> Self {
+            Exp(LogicTree::Atom(v))
+        }
+    }
+
+    impl<'a, T> LogicValue<'a, T> {
+        pub fn not(self, arena: LogicArena<'a, T>) -> Self {
+            match self {
+                Exp(x) => Exp(LogicTree::Not(arena.alloc(x))),
+                True => False,
+                False => True,
+            }
+        }
+
+        pub fn or(self, other: Self, arena: LogicArena<'a, T>) -> Self {
+            match (self, other) {
+                (Exp(a), Exp(b)) => {
+                    let a = arena.alloc(a);
+                    let b = arena.alloc(b);
+                    Exp(LogicTree::Or(a, b))
+                }
+                (True, _) | (_, True) => True,
+                (False, x) | (x, False) => x,
+            }
+        }
+
+        pub fn and(self, other: Self, arena: LogicArena<'a, T>) -> Self {
+            match (self, other) {
+                (Exp(a), Exp(b)) => {
+                    let a = arena.alloc(a);
+                    let b = arena.alloc(b);
+                    Exp(LogicTree::And(a, b))
+                }
+                (False, _) | (_, False) => False,
+                (True, x) | (x, True) => x,
+            }
+        }
+
+        pub fn unknown() -> Self {
+            Self::Exp(LogicTree::Unknown)
+        }
+    }
+
+    impl<'a, T> Default for LogicValue<'a, T> {
+        fn default() -> Self {
+            Self::unknown()
+        }
     }
 }
 
@@ -104,23 +162,24 @@ impl<'a, T: Clone + Debug> Hyps<'a, T> {
 pub struct LogicBuilder<'a, T> {
     arena: Arena<LogicTree<'a, T>>,
     hyps: Hyps<'a, T>,
-    root: Cell<LogicTree<'a, T>>,
-    f: fn(t: TermRef, arena: LogicArena<'a, T>) -> &'a LogicTree<'a, T>,
+    root: Cell<LogicValue<'a, T>>,
+    f: fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>,
 }
 impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
-    pub fn new(f: fn(t: TermRef, arena: LogicArena<'a, T>) -> &'a LogicTree<'a, T>) -> Self {
+    pub fn new(f: fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>) -> Self {
         let arena = Arena::new();
         Self {
             arena,
             hyps: Hyps::new(),
-            root: Cell::new(Unknown),
+            root: Cell::new(LogicValue::unknown()),
             f,
         }
     }
 
-    fn and(&'a self, item: &'a LogicTree<'a, T>) {
-        let old_root = self.arena.alloc(self.root.take());
-        self.root.set(And(old_root, item));
+    fn and(&'a self, item: LogicValue<'a, T>) {
+        dbg!(&item);
+        let old_root = self.root.take();
+        self.root.set(old_root.and(item, &self.arena));
     }
 
     pub fn and_term(&'a self, term: TermRef) {
@@ -130,11 +189,11 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
 
     pub fn and_not_term(&'a self, term: TermRef) {
         let item = self.convert_term(term);
-        let not = self.arena.alloc(Not(item));
+        let not = item.not(&self.arena);
         self.and(not);
     }
 
-    fn convert_term(&'a self, term: TermRef) -> &'a LogicTree<'a, T> {
+    fn convert_term(&'a self, term: TermRef) -> LogicValue<'a, T> {
         if let Term::Forall(Abstraction {
             var_ty,
             body,
@@ -144,8 +203,7 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
             if let Some(body) = remove_unused_var(body.clone(), 0) {
                 let op1 = self.convert_term(var_ty.clone());
                 let op2 = self.convert_term(body);
-                let op1 = self.arena.alloc(Not(op1));
-                return self.arena.alloc(Or(op1, op2));
+                return op2.or(op1.not(&self.arena), &self.arena);
             }
         }
         if let Term::App { func, op: op2 } = term.as_ref() {
@@ -155,8 +213,8 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
                         let op1 = self.convert_term(op1.clone());
                         let op2 = self.convert_term(op2.clone());
                         return match unique_name.as_str() {
-                            "and" => self.arena.alloc(And(op1, op2)),
-                            "or" => self.arena.alloc(Or(op1, op2)),
+                            "and" => op1.and(op2, &self.arena),
+                            "or" => op1.or(op2, &self.arena),
                             _ => unreachable!(),
                         };
                     }
@@ -242,7 +300,12 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
         ans
     }
     pub fn check_contradiction(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> bool {
-        let root = self.arena.alloc(self.root.take());
+        let root = dbg!(self.root.take());
+        let root = match root {
+            LogicValue::Exp(e) => self.arena.alloc(e),
+            LogicValue::True => return false,
+            LogicValue::False => return true,
+        };
         self.hyps.add_hyp(root, false, negator);
         self.dfs(checker, negator)
     }
