@@ -1,4 +1,5 @@
-Axiom set_from_func_intro: ∀ A: U, ∀ f: A -> U, ∀ a: A, (f a) -> a ∈ (set_from_func A f).
+Axiom set_from_func_fold: ∀ A: U, ∀ f: A -> U, ∀ a: A, f a -> a ∈ (set_from_func A f).
+Axiom set_from_func_unfold: ∀ A: U, ∀ f: A -> U, ∀ a: A, a ∈ (set_from_func A f) -> f a.
 Axiom empty_intro: ∀ A: U, ∀ a: A, a ∈ {} -> False.
 Axiom singleton_unfold: ∀ A: U, ∀ a b: A, b ∈ {a} -> a = b. 
 Axiom singleton_fold: ∀ A: U, ∀ a b: A, a = b -> b ∈ {a}. 

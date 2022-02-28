@@ -265,11 +265,11 @@ impl Frame {
     }
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
-        suggest_on_goal_dblclk(&self.goal)
+        suggest_on_goal_dblclk(&self.goal, &self.engine)
     }
 
     pub fn suggest_on_goal_menu(&self) -> Vec<Suggestion> {
-        suggest_on_goal(&self.goal)
+        suggest_on_goal(&self.goal, &self.engine)
     }
 
     pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {

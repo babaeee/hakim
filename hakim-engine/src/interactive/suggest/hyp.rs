@@ -27,6 +27,12 @@ pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &Term) -> Vec<Suggestion>
                             &format!("apply (singleton_unfold ? ? ?) in {}", name),
                         ));
                     }
+                    SetTermClass::FromFunc => {
+                        r.push(Suggestion::new_default(
+                            Pattern("a ∈ {b | f b}", "f a"),
+                            &format!("apply (set_from_func_unfold ? ? ?) in {}", name),
+                        ));
+                    }
                     SetTermClass::Empty => r.push(Suggestion {
                         class: Contradiction,
                         tactic: vec![

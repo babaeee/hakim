@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::Term;
+use crate::{engine::Engine, Term};
 
 #[cfg(test)]
 mod tests;
@@ -73,6 +73,7 @@ impl Suggestion {
 enum SetTermClass {
     Empty,
     Singleton,
+    FromFunc,
     Unknown,
 }
 
@@ -92,6 +93,7 @@ fn detect_set_class(t: &Term) -> SetTermClass {
             Term::App { func, op: _ } => match func.as_ref() {
                 Term::Axiom { unique_name, .. } => match unique_name.as_str() {
                     "set_singleton" => SetTermClass::Singleton,
+                    "set_from_func" => SetTermClass::FromFunc,
                     _ => SetTermClass::Unknown,
                 },
                 _ => SetTermClass::Unknown,
@@ -142,7 +144,7 @@ fn detect_class(t: &Term) -> TermClass {
     TermClass::Unknown
 }
 
-pub fn suggest_on_goal(goal: &Term) -> Vec<Suggestion> {
+pub fn suggest_on_goal(goal: &Term, engine: &Engine) -> Vec<Suggestion> {
     let c = detect_class(goal);
     let mut r = vec![];
     match c {
@@ -166,13 +168,32 @@ pub fn suggest_on_goal(goal: &Term) -> Vec<Suggestion> {
                 "apply included_fold",
             ));
         }
+        TermClass::SetMember(x) => {
+            if engine.has_library("Set") {
+                match x {
+                    SetTermClass::Singleton => {
+                        r.push(Suggestion::new_default(
+                            Pattern("a ∈ {b}", "a = b"),
+                            "apply (singleton_fold ? ? ?)",
+                        ));
+                    }
+                    SetTermClass::FromFunc => {
+                        r.push(Suggestion::new_default(
+                            Pattern("a ∈ {b | f b}", "f a"),
+                            "apply (set_from_func_fold ? ? ?)",
+                        ));
+                    }
+                    SetTermClass::Empty | SetTermClass::Unknown => {}
+                }
+            }
+        }
         _ => {}
     }
     r
 }
 
-pub fn suggest_on_goal_dblclk(goal: &Term) -> Option<Suggestion> {
-    let suggs = suggest_on_goal(goal);
+pub fn suggest_on_goal_dblclk(goal: &Term, engine: &Engine) -> Option<Suggestion> {
+    let suggs = suggest_on_goal(goal, engine);
     for sugg in suggs {
         if sugg.is_default {
             return Some(sugg);
