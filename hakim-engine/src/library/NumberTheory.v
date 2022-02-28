@@ -6,7 +6,8 @@ Axiom divide_plus: ∀ a b c: ℤ, a | b -> a | c -> a | b + c.
 Axiom divide_linear_combination: ∀ a b c: ℤ, a | b -> a | c -> (∀ k l: ℤ, a | k * b + l * c).
 
 Axiom prime: ℤ -> U.
-Axiom prime_intro: ∀ x: ℤ, prime x -> 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 0 ∨ y = x).
+Axiom prime_intro_l: ∀ x: ℤ, prime x -> 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 0 ∨ y = x).
+Axiom prime_intro_r: ∀ x: ℤ, 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 0 ∨ y = x) -> prime x.
 Axiom prime_gt_2: ∀ x: ℤ, prime x -> 2 < x.
 
 Axiom prime_divisor: ∀ x: ℤ, (x = 0 -> False) -> ∃ p: ℤ, p | x.

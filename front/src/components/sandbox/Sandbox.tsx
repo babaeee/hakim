@@ -9,7 +9,7 @@ type SanboxProps = {
 };
 //∀ A: U, ∀ a: A, In A (empty A) a -> False
 const exampleGoals = [
-    'finite ℤ ({x|prime x}) -> False',
+    'finite ℤ { x: ℤ | prime x} -> False',
     '∀ A: U, ∀ a: A, a ∈ {} -> False',
     '∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S -> { a } ∪ (S ∖ { a }) = S',
     '∀ a b c d: ℤ, a < b -> c < d -> a + c < b + d',
