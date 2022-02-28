@@ -8,3 +8,4 @@ mod library;
 pub(crate) mod parser;
 pub(crate) mod search;
 pub(crate) use brain::{Abstraction, Term, TermRef};
+pub use library::all_library_data;

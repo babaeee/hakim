@@ -7,6 +7,7 @@ use std::panic;
 use wasm_bindgen_futures::future_to_promise;
 
 use hakim_engine::{
+    all_library_data,
     engine::Engine,
     interactive::{tactic::Error, Session, Suggestion},
 };
@@ -109,6 +110,12 @@ impl Instance {
             Err(e) => return Some(format!("{:?}", e)),
         };
         None
+    }
+
+    #[wasm_bindgen]
+    pub fn all_library_data(&self) -> JsValue {
+        let serializer = serde_wasm_bindgen::Serializer::json_compatible();
+        all_library_data().serialize(&serializer).unwrap()
     }
 
     #[wasm_bindgen]
