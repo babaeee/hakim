@@ -37,7 +37,7 @@ pub enum Term {
     Var { index: usize },
     Number { value: BigInt },
     App { func: TermRef, op: TermRef },
-    Wild { index: usize },
+    Wild { index: usize, scope: usize },
 }
 
 pub type TermRef = Rc<Term>;
@@ -66,7 +66,7 @@ macro_rules! term {
     {universe $input:expr} => (crate::Term::Universe { index: ($input) });
     {v $input:expr} => (crate::Term::Var { index: ($input) });
     {n $input:expr} => (crate::Term::Number { value: ($input) });
-    {_ $input:expr} => (crate::Term::Wild { index: ($input) });
+    {_ $input:expr} => (crate::Term::Wild { index: ($input), scope: 0 });
     {$input:expr} => ($input);
 }
 
@@ -108,12 +108,13 @@ macro_rules! app {
 
 #[derive(Debug)]
 pub enum Error {
-    BadTerm,
+    ForiegnVariableInTerm(usize),
     TypeMismatch(TermRef, TermRef),
     IsNotFunc { value: TermRef, ty: TermRef },
     ContainsWild,
     IsNotUniverse,
     LoopOfInference(usize, TermRef),
+    WildNeedLocalVar(usize),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -124,7 +125,7 @@ use Error::*;
 
 pub fn map_reduce_wild<T>(
     t: &Term,
-    map: &impl Fn(usize) -> Option<T>,
+    map: &impl Fn(usize, usize) -> Option<T>,
     reduce: &impl Fn(T, T) -> T,
 ) -> Option<T> {
     let combine = |a, b| {
@@ -149,14 +150,19 @@ pub fn map_reduce_wild<T>(
             body,
             hint_name: _,
         }) => combine(var_ty, body),
-        Term::Wild { index } => map(*index),
+        Term::Wild { index, scope } => map(*index, *scope),
     }
 }
 
 /// if expression contains some wilds, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is id of wilds. In case of no wild, it will return false
-pub fn predict_wild(t: &Term, predict: &impl Fn(usize) -> bool) -> bool {
-    map_reduce_wild(t, &|x| if predict(x) { Some(()) } else { None }, &|_, _| ()).is_some()
+pub fn predict_wild(t: &Term, predict: &impl Fn(usize, usize) -> bool) -> bool {
+    map_reduce_wild(
+        t,
+        &|x, y| if predict(x, y) { Some(()) } else { None },
+        &|_, _| (),
+    )
+    .is_some()
 }
 
 /// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)
@@ -180,7 +186,7 @@ pub fn predict_axiom(t: &Term, predict: &impl Fn(&str) -> bool) -> bool {
 }
 
 pub fn contains_wild(t: &Term) -> bool {
-    predict_wild(t, &|_| true)
+    predict_wild(t, &|_, _| true)
 }
 
 pub fn remove_unused_var(t: TermRef, depth: usize) -> Option<TermRef> {
@@ -237,17 +243,22 @@ fn deny_wild(t: &Term) -> Result<()> {
     }
 }
 
-pub fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
+pub fn fill_wild_with_depth(
+    t: TermRef,
+    f: &impl Fn(usize, usize, usize) -> TermRef,
+    depth: usize,
+) -> TermRef {
     fn for_abs(
         Abstraction {
             body,
             var_ty,
             hint_name,
         }: &Abstraction,
-        f: &impl Fn(usize) -> TermRef,
+        f: &impl Fn(usize, usize, usize) -> TermRef,
+        depth: usize,
     ) -> Abstraction {
-        let body = fill_wild(body.clone(), f);
-        let var_ty = fill_wild(var_ty.clone(), f);
+        let body = fill_wild_with_depth(body.clone(), f, depth + 1);
+        let var_ty = fill_wild_with_depth(var_ty.clone(), f, depth);
         let hint_name = hint_name.clone();
         Abstraction {
             var_ty,
@@ -257,11 +268,18 @@ pub fn fill_wild(t: TermRef, f: &impl Fn(usize) -> TermRef) -> TermRef {
     }
     match t.as_ref() {
         Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => t,
-        Term::App { func, op } => app_ref!(fill_wild(func.clone(), f), fill_wild(op.clone(), f)),
-        Term::Forall(abs) => TermRef::new(Term::Forall(for_abs(abs, f))),
-        Term::Fun(abs) => TermRef::new(Term::Fun(for_abs(abs, f))),
-        Term::Wild { index } => f(*index),
+        Term::App { func, op } => app_ref!(
+            fill_wild_with_depth(func.clone(), f, depth),
+            fill_wild_with_depth(op.clone(), f, depth)
+        ),
+        Term::Forall(abs) => TermRef::new(Term::Forall(for_abs(abs, f, depth))),
+        Term::Fun(abs) => TermRef::new(Term::Fun(for_abs(abs, f, depth))),
+        Term::Wild { index, scope } => f(*index, *scope, depth),
     }
+}
+
+pub fn fill_wild(t: TermRef, f: &impl Fn(usize, usize) -> TermRef) -> TermRef {
+    fill_wild_with_depth(t, &|a, b, _| f(a, b), 0)
 }
 
 pub fn normalize(t: TermRef) -> TermRef {

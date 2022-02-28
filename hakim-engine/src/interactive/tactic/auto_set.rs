@@ -1,4 +1,4 @@
-use super::{Error::*, Result};
+use super::{apply::apply, intros::intros, Error::*, Result};
 use crate::{
     analysis::logic::{LogicArena, LogicBuilder, LogicValue},
     app_ref,
@@ -199,7 +199,11 @@ fn convert(
                 if a == b {
                     LogicValue::True
                 } else {
-                    LogicValue::unknown()
+                    // not everything is a set, but it has no problem to imagine as so, because
+                    // input is type checked and there is no wrong types mixing sets and non sets
+                    let l = LogicValue::from(EnsembleStatement::IsSubset(a.clone(), b.clone()));
+                    let r = LogicValue::from(EnsembleStatement::IsSubset(b.clone(), a.clone()));
+                    l.and(r, arena)
                 }
             }
             Inset(x, Union(a, b)) => {
@@ -270,7 +274,6 @@ impl InternedStatement {
 
 fn check_contradiction(a: &[EnsembleStatement]) -> bool {
     use InternedStatement::*;
-    dbg!(a);
     let (mut cnt_vars, a) = InternedStatement::intern_array(a);
     let mut m = HashMap::<(usize, usize), bool>::new();
     let mut edges = vec![vec![]; cnt_vars];
@@ -301,6 +304,18 @@ fn check_contradiction(a: &[EnsembleStatement]) -> bool {
             False => return true,
         }
     }
+    let (mut scc, edges) = strong_components(&edges);
+    for x in scc.len()..cnt_vars {
+        scc.push(x);
+    }
+    let it = m.into_iter().map(|((x, y), b)| ((scc[x], scc[y]), b));
+    let mut m = HashMap::new();
+    for ((a, b), v) in it {
+        if m.get(&(a, b)) == Some(&!v) {
+            return true;
+        }
+        m.insert((a, b), v);
+    }
     for _ in 0..cnt_vars {
         let it = m.clone().into_iter();
         for ((a, b), v) in it {
@@ -317,6 +332,43 @@ fn check_contradiction(a: &[EnsembleStatement]) -> bool {
     false
 }
 
+fn strong_components(edges: &[Vec<usize>]) -> (Vec<usize>, Vec<Vec<usize>>) {
+    let n = edges.len();
+    let mut reachable = vec![vec![false; n]; n];
+    fn dfs(i: usize, edges: &[Vec<usize>], mark: &mut Vec<bool>) {
+        if mark[i] {
+            return;
+        }
+        mark[i] = true;
+        for j in &edges[i] {
+            dfs(*j, edges, mark);
+        }
+    }
+    for (x, r) in reachable.iter_mut().enumerate() {
+        dfs(x, edges, r);
+    }
+    let scc = (0..n)
+        .map(|x| {
+            (0..x)
+                .find(|y| reachable[x][*y] && reachable[*y][x])
+                .unwrap_or(x)
+        })
+        .collect::<Vec<_>>();
+    let reach_edges = (0..n)
+        .map(|x| {
+            if scc[x] != x {
+                return vec![];
+            }
+            scc.iter()
+                .enumerate()
+                .filter(|(a, b)| a == *b && reachable[x][*a])
+                .map(|x| x.0)
+                .collect()
+        })
+        .collect();
+    (scc, reach_edges)
+}
+
 fn negator(x: EnsembleStatement) -> EnsembleStatement {
     use EnsembleStatement::*;
     match x {
@@ -329,7 +381,37 @@ fn negator(x: EnsembleStatement) -> EnsembleStatement {
     }
 }
 
+fn pre_process_frame(frame: Frame) -> Frame {
+    let mut intros_flag = false;
+    let frame = match apply(frame.clone(), vec!["included_fold".to_string()].into_iter()) {
+        Ok(x) if x.len() == 1 => {
+            intros_flag = true;
+            x.into_iter().next().unwrap()
+        }
+        _ => frame,
+    };
+    let frame = match apply(
+        frame.clone(),
+        vec!["set_equality_forall".to_string()].into_iter(),
+    ) {
+        Ok(x) if x.len() == 1 => {
+            intros_flag = true;
+            x.into_iter().next().unwrap()
+        }
+        _ => frame,
+    };
+    if intros_flag {
+        match intros(frame.clone(), vec![].into_iter()) {
+            Ok(x) if x.len() == 1 => x.into_iter().next().unwrap(),
+            _ => frame,
+        }
+    } else {
+        frame
+    }
+}
+
 pub fn auto_set(frame: Frame) -> Result<Vec<Frame>> {
+    let frame = pre_process_frame(frame);
     let logic_builder = LogicBuilder::new(convert);
     logic_builder.and_not_term(frame.goal);
     for (_, hyp) in frame.hyps {
@@ -369,6 +451,7 @@ mod tests {
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∪ B → a ∈ A ∨ a ∈ B");
         success("∀ T: U, ∀ a: T, ∀ A B: set T, a ∈ A ∨ a ∈ B → a ∈ A ∪ B");
         fail("∀ T: U, ∀ A B C: set T, A ⊆ C ∪ B -> A ⊆ C ∨ A ⊆ B");
+        success("∀ T: U, ∀ A B: set T, A ⊆ A ∪ B");
     }
 
     #[test]
@@ -394,9 +477,25 @@ mod tests {
     }
 
     #[test]
+    fn set_minus() {
+        success("∀ T: U, ∀ A B: set T, B ⊆ A -> ∀ x: T, x ∈ A -> x ∈ B ∪ A ∖ B");
+    }
+
+    #[test]
     fn empty() {
         success("∀ T: U, ∀ a: T, a ∈ {} -> False");
         success("∀ T: U, ∀ A: set T, {} ⊆ A");
+    }
+
+    #[test]
+    fn equality() {
+        success("∀ T: U, ∀ A B: set T, A = B -> A ∈ {B}");
+        success("∀ T: U, ∀ a: T, ∀ A B: set T, A = B -> a ∈ A -> a ∈ B");
+        success("∀ T: U, ∀ S: set (set T), ∀ A B: set T, A = B -> A ∈ S -> B ∈ S");
+        success(
+            "∀ T: U, ∀ S: set (set T), ∀ A B C: set T,\
+            A ⊆ B -> B ⊆ C -> C ⊆ A -> A ∈ S -> B ∈ S ∧ C ∈ S",
+        );
     }
 
     #[test]
@@ -413,6 +512,9 @@ mod tests {
         fail("{2, 3} ⊆ {2}");
         success("{2, 3} ⊆ {2, 3}");
         success("{2, 3} ⊆ {2, 5, 3}");
+        success("∀ T: U, ∀ a b: T, a ∈ {b} -> a = b");
+        success("∀ a: ℤ, a ∈ {2} -> a = 2");
+        success("∀ a: ℤ, a ∈ {2, 3} -> a = 2 ∨ a = 3");
     }
 
     #[test]
@@ -424,6 +526,20 @@ mod tests {
         fail(
             "∀ T: U, ∀ a: T, ∀ A B C D E F: set T,\
         a ∈ C -> a ∈ E -> a ∈ (A ∪ (B ∪ C)) ∩ (D ∪ (E ∩ F))",
+        );
+    }
+
+    #[test]
+    fn remove_element() {
+        success("∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S → {a} ∪ S ∖ {a} = S")
+    }
+
+    #[test]
+    fn dont_solve_forall_without_intros() {
+        run_interactive_to_fail(
+            "∀ T: U, ∀ A B C: set T, A ⊆ B -> B ⊆ C -> A ⊆ C",
+            "",
+            "auto_set",
         );
     }
 

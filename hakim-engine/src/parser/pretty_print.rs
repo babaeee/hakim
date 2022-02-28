@@ -217,6 +217,6 @@ pub fn term_pretty_print(
                 s
             }
         }
-        Term::Wild { index } => format!("?w{}", index),
+        Term::Wild { index, scope: _ } => format!("?w{}", index),
     }
 }

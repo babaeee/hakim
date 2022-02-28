@@ -8,7 +8,7 @@ use crate::{
         normalize, type_of, Term, TermRef,
     },
     library::{load_library_by_name, prelude},
-    parser::{self, ast_to_term, is_valid_ident, parse, term_pretty_print},
+    parser::{self, ast_to_term, fix_wild_scope, is_valid_ident, parse, term_pretty_print},
     search::search,
     term_ref,
 };
@@ -28,6 +28,7 @@ impl Default for Engine {
         name_dict.insert("U3".to_string(), prelude::u3());
         name_dict.insert("ℤ".to_string(), prelude::z());
         name_dict.insert("False".to_string(), prelude::false_ty());
+        name_dict.insert("True".to_string(), prelude::true_ty());
         name_dict.insert("divide".to_string(), prelude::divide());
         name_dict.insert("eq".to_string(), prelude::eq());
         name_dict.insert("ex".to_string(), prelude::ex());
@@ -36,7 +37,6 @@ impl Default for Engine {
         name_dict.insert("mult".to_string(), prelude::mult());
         name_dict.insert("or".to_string(), prelude::or());
         name_dict.insert("and".to_string(), prelude::and());
-        name_dict.insert("Iff".to_string(), prelude::iff());
         name_dict.insert("set".to_string(), prelude::set());
         name_dict.insert("set_from_func".to_string(), prelude::set_from_func());
         name_dict.insert("set_empty".to_string(), prelude::set_empty());
@@ -156,7 +156,9 @@ impl Engine {
             &mut HashMap::default(),
             &mut infer_cnt,
         )?;
-        Ok((term, infer_cnt.0))
+        let n = infer_cnt.0;
+        let term = fix_wild_scope(term, n);
+        Ok((term, n))
     }
 
     pub fn parse_text(&self, text: &str) -> Result<TermRef> {

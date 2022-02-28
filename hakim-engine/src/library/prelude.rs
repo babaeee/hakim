@@ -18,6 +18,9 @@ pub fn z() -> TermRef {
 pub fn false_ty() -> TermRef {
     term_ref!(axiom "False" , u())
 }
+pub fn true_ty() -> TermRef {
+    term_ref!(axiom "True" , u())
+}
 fn v0() -> TermRef {
     term_ref!(v 0)
 }
@@ -47,9 +50,6 @@ pub fn or() -> TermRef {
 }
 pub fn and() -> TermRef {
     term_ref!(axiom "and", forall u(), forall u(), u())
-}
-pub fn iff() -> TermRef {
-    term_ref!(axiom "iff", forall u(), forall u(), u())
 }
 pub fn set() -> TermRef {
     term_ref!(axiom "set", forall u(), u())

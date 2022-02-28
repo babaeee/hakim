@@ -61,7 +61,7 @@ use crate::{
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::ast::InferGenerator;
+use super::InferGenerator;
 
 impl BinOp {
     pub fn level_left(&self) -> u8 {
@@ -151,7 +151,11 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(eq(), w, l, r)
             }
-            Iff => app_ref!(iff(), l, r),
+            Iff => app_ref!(
+                and(),
+                term_ref!(forall l, increase_foreign_vars(r.clone(), 0)),
+                term_ref!(forall r, increase_foreign_vars(l, 0))
+            ),
             Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
             Included => {
                 let i = infer_cnt.generate();

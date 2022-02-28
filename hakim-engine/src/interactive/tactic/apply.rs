@@ -24,7 +24,7 @@ impl FindInstance {
     pub(crate) fn first_needed_wild(&self) -> usize {
         let mut r = None;
         for ty in &self.infer.tys {
-            let t = map_reduce_wild(ty, &Some, &std::cmp::min);
+            let t = map_reduce_wild(ty, &|x, _| Some(x), &std::cmp::min);
             if let Some(tv) = t {
                 if let Some(rv) = r {
                     if rv > tv {
@@ -44,7 +44,7 @@ impl FindInstance {
             self.exp, self.ty
         );
         for i in 0..self.infer.n {
-            r += &if (Term::Wild { index: i }) == *self.infer.terms[i].as_ref() {
+            r += &if let Term::Wild { index: i, scope: _ } = *self.infer.terms[i].as_ref() {
                 format!("\u{2068}?w{} : {:?}\u{2069}\n", i, self.infer.tys[i])
             } else {
                 format!(
@@ -63,7 +63,7 @@ impl FindInstance {
     pub fn tactic_by_answer(self, filler: &str) -> Result<String> {
         let filler = self.engine.parse_text(filler)?;
         let id = self.first_needed_wild();
-        let exp = fill_wild(self.exp, &|x| {
+        let exp = fill_wild(self.exp, &|x, _| {
             if x == id {
                 filler.clone()
             } else {
@@ -97,7 +97,9 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
     let (term, mut inf_num) = frame.engine.parse_text_with_wild(exp)?;
     let ty = type_of_and_infer(term.clone(), &mut InferResults::new(inf_num))?;
     let goal = frame.goal.clone();
-    let d_forall = get_forall_depth(&ty) - get_forall_depth(&goal);
+    let d_forall = get_forall_depth(&ty)
+        .checked_sub(get_forall_depth(&goal))
+        .ok_or(CanNotSolve("apply"))?;
     let mut twa = term;
     for _ in 0..d_forall {
         twa = app_ref!(twa, term_ref!(_ inf_num));
@@ -151,7 +153,9 @@ pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Res
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{run_interactive, run_interactive_to_end, EngineLevel};
+    use crate::interactive::tests::{
+        run_interactive, run_interactive_to_end, run_interactive_to_fail, EngineLevel,
+    };
 
     #[test]
     fn infer_tohi_type() {
@@ -178,6 +182,15 @@ mod tests {
             apply exP_proof
         "#,
         )
+    }
+
+    #[test]
+    fn apply_on_forall_no_overflow() {
+        run_interactive_to_fail(
+            "∀ T: U, ∀ A B C: set T, A ⊆ B -> B ⊆ C -> A ⊆ C",
+            "",
+            "apply included_fold",
+        );
     }
 
     #[test]

@@ -79,6 +79,7 @@ fn eq() {
 }
 
 #[test]
+#[ignore]
 fn iff_check() {
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, x0 = x1 ↔ x0 + 3 = x1 + 3");
 }
@@ -96,6 +97,13 @@ fn sets() {
     parse_pretty("{ x0: ℤ | 5 < x0 } ∩ { x0: ℤ | x0 < 10 }");
     parse_pretty("{2} ∩ {}");
     parse_pretty("{1, 2, 3}");
+}
+
+#[test]
+fn set_and_app() {
+    parse_pretty("∀ f: set ℤ → U, f {}");
+    parse_pretty("∀ f: set ℤ → U, f {1, 2, 3}");
+    parse_pretty("∀ f: set ℤ → U, ∀ X: set ℤ, f {1, 2, 3} → f X → X = {1, 2, 3}");
 }
 
 #[test]

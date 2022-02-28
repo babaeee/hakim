@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::{
     tokenizer::{AbsSign, Token},
+    wild::InferGenerator,
     Error::*,
     Result,
 };
@@ -188,7 +189,7 @@ trait TokenEater {
                     cur = self.eat_ast_without_app()?;
                     continue;
                 }
-                if s == "(" {
+                if s == "(" || s == "{" {
                     push_to_stack(&mut stack, BinOp::App, cur);
                     cur = self.eat_ast_without_app()?;
                     continue;
@@ -231,17 +232,6 @@ pub fn pack_abstraction(sign: AbsSign, abs: Abstraction) -> TermRef {
         AbsSign::Forall => TermRef::new(Term::Forall(abs)),
         AbsSign::Fun => TermRef::new(Term::Fun(abs)),
         AbsSign::Exists => app_ref!(ex(), abs.var_ty, pack_abstraction(AbsSign::Fun, abs)),
-    }
-}
-
-#[derive(Default)]
-pub struct InferGenerator(pub usize);
-
-impl InferGenerator {
-    pub fn generate(&mut self) -> usize {
-        let i = self.0;
-        self.0 += 1;
-        i
     }
 }
 
