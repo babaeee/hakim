@@ -1,6 +1,6 @@
 use crate::engine::Engine;
 
-const LIB_NAMES: [&str; 8] = ["All", "Arith", "Logic", "Eq", "NumberTheory", "Sigma", "Set", "Induction"];
+const LIB_NAMES: [&str; 9] = ["All", "Arith", "Logic", "Eq", "NumberTheory", "ProductOperator", "Sigma", "Set", "Induction"];
 
 #[test]
 fn all() {
