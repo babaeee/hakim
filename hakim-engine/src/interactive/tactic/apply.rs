@@ -44,7 +44,7 @@ impl FindInstance {
             self.exp, self.ty
         );
         for i in 0..self.infer.n {
-            r += &if let Term::Wild { index: i, scope: _ } = *self.infer.terms[i].as_ref() {
+            r += &if (Term::Wild { index: i, scope: 0 }) == *self.infer.terms[i].as_ref() {
                 format!("\u{2068}?w{} : {:?}\u{2069}\n", i, self.infer.tys[i])
             } else {
                 format!(
@@ -182,8 +182,9 @@ pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Res
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{
-        run_interactive, run_interactive_to_end, run_interactive_to_fail, EngineLevel,
+    use crate::interactive::{
+        tactic::Error,
+        tests::{run_interactive, run_interactive_to_end, run_interactive_to_fail, EngineLevel},
     };
 
     #[test]
@@ -245,6 +246,24 @@ mod tests {
     #[test]
     fn apply_on_depended_hyp() {
         run_interactive_to_fail("∀ f: ℤ -> U, ∀ n: ℤ, f n", "intros f n", "apply f in n");
+    }
+
+    // A regression test for out of bound array access in the FindInstance::question_text
+    #[test]
+    fn empty_intro_on_false() {
+        let fail_tactic = "apply empty_intro";
+        let mut session = run_interactive(
+            "∀ A: U, ∀ a: A, a ∈ {} → False",
+            "intros A a H",
+            EngineLevel::Full,
+        );
+        match session.run_tactic(fail_tactic) {
+            Ok(_) => panic!("tactic succeed but we need CanNotFindInstance failure"),
+            Err(Error::CanNotFindInstance(e)) => {
+                e.question_text();
+            }
+            Err(e) => panic!("We need CanNotFindInstance but found {:?}", e),
+        }
     }
 
     #[test]
