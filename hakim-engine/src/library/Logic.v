@@ -8,6 +8,7 @@ Axiom imply_trans: ∀ A B C: U, (A -> B) -> (B -> C) -> (A -> C).
 Axiom imply_iff: ∀ A B: U, (A -> B) ∧ (B -> A) -> A ↔ B.
 Axiom iff_imply: ∀ A B: U, A ↔ B -> (A -> B) ∧ (B -> A).
 Axiom p_or_not_p: ∀ A: U, A ∨ (A → False).
+Axiom NNPP: ∀ A: U, ((A -> False) -> False) -> A.
 Axiom and_intro: ∀ A B: U, A -> B -> A ∧ B. 
 Axiom or_introl: ∀ A B: U, A -> A ∨ B.
 Axiom or_intror: ∀ A B: U, B -> A ∨ B.

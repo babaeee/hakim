@@ -14,7 +14,7 @@ pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &Term) -> Vec<Suggestion>
             if engine.has_library("Eq") {
                 r.push(Suggestion::new(
                     Pattern("a = b", "b = a"),
-                    &format!("apply (eq_sym ? ? ?) in {}", name),
+                    &format!("apply eq_sym in {}", name),
                 ));
             }
         }
@@ -24,19 +24,19 @@ pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &Term) -> Vec<Suggestion>
                     SetTermClass::Singleton => {
                         r.push(Suggestion::new_default(
                             Pattern("a ∈ {b}", "a = b"),
-                            &format!("apply (singleton_unfold ? ? ?) in {}", name),
+                            &format!("apply singleton_unfold in {}", name),
                         ));
                     }
                     SetTermClass::FromFunc => {
                         r.push(Suggestion::new_default(
                             Pattern("a ∈ {b | f b}", "f a"),
-                            &format!("apply (set_from_func_unfold ? ? ?) in {}", name),
+                            &format!("apply set_from_func_unfold in {}", name),
                         ));
                     }
                     SetTermClass::Empty => r.push(Suggestion {
                         class: Contradiction,
                         tactic: vec![
-                            format!("apply (empty_intro ? ?) in {}", name),
+                            format!("apply empty_intro in {}", name),
                             format!("apply (False_ind {} ?)", name),
                         ],
                         questions: vec![],
@@ -50,7 +50,7 @@ pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &Term) -> Vec<Suggestion>
             if engine.has_library("Set") {
                 r.push(Suggestion::new_default(
                     Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
-                    &format!("apply (included_unfold ? ? ?) in {}", name),
+                    &format!("apply included_unfold in {}", name),
                 ));
             }
         }

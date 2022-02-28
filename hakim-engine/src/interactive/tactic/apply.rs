@@ -74,21 +74,50 @@ impl FindInstance {
     }
 }
 
+fn find_args_in_apply_hyp(
+    mut func: TermRef,
+    op: TermRef,
+    base_ic: usize,
+    name: &str,
+) -> Option<TermRef> {
+    let fd = {
+        let ty = type_of_and_infer(func.clone(), &mut InferResults::new(base_ic)).ok()?;
+        get_forall_depth(&ty)
+    };
+    for ic in base_ic..base_ic + fd {
+        let mut infers = InferResults::new(ic);
+        let ty = match type_of_and_infer(app_ref!(func, op), &mut infers) {
+            Ok(x) => x,
+            Err(_) => {
+                func = app_ref!(func, term_ref!(_ ic));
+                continue;
+            }
+        };
+        let mut flag = false;
+        for i in 0..ic {
+            if !contains_wild(&infers.terms[i]) {
+                continue;
+            }
+            flag = true;
+        }
+        let ty = infers.fill(ty);
+        if flag || predict_axiom(&ty, &|x| x == name) {
+            func = app_ref!(func, term_ref!(_ ic));
+            continue;
+        }
+        return Some(ty);
+    }
+    None
+}
+
 fn apply_for_hyp(mut frame: Frame, exp: &str, name: String) -> Result<Vec<Frame>> {
     let (term, ic) = frame.engine.parse_text_with_wild(exp)?;
     let prev_hyp = frame.remove_hyp_with_name(name.clone())?;
-    let mut infers = InferResults::new(ic);
-    let ty = type_of_and_infer(app_ref!(term, term_ref!(axiom name, prev_hyp)), &mut infers)?;
-    for i in 0..ic {
-        if !contains_wild(&infers.terms[i]) {
-            continue;
-        }
-        todo!();
-    }
-    let ty = infers.fill(ty);
-    if predict_axiom(&ty, &|x| x == name) {
-        return Err(ContextDependOnHyp(name, ty));
-    }
+    let op = term_ref!(axiom name, prev_hyp);
+    let ty = match find_args_in_apply_hyp(term, op, ic, &name) {
+        Some(x) => x,
+        None => return Err(CanNotSolve("apply")),
+    };
     frame.add_hyp_with_name(&name, ty)?;
     Ok(vec![frame])
 }
@@ -211,6 +240,11 @@ mod tests {
             "",
             "apply included_fold",
         );
+    }
+
+    #[test]
+    fn apply_on_depended_hyp() {
+        run_interactive_to_fail("∀ f: ℤ -> U, ∀ n: ℤ, f n", "intros f n", "apply f in n");
     }
 
     #[test]

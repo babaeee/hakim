@@ -174,13 +174,13 @@ pub fn suggest_on_goal(goal: &Term, engine: &Engine) -> Vec<Suggestion> {
                     SetTermClass::Singleton => {
                         r.push(Suggestion::new_default(
                             Pattern("a ∈ {b}", "a = b"),
-                            "apply (singleton_fold ? ? ?)",
+                            "apply singleton_fold",
                         ));
                     }
                     SetTermClass::FromFunc => {
                         r.push(Suggestion::new_default(
                             Pattern("a ∈ {b | f b}", "f a"),
-                            "apply (set_from_func_fold ? ? ?)",
+                            "apply set_from_func_fold",
                         ));
                     }
                     SetTermClass::Empty | SetTermClass::Unknown => {}
