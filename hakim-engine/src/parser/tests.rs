@@ -100,6 +100,13 @@ fn sets() {
 }
 
 #[test]
+fn set_and_app() {
+    parse_pretty("∀ f: set ℤ → U, f {}");
+    parse_pretty("∀ f: set ℤ → U, f {1, 2, 3}");
+    parse_pretty("∀ f: set ℤ → U, ∀ X: set ℤ, f {1, 2, 3} → f X → X = {1, 2, 3}");
+}
+
+#[test]
 fn pretty_names() {
     parse_pretty("∀ salam: ℤ, ∀ x2: ℤ, salam < x2");
     parse_not_pretty("∀ x: U, x → ∀ x: ℤ, x < x", "∀ x: U, x → ∀ x0: ℤ, x0 < x0");

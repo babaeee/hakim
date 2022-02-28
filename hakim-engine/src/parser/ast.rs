@@ -189,7 +189,7 @@ trait TokenEater {
                     cur = self.eat_ast_without_app()?;
                     continue;
                 }
-                if s == "(" {
+                if s == "(" || s == "{" {
                     push_to_stack(&mut stack, BinOp::App, cur);
                     cur = self.eat_ast_without_app()?;
                     continue;
