@@ -170,6 +170,26 @@ mod tests {
     }
 
     #[test]
+    fn infer_sigma_factor_fn() {
+        run_interactive(
+            "∀ n: ℤ, 2 * sigma 0 (n + 1) (λ i: ℤ, i + 3) = sigma 0 (n + 1) (λ i: ℤ, 2 * (i+3))",
+            r#"
+            intros n
+            apply sigma_factor
+            "#,
+            EngineLevel::Full,
+        );
+        run_interactive(
+            "∀ n: ℤ, 2 * sigma 0 (n + 1) (λ i: ℤ, i) = sigma 0 (n + 1) (λ i: ℤ, 2 * i)",
+            r#"
+            intros n
+            apply sigma_factor
+            "#,
+            EngineLevel::Full,
+        );
+    }
+
+    #[test]
     fn exists_destruct() {
         run_interactive_to_end(
             "∀ P: ℤ -> U, (∀ x: ℤ, P x -> P (2*x)) -> (∃ b: ℤ, P b) -> ∃ b: ℤ, P (2*b)",

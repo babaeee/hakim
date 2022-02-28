@@ -3,7 +3,7 @@ use super::{
     Result, Term, TermRef,
 };
 use crate::library::prelude;
-use crate::Abstraction;
+use crate::{app_ref, Abstraction};
 use crate::{brain::get_universe, term_ref};
 
 use std::cmp::max;
@@ -272,6 +272,18 @@ fn match_and_infer_without_normalize(
         }
         (Term::Forall(a1), Term::Forall(a2)) | (Term::Fun(a1), Term::Fun(a2)) => {
             for_abs(a1.clone(), a2.clone(), infers)
+        }
+        (Term::Fun(a), _) | (_, Term::Fun(a)) => {
+            let f = match t1.as_ref() {
+                Term::Fun(_) => t2.clone(),
+                _ => t1.clone(),
+            };
+            // we try λ x: f x instead of f
+            match_and_infer_without_normalize(
+                app_ref!(increase_foreign_vars(f, 0), term_ref!(v 0)),
+                a.body.clone(),
+                infers,
+            )
         }
         (Term::Var { index: i1 }, Term::Var { index: i2 }) => {
             if i1 == i2 {
