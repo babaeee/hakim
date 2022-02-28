@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { setGoal, toBackup } from "../../hakim";
 import { isRTL } from "../../i18n";
+import { MainMenu } from "../mainmenu/MainMenu";
 import { Proof } from "../proof/Proof";
 import { Sandbox } from "../sandbox/Sandbox";
 import css from "./Root.module.css";
 
-type State = {
-    mode: 'sandbox' | 'proof',
+export type State = {
+    mode: 'sandbox' | 'proof' | 'mainmenu',
 };
 
 const storedState = (): State => {
@@ -14,7 +15,7 @@ const storedState = (): State => {
     if (json) {
         return JSON.parse(json);
     } else {
-        return { mode: 'sandbox' };
+        return { mode: 'mainmenu' };
     }
 };
 
@@ -33,14 +34,19 @@ export const Root = () => {
     }
     return (
         <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>
-            {s.mode === 'sandbox'
-                ? <Sandbox onFinish={async (goal) => {
-                    if (await setGoal(goal)) setS({ mode: 'proof' });
-                }} />
-                : <Proof onFinish={() => {
-                    setS({ mode: 'sandbox' });
-                }} />
-            }
+            {s.mode === 'mainmenu' && <MainMenu onFinish={async (mode) => {
+                setS({ mode });
+            }} />}
+            {s.mode === 'sandbox' && <Sandbox onFinish={async (goal) => {
+                if (!goal) {
+                    setS({ mode: 'mainmenu' });
+                    return;
+                }
+                if (await setGoal(goal)) setS({ mode: 'proof' });
+            }} />}
+            {s.mode === 'proof' && <Proof onFinish={() => {
+                setS({ mode: 'sandbox' });
+            }} />}
         </div>
     );;
 };

@@ -5,7 +5,7 @@ import { UnicodeInput } from "../unicode/UnicodeInput";
 import css from "./Sandbox.module.css";
 
 type SanboxProps = {
-    onFinish: (goal: string) => void,
+    onFinish: (goal: string | undefined) => void,
 };
 //∀ A: U, ∀ a: A, In A (empty A) a -> False
 const exampleGoals = [
@@ -36,6 +36,7 @@ export const Sandbox = ({ onFinish }: SanboxProps) => {
             <ul dir="ltr" className={css.exampleSection}>
                 {exampleGoals.map((g) => <><li key={g} onClick={() => onFinish(g)} className={css.exampleItem}>{g}</li>{' '}</>)}
             </ul>
+            <button onClick={() => onFinish(undefined)}>{g`back`}</button>
         </div>
     );
 };
