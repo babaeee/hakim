@@ -535,6 +535,15 @@ mod tests {
     }
 
     #[test]
+    fn dont_solve_forall_without_intros() {
+        run_interactive_to_fail(
+            "∀ T: U, ∀ A B C: set T, A ⊆ B -> B ⊆ C -> A ⊆ C",
+            "",
+            "auto_set",
+        );
+    }
+
+    #[test]
     fn imp_and_subset() {
         success(
             "∀ T: U, ∀ A B C D: set T, A ⊆ B -> (A ⊆ B -> B ⊆ C) ->\
