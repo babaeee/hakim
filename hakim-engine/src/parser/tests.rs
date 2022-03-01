@@ -113,6 +113,12 @@ fn pretty_names() {
 }
 
 #[test]
+fn abstr_prec() {
+    parse_pretty("(∃ x: ℤ, 2 < x) → 2 | 5");
+    parse_pretty("∃ x: ℤ, 2 < x → 2 | 5");
+}
+
+#[test]
 fn basic_fails() {
     parse_error("(2+3");
     parse_error("()");
