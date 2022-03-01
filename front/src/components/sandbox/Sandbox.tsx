@@ -27,7 +27,7 @@ export const Sandbox = ({ onFinish }: SanboxProps) => {
     const done = () => onFinish(text);
     return (
         <div className={css.main}>
-            <h1 className={css.title}>{g`sandbox_title`}</h1>
+            <h1 className={css.title}>{g`sandbox`}</h1>
             <p className={css.text}>{g`type_a_goal_to_proof`}</p>
             <UnicodeInput value={text} onChange={setText} enableHelp={setHelp} onEnter={done} />
             <button onClick={done}>{g`submit`}</button>

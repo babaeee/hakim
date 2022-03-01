@@ -1,5 +1,6 @@
 auto_proof: اثبات خودکار
 babaeee_coq: اثبات چک کن ببعییی
+back: بازگشت
 change_lang: تغییر زبان
 choose_for_replace: قسمتی را برای جایگزینی انتخاب کنید
 contradiction: تناقض
@@ -12,6 +13,7 @@ enter_value_that_satisfy: مقداری که در عبارت صدق می کند �
 enter_value_of1: مقدار
 enter_value_of2: را وارد کنید
 exit: خروج
+export: صادر کردن
 in_applying: در حین اعمال کردن
 induction_on: استقرا روی
 input_assertion: ادعای خود را وارد کنید
@@ -27,7 +29,7 @@ rewrite: بازنویسی
 replace: جایگزینی
 replace_with_what1: می خواهید
 replace_with_what2: را با چه چیزی جایگزین کنید؟
-sandbox_title: زمین بازی
+sandbox: جعبه شنی
 search: جستجو
 submit: ارسال
 tactic_intros: معرفی
