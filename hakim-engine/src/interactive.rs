@@ -78,7 +78,7 @@ impl Session {
         let snapshot = Snapshot::new(engine, goal)?;
         let hr = HistoryRecord {
             snapshot,
-            tactic: "Goal".to_string(),
+            tactic: "Proof".to_string(),
         };
         Ok(Session {
             history: vector![hr],

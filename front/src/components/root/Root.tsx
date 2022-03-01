@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { setGoal, toBackup } from "../../hakim";
+import { sendTactic, setGoal, toBackup } from "../../hakim";
 import { isRTL } from "../../i18n";
 import { MainMenu } from "../mainmenu/MainMenu";
 import { Proof } from "../proof/Proof";
@@ -40,6 +40,22 @@ export const Root = () => {
             {s.mode === 'sandbox' && <Sandbox onFinish={async (goal) => {
                 if (!goal) {
                     setS({ mode: 'mainmenu' });
+                    return;
+                }
+                goal = goal.trim();
+                if (goal.startsWith('Goal')) {
+                    const [g, , ...v] = goal.split('.');
+                    if (!await setGoal(g.slice(6, -1))) {
+                        return;
+                    }
+                    for (const xs of v) {
+                        const x = xs.trim();
+                        if (x === '') continue;
+                        if (!await sendTactic(x)) {
+                            return;
+                        }
+                    }
+                    setS({ mode: 'proof' });
                     return;
                 }
                 if (await setGoal(goal)) setS({ mode: 'proof' });

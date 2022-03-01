@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { sendTactic, subscribe } from "../../../hakim";
 import { g } from "../../../i18n";
+import { CopyButton } from "../../util/CopyButton";
 import css from "./Sidebar.module.css";
 
 export const History = () => {
@@ -16,6 +17,7 @@ export const History = () => {
                 {s.map((x, i) => <li key={i}>{x}</li>)}
             </ul>
             <button onClick={() => sendTactic('Undo')}>{g`undo`}</button>
+            <CopyButton label={g`export`} text={() => `${localStorage.getItem('last_goal')}.\n${s.join('.\n')}.\n`} />
         </div>
     );
 };

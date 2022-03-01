@@ -121,6 +121,7 @@ export const searchPattern = (expr: string): SearchResult[] => {
 };
 
 export const setGoal = (goal: string, libs: string = 'All') => {
+    localStorage.setItem('last_goal', `Goal (${goal})`);
     return checkErrorAndUpdate(() => Promise.resolve(instance.start_session(goal, libs)));
 };
 
