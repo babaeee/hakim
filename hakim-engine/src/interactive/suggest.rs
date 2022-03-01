@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{engine::Engine, Term};
+use crate::Term;
 
 #[cfg(test)]
 mod tests;
@@ -8,7 +8,7 @@ mod tests;
 mod hyp;
 pub use hyp::{suggest_on_hyp, suggest_on_hyp_dblclk};
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum SuggClass {
     Intros,
     IntrosWithName,
@@ -33,6 +33,45 @@ impl Display for SuggClass {
 
 use SuggClass::*;
 
+use super::Frame;
+
+#[derive(Debug, Clone, Copy)]
+pub struct SuggRule {
+    pub class: SuggClass,
+    pub tactic: &'static [&'static str],
+    pub questions: &'static [&'static str],
+    pub is_default: bool,
+}
+
+impl From<SuggRule> for Suggestion {
+    fn from(sugg: SuggRule) -> Self {
+        Self {
+            class: sugg.class,
+            tactic: sugg.tactic.iter().map(|x| x.to_string()).collect(),
+            questions: sugg.questions.iter().map(|x| x.to_string()).collect(),
+            is_default: sugg.is_default,
+        }
+    }
+}
+
+impl SuggRule {
+    fn try_on_goal(self, frame: Frame) -> Option<Suggestion> {
+        frame.run_tactic(self.tactic[0]).ok()?;
+        Some(self.into())
+    }
+
+    fn try_on_hyp(self, name: &str, frame: Frame) -> Option<Suggestion> {
+        frame.run_tactic(&self.tactic[0].replace("$n", name)).ok()?;
+        let mut r: Suggestion = self.into();
+        r.tactic = r
+            .tactic
+            .into_iter()
+            .map(|x| x.replace("$n", name))
+            .collect();
+        Some(r)
+    }
+}
+
 #[derive(Debug)]
 pub struct Suggestion {
     pub class: SuggClass,
@@ -42,15 +81,6 @@ pub struct Suggestion {
 }
 
 impl Suggestion {
-    fn new(class: SuggClass, t: &str) -> Self {
-        Self {
-            class,
-            tactic: vec![t.to_string()],
-            questions: vec![],
-            is_default: false,
-        }
-    }
-
     fn new_default(class: SuggClass, t: &str) -> Self {
         Self {
             class,
@@ -70,85 +100,48 @@ impl Suggestion {
     }
 }
 
-enum SetTermClass {
-    Empty,
-    Singleton,
-    FromFunc,
-    Unknown,
-}
+const GOAL_RULES: &[SuggRule] = &[
+    SuggRule {
+        class: Pattern("A = B", "A ⊆ B ∧ B ⊆ A"),
+        tactic: &["apply set_equality"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("a ∈ x ∪ y", "a ∈ x ∨ a ∈ y"),
+        tactic: &["apply union_fold"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("a ∈ {b}", "a = b"),
+        tactic: &["apply singleton_fold"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("a ∈ {b | f b}", "f a"),
+        tactic: &["apply set_from_func_fold"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
+        tactic: &["apply included_fold"],
+        questions: &[],
+        is_default: true,
+    },
+];
 
-enum TermClass {
-    Forall,
-    Exists,
-    False,
-    Eq,
-    SetMember(SetTermClass),
-    SetIncluded(SetTermClass, SetTermClass),
-    Unknown,
-}
-
-fn detect_set_class(t: &Term) -> SetTermClass {
-    match dbg!(t) {
-        Term::App { func, op: _ } => match func.as_ref() {
-            Term::App { func, op: _ } => match func.as_ref() {
-                Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                    "set_singleton" => SetTermClass::Singleton,
-                    "set_from_func" => SetTermClass::FromFunc,
-                    _ => SetTermClass::Unknown,
-                },
-                _ => SetTermClass::Unknown,
-            },
-            Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                "set_empty" => SetTermClass::Empty,
-                _ => SetTermClass::Unknown,
-            },
-            _ => SetTermClass::Unknown,
-        },
-        _ => SetTermClass::Unknown,
-    }
-}
-
-fn detect_class(t: &Term) -> TermClass {
-    match t {
-        Term::Forall(_) => return TermClass::Forall,
-        Term::Axiom { unique_name, .. } => {
-            return match unique_name.as_str() {
-                "False" => TermClass::False,
-                _ => TermClass::Unknown,
-            }
-        }
-        Term::App { func, op: op1 } => {
-            if let Term::App { func, op: op2 } = func.as_ref() {
-                if let Term::App { func, op: _ } = func.as_ref() {
-                    if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                        return match unique_name.as_str() {
-                            "eq" => TermClass::Eq,
-                            "inset" => TermClass::SetMember(detect_set_class(op1)),
-                            "included" => {
-                                TermClass::SetIncluded(detect_set_class(op1), detect_set_class(op2))
-                            }
-                            _ => TermClass::Unknown,
-                        };
-                    }
-                }
-                if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                    return match unique_name.as_str() {
-                        "ex" => TermClass::Exists,
-                        _ => TermClass::Unknown,
-                    };
-                }
-            }
-        }
-        _ => (),
-    }
-    TermClass::Unknown
-}
-
-pub fn suggest_on_goal(goal: &Term, engine: &Engine) -> Vec<Suggestion> {
-    let c = detect_class(goal);
+pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {
     let mut r = vec![];
-    match c {
-        TermClass::Forall => {
+    for rule in GOAL_RULES {
+        if let Some(x) = rule.try_on_goal(frame.clone()) {
+            r.push(x);
+        }
+    }
+    match goal {
+        Term::Forall(_) => {
             r.push(Suggestion::new_default(Intros, "intros"));
             r.push(Suggestion {
                 class: IntrosWithName,
@@ -157,33 +150,16 @@ pub fn suggest_on_goal(goal: &Term, engine: &Engine) -> Vec<Suggestion> {
                 is_default: false,
             });
         }
-        TermClass::Exists => r.push(Suggestion::newq1default(
-            Destruct,
-            "apply (ex_intro ? ? ($0))",
-            "$enter_value_that_satisfy:",
-        )),
-        TermClass::SetIncluded(_, _) => {
-            r.push(Suggestion::new_default(
-                Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
-                "apply included_fold",
-            ));
-        }
-        TermClass::SetMember(x) => {
-            if engine.has_library("Set") {
-                match x {
-                    SetTermClass::Singleton => {
-                        r.push(Suggestion::new_default(
-                            Pattern("a ∈ {b}", "a = b"),
-                            "apply singleton_fold",
-                        ));
-                    }
-                    SetTermClass::FromFunc => {
-                        r.push(Suggestion::new_default(
-                            Pattern("a ∈ {b | f b}", "f a"),
-                            "apply set_from_func_fold",
-                        ));
-                    }
-                    SetTermClass::Empty | SetTermClass::Unknown => {}
+        Term::App { func, op: _ } => {
+            if let Term::App { func, op: _ } = func.as_ref() {
+                if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                    if unique_name.as_str() == "ex" {
+                        r.push(Suggestion::newq1default(
+                            Destruct,
+                            "apply (ex_intro ? ? ($0))",
+                            "$enter_value_that_satisfy:",
+                        ))
+                    };
                 }
             }
         }
@@ -192,8 +168,8 @@ pub fn suggest_on_goal(goal: &Term, engine: &Engine) -> Vec<Suggestion> {
     r
 }
 
-pub fn suggest_on_goal_dblclk(goal: &Term, engine: &Engine) -> Option<Suggestion> {
-    let suggs = suggest_on_goal(goal, engine);
+pub fn suggest_on_goal_dblclk(goal: &Term, frame: &Frame) -> Option<Suggestion> {
+    let suggs = suggest_on_goal(goal, frame);
     for sugg in suggs {
         if sugg.is_default {
             return Some(sugg);

@@ -265,25 +265,19 @@ impl Frame {
     }
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
-        suggest_on_goal_dblclk(&self.goal, &self.engine)
+        suggest_on_goal_dblclk(&self.goal, self)
     }
 
     pub fn suggest_on_goal_menu(&self) -> Vec<Suggestion> {
-        suggest_on_goal(&self.goal, &self.engine)
+        suggest_on_goal(&self.goal, self)
     }
 
     pub fn suggest_on_hyp_dblclk(&self, hyp_name: &str) -> Option<Suggestion> {
-        let h = self.hyps.get(hyp_name)?;
-        suggest_on_hyp_dblclk(&self.engine, hyp_name, h)
+        suggest_on_hyp_dblclk(self, hyp_name)
     }
 
     pub fn suggest_on_hyp_menu(&self, hyp_name: &str) -> Vec<Suggestion> {
-        let h = if let Some(x) = self.hyps.get(hyp_name) {
-            x
-        } else {
-            return vec![];
-        };
-        suggest_on_hyp(&self.engine, hyp_name, h)
+        suggest_on_hyp(self, hyp_name)
     }
 
     pub fn run_tactic(&self, line: &str) -> Result<Vec<Self>, tactic::Error> {

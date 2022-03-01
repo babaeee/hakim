@@ -3,7 +3,8 @@ Axiom set_from_func_unfold: ∀ A: U, ∀ f: A -> U, ∀ a: A, a ∈ (set_from_f
 Axiom empty_intro: ∀ A: U, ∀ a: A, a ∈ {} -> False.
 Axiom singleton_unfold: ∀ A: U, ∀ a b: A, b ∈ {a} -> a = b. 
 Axiom singleton_fold: ∀ A: U, ∀ a b: A, a = b -> b ∈ {a}. 
-Axiom unino_intro: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∪ y ↔ a ∈ x ∨ a ∈ y.
+Axiom union_unfold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∪ y -> a ∈ x ∨ a ∈ y.
+Axiom union_fold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∨ a ∈ y -> a ∈ x ∪ y.
 Axiom intersection_intro: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∩ y ↔ a ∈ x ∧ a ∈ y.
 Axiom setminus_intro: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∖ y ↔ a ∈ x ∨ (a ∈ y -> False).
 Axiom included_fold: ∀ A: U, ∀ x y: set A, (∀ a: A, a ∈ x -> a ∈ y) -> x ⊆ y.

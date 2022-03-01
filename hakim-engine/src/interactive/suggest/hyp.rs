@@ -1,90 +1,74 @@
-use crate::{brain::Term, engine::Engine};
+use crate::interactive::Frame;
 
-use super::{detect_class, SetTermClass, SuggClass::*, Suggestion, TermClass};
+use super::{SuggClass::*, SuggRule, Suggestion};
 
-pub fn suggest_on_hyp(engine: &Engine, name: &str, ty: &Term) -> Vec<Suggestion> {
-    let c = detect_class(ty);
+const HYP_RULES: &[SuggRule] = &[
+    SuggRule {
+        class: Destruct,
+        tactic: &[
+            "apply (ex_ind ? ? $n)",
+            "remove_hyp $n",
+            "intros $n_value $n_proof",
+        ],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Rewrite,
+        tactic: &["rewrite $n"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("a = b", "b = a"),
+        tactic: &["apply eq_sym in $n"],
+        questions: &[],
+        is_default: false,
+    },
+    SuggRule {
+        class: Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
+        tactic: &["apply included_unfold in $n"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("a ∈ {b}", "a = b"),
+        tactic: &["apply singleton_unfold in $n"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("a ∈ {b | f b}", "f a"),
+        tactic: &["apply set_from_func_unfold in $n"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Contradiction,
+        tactic: &["apply empty_intro in $n", "apply (False_ind $n ?)"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Contradiction,
+        tactic: &["apply (False_ind $n ?)"],
+        questions: &[],
+        is_default: true,
+    },
+];
+
+pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
     let mut r = vec![];
-    match c {
-        TermClass::Eq => {
-            r.push(Suggestion::new_default(
-                Rewrite,
-                &format!("rewrite {}", name),
-            ));
-            if engine.has_library("Eq") {
-                r.push(Suggestion::new(
-                    Pattern("a = b", "b = a"),
-                    &format!("apply eq_sym in {}", name),
-                ));
-            }
+    for rule in HYP_RULES {
+        if let Some(x) = rule.try_on_hyp(name, frame.clone()) {
+            r.push(x);
         }
-        TermClass::SetMember(x) => {
-            if engine.has_library("Set") {
-                match x {
-                    SetTermClass::Singleton => {
-                        r.push(Suggestion::new_default(
-                            Pattern("a ∈ {b}", "a = b"),
-                            &format!("apply singleton_unfold in {}", name),
-                        ));
-                    }
-                    SetTermClass::FromFunc => {
-                        r.push(Suggestion::new_default(
-                            Pattern("a ∈ {b | f b}", "f a"),
-                            &format!("apply set_from_func_unfold in {}", name),
-                        ));
-                    }
-                    SetTermClass::Empty => r.push(Suggestion {
-                        class: Contradiction,
-                        tactic: vec![
-                            format!("apply empty_intro in {}", name),
-                            format!("apply (False_ind {} ?)", name),
-                        ],
-                        questions: vec![],
-                        is_default: true,
-                    }),
-                    SetTermClass::Unknown => {}
-                }
-            }
-        }
-        TermClass::SetIncluded(..) => {
-            if engine.has_library("Set") {
-                r.push(Suggestion::new_default(
-                    Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
-                    &format!("apply included_unfold in {}", name),
-                ));
-            }
-        }
-        TermClass::False => {
-            if engine.has_library("Logic") {
-                r.push(Suggestion::new_default(
-                    Contradiction,
-                    &format!("apply (False_ind {} ?)", name),
-                ));
-            }
-        }
-        TermClass::Exists => {
-            if engine.has_library("Logic") {
-                let val_name = engine.generate_name(&format!("{}_value", name));
-                let proof_name = engine.generate_name(&format!("{}_proof", name));
-                r.push(Suggestion {
-                    class: Destruct,
-                    tactic: vec![
-                        format!("apply (ex_ind ? ? {})", name),
-                        format!("remove_hyp {}", name),
-                        format!("intros {} {}", val_name, proof_name),
-                    ],
-                    questions: vec![],
-                    is_default: true,
-                });
-            }
-        }
-        TermClass::Forall | TermClass::Unknown => (),
     }
     r
 }
 
-pub fn suggest_on_hyp_dblclk(engine: &Engine, name: &str, ty: &Term) -> Option<Suggestion> {
-    let suggs = suggest_on_hyp(engine, name, ty);
+pub fn suggest_on_hyp_dblclk(frame: &Frame, name: &str) -> Option<Suggestion> {
+    let suggs = suggest_on_hyp(frame, name);
     for sugg in suggs {
         if sugg.is_default {
             return Some(sugg);
