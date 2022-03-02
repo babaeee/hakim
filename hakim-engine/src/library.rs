@@ -1,8 +1,11 @@
 use im::HashMap;
 
-use crate::engine::{Engine, Error, Result};
+use crate::{
+    engine::{Engine, Error, Result},
+    library::ast::Sentence,
+};
 
-use self::text::load_text;
+use self::{ast::File, text::load_text};
 
 pub mod prelude;
 mod text;
@@ -25,10 +28,30 @@ fn text_of_name(name: &str) -> Result<&str> {
     load_text(name).ok_or_else(|| Error::UnknownLibrary(name.to_string()))
 }
 
+pub(crate) fn engine_from_middle_of_lib(lib: &str, name: &str) -> Option<(Engine, String)> {
+    let mut eng = Engine::default();
+    let lib = File::parse(text_of_name(lib).ok()?);
+    for x in lib.0 {
+        if x.name() == name {
+            return Some((eng, x.ty()?.to_string()));
+        }
+        x.add_to_engine(&mut eng).ok()?;
+    }
+    None
+}
+
 pub fn all_library_data() -> HashMap<String, ast::File> {
     fn f(name: String, r: &mut HashMap<String, ast::File>) -> Result<()> {
+        if r.contains_key(&name) {
+            return Ok(());
+        }
         let x = ast::File::parse(text_of_name(&name)?);
-        r.insert(name, x);
+        r.insert(name, x.clone());
+        for a in x.0 {
+            if let Sentence::Import { name } = a {
+                f(name, r)?;
+            }
+        }
         Ok(())
     }
     let mut r = HashMap::new();

@@ -1,7 +1,6 @@
 .main {
-    background-color: green;
     display: flex;
     margin: 0;
-    width: 100vw;
+    width: 96vw;
     height: 100vh;
 }

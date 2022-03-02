@@ -199,3 +199,28 @@ export const tryAuto = (): TryAutoResult => {
     }
     return { available: false };
 };
+
+type LibraryData = {
+    name: string,
+    rules: {
+        kind: 'Import' | 'Axiom',
+        name: string,
+        ty?: string,
+    }[],
+};
+
+export const fromMiddleOfLib = (lib: string, name: string) => {
+    return checkErrorAndUpdate(() => Promise.resolve(instance.start_session_from_lib(lib, name)));
+};
+
+export const allLibraryData = (): LibraryData[] => {
+    const x = instance.all_library_data();
+    const convertRule = (r: any) => {
+        const kind = Object.keys(r)[0];
+        return {
+            kind,
+            ...r[kind],
+        };
+    };
+    return Object.keys(x).map((a) => ({ name: a, rules: x[a].map(convertRule) }));
+};

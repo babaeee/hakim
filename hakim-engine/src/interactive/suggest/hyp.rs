@@ -55,6 +55,12 @@ const HYP_RULES: &[SuggRule] = &[
         questions: &[],
         is_default: true,
     },
+    SuggRule {
+        class: Destruct,
+        tactic: &["apply (or_ind ? ? $n)"],
+        questions: &[],
+        is_default: true,
+    },
 ];
 
 pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::brain::{contains_wild, predict_axiom, TermRef};
 
 use crate::engine::{Engine, Error};
+use crate::library::engine_from_middle_of_lib;
 
 #[cfg(test)]
 mod tests;
@@ -83,6 +84,11 @@ impl Session {
         Ok(Session {
             history: vector![hr],
         })
+    }
+
+    pub fn from_middle_of_lib(lib: &str, name: &str) -> Option<Self> {
+        let (engine, goal) = engine_from_middle_of_lib(lib, name)?;
+        Self::new(engine, &goal).ok()
     }
 
     pub fn initial_engine(&self) -> Engine {

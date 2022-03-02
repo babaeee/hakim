@@ -1,13 +1,14 @@
-import { useState } from "react";
-import { sendTactic, setGoal, toBackup } from "../../hakim";
+import { useEffect, useState } from "react";
+import { fromMiddleOfLib, sendTactic, setGoal, toBackup } from "../../hakim";
 import { isRTL } from "../../i18n";
+import { LibraryViewer } from "../library_viewer/LibraryViewer";
 import { MainMenu } from "../mainmenu/MainMenu";
 import { Proof } from "../proof/Proof";
 import { Sandbox } from "../sandbox/Sandbox";
 import css from "./Root.module.css";
 
 export type State = {
-    mode: 'sandbox' | 'proof' | 'mainmenu',
+    mode: 'sandbox' | 'proof' | 'mainmenu' | 'library',
 };
 
 const storedState = (): State => {
@@ -32,10 +33,28 @@ export const Root = () => {
         stateToStore = x;
         setSinner(x);
     }
+    useEffect(() => {
+        window.history.pushState(null, document.title, window.location.href);
+        window.onpopstate = () => {
+            const m = s.mode;
+            if (m === 'sandbox' || m === 'library') {
+                window.history.pushState(null, document.title, window.location.href);
+                setS({ mode: 'mainmenu' });
+            } else if (m === 'proof') {
+                window.history.pushState(null, document.title, window.location.href);
+                setS({ mode: 'mainmenu' });
+            } else {
+                window.history.back();
+            }
+        };
+    }, [s.mode]);
     return (
         <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>
             {s.mode === 'mainmenu' && <MainMenu onFinish={async (mode) => {
                 setS({ mode });
+            }} />}
+            {s.mode === 'library' && <LibraryViewer onFinish={async (x, y) => {
+                if (await fromMiddleOfLib(x, y)) setS({ mode: 'proof' });
             }} />}
             {s.mode === 'sandbox' && <Sandbox onFinish={async (goal) => {
                 if (!goal) {
@@ -61,7 +80,7 @@ export const Root = () => {
                 if (await setGoal(goal)) setS({ mode: 'proof' });
             }} />}
             {s.mode === 'proof' && <Proof onFinish={() => {
-                setS({ mode: 'sandbox' });
+                setS({ mode: 'mainmenu' });
             }} />}
         </div>
     );;
