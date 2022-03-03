@@ -13,7 +13,7 @@ const config = {
             {
                 test: /\.ya?ml$/i,
                 type: 'json',
-                use: 'yaml-loader'
+                use: 'yaml-include-loader'
             },
             {
                 test: /\.css$/i,

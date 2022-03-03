@@ -1,0 +1,8 @@
+- id: tutorial
+  type: collection
+  x: 0
+  y: 0
+- id: logic
+  type: collection
+  x: 0
+  y: 2

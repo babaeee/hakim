@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fromMiddleOfLib, sendTactic, setGoal, toBackup } from "../../hakim";
 import { isRTL } from "../../i18n";
+import { Adventure } from "../adventure/Adventure";
 import { LibraryViewer } from "../library_viewer/LibraryViewer";
 import { MainMenu } from "../mainmenu/MainMenu";
 import { Proof } from "../proof/Proof";
@@ -8,7 +9,7 @@ import { Sandbox } from "../sandbox/Sandbox";
 import css from "./Root.module.css";
 
 export type State = {
-    mode: 'sandbox' | 'proof' | 'mainmenu' | 'library',
+    mode: 'sandbox' | 'proof' | 'mainmenu' | 'library' | 'adventure',
 };
 
 const storedState = (): State => {
@@ -37,10 +38,7 @@ export const Root = () => {
         window.history.pushState(null, document.title, window.location.href);
         window.onpopstate = () => {
             const m = s.mode;
-            if (m === 'sandbox' || m === 'library') {
-                window.history.pushState(null, document.title, window.location.href);
-                setS({ mode: 'mainmenu' });
-            } else if (m === 'proof') {
+            if (m !== 'mainmenu') {
                 window.history.pushState(null, document.title, window.location.href);
                 setS({ mode: 'mainmenu' });
             } else {
@@ -53,6 +51,7 @@ export const Root = () => {
             {s.mode === 'mainmenu' && <MainMenu onFinish={async (mode) => {
                 setS({ mode });
             }} />}
+            {s.mode === 'adventure' && <Adventure />}
             {s.mode === 'library' && <LibraryViewer onFinish={async (x, y) => {
                 if (await fromMiddleOfLib(x, y)) setS({ mode: 'proof' });
             }} />}
