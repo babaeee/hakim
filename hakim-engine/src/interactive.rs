@@ -19,7 +19,7 @@ use self::suggest::{
 };
 
 pub use self::suggest::Suggestion;
-use self::tactic::{auto_set, remove_hyp};
+use self::tactic::{auto_set, chain, remove_hyp};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Frame {
@@ -298,6 +298,7 @@ impl Frame {
             "apply" => apply(frame, parts),
             "add_hyp" => add_hyp(frame, parts),
             "remove_hyp" => remove_hyp(frame, parts),
+            "chain" => chain(frame, parts),
             "ring" => ring(frame),
             "lia" => lia(frame),
             "auto_set" => auto_set(frame),

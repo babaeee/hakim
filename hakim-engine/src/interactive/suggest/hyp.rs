@@ -57,7 +57,7 @@ const HYP_RULES: &[SuggRule] = &[
     },
     SuggRule {
         class: Destruct,
-        tactic: &["apply (or_ind ? ? $n)"],
+        tactic: &["chain (apply (or_ind ? ? $n)) (remove_hyp $n) (intros $n)"],
         questions: &[],
         is_default: true,
     },
