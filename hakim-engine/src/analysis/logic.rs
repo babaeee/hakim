@@ -177,7 +177,7 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
     }
 
     fn and(&'a self, item: LogicValue<'a, T>) {
-        dbg!(&item);
+        //        dbg!(&item);
         let old_root = self.root.take();
         self.root.set(old_root.and(item, &self.arena));
     }
@@ -300,7 +300,7 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
         ans
     }
     pub fn check_contradiction(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> bool {
-        let root = dbg!(self.root.take());
+        let root = self.root.take(); //dbg!()
         let root = match root {
             LogicValue::Exp(e) => self.arena.alloc(e),
             LogicValue::True => return false,
