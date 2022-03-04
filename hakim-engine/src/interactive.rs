@@ -19,7 +19,7 @@ use self::suggest::{
 };
 
 pub use self::suggest::Suggestion;
-use self::tactic::{auto_set, chain, remove_hyp};
+use self::tactic::{assumption, auto_set, chain, remove_hyp};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Frame {
@@ -302,6 +302,7 @@ impl Frame {
             "ring" => ring(frame),
             "lia" => lia(frame),
             "auto_set" => auto_set(frame),
+            "assumption" => assumption(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }
     }

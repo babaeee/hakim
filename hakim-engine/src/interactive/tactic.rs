@@ -24,6 +24,9 @@ pub(crate) use auto_set::auto_set;
 mod chain;
 pub(crate) use chain::chain;
 
+mod assumption;
+pub(crate) use assumption::assumption;
+
 #[derive(Debug)]
 pub enum Error {
     UnknownTactic(String),

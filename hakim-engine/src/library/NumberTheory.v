@@ -1,5 +1,5 @@
 Axiom divide_introl: ∀ a b: ℤ, a | b -> ∃ c: ℤ, a * c = b.
-Axiom divide_intror: ∀ a b: ℤ, ∃ c: ℤ, a * c = b -> a | b.
+Axiom divide_intror: ∀ a b: ℤ, (∃ c: ℤ, a * c = b) -> a | b.
 Axiom divide_refl: ∀ a: ℤ, a | a.
 Axiom divide_trans: ∀ a b c: ℤ, a | b -> b | c -> a | c.
 Axiom divide_factor: ∀ a b c: ℤ, a | b -> a | b * c.
