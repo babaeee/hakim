@@ -37,6 +37,17 @@ fn number_ops() {
 }
 
 #[test]
+fn minus_prec() {
+    parse_pretty("1 - 2");
+    parse_pretty("1 - 2 - 3");
+    parse_pretty("1 - 2 - 3 - 4");
+    parse_pretty("1 - (2 - 3) - 4");
+    parse_pretty("1 - (2 + 3) - 4");
+    parse_pretty("1 - (2 + 3)");
+    parse_pretty("1 - 2 + 3");
+}
+
+#[test]
 fn bigint() {
     parse_pretty("1 < 100000000000000000000000");
 }

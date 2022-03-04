@@ -14,29 +14,32 @@ pub fn ring(frame: Frame) -> Result<Vec<Frame>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::run_interactive_to_end;
+    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail};
+
+    fn success(goal: &str) {
+        run_interactive_to_end(goal, "intros\nring");
+    }
+
+    fn fail(goal: &str) {
+        run_interactive_to_fail(goal, "intros", "lia");
+    }
+
+    #[test]
+    fn minus() {
+        success("∀ x: ℤ, x - x = 0");
+        fail("∀ x: ℤ, x - x = 1");
+    }
 
     #[test]
     fn success_ring1() {
-        run_interactive_to_end(
-            "forall x: ℤ, eq ℤ (x + x) (2 * x)",
-            r#"
-        intros x
-        ring
-        "#,
-        );
+        success("∀ x: ℤ, x + x = 2 * x");
     }
 
     #[test]
     fn success_ring2() {
-        run_interactive_to_end(
+        success(
             "forall a b: ℤ, eq ℤ (mult (plus a b) (plus a b)) \
-        (plus (mult a a) (plus (mult 2 (mult a b)) (mult b b)))",
-            r#"
-        intros a
-        intros b
-        ring
-        "#,
+            (plus (mult a a) (plus (mult 2 (mult a b)) (mult b b)))",
         );
     }
 }
