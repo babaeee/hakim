@@ -127,7 +127,7 @@ impl<'a, T: Clone + Debug> Hyps<'a, T> {
             if undo {
                 hyps.pop();
             } else {
-                //                dbg!(h);
+                dbg!(h);
                 hyps.push(h);
             }
         };
@@ -236,10 +236,10 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
         let mut found = false;
 
         let step1 = |h1, h2| {
-            //            dbg!("step1");
-            //            dbg!("h1");
+            dbg!("step1");
+            dbg!("h1");
             self.hyps.add_hyp(h1, false, negator);
-            //            dbg!("h2");
+            dbg!("h2");
             self.hyps.add_hyp(h2, false, negator);
             let c = self.dfs(checker, negator);
             self.hyps.add_hyp(h2, true, negator);
@@ -266,14 +266,14 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
         }
 
         let step2 = |h1, h2| {
-            //            dbg!("step2");
-            //            dbg!("h1");
+            dbg!("step2");
+            dbg!("h1");
             self.hyps.add_hyp(h1, false, negator);
             let mut ans = self.dfs(checker, negator);
             self.hyps.add_hyp(h1, true, negator);
 
             if ans {
-                //                dbg!("h2");
+                dbg!("h2");
                 self.hyps.add_hyp(h2, false, negator);
                 ans = self.dfs(checker, negator);
                 self.hyps.add_hyp(h2, true, negator);

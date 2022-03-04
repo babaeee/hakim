@@ -18,9 +18,9 @@ use PropStatement::*;
 use std::collections::HashMap;
 fn convert(
     term: TermRef,
-    logic_arena: LogicArena<'_, PropStatement>,
+    _logic_arena: LogicArena<'_, PropStatement>,
 ) -> LogicValue<'_, PropStatement> {
-    return LogicValue::from(PropStatement::Atom(term));
+    LogicValue::from(PropStatement::Atom(term))
 }
 fn check_contradiction(a: &[PropStatement]) -> bool {
     let mut map = HashMap::<TermRef, bool>::new();
@@ -28,7 +28,7 @@ fn check_contradiction(a: &[PropStatement]) -> bool {
         match x {
             Atom(t) => {
                 if let Some(x) = map.get(t) {
-                    if *x == false {
+                    if !*x {
                         return true;
                     }
                 } else {
@@ -37,7 +37,7 @@ fn check_contradiction(a: &[PropStatement]) -> bool {
             }
             Not(t) => {
                 if let Some(x) = map.get(t) {
-                    if *x == true {
+                    if *x {
                         return true;
                     }
                 } else {
