@@ -316,23 +316,3 @@ fn set_lemma() {
     "#,
     );
 }
-#[test]
-fn assumption_test() {
-    run_interactive_to_end(
-        "∀ P Q R S: U, (R -> S) -> R -> (S -> False) ∨ Q -> Q",
-        r#"
-        intros P Q R S H1 H2 H3
-        assumption
-    "#,
-    );
-}
-#[test]
-fn auto_set_test() {
-    run_interactive_to_end(
-        "∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) -> a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q",
-        r#"
-        intros A P Q R S a H1 H2 H3
-        auto_set
-    "#,
-    );
-}
