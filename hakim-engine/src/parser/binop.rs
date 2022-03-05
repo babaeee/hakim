@@ -7,9 +7,10 @@ pub enum BinOp {
     Iff,
     Imply,
     Included,
-    Intersection,
     Inset,
+    Intersection,
     Lt,
+    Minus,
     ModOf,
     Mult,
     Or,
@@ -23,7 +24,6 @@ pub enum Assoc {
     Left,
     Right,
     No,
-    Comm,
 }
 
 impl Display for BinOp {
@@ -39,6 +39,7 @@ impl Display for BinOp {
             Intersection => "∩",
             Inset => "∈",
             Lt => "<",
+            Minus => "-",
             ModOf => "mod",
             Mult => "*",
             Or => "∨",
@@ -66,7 +67,7 @@ use super::InferGenerator;
 impl BinOp {
     pub fn level_left(&self) -> u8 {
         match self.assoc() {
-            Left | Comm => self.prec(),
+            Left => self.prec(),
             No | Right => self.prec() - 1,
         }
     }
@@ -74,10 +75,11 @@ impl BinOp {
     pub fn level_right(&self) -> u8 {
         match self.assoc() {
             Right => self.prec(),
-            No | Left | Comm => self.prec() - 1,
+            No | Left => self.prec() - 1,
         }
     }
 
+    // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
     pub fn prec(&self) -> u8 {
         match self {
             App => 0,
@@ -93,30 +95,33 @@ impl BinOp {
             ModOf => 60,
             Mult => 40,
             Plus => 50,
+            Minus => 50,
             Or => 85,
             Union => 50,
             Setminus => 30,
         }
     }
 
+    // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
     pub fn assoc(&self) -> Assoc {
         match self {
-            And => Comm,
+            And => Right,
             App => Left,
             Divide => No,
             Eq => No,
-            Iff => Comm,
+            Iff => No,
             Imply => Right,
             Included => No,
-            Intersection => Comm,
+            Intersection => Left,
             Inset => No,
             Lt => No,
+            Minus => Left,
             ModOf => Left,
-            Mult => Comm,
-            Or => Comm,
-            Plus => Comm,
-            Union => Comm,
-            Setminus => Comm,
+            Mult => Left,
+            Or => Right,
+            Plus => Left,
+            Union => Left,
+            Setminus => Left,
         }
     }
 
@@ -131,6 +136,7 @@ impl BinOp {
             "∩" => Intersection,
             "∈" => Inset,
             "<" => Lt,
+            "-" => Minus,
             "mod" => ModOf,
             "*" => Mult,
             "∨" => Or,
@@ -173,6 +179,7 @@ impl BinOp {
                 app_ref!(inset(), w, l, r)
             }
             Lt => app_ref!(lt(), l, r),
+            Minus => app_ref!(minus(), l, r),
             ModOf => app_ref!(mod_of(), l, r),
             Mult => app_ref!(mult(), l, r),
             Or => app_ref!(or(), l, r),
@@ -210,6 +217,7 @@ impl BinOp {
                         "divide" => (op.clone(), BinOp::Divide, op2.clone()),
                         "iff" => (op.clone(), BinOp::Iff, op2.clone()),
                         "plus" => (op.clone(), BinOp::Plus, op2.clone()),
+                        "minus" => (op.clone(), BinOp::Minus, op2.clone()),
                         "mod" => (op.clone(), BinOp::ModOf, op2.clone()),
                         "mult" => (op.clone(), BinOp::Mult, op2.clone()),
                         "lt" => (op.clone(), BinOp::Lt, op2.clone()),

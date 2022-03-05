@@ -127,21 +127,21 @@ fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
     let arith_tree = match t.as_ref() {
         Term::App { func, op: op2 } => match func.as_ref() {
             Term::App { func, op: op1 } => match func.as_ref() {
-                Term::Axiom { unique_name, .. } => {
-                    if unique_name == "plus" {
-                        Plus(
-                            term_ref_to_arith(op1.clone(), arena),
-                            term_ref_to_arith(op2.clone(), arena),
-                        )
-                    } else if unique_name == "mult" {
-                        Mult(
-                            term_ref_to_arith(op1.clone(), arena),
-                            term_ref_to_arith(op2.clone(), arena),
-                        )
-                    } else {
-                        Atom(t)
-                    }
-                }
+                Term::Axiom { unique_name, .. } => match unique_name.as_str() {
+                    "plus" => Plus(
+                        term_ref_to_arith(op1.clone(), arena),
+                        term_ref_to_arith(op2.clone(), arena),
+                    ),
+                    "minus" => Plus(
+                        term_ref_to_arith(op1.clone(), arena),
+                        term_ref_to_arith(op2.clone(), arena),
+                    ),
+                    "mult" => Mult(
+                        term_ref_to_arith(op1.clone(), arena),
+                        term_ref_to_arith(op2.clone(), arena),
+                    ),
+                    _ => Atom(t),
+                },
                 _ => Atom(t),
             },
             _ => Atom(t),

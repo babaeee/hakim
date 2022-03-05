@@ -39,6 +39,9 @@ pub fn lt() -> TermRef {
 pub fn plus() -> TermRef {
     term_ref!(axiom "plus", forall z(), forall z(), z())
 }
+pub fn minus() -> TermRef {
+    term_ref!(axiom "minus", forall z(), forall z(), z())
+}
 pub fn mult() -> TermRef {
     term_ref!(axiom "mult", forall z(), forall z(), z())
 }

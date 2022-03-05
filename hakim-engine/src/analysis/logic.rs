@@ -206,6 +206,15 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
                 return op2.or(op1.not(&self.arena), &self.arena);
             }
         }
+        if let Term::Axiom { unique_name, .. } = term.as_ref() {
+            if unique_name == "False" || unique_name == "True" {
+                return match unique_name.as_str() {
+                    "True" => LogicValue::True,
+                    "False" => LogicValue::False,
+                    _ => unreachable!(),
+                };
+            }
+        }
         if let Term::App { func, op: op2 } = term.as_ref() {
             if let Term::App { func, op: op1 } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
