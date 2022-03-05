@@ -22,7 +22,7 @@ mod auto_set;
 pub(crate) use auto_set::auto_set;
 
 mod chain;
-pub(crate) use chain::chain;
+pub(crate) use chain::{chain, destruct};
 
 mod assumption;
 pub(crate) use assumption::assumption;

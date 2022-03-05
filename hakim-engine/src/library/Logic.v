@@ -6,6 +6,7 @@ Axiom True_proof_unique: ∀ p: True, p = True_proof.
 Todo imply_refl: ∀ A: U, A -> A.
 Todo imply_trans: ∀ A B C: U, (A -> B) -> (B -> C) -> (A -> C).
 Axiom and_intro: ∀ A B: U, A -> B -> A ∧ B. 
+Axiom and_ind: ∀ A B: U, A ∧ B -> ∀ Q: U, (A -> B -> Q) -> Q.
 Axiom or_introl: ∀ A B: U, A -> A ∨ B.
 Axiom or_intror: ∀ A B: U, B -> A ∨ B.
 Axiom or_ind: ∀ A B: U, A ∨ B -> ∀ Q: U, (A -> Q) -> (B -> Q) -> Q.

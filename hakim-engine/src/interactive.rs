@@ -13,7 +13,7 @@ mod monitor;
 mod suggest;
 pub mod tactic;
 
-use tactic::{add_hyp, apply, intros, lia, replace, rewrite, ring};
+use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite, ring};
 
 use self::monitor::Monitor;
 use self::suggest::{
@@ -292,6 +292,7 @@ impl Frame {
             "add_hyp" => add_hyp(frame, parts),
             "remove_hyp" => remove_hyp(frame, parts),
             "chain" => chain(frame, parts),
+            "destruct" => destruct(frame, parts),
             "ring" => ring(frame),
             "lia" => lia(frame),
             "auto_set" => auto_set(frame),
