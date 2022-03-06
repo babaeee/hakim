@@ -9,11 +9,13 @@ use crate::library::engine_from_middle_of_lib;
 #[cfg(test)]
 mod tests;
 
+mod monitor;
 mod suggest;
 pub mod tactic;
 
-use tactic::{add_hyp, apply, intros, lia, replace, rewrite, ring};
+use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite, ring};
 
+use self::monitor::Monitor;
 use self::suggest::{
     suggest_on_goal, suggest_on_goal_dblclk, suggest_on_hyp, suggest_on_hyp_dblclk,
 };
@@ -145,6 +147,10 @@ impl Session {
         self.last_snapshot().monitor_string()
     }
 
+    pub fn monitor(&self) -> Monitor {
+        self.last_snapshot().monitor()
+    }
+
     pub fn print(&self) {
         println!("{}", self.monitor_string());
     }
@@ -206,20 +212,7 @@ impl Snapshot {
         if self.is_finished() {
             return "No more subgoals.".to_string();
         }
-        let goal_count = self.frames.len();
-        let mut r = "".to_string();
-        for (name, ty) in &self.frames.last().unwrap().hyps {
-            r += &format!(" {}: {:#?}\n", name, ty);
-        }
-        for (i, frame) in self.frames.iter().rev().enumerate() {
-            r += &format!(
-                "--------------------------------------------({}/{})\n",
-                i + 1,
-                goal_count
-            );
-            r += &format!("    {:#?}\n", frame.goal);
-        }
-        r
+        self.monitor().to_string()
     }
 
     pub fn run_tactic(&self, line: &str) -> Result<Self, tactic::Error> {
@@ -299,6 +292,7 @@ impl Frame {
             "add_hyp" => add_hyp(frame, parts),
             "remove_hyp" => remove_hyp(frame, parts),
             "chain" => chain(frame, parts),
+            "destruct" => destruct(frame, parts),
             "ring" => ring(frame),
             "lia" => lia(frame),
             "auto_set" => auto_set(frame),

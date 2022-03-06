@@ -5,11 +5,7 @@ use super::{SuggClass::*, SuggRule, Suggestion};
 const HYP_RULES: &[SuggRule] = &[
     SuggRule {
         class: Destruct,
-        tactic: &[
-            "apply (ex_ind ? ? $n)",
-            "remove_hyp $n",
-            "intros $n_value $n_proof",
-        ],
+        tactic: &["destruct $n with (ex_ind ? ?) to ($n_value $n_proof)"],
         questions: &[],
         is_default: true,
     },
@@ -57,7 +53,13 @@ const HYP_RULES: &[SuggRule] = &[
     },
     SuggRule {
         class: Destruct,
-        tactic: &["chain (apply (or_ind ? ? $n)) (remove_hyp $n) (intros $n)"],
+        tactic: &["destruct $n with (or_ind ? ?)"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Destruct,
+        tactic: &["destruct $n with (and_ind ? ?) to ($n_l $n_r)"],
         questions: &[],
         is_default: true,
     },

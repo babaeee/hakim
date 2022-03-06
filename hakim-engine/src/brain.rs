@@ -167,10 +167,23 @@ pub fn predict_wild(t: &Term, predict: &impl Fn(usize, usize) -> bool) -> bool {
 
 /// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is unique_name of axioms. In case of no axiom, it will return false
-pub fn predict_axiom(t: &Term, predict: &impl Fn(&str) -> bool) -> bool {
+pub fn map_reduce_axiom<T>(
+    t: &Term,
+    map: &mut impl FnMut(&str) -> Option<T>,
+    reduce: &impl Fn(T, T) -> T,
+) -> Option<T> {
+    let mut combine = |a, b| {
+        let a = map_reduce_axiom(a, map, reduce);
+        let b = map_reduce_axiom(b, map, reduce);
+        match (a, b) {
+            (Some(a), Some(b)) => Some(reduce(a, b)),
+            (Some(a), None) | (None, Some(a)) => Some(a),
+            (None, None) => None,
+        }
+    };
     match t {
-        Term::Wild { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => false,
-        Term::App { func, op } => predict_axiom(func, predict) || predict_axiom(op, predict),
+        Term::Wild { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => None,
+        Term::App { func, op } => combine(func, op),
         Term::Forall(Abstraction {
             var_ty,
             body,
@@ -180,9 +193,20 @@ pub fn predict_axiom(t: &Term, predict: &impl Fn(&str) -> bool) -> bool {
             var_ty,
             body,
             hint_name: _,
-        }) => predict_axiom(var_ty, predict) || predict_axiom(body, predict),
-        Term::Axiom { unique_name, .. } => predict(unique_name),
+        }) => combine(var_ty, body),
+        Term::Axiom { unique_name, .. } => map(unique_name),
     }
+}
+
+/// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)
+/// when ik is unique_name of axioms. In case of no axiom, it will return false
+pub fn predict_axiom(t: &Term, predict: &impl Fn(&str) -> bool) -> bool {
+    map_reduce_axiom(
+        t,
+        &mut |x| if predict(x) { Some(()) } else { None },
+        &|_, _| (),
+    )
+    .is_some()
 }
 
 pub fn contains_wild(t: &Term) -> bool {

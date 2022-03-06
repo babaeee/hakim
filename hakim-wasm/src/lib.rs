@@ -129,27 +129,7 @@ impl Instance {
 
     #[wasm_bindgen]
     pub fn monitor(&self) -> JsValue {
-        let monitor = match &self.session {
-            Some(s) if s.is_finished() => Monitor::Finished,
-            Some(s) => {
-                let mut snapshot = s.last_snapshot().clone();
-                let goals = snapshot
-                    .frames
-                    .iter()
-                    .map(|x| x.engine.pretty_print(&x.goal))
-                    .collect();
-                let hyps = {
-                    let frame = snapshot.pop_frame();
-                    frame
-                        .hyps
-                        .into_iter()
-                        .map(|(k, v)| (k, frame.engine.pretty_print(&v)))
-                        .collect()
-                };
-                Monitor::Running { goals, hyps }
-            }
-            None => Monitor::SessionIsNotStarted,
-        };
+        let monitor = self.session.as_ref().map(|s| s.monitor());
         serde_wasm_bindgen::to_value(&monitor).unwrap()
     }
 

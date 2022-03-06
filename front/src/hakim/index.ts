@@ -64,14 +64,40 @@ type EventListener = (s: State) => void;
 
 let listeners: EventListener[] = [];
 
-const calcState = (): State => {
-    const history = instance.get_history();
-    console.log(instance.monitor());
-    const monitor = instance.monitor();
-    if (monitor === 'Finished') {
-        return { history, isFinished: true };
+const isState = (x: State): x is State => {
+    if (!(x.history instanceof Array)) {
+        console.log('state does not have history\nState: ' + JSON.stringify(x));
+        return false;
     }
-    return { history, monitor: monitor.Running, isFinished: false };
+    if (x.isFinished === true) return true;
+    if (x.isFinished !== false) return false;
+    if (!x.monitor) return false;
+    if (!(x.monitor.goals instanceof Array)) return false;
+    if (!(x.monitor.hyps instanceof Array)) return false;
+    return true;
+};
+
+const calcState = (): State => {
+    const f = (): State => {
+        const history = instance.get_history();
+        console.log(instance.monitor());
+        const monitor = instance.monitor();
+        if (monitor === 'Finished') {
+            return { history, isFinished: true };
+        }
+        return { history, monitor: monitor.Running, isFinished: false };
+    };
+    const r = f();
+    if (!isState(r)) {
+        if (localStorage.getItem('wasmState') === null) {
+            throw new Error('invalid state');
+        }
+        window.onbeforeunload = null;
+        localStorage.removeItem('wasmState');
+        localStorage.removeItem('reactState');
+        window.location.reload();
+    }
+    return r;
 };
 
 export const emit = () => {
