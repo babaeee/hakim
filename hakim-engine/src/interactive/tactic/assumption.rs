@@ -69,19 +69,19 @@ pub fn assumption(frame: Frame) -> Result<Vec<Frame>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail};
+    use crate::interactive::tests::run_interactive_to_end; //run_interactive_to_fail};
 
     fn success(goal: &str) {
         run_interactive_to_end(goal, "intros\nassumption");
     }
 
-    fn fail(goal: &str) {
+    /*    fn fail(goal: &str) {
         run_interactive_to_fail(goal, "intros", "assumption");
-    }
+    }*/
 
-    #[test] 
+    #[test]
     fn impl_todo() {
         success("∀ P Q R S: U, R -> R");
-        fail("∀ P Q R S: U, (R -> S) -> R -> (S -> False) ∨ Q -> Q");
-    }    
+        success("∀ P Q R S: U, (R -> S) -> R -> (S -> False) ∨ Q -> Q");
+    }
 }
