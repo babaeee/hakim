@@ -37,3 +37,12 @@
   color: black;
   background-color: white;
 }
+
+.inlBody {
+  flex: 1;
+  border-radius: 2rem;
+  background-color: black;
+  color: white;
+  padding: 1rem;
+  margin: 1rem;
+}

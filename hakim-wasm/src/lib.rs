@@ -133,6 +133,12 @@ impl Instance {
         serde_wasm_bindgen::to_value(&monitor).unwrap()
     }
 
+    #[wasm_bindgen]
+    pub fn natural(&self) -> Option<String> {
+        let s = (&self.session).as_ref()?;
+        Some(s.natural())
+    }
+
     pub fn try_auto(&self) -> Option<String> {
         let mut s = (&self.session).as_ref()?.last_snapshot().clone();
         if s.is_finished() {

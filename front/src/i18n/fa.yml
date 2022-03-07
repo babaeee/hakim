@@ -1,7 +1,11 @@
 adventure: ماجراجویی
+and: و
 auto_proof: اثبات خودکار
 babaeee_coq: اثبات چک کن ببعییی
 back: بازگشت
+by: طبق
+case_on: روی فرض $0 حالت بندی می کنیم
+case: حالت
 change_lang: تغییر زبان
 choose_for_replace: قسمتی را برای جایگزینی انتخاب کنید
 contradiction: تناقض
@@ -16,11 +20,20 @@ enter_value_of1: مقدار
 enter_value_of2: را وارد کنید
 exit: خروج
 export: صادر کردن
+goal: حکم
+goal_solved: حکم برقرار است
+hyp: فرض
 in_applying: در حین اعمال کردن
+in_natural: به زبان طبیعی
 induction_on: استقرا روی
 input_assertion: ادعای خود را وارد کنید
 intros: معرفی
 intros_with_name: معرفی با نام
+inl_by_lia: حکم توسط جبر مقدماتی قابل نتیجه گیری است.
+inl_by_ring: حکم توسط جبر مقدماتی قابل نتیجه گیری است.
+inl_by_auto_set: حکم توسط جبر مجموعه ها قابل اثبات است.
+its_enough_to_proof_following: کافیست گزاره های زیر را ثابت کنیم
+its_enough_to_proof: کافیست ثابت کنیم
 library: کتابخانه
 library_intro: |
   در این قسمت می توانید قضیه ها و تعاریف موجود در کتابخانه را ببینید و حتی آن ها را ثابت
@@ -33,8 +46,11 @@ loading: در حال بارگیری
 new_assertion: ادعای جدید
 no_action_for_goal: اقدامی برای این نوع هدف تعریف نشده است
 no_more_subgoal: هدف دیگری برای اثبات وجود ندارد.
+not_solved: هنوز ثابت نشده است
+one: یک
 or_choose_one_prop: یا یکی از گزاره های زیر را انتخاب کنید
 proof_screen: صفحه اثبات
+random_like: دلخواه مانند
 rewrite: بازنویسی
 replace: جایگزینی
 replace_with_what1: می خواهید
@@ -47,4 +63,5 @@ tactic_left: چپ
 tactic_right: راست
 type_a_goal_to_proof: یک هدف را برای اثبات کردن تایپ کنید
 we_know: ما می دانیم
+we_consider: در نظر می گیریم
 with_type: با تایپ
