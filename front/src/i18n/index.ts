@@ -1,7 +1,7 @@
 import enDict from "./en.yml";
 import faDict from "./fa.yml";
 
-let dict: any = {};
+let dict: { [s: string]: string } = {};
 
 export const getLang = () => {
   return localStorage.getItem('lang') || 'fa';
@@ -24,8 +24,19 @@ export const init = () => {
   if (lang === 'en') dict = enDict;
 };
 
-export const getText = (id: string): string => {
-  return dict[id] || id;
+export const getText = (inp: string): string => {
+  const [id, argsText] = inp.split('<$');
+  let r = dict[id] || id;
+  if (!argsText) {
+    return r;
+  }
+  const args = argsText.slice(0, -2).split('$,');
+  let i = 0;
+  for (const arg of args) {
+    r = r.replaceAll(`$${i}`, arg);
+    i += 1;
+  }
+  return r;
 };
 
 export const g = (c: TemplateStringsArray, ...v: string[]) => {
@@ -36,7 +47,7 @@ export const g = (c: TemplateStringsArray, ...v: string[]) => {
 };
 
 export const fromRust = (s: string) => {
-  return s.replace(/\$\w+/g, (x) => getText(x.slice(1)));
+  return s.replace(/\$\w+(<\$.*\$>)?/g, (x) => getText(x.slice(1)));
 };
 
 init();

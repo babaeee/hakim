@@ -112,6 +112,17 @@ impl From<Session> for NaturalProof {
             r += &next.engine.pretty_print(&next.goal);
             r
         }
+        fn apply_hyp(lem: &str, hyp: &str, next: usize, pt: &[ProofTree]) -> NaturalProof {
+            let ty = pt[next].frame().hyps.get(hyp).unwrap();
+            let ty = pt[next].frame().engine.pretty_print(ty);
+            Sibling(
+                Box::new(Statement(format!(
+                    "$inl_apply_on_hyp<${}$,{}$,{}$>",
+                    lem, hyp, ty
+                ))),
+                Box::new(dfs(next, pt)),
+            )
+        }
         fn apply_goal(lem: &str, children: &[usize], pt: &[ProofTree]) -> NaturalProof {
             match children {
                 [] => Statement(format!("$by {} $goal_solved", lem)),
@@ -168,10 +179,13 @@ impl From<Session> for NaturalProof {
                             Box::new(dfs(children[0], pt)),
                         ),
                         "apply" if tacvec.len() == 2 => apply_goal(&tacvec[1], children, pt),
+                        "apply" if tacvec.len() == 4 => {
+                            apply_hyp(&tacvec[1], &tacvec[3], children[0], pt)
+                        }
                         "destruct" if tacvec.len() == 4 => {
                             if tacvec[3] == "(or_ind ? ?)" {
                                 let h = &tacvec[1];
-                                let parent = Box::new(Statement(format!("$case_on {}", h)));
+                                let parent = Box::new(Statement(format!("$case_on_hyp<${}$>", h)));
                                 let childs = sibl(children.iter().map(|&x| {
                                     Box::new(ParentChild(
                                         Box::new(Statement(format!(
