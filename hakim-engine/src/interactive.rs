@@ -5,17 +5,20 @@ use crate::brain::{contains_wild, predict_axiom, TermRef};
 
 use crate::engine::{Engine, Error};
 use crate::library::engine_from_middle_of_lib;
+use crate::parser::is_whity_char;
 
 #[cfg(test)]
 mod tests;
 
 mod monitor;
+mod natural;
 mod suggest;
 pub mod tactic;
 
 use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite, ring};
 
 use self::monitor::Monitor;
+use self::natural::NaturalProof;
 use self::suggest::{
     suggest_on_goal, suggest_on_goal_dblclk, suggest_on_hyp, suggest_on_hyp_dblclk,
 };
@@ -61,7 +64,7 @@ fn smart_split(text: &str) -> Vec<String> {
             s.push(c);
             continue;
         }
-        if c.is_whitespace() {
+        if is_whity_char(c) {
             if !s.is_empty() {
                 r.push(s);
                 s = "".to_string();
@@ -149,6 +152,12 @@ impl Session {
 
     pub fn monitor(&self) -> Monitor {
         self.last_snapshot().monitor()
+    }
+
+    pub fn natural(&self) -> String {
+        let mut r = String::new();
+        NaturalProof::from(self.clone()).into_string(0, &mut r);
+        r
     }
 
     pub fn print(&self) {
@@ -247,7 +256,7 @@ impl Frame {
         Ok(())
     }
 
-    pub fn remove_hyp_with_name(&mut self, name: String) -> tactic::Result<TermRef> {
+    pub fn deny_dependency(&self, name: String) -> tactic::Result<()> {
         for (_, hyp) in &self.hyps {
             if predict_axiom(hyp, &|x| x == name) {
                 return Err(tactic::Error::ContextDependOnHyp(name, hyp.clone()));
@@ -256,6 +265,11 @@ impl Frame {
         if predict_axiom(&self.goal, &|x| x == name) {
             return Err(tactic::Error::ContextDependOnHyp(name, self.goal.clone()));
         }
+        Ok(())
+    }
+
+    pub fn remove_hyp_with_name(&mut self, name: String) -> tactic::Result<TermRef> {
+        self.deny_dependency(name.clone())?;
         if let Some(hyp) = self.hyps.remove(&name) {
             self.engine.remove_name_unchecked(&name);
             return Ok(hyp);

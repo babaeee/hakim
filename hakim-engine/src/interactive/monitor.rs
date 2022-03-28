@@ -43,49 +43,49 @@ impl Display for Monitor {
     }
 }
 
-fn order_hyps(frame: &Frame) -> Vec<(String, String)> {
-    let id_map = {
-        let mut x = HashMap::<String, usize>::new();
-        for (i, (hyp, _)) in frame.hyps.iter().enumerate() {
-            x.insert(hyp.clone(), i);
+impl Frame {
+    pub fn order_hyps(&self) -> Vec<String> {
+        let frame = self;
+        let id_map = {
+            let mut x = HashMap::<String, usize>::new();
+            for (i, (hyp, _)) in frame.hyps.iter().enumerate() {
+                x.insert(hyp.clone(), i);
+            }
+            x
+        };
+        let n = frame.hyps.len();
+        let mut edge = vec![vec![]; n];
+        let mut cnt = vec![0; n];
+        for (i, (_, ty)) in frame.hyps.iter().enumerate() {
+            map_reduce_axiom(
+                ty,
+                &mut |x| {
+                    let j = *id_map.get(x)?;
+                    edge[j].push(i);
+                    cnt[i] += 1;
+                    Some(())
+                },
+                &|_, _| (),
+            );
         }
-        x
-    };
-    let n = frame.hyps.len();
-    let mut edge = vec![vec![]; n];
-    let mut cnt = vec![0; n];
-    for (i, (_, ty)) in frame.hyps.iter().enumerate() {
-        map_reduce_axiom(
-            ty,
-            &mut |x| {
-                let j = *id_map.get(x)?;
-                edge[j].push(i);
-                cnt[i] += 1;
-                Some(())
-            },
-            &|_, _| (),
-        );
-    }
-    let mut queue = BinaryHeap::new();
-    let hyp_vec: Vec<_> = frame.hyps.iter().map(|(a, _)| a).collect();
-    cnt.iter().enumerate().filter(|x| *x.1 == 0).for_each(|x| {
-        queue.push(Reverse(hyp_vec[x.0]));
-    });
-    let mut r = vec![];
-    while let Some(Reverse(x)) = queue.pop() {
-        r.push((
-            x.clone(),
-            frame.engine.pretty_print(frame.hyps.get(x).unwrap()),
-        ));
-        let x = *id_map.get(x).unwrap();
-        for &y in &edge[x] {
-            cnt[y] -= 1;
-            if cnt[y] == 0 {
-                queue.push(Reverse(hyp_vec[y]));
+        let mut queue = BinaryHeap::new();
+        let hyp_vec: Vec<_> = frame.hyps.iter().map(|(a, _)| a).collect();
+        cnt.iter().enumerate().filter(|x| *x.1 == 0).for_each(|x| {
+            queue.push(Reverse(hyp_vec[x.0]));
+        });
+        let mut r = vec![];
+        while let Some(Reverse(x)) = queue.pop() {
+            r.push(x.clone());
+            let x = *id_map.get(x).unwrap();
+            for &y in &edge[x] {
+                cnt[y] -= 1;
+                if cnt[y] == 0 {
+                    queue.push(Reverse(hyp_vec[y]));
+                }
             }
         }
+        r
     }
-    r
 }
 
 impl Snapshot {
@@ -98,7 +98,15 @@ impl Snapshot {
             .iter()
             .map(|x| x.engine.pretty_print(&x.goal))
             .collect();
-        let hyps = order_hyps(self.frames.last().unwrap());
+        let frame = self.frames.last().unwrap();
+        let hyps = frame
+            .order_hyps()
+            .into_iter()
+            .map(|x| {
+                let rc = frame.hyps.get(&x).unwrap();
+                (x, frame.engine.pretty_print(rc))
+            })
+            .collect();
         Monitor::Running { goals, hyps }
     }
 }

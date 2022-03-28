@@ -106,9 +106,9 @@ fn abstraction_pretty_print_inner(
     } else {
         generate_name(names, "x")
     };
-    let var_ty_str = term_pretty_print(var_ty, names, (200, 200));
+    let var_ty_str = term_pretty_print_inner(var_ty, names, (200, 200));
     names.0.push((name.clone(), 0));
-    let body_str = term_pretty_print(body, names, (200, 200));
+    let body_str = term_pretty_print_inner(body, names, (200, 200));
     names.0.pop();
     (name, var_ty_str, body_str)
 }
@@ -144,7 +144,7 @@ fn abstraction_pretty_print(
     }
 }
 
-pub fn term_pretty_print(
+fn term_pretty_print_inner(
     term: &Term,
     names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
     level: (u8, u8),
@@ -164,7 +164,7 @@ pub fn term_pretty_print(
         let r = exp
             .into_iter()
             .rev()
-            .map(|x| term_pretty_print(&x, names, (200, 200)))
+            .map(|x| term_pretty_print_inner(&x, names, (200, 200)))
             .collect::<Vec<_>>();
         return format!("{{{}}}", r.join(", "));
     }
@@ -172,16 +172,16 @@ pub fn term_pretty_print(
         return if min(level.0, level.1) < op.prec() {
             format!(
                 "({} {} {})",
-                term_pretty_print(&l, names, (200, op.level_left())),
+                term_pretty_print_inner(&l, names, (200, op.level_left())),
                 op,
-                term_pretty_print(&r, names, (op.level_right(), 200))
+                term_pretty_print_inner(&r, names, (op.level_right(), 200))
             )
         } else {
             format!(
                 "{} {} {}",
-                term_pretty_print(&l, names, (level.0, op.level_left())),
+                term_pretty_print_inner(&l, names, (level.0, op.level_left())),
                 op,
-                term_pretty_print(&r, names, (op.level_right(), level.1))
+                term_pretty_print_inner(&r, names, (op.level_right(), level.1))
             )
         };
     }
@@ -208,8 +208,8 @@ pub fn term_pretty_print(
         Term::App { func, op } => {
             let s = format!(
                 "{} {}",
-                term_pretty_print(func, names, (1, 1)),
-                term_pretty_print(op, names, (0, 0))
+                term_pretty_print_inner(func, names, (1, 1)),
+                term_pretty_print_inner(op, names, (0, 0))
             );
             if min(level.0, level.1) < 1 {
                 format!("({})", s)
@@ -219,4 +219,9 @@ pub fn term_pretty_print(
         }
         Term::Wild { index, scope: _ } => format!("?w{}", index),
     }
+}
+
+pub fn term_pretty_print(term: &Term, contain_name: impl Fn(&str) -> bool) -> String {
+    let r = term_pretty_print_inner(term, &mut (vec![], contain_name), (200, 200));
+    format!("\u{2068}{}\u{2069}", r)
 }

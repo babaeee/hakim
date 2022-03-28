@@ -27,6 +27,15 @@ export const ProofContext = createContext({} as ProofContextType);
 
 export const Proof = ({ onFinish }: ProofProps) => {
   const [lemmaBox, setLemmaBox] = useState([] as Lemma[]);
+  const [natural, setNatural] = useState(undefined as string | undefined);
+  if (natural) {
+    return <div className={css.inlBody}>
+      <pre>
+        {natural}
+      </pre>
+      <button onClick={() => setNatural(undefined)}>{g`back`}</button>
+    </div>;
+  }
   const ctx: ProofContextType = {
     lemmaBox,
     appendLemma: (lemma) => {
@@ -48,7 +57,7 @@ export const Proof = ({ onFinish }: ProofProps) => {
           <Toolbar />
           <Tabs />
           <div className={css.sidebarContainer}>
-            <History />
+            <History onNatural={setNatural} />
             <LemmaBox />
           </div>
         </div>

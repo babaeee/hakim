@@ -182,10 +182,6 @@ impl Engine {
     }
 
     pub fn pretty_print(&self, term: &Term) -> String {
-        term_pretty_print(
-            term,
-            &mut (vec![], |x| !self.name_dict.contains_key(x)),
-            (200, 200),
-        )
+        term_pretty_print(term, |x| !self.name_dict.contains_key(x))
     }
 }

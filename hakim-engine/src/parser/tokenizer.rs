@@ -51,6 +51,10 @@ pub fn is_valid_ident_char(c: char) -> bool {
     c.is_alphanumeric() || c == '_'
 }
 
+pub fn is_whity_char(c: char) -> bool {
+    c.is_whitespace() || c == '\u{2068}' || c == '\u{2069}'
+}
+
 pub fn is_valid_ident(s: &str) -> bool {
     if s.is_empty() {
         return false;
@@ -85,7 +89,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             continue;
         }
         let c = text.eat_char();
-        if c.is_whitespace() {
+        if is_whity_char(c) {
             continue;
         }
         if is_valid_ident_first_char(c) {
