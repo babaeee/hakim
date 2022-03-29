@@ -35,8 +35,8 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     const range = sel.getRangeAt(0);
     const start = range.startOffset;
     const end = range.endOffset;
-    const len = end - start;
-    const text = ty.slice(start, end);
+    const text = ty.slice(start, end).trim().replaceAll('\u2068', '').replaceAll('\u2069', '');
+    const len = text.length;
     let cnt = 1;
     for (let i = 0; i < start; i += 1) {
         if (ty.slice(i, i + len) === text) {

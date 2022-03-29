@@ -6,6 +6,7 @@ type Props = {
     onEnter: () => any,
     enableHelp: (x: boolean) => any,
     className?: string,
+    autoFocus?: boolean,
 };
 
 const transform = (s: string | undefined) => {
@@ -18,9 +19,9 @@ const transform = (s: string | undefined) => {
     return s;
 }
 
-export const UnicodeInput = ({ value, onChange, enableHelp, onEnter, className }: Props) => {
+export const UnicodeInput = ({ autoFocus, value, onChange, enableHelp, onEnter, className }: Props) => {
     return (
-        <input dir="ltr" className={className} type="text" value={value} onChange={(e) => {
+        <input autoFocus={autoFocus} dir="ltr" className={className} type="text" value={value} onChange={(e) => {
             const txt = transform(e.target.value);
             enableHelp(txt.endsWith(';'));
             onChange(txt);
