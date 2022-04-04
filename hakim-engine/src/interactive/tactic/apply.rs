@@ -110,9 +110,9 @@ fn find_args_in_apply_hyp(
     None
 }
 
-fn apply_for_hyp(mut frame: Frame, exp: &str, name: String) -> Result<Vec<Frame>> {
+fn apply_for_hyp(mut frame: Frame, exp: &str, name: &str) -> Result<Vec<Frame>> {
     let (term, ic) = frame.engine.parse_text_with_wild(exp)?;
-    let prev_hyp = frame.remove_hyp_with_name(name.clone())?;
+    let prev_hyp = frame.remove_hyp_with_name(name)?;
     let op = term_ref!(axiom name, prev_hyp);
     let ty = match find_args_in_apply_hyp(term, op, ic, &name) {
         Some(x) => x,
@@ -158,13 +158,16 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
     Ok(v)
 }
 
-pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub(crate) fn apply<'a>(
+    frame: Frame,
+    mut args: impl Iterator<Item = &'a str>,
+) -> Result<Vec<Frame>> {
     let exp = &next_arg(&mut args, "apply")?;
     if let Some(in_kw) = args.next() {
         if in_kw != "in" {
             return Err(BadArg {
                 tactic_name: "apply".to_string(),
-                arg: in_kw,
+                arg: in_kw.to_string(),
             });
         }
         if let Some(hyp) = args.next() {
@@ -172,7 +175,7 @@ pub(crate) fn apply(frame: Frame, mut args: impl Iterator<Item = String>) -> Res
         } else {
             Err(BadArg {
                 tactic_name: "apply".to_string(),
-                arg: in_kw,
+                arg: in_kw.to_string(),
             })
         }
     } else {

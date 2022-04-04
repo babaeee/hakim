@@ -52,7 +52,7 @@ pub fn ring(frame: Frame) -> Result<Vec<Frame>> {
 تاکتیک بازنویسی:
 
 ```rust
-pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn rewrite<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
             // ^^^
     // ......
     frame.goal = if is_reverse {

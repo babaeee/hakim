@@ -74,9 +74,9 @@ pub fn get_eq_params(term: &Term) -> Option<[TermRef; 3]> {
     None
 }
 
-pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn rewrite<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
-    let is_reverse = args.peek() == Some(&"<-".to_string());
+    let is_reverse = args.peek() == Some(&"<-");
     if is_reverse {
         args.next();
     }
@@ -92,13 +92,13 @@ pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<V
     Ok(vec![frame])
 }
 
-pub fn replace(frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     let mut which = None;
     if let Some(x) = args.peek() {
         if &x[..1] == "#" {
             let n: isize = x[1..].parse().map_err(|_| BadArg {
-                arg: args.next().unwrap(),
+                arg: x.to_string(),
                 tactic_name: "replace".to_string(),
             })?;
             which = Some(n);

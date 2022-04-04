@@ -22,7 +22,7 @@ pub fn intros_one(frame: &mut Frame, name: &str) -> Result<()> {
     }
 }
 
-pub fn intros(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn intros<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     if args.peek().is_none() {
         while let Term::Forall(Abstraction {

@@ -5,6 +5,7 @@ pub fn ring(frame: Frame) -> Result<Vec<Frame>> {
     let goal = frame.goal;
     let [op1, op2, _] = get_eq_params(&goal).ok_or(BadGoal("ring only work on equality"))?;
     let d = Poly::from_subtract(op1, op2);
+    dbg!(&d);
     if d.is_zero() {
         Ok(vec![])
     } else {

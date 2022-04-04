@@ -1,16 +1,16 @@
 use super::{next_arg, next_arg_constant, Result};
 use crate::interactive::Frame;
 
-fn eat_paren(mut x: &str) -> String {
+fn eat_paren(mut x: &str) -> &str {
     if let Some(a) = x.strip_prefix('(') {
         if let Some(a) = a.strip_suffix(')') {
             x = a;
         }
     }
-    x.to_string()
+    x
 }
 
-pub(crate) fn chain(frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub(crate) fn chain<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut frames = vec![frame];
     for arg in args {
         let arg = eat_paren(&arg);
@@ -25,7 +25,10 @@ pub(crate) fn chain(frame: Frame, args: impl Iterator<Item = String>) -> Result<
     Ok(frames)
 }
 
-pub(crate) fn destruct(frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub(crate) fn destruct<'a>(
+    frame: Frame,
+    args: impl Iterator<Item = &'a str>,
+) -> Result<Vec<Frame>> {
     let args = &mut args.peekable();
     let tactic_name = "destruct";
     let hyp = next_arg(args, tactic_name)?;

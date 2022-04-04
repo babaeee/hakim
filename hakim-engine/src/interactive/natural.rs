@@ -91,7 +91,7 @@ impl From<Session> for NaturalProof {
                 if cur.hyps.contains_key(hn) {
                     continue;
                 }
-                if next.deny_dependency(hn.clone()).is_ok() {
+                if next.deny_dependency(&hn).is_ok() {
                     continue;
                 }
                 let ty = next.engine.pretty_print(next.hyps.get(hn).unwrap());
@@ -102,7 +102,7 @@ impl From<Session> for NaturalProof {
                 if cur.hyps.contains_key(hn) {
                     continue;
                 }
-                if next.deny_dependency(hn.clone()).is_err() {
+                if next.deny_dependency(&hn).is_err() {
                     continue;
                 }
                 let ty = next.engine.pretty_print(next.hyps.get(hn).unwrap());

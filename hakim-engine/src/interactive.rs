@@ -50,6 +50,7 @@ pub struct Session {
 }
 
 fn smart_split(text: &str) -> Vec<String> {
+    let c = text.split(" ");
     let mut r = vec![];
     let mut s = "".to_string();
     let mut d = 0;
@@ -256,25 +257,31 @@ impl Frame {
         Ok(())
     }
 
-    pub fn deny_dependency(&self, name: String) -> tactic::Result<()> {
+    pub fn deny_dependency(&self, name: &str) -> tactic::Result<()> {
         for (_, hyp) in &self.hyps {
             if predict_axiom(hyp, &|x| x == name) {
-                return Err(tactic::Error::ContextDependOnHyp(name, hyp.clone()));
+                return Err(tactic::Error::ContextDependOnHyp(
+                    name.to_string(),
+                    hyp.clone(),
+                ));
             }
         }
         if predict_axiom(&self.goal, &|x| x == name) {
-            return Err(tactic::Error::ContextDependOnHyp(name, self.goal.clone()));
+            return Err(tactic::Error::ContextDependOnHyp(
+                name.to_string(),
+                self.goal.clone(),
+            ));
         }
         Ok(())
     }
 
-    pub fn remove_hyp_with_name(&mut self, name: String) -> tactic::Result<TermRef> {
-        self.deny_dependency(name.clone())?;
-        if let Some(hyp) = self.hyps.remove(&name) {
-            self.engine.remove_name_unchecked(&name);
+    pub fn remove_hyp_with_name(&mut self, name: &str) -> tactic::Result<TermRef> {
+        self.deny_dependency(name)?;
+        if let Some(hyp) = self.hyps.remove(name) {
+            self.engine.remove_name_unchecked(name);
             return Ok(hyp);
         }
-        Err(tactic::Error::UnknownHyp(name))
+        Err(tactic::Error::UnknownHyp(name.to_string()))
     }
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
@@ -295,10 +302,10 @@ impl Frame {
 
     pub fn run_tactic(&self, line: &str) -> Result<Vec<Self>, tactic::Error> {
         let parts = smart_split(line);
-        let mut parts = parts.into_iter();
+        let mut parts = parts.iter().map(|x| x.as_str());
         let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
         let frame = self.clone();
-        match name.as_str() {
+        match name {
             "intros" => intros(frame, parts),
             "rewrite" => rewrite(frame, parts),
             "replace" => replace(frame, parts),
