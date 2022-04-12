@@ -41,7 +41,7 @@ pub fn intros<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Resu
         }
     } else {
         for name in args {
-            intros_one(&mut frame, &name)?;
+            intros_one(&mut frame, name)?;
         }
     }
     Ok(vec![frame])

@@ -50,7 +50,6 @@ pub struct Session {
 }
 
 fn smart_split(text: &str) -> Vec<String> {
-    let c = text.split(" ");
     let mut r = vec![];
     let mut s = "".to_string();
     let mut d = 0;

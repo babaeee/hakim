@@ -223,10 +223,9 @@ fn term_pretty_print_inner(
 
 pub fn term_pretty_print(term: &Term, contain_name: impl Fn(&str) -> bool) -> String {
     let r = term_pretty_print_inner(term, &mut (vec![], contain_name), (200, 200));
-    #[cfg(not(test))]
-    {
+    if cfg!(test) {
+        r
+    } else {
         format!("\u{2068}{}\u{2069}", r)
     }
-    #[cfg(test)]
-    r
 }

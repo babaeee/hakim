@@ -106,18 +106,18 @@ pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<
         }
     }
     let find = next_arg(&mut args, "replace")?;
-    let find = frame.engine.parse_text(&find)?;
+    let find = frame.engine.parse_text(find)?;
     next_arg_constant(&mut args, "replace", "with")?;
     let replace = next_arg(&mut args, "replace")?;
-    let replace = frame.engine.parse_text(&replace)?;
+    let replace = frame.engine.parse_text(replace)?;
     let mut proof_eq = frame.clone();
     proof_eq.goal = build_eq_term(find.clone(), replace.clone())?;
     let mut after_replace = frame;
     if args.peek().is_some() {
         next_arg_constant(&mut args, "replace", "in")?;
         let hyp_name = next_arg(&mut args, "replace")?;
-        let hyp = after_replace.remove_hyp_with_name(hyp_name.clone())?;
-        after_replace.add_hyp_with_name(&hyp_name, replace_term(hyp, find, replace, &mut which))?;
+        let hyp = after_replace.remove_hyp_with_name(hyp_name)?;
+        after_replace.add_hyp_with_name(hyp_name, replace_term(hyp, find, replace, &mut which))?;
         deny_arg(args, "replace")?;
     } else {
         after_replace.goal = replace_term(after_replace.goal, find, replace, &mut which);

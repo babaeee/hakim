@@ -6,7 +6,7 @@ use crate::{
 
 pub fn add_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "add_hyp")?;
-    let term = frame.engine.parse_text(&exp)?;
+    let term = frame.engine.parse_text(exp)?;
     let ty = type_of(term.clone())?;
     if !matches!(ty.as_ref(), Term::Universe { .. }) {
         return Err(Error::TermIsNotType(term));

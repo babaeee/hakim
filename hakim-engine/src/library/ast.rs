@@ -26,7 +26,7 @@ impl Sentence {
     fn parse<'a, T: Iterator<Item = &'a str> + 'a>(it: &mut T) -> Self {
         let s = it.next().unwrap();
         if let Some(r) = s.strip_prefix("Todo ") {
-            if let Some((name, body)) = r.split_once(":") {
+            if let Some((name, body)) = r.split_once(':') {
                 return Sentence::Todo {
                     name: name.trim().to_string(),
                     ty: body.to_string(),
@@ -34,7 +34,7 @@ impl Sentence {
             }
         }
         if let Some(r) = s.strip_prefix("Axiom ") {
-            if let Some((name, body)) = r.split_once(":") {
+            if let Some((name, body)) = r.split_once(':') {
                 return Sentence::Axiom {
                     name: name.trim().to_string(),
                     ty: body.to_string(),
@@ -47,7 +47,7 @@ impl Sentence {
             };
         }
         if let Some(r) = s.strip_prefix("Theorem ") {
-            if let Some((name, body)) = r.split_once(":") {
+            if let Some((name, body)) = r.split_once(':') {
                 let mut proof = vec![];
                 assert_eq!("Proof", it.next().unwrap());
                 for x in it {

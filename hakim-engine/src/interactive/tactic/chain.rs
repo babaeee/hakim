@@ -13,10 +13,10 @@ fn eat_paren(mut x: &str) -> &str {
 pub(crate) fn chain<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut frames = vec![frame];
     for arg in args {
-        let arg = eat_paren(&arg);
+        let arg = eat_paren(arg);
         frames = frames
             .into_iter()
-            .map(|x| x.run_tactic(&arg))
+            .map(|x| x.run_tactic(arg))
             .collect::<Result<Vec<Vec<_>>>>()?
             .into_iter()
             .flat_map(|x| x.into_iter())
@@ -35,10 +35,10 @@ pub(crate) fn destruct<'a>(
     next_arg_constant(args, tactic_name, "with")?;
     let lem = next_arg(args, tactic_name)?;
     let var = if args.peek().is_none() {
-        hyp.clone()
+        hyp
     } else {
         next_arg_constant(args, tactic_name, "to")?;
-        eat_paren(&next_arg(args, tactic_name)?)
+        eat_paren(next_arg(args, tactic_name)?)
     };
     frame.run_tactic(&format!(
         "chain (apply ({} {})) (remove_hyp {}) (intros {})",
