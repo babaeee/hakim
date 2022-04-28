@@ -57,13 +57,10 @@ const config = {
     experiments: {
         asyncWebAssembly: true
     },
-    /*devServer: {
-        static: path.join(__dirname, "build"),
-        historyApiFallback: true,
+    devServer: {
         port: 4000,
-        open: true,
-        hot: true
-    },*/
+        historyApiFallback: true,
+    },
 };
 
 module.exports = (_, argv) => {

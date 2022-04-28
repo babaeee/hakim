@@ -8,10 +8,6 @@ import { createContext, useState } from 'react';
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 
-type ProofProps = {
-  onFinish: () => void;
-};
-
 type Lemma = {
   name: string,
   ty: string,
@@ -25,7 +21,7 @@ type ProofContextType = {
 
 export const ProofContext = createContext({} as ProofContextType);
 
-export const Proof = ({ onFinish }: ProofProps) => {
+export const Proof = () => {
   const [lemmaBox, setLemmaBox] = useState([] as Lemma[]);
   const [natural, setNatural] = useState(undefined as string | undefined);
   if (natural) {
@@ -36,6 +32,9 @@ export const Proof = ({ onFinish }: ProofProps) => {
       <button onClick={() => setNatural(undefined)}>{g`back`}</button>
     </div>;
   }
+  const onFinish = () => {
+    window.history.back();
+  };
   const ctx: ProofContextType = {
     lemmaBox,
     appendLemma: (lemma) => {
