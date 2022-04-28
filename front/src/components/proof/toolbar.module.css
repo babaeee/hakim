@@ -21,12 +21,13 @@
 
 @keyframes col {
   0% {
-    background-color:#0f0;
+    background-color: #0f0;
     border-color: #0f0;
     color: #f0f;
   }
+
   100% {
-    background-color:#f0f;
+    background-color: #f0f;
     border-color: #f0f;
     color: #0f0;
   }

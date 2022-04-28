@@ -35,6 +35,8 @@ inl_by_ring: حکم توسط جبر مقدماتی قابل نتیجه گیری 
 inl_by_auto_set: حکم توسط جبر مجموعه ها قابل اثبات است.
 its_enough_to_proof_following: کافیست گزاره های زیر را ثابت کنیم
 its_enough_to_proof: کافیست ثابت کنیم
+level_tutorial: آموزش
+level_logic: منطق و استدلال
 library: کتابخانه
 library_intro: |
   در این قسمت می توانید قضیه ها و تعاریف موجود در کتابخانه را ببینید و حتی آن ها را ثابت

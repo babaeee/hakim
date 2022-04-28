@@ -3,6 +3,11 @@
     margin: 10px 100px;
 }
 
+.lock {
+    height: 2rem;
+    width: 100%;
+}
+
 .title {
     width: 100%;
     padding-top: 10px;
@@ -10,7 +15,31 @@
     color: white;
 }
 
-.text, .text * {
+.lines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 1;
+}
+
+.item {
+    height: 6vw;
+    width: 6vw;
+    position: fixed;
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+    background-color: red;
+    border: 0;
+    border-radius: 1vw;
+    outline: none;
+    z-index: 2;
+}
+
+.text,
+.text * {
     color: white;
     padding: 0.3rem;
 }

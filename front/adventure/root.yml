@@ -7,3 +7,24 @@
   type: collection
   x: 0
   y: 2
+  dependencies:
+   - tutorial
+- id: equality
+  type: collection
+  x: -1
+  y: 3
+  dependencies:
+   - logic
+- id: induction
+  type: collection
+  x: 1
+  y: 3
+  dependencies:
+   - logic
+- id: number_theory
+  type: collection
+  x: 0
+  y: 4
+  dependencies:
+   - induction
+   - equality
