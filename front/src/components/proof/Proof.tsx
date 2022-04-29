@@ -9,6 +9,7 @@ import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { cancelProof, solveProof } from '../root/Root';
 import { useNavigate } from 'react-router-dom';
+import { Title } from '../util/Title';
 
 type Lemma = {
   name: string,
@@ -54,6 +55,7 @@ export const Proof = () => {
   };
   return (
     <DndProvider backend={HTML5Backend}><ProofContext.Provider value={ctx}>
+      <Title title={g`proof_screen`} />
       <div className={css.main}>
         <h1 className={css.title}>
           <span>{g`babaeee_coq`}</span>

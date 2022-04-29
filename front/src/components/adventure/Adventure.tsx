@@ -5,6 +5,8 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { setGoal } from "../../hakim";
 import { AfterProofAction, openProofSession } from "../root/Root";
 import { isWinNode } from "./winList";
+import { Title } from "../util/Title";
+import { useEffect } from "react";
 
 export type Node = {
     id: string,
@@ -126,35 +128,56 @@ export const Adventure = () => {
     const yt = (x: number) => x * 17 + 20;
     let d = data.children;
     let cpath = "/adventure";
+    let myname = undefined;
+    let levelToRender: Level | undefined = undefined;
+    let levelIs404 = false;
+    let levelIsLocked = false;
     for (const p of path) {
         const x = d.find((x) => x.id === p);
         if (!x) {
-            return <div>404</div>;
+            levelIs404 = true;
+            break;
         }
         if (isLocked(x, d)) {
-            return <div>{g`this_is_locked`}</div>;
+            levelIsLocked = true;
+            break;
         }
         if (x.type === "level") {
-            const goto: AfterProofAction = {
-                type: 'goto',
-                url: cpath,
-            };
-            (async () => {
-                if (await setGoal(x.goal)) {
-                    openProofSession(navigator, {
-                        onCancel: goto,
-                        onSolve: {
-                            type: 'win',
-                            level: x.id,
-                            then: goto,
-                        }
-                    });
-                }
-            })();
-            return <div>Wait</div>;
+            levelToRender = x;
+            myname = x.name;
+            break;
         }
         cpath += `/${x.id}`;
         d = x.children;
+        myname = x.name;
+    }
+    useEffect(() => {
+        if (!levelToRender) return;
+        const back: AfterProofAction = {
+            type: 'back',
+        };
+        (async () => {
+            if (await setGoal(levelToRender.goal)) {
+                openProofSession(navigator, {
+                    onCancel: back,
+                    onSolve: {
+                        type: 'win',
+                        level: levelToRender.id,
+                        then: back,
+                    },
+                }, true);
+            }
+        })();
+        // cpath is function of levelToRender
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [levelToRender?.id]);
+    if (levelIs404) return <div>404</div>;
+    if (levelIsLocked) return <div>{g`this_is_locked`}</div>;
+    if (levelToRender) {
+        return <div>
+            <Title title={[g`adventure`, myname]} />
+            Wait
+        </div>;
     }
     const edges = d.flatMap(
         (a) => a.dependencies?.map((bid): [[number, number], [number, number]] => {
@@ -164,6 +187,7 @@ export const Adventure = () => {
     );
     return (
         <div className={css.main}>
+            <Title title={[g`adventure`, myname]} />
             <h1 className={css.title}>{g`adventure`}</h1>
             {d.map((x) => <Link to={`${location.pathname}/${x.id}`}><button style={{
                 left: `${xt(x.x) - 3}vw`,

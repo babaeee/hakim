@@ -68,9 +68,9 @@ export const cancelProof = (navigate: NavigateFunction) => {
     runProofAction(navigate, todoAfterProof.onCancel || { type: 'back' });
 };
 
-export const openProofSession = (navigate: NavigateFunction, afterProof: AfterProof) => {
+export const openProofSession = (navigate: NavigateFunction, afterProof: AfterProof, replace: boolean = false) => {
     todoAfterProof = afterProof;
-    navigate('/proof');
+    navigate('/proof', { replace });
 };
 
 export const Root = () => {

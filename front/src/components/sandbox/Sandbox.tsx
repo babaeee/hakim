@@ -5,6 +5,7 @@ import { g } from "../../i18n";
 import { openProofSession } from "../root/Root";
 import { UnicodeHelp } from "../unicode/UnicodeHelp";
 import { UnicodeInput } from "../unicode/UnicodeInput";
+import { Title } from "../util/Title";
 import css from "./Sandbox.module.css";
 
 //∀ A: U, ∀ a: A, In A (empty A) a -> False
@@ -50,6 +51,7 @@ export const Sandbox = () => {
     };
     return (
         <div className={css.main}>
+            <Title title={g`sandbox`} />
             <h1 className={css.title}>{g`sandbox`}</h1>
             <p className={css.text}>{g`type_a_goal_to_proof`}</p>
             <UnicodeInput value={text} onChange={setText} enableHelp={setHelp} onEnter={done} />

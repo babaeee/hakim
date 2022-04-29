@@ -61,6 +61,7 @@
     "react-dnd": "^14.0.4",
     "react-dnd-html5-backend": "^14.0.2",
     "react-dom": "^17.0.2",
+    "react-helmet": "^6.1.0",
     "react-refresh": "^0.8.3",
     "react-router-dom": "^6.3.0",
     "resolve": "1.18.1",
@@ -90,6 +91,7 @@
     ]
   },
   "devDependencies": {
+    "@types/react-helmet": "^6.1.5",
     "webpack-cli": "^4.9.1"
   }
 }
