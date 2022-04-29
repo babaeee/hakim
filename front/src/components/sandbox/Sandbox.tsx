@@ -24,7 +24,6 @@ const exampleGoals = [
 export const Sandbox = () => {
     const [text, setText] = useState("");
     const [help, setHelp] = useState(false);
-    const gotoSandbox = () => { };
     const navigator = useNavigate();
     const done = async (t = text) => {
         const goal = t.trim();
@@ -46,10 +45,7 @@ export const Sandbox = () => {
             toProof = true;
         }
         if (toProof) {
-            openProofSession(navigator, {
-                onSolve: gotoSandbox,
-                onCancel: gotoSandbox,
-            });
+            openProofSession(navigator, {});
         }
     };
     return (

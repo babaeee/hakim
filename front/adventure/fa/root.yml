@@ -1,30 +1,39 @@
 - id: tutorial
+  name: آموزش
   type: collection
   x: 0
   y: 0
-  data: !include ./tutorial.yml
+  children: !include ./tutorial.yml
 - id: logic
+  name: منطق و استدلال
   type: collection
   x: 0
-  y: 2
+  y: 1
   dependencies:
    - tutorial
+  children: !include ./todo.yml
 - id: equality
+  name: برابری
   type: collection
   x: -1
-  y: 3
+  y: 2
   dependencies:
    - logic
+  children: !include ./todo.yml
 - id: induction
+  name: استقرا
   type: collection
   x: 1
-  y: 3
+  y: 2
   dependencies:
    - logic
+  children: !include ./todo.yml
 - id: number_theory
   type: collection
   x: 0
-  y: 4
+  y: 3
+  name: نظریه اعداد
   dependencies:
    - induction
    - equality
+  children: !include ./todo.yml

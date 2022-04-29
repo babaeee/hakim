@@ -7,6 +7,8 @@ import { LemmaBox } from './sidebar/LemmaBox';
 import { createContext, useState } from 'react';
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import { cancelProof, solveProof } from '../root/Root';
+import { useNavigate } from 'react-router-dom';
 
 type Lemma = {
   name: string,
@@ -14,7 +16,7 @@ type Lemma = {
 };
 
 type ProofContextType = {
-  onFinish: () => void,
+  onFinish: (won: boolean) => void,
   lemmaBox: Lemma[],
   appendLemma: (lemma: Lemma) => void,
 };
@@ -23,6 +25,7 @@ export const ProofContext = createContext({} as ProofContextType);
 
 export const Proof = () => {
   const [lemmaBox, setLemmaBox] = useState([] as Lemma[]);
+  const navigator = useNavigate();
   const [natural, setNatural] = useState(undefined as string | undefined);
   if (natural) {
     return <div className={css.inlBody}>
@@ -32,8 +35,12 @@ export const Proof = () => {
       <button onClick={() => setNatural(undefined)}>{g`back`}</button>
     </div>;
   }
-  const onFinish = () => {
-    window.history.back();
+  const onFinish = (won: boolean) => {
+    if (won) {
+      solveProof(navigator);
+    } else {
+      cancelProof(navigator);
+    }
   };
   const ctx: ProofContextType = {
     lemmaBox,
@@ -50,7 +57,7 @@ export const Proof = () => {
       <div className={css.main}>
         <h1 className={css.title}>
           <span>{g`babaeee_coq`}</span>
-          <button className={css.changeLangButton} onClick={onFinish}>{g`exit`}</button>
+          <button className={css.changeLangButton} onClick={() => onFinish(false)}>{g`exit`}</button>
         </h1>
         <div className={css.bottomContainer}>
           <Toolbar />

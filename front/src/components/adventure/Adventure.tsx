@@ -1,16 +1,84 @@
-import { g, getText } from "../../i18n";
+import { g } from "../../i18n";
 import css from "./Adventure.module.css";
-import dataNotTyped from "../../../adventure/root.yml";
+import dataNotTyped from "../../../adventure/fa/root.yml";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { setGoal } from "../../hakim";
+import { AfterProofAction, openProofSession } from "../root/Root";
+import { isWinNode } from "./winList";
 
-type collection = {
+export type Node = {
     id: string,
-    type: "collection",
+    name: string,
     x: number,
     y: number,
-    dependencies: string[],
+    dependencies?: string[] | undefined,
 };
 
-const data: collection[] = dataNotTyped as any;
+export type Level = Node & {
+    type: "level",
+    goal: string,
+};
+
+export type Collection = Node & {
+    type: "collection",
+    children: (Level | Collection)[],
+};
+
+const checkValidNode = (node: any) => {
+    if (typeof node.id !== 'string') throw new Error(`Node without id: ${JSON.stringify(node)}`);
+    if (typeof node.x !== 'number' || typeof node.x !== 'number') throw new Error(`Invalid position for ${node.id}`);
+    if (typeof node.name !== 'string') throw new Error(`Invalid name for ${node.id}`);
+};
+
+const checkValidCollectionOrLevelArray = (array: any, parent: string) => {
+    if (array instanceof Array) {
+        array.forEach((x) => {
+            if (typeof x.type !== 'string') {
+                throw new Error(`node ${x.id} has no type`);
+            }
+            if (x.type === 'collection') {
+                checkValidCollection(x);
+            } else {
+                checkValidLevel(x);
+            }
+        })
+        return;
+    }
+    throw new Error(`invalid children array for ${parent}`);
+};
+
+const checkValidCollection = (node: any) => {
+    checkValidNode(node);
+    checkValidCollectionOrLevelArray(node.children, node.id);
+};
+
+const checkValidLevel = (node: any) => {
+    checkValidNode(node);
+    if (node.type !== 'level') throw new Error(`Node ${node.id} is not a level, but a ${node.type}`);
+    if (typeof node.goal !== 'string') throw new Error(`Invalid goal for ${node.id}`);
+};
+
+const isLocked = (node: Node, parent: (Level | Collection)[]) => {
+    if (!node.dependencies) {
+        return false;
+    }
+    return node.dependencies.find((x) => isWinNode(parent.find((y) => y.id === x)!)) === undefined;
+};
+
+try {
+    checkValidCollectionOrLevelArray(dataNotTyped, 'root');
+} catch (e) {
+    alert((e as any).toString());
+}
+
+const data: Collection = {
+    id: 'root',
+    name: '',
+    type: 'collection',
+    x: 0,
+    y: 0,
+    children: dataNotTyped as any,
+};
 
 type LockProps = {
     state: "open" | "locked" | "done",
@@ -36,8 +104,10 @@ const Lock: React.FC<LockProps> = ({ state }) => {
     const open = <svg height="100%" width="100%" viewBox="0 0 100 100">
         <circle r={40} cx={50} cy={50} fill={'yellow'}></circle>
     </svg>;
-    const done = <svg height="100%" width="100%" viewBox="0 0 100 100">
-        <circle r={40} cx={50} cy={50} fill={'green'}></circle>
+    const done = <svg height="100%" width="100%" viewBox="0 0 173.52 198.57">
+        <g transform="translate(-36.097 -595.93)">
+            <path id="path3157" style={{ fill: '#008000' }} d="m36.097 739.31 20-30c16.511 12.907 17.767 19.639 24.949 30.909 36.804-72.31 74.954-104.96 128.57-144.29-51.91 53.35-83.23 89.32-130 198.58-16.193-26.29-27.333-53.62-43.523-55.2z" />
+        </g>
     </svg>;
     if (state === "locked") {
         return <div className={css.lock}>{lock}</div>;
@@ -49,23 +119,58 @@ const Lock: React.FC<LockProps> = ({ state }) => {
 };
 
 export const Adventure = () => {
+    const location = useLocation();
+    const navigator = useNavigate();
+    const path = location.pathname.split('/').filter((x) => x !== "" && x !== "adventure");
     const xt = (x: number) => x * 10 + 50;
-    const yt = (x: number) => x * 10 + 20;
-    const edges = data.flatMap(
+    const yt = (x: number) => x * 17 + 20;
+    let d = data.children;
+    let cpath = "/adventure";
+    for (const p of path) {
+        const x = d.find((x) => x.id === p);
+        if (!x) {
+            return <div>404</div>;
+        }
+        if (isLocked(x, d)) {
+            return <div>{g`this_is_locked`}</div>;
+        }
+        if (x.type === "level") {
+            const goto: AfterProofAction = {
+                type: 'goto',
+                url: cpath,
+            };
+            (async () => {
+                if (await setGoal(x.goal)) {
+                    openProofSession(navigator, {
+                        onCancel: goto,
+                        onSolve: {
+                            type: 'win',
+                            level: x.id,
+                            then: goto,
+                        }
+                    });
+                }
+            })();
+            return <div>Wait</div>;
+        }
+        cpath += `/${x.id}`;
+        d = x.children;
+    }
+    const edges = d.flatMap(
         (a) => a.dependencies?.map((bid): [[number, number], [number, number]] => {
-            const b = data.find((c) => c.id === bid)!;
+            const b = d.find((c) => c.id === bid)!;
             return [[xt(a.x), yt(a.y)], [xt(b.x), yt(b.y)]];
         }) || []
     );
     return (
         <div className={css.main}>
             <h1 className={css.title}>{g`adventure`}</h1>
-            {data.map((x) => <button style={{
+            {d.map((x) => <Link to={`${location.pathname}/${x.id}`}><button style={{
                 left: `${xt(x.x) - 3}vw`,
                 top: `${yt(x.y)}vh`,
-            }} className={css.item}>{getText(`level_${x.id}`)}
-                <Lock state={x.dependencies?.length > 0 ? "locked" : "open"} />
-            </button>)}
+            }} className={css.item}>{x.name}
+                <Lock state={isWinNode(x) ? "done" : isLocked(x, d) ? "locked" : "open"} />
+            </button></Link>)}
             <svg className={css.lines} viewBox="0 0 100 100" preserveAspectRatio="none">
                 {edges.map(([[x1, y1], [x2, y2]]) => <line
                     stroke="black"

@@ -1,0 +1,22 @@
+- id: apply
+  name: اعمال
+  type: level
+  x: 0
+  y: 0
+  goal: "(∀ a b: ℤ, a < b -> 0 < a -> 2 * a < 3 * b) -> 2 * 100 < 3 * 200"
+- id: apply2
+  name: اعمال ۲
+  type: level
+  x: 0
+  y: 1
+  dependencies:
+    - apply
+  goal: "(∀ a b: ℤ, a < b -> 0 < a -> 2 * a < 3 * b) -> 2 * 100 < 3 * 200"
+- id: apply_library
+  name: اعمال از کتابخانه
+  type: level
+  x: 0
+  y: 2
+  dependencies:
+    - apply2
+  goal: "(∀ a b: ℤ, a < b -> 0 < a -> 2 * a < 3 * b) -> 2 * 100 < 3 * 200"

@@ -196,7 +196,7 @@ export const Monitor = () => {
     if (s.isFinished) {
         return <div className={css.monitor}>
             {g`no_more_subgoal`}
-            <button onClick={onFinish}>{g`exit`}</button>
+            <button onClick={() => onFinish(true)}>{g`exit`}</button>
         </div>;
     }
     const { hyps, goals } = s.monitor;
