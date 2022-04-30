@@ -5,7 +5,7 @@ use crate::{
     brain::{
         self,
         infer::{type_of_and_infer, InferResults},
-        normalize, type_of, Term, TermRef,
+        normalize, predict_axiom, type_of, Term, TermRef,
     },
     library::{load_library_by_name, prelude},
     parser::{self, ast_to_term, fix_wild_scope, is_valid_ident, parse, term_pretty_print},
@@ -33,14 +33,21 @@ impl Default for Engine {
         name_dict.insert("eq".to_string(), prelude::eq());
         name_dict.insert("ex".to_string(), prelude::ex());
         name_dict.insert("plus".to_string(), prelude::plus());
+        name_dict.insert("minus".to_string(), prelude::minus());
         name_dict.insert("mod".to_string(), prelude::mod_of());
         name_dict.insert("mult".to_string(), prelude::mult());
         name_dict.insert("or".to_string(), prelude::or());
+        name_dict.insert("lt".to_string(), prelude::lt());
         name_dict.insert("and".to_string(), prelude::and());
         name_dict.insert("set".to_string(), prelude::set());
         name_dict.insert("set_from_func".to_string(), prelude::set_from_func());
         name_dict.insert("set_empty".to_string(), prelude::set_empty());
         name_dict.insert("set_singleton".to_string(), prelude::set_singleton());
+        name_dict.insert("setminus".to_string(), prelude::setminus());
+        name_dict.insert("union".to_string(), prelude::union());
+        name_dict.insert("intersection".to_string(), prelude::intersection());
+        name_dict.insert("inset".to_string(), prelude::inset());
+        name_dict.insert("included".to_string(), prelude::included());
         let libs = im::HashMap::<String, ()>::default();
         Self { name_dict, libs }
     }
@@ -158,6 +165,13 @@ impl Engine {
         )?;
         let n = infer_cnt.0;
         let term = fix_wild_scope(term, n);
+        // check if all axioms in the generated term are registered in the engine
+        predict_axiom(&term, |x| {
+            if !self.name_dict.contains_key(x) {
+                panic!("invalid axiom {x} in the parsed term");
+            }
+            true
+        });
         Ok((term, n))
     }
 

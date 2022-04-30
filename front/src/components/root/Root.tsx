@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import { fromMiddleOfLib, sendTactic, setGoal, toBackup } from "../../hakim";
-import { isRTL } from "../../i18n";
+import { toBackup } from "../../hakim";
+import { g, isRTL } from "../../i18n";
 import { Adventure } from "../adventure/Adventure";
 import { LibraryViewer } from "../library_viewer/LibraryViewer";
 import { MainMenu } from "../mainmenu/MainMenu";
 import { Proof } from "../proof/Proof";
 import { Sandbox } from "../sandbox/Sandbox";
+import { BrowserRouter, NavigateFunction, Route, Routes } from "react-router-dom";
 import css from "./Root.module.css";
+import { addToWinList } from "../adventure/winList";
+import { useState } from "react";
 
 export type State = {
-    mode: 'sandbox' | 'proof' | 'mainmenu' | 'library' | 'adventure',
+    proofState: ProofState,
 };
 
 const storedState = (): State => {
@@ -17,7 +19,12 @@ const storedState = (): State => {
     if (json) {
         return JSON.parse(json);
     } else {
-        return { mode: 'mainmenu' };
+        return {
+            proofState: {
+                afterProof: {},
+                text: "",
+            }
+        };
     }
 };
 
@@ -28,59 +35,90 @@ window.onbeforeunload = () => {
     localStorage.setItem('wasmState', toBackup());
 };
 
-export const Root = () => {
-    const [s, setSinner] = useState(storedState());
-    const setS = (x: State) => {
-        stateToStore = x;
-        setSinner(x);
+export type AfterProofAction = {
+    type: "back"
+} | {
+    type: "goto",
+    url: string,
+} | {
+    type: "win",
+    level: string,
+    then: AfterProofAction,
+};
+
+type AfterProof = {
+    onSolve?: AfterProofAction | undefined,
+    onCancel?: AfterProofAction | undefined,
+};
+
+type ProofState = {
+    afterProof: AfterProof,
+    text: string,
+};
+
+export let proofState: ProofState = stateToStore.proofState;
+
+const runProofAction = (navigate: NavigateFunction, action: AfterProofAction) => {
+    if (action.type === 'back') {
+        window.history.back();
+        return;
     }
-    useEffect(() => {
-        window.history.pushState(null, document.title, window.location.href);
-        window.onpopstate = () => {
-            const m = s.mode;
-            if (m !== 'mainmenu') {
-                window.history.pushState(null, document.title, window.location.href);
-                setS({ mode: 'mainmenu' });
-            } else {
-                window.history.back();
-            }
-        };
-    }, [s.mode]);
+    if (action.type === 'goto') {
+        navigate(action.url, { replace: true });
+        return;
+    }
+    addToWinList(action.level);
+    runProofAction(navigate, action.then);
+};
+
+export const solveProof = (navigate: NavigateFunction) => {
+    runProofAction(navigate, proofState.afterProof.onSolve || { type: 'back' });
+};
+
+export const cancelProof = (navigate: NavigateFunction) => {
+    runProofAction(navigate, proofState.afterProof.onCancel || { type: 'back' });
+};
+
+type OpenProofOptions = {
+    replace?: boolean,
+    afterProof?: AfterProof,
+    text?: string,
+};
+
+export const openProofSession = (navigate: NavigateFunction, options: OpenProofOptions = {}) => {
+    const afterProof = options.afterProof || {};
+    const text = options.text || "";
+    const replace = options.replace || false;
+    proofState = { afterProof, text };
+    stateToStore.proofState = proofState;
+    navigate('/proof', { replace });
+};
+
+export const Root = () => {
+    const [width, setWidth] = useState(document.documentElement.clientWidth);
+    const [height, setheight] = useState(document.documentElement.clientHeight);
+    window.onresize = () => {
+        setWidth(document.documentElement.clientWidth);
+        setheight(document.documentElement.clientHeight);
+    };
+    if (height > width) {
+        return <div>{g`this_page_is_not_optimized_for_mobile`}</div>
+    }
     return (
         <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>
-            {s.mode === 'mainmenu' && <MainMenu onFinish={async (mode) => {
-                setS({ mode });
-            }} />}
-            {s.mode === 'adventure' && <Adventure />}
-            {s.mode === 'library' && <LibraryViewer onFinish={async (x, y) => {
-                if (await fromMiddleOfLib(x, y)) setS({ mode: 'proof' });
-            }} />}
-            {s.mode === 'sandbox' && <Sandbox onFinish={async (goal) => {
-                if (!goal) {
-                    setS({ mode: 'mainmenu' });
-                    return;
-                }
-                goal = goal.trim();
-                if (goal.startsWith('Goal')) {
-                    const [g, , ...v] = goal.split('.');
-                    if (!await setGoal(g.slice(6, -1))) {
-                        return;
-                    }
-                    for (const xs of v) {
-                        const x = xs.trim();
-                        if (x === '') continue;
-                        if (!await sendTactic(x)) {
-                            return;
-                        }
-                    }
-                    setS({ mode: 'proof' });
-                    return;
-                }
-                if (await setGoal(goal)) setS({ mode: 'proof' });
-            }} />}
-            {s.mode === 'proof' && <Proof onFinish={() => {
-                setS({ mode: 'mainmenu' });
-            }} />}
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/">
+                        <Route index element={<MainMenu />} />
+                        <Route path="adventure" element={<Adventure />} />
+                        <Route path="adventure/*" element={<Adventure />} />
+                        <Route path="sandbox" element={<Sandbox />} />
+                        <Route path="proof" element={<Proof />} />
+                        <Route path="library" element={<LibraryViewer />} />
+                        <Route path="*" element={<div>404 not found</div>} />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
         </div>
     );;
 };

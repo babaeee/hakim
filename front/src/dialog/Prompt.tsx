@@ -18,7 +18,7 @@ export const NormalPrompt = ({ msg, onDone, defaultValue }: Props) => {
       <div className={css.background} onClick={() => onDone(value)} />
       <div className={css.foreground}>
         <p className={css.myP} dir={isRTL() ? 'rtl' : 'ltr'}>{msg}</p>
-        <UnicodeInput className={css.input} value={value} onEnter={() => onDone(value)} onChange={setValue} enableHelp={setHelp} />
+        <UnicodeInput autoFocus className={css.input} value={value} onEnter={() => onDone(value)} onChange={setValue} enableHelp={setHelp} />
         <div>
           {help && <UnicodeHelp />}
         </div>

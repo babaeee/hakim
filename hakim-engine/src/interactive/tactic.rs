@@ -69,33 +69,33 @@ use Error::*;
 
 use self::apply::FindInstance;
 
-pub(crate) fn next_arg(
-    args: &mut impl Iterator<Item = String>,
+pub(crate) fn next_arg<'a>(
+    args: &mut impl Iterator<Item = &'a str>,
     tactic_name: &'static str,
-) -> Result<String> {
+) -> Result<&'a str> {
     let arg = args.next().ok_or(BadArgCount {
         tactic_name: tactic_name.to_string(),
     })?;
     Ok(arg)
 }
 
-pub(crate) fn next_arg_constant(
-    args: &mut impl Iterator<Item = String>,
+pub(crate) fn next_arg_constant<'a>(
+    args: &mut impl Iterator<Item = &'a str>,
     tactic_name: &'static str,
     expected: &'static str,
 ) -> Result<()> {
     let v = next_arg(args, tactic_name)?;
     if v != expected {
         return Err(BadArg {
-            arg: v,
+            arg: v.to_string(),
             tactic_name: tactic_name.to_string(),
         });
     }
     Ok(())
 }
 
-pub(crate) fn deny_arg(
-    mut args: impl Iterator<Item = String>,
+pub(crate) fn deny_arg<'a>(
+    mut args: impl Iterator<Item = &'a str>,
     tactic_name: &'static str,
 ) -> Result<()> {
     if args.next().is_some() {
@@ -106,10 +106,10 @@ pub(crate) fn deny_arg(
     Ok(())
 }
 
-pub(crate) fn get_one_arg(
-    mut args: impl Iterator<Item = String>,
+pub(crate) fn get_one_arg<'a>(
+    mut args: impl Iterator<Item = &'a str>,
     tactic_name: &'static str,
-) -> Result<String> {
+) -> Result<&'a str> {
     let arg1 = next_arg(&mut args, tactic_name)?;
     deny_arg(args, tactic_name)?;
     Ok(arg1)

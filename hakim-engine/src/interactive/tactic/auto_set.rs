@@ -383,17 +383,14 @@ fn negator(x: EnsembleStatement) -> EnsembleStatement {
 
 fn pre_process_frame(frame: Frame) -> Frame {
     let mut intros_flag = false;
-    let frame = match apply(frame.clone(), vec!["included_fold".to_string()].into_iter()) {
+    let frame = match apply(frame.clone(), vec!["included_fold"].into_iter()) {
         Ok(x) if x.len() == 1 => {
             intros_flag = true;
             x.into_iter().next().unwrap()
         }
         _ => frame,
     };
-    let frame = match apply(
-        frame.clone(),
-        vec!["set_equality_forall".to_string()].into_iter(),
-    ) {
+    let frame = match apply(frame.clone(), vec!["set_equality_forall"].into_iter()) {
         Ok(x) if x.len() == 1 => {
             intros_flag = true;
             x.into_iter().next().unwrap()

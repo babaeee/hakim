@@ -49,6 +49,8 @@ jobs:
           yarn
           yarn build
           echo "proof.babaeee.ir" > dist/CNAME
+          echo "" > dist/.nojekyll
+          cat dist/index.html > dist/404.html
       
       - name: Deploy to github pages
         if: success()

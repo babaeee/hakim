@@ -196,7 +196,7 @@ pub fn map_reduce_axiom<T>(
 
 /// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is unique_name of axioms. In case of no axiom, it will return false
-pub fn predict_axiom(t: &Term, predict: &impl Fn(&str) -> bool) -> bool {
+pub fn predict_axiom(t: &Term, predict: impl Fn(&str) -> bool) -> bool {
     map_reduce_axiom(
         t,
         &mut |x| if predict(x) { Some(()) } else { None },

@@ -134,7 +134,10 @@ fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
                     ),
                     "minus" => Plus(
                         term_ref_to_arith(op1.clone(), arena),
-                        term_ref_to_arith(op2.clone(), arena),
+                        arena.alloc(Mult(
+                            arena.alloc(Const((-1).into())),
+                            term_ref_to_arith(op2.clone(), arena),
+                        )),
                     ),
                     "mult" => Mult(
                         term_ref_to_arith(op1.clone(), arena),

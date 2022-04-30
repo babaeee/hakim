@@ -47,7 +47,9 @@
     "jest-circus": "26.6.0",
     "jest-resolve": "26.6.0",
     "jest-watch-typeahead": "0.6.1",
+    "markdown-it": "^13.0.0",
     "mini-css-extract-plugin": "0.11.3",
+    "multi-yaml-loader": "^1.6.0",
     "pnp-webpack-plugin": "1.6.4",
     "postcss-flexbugs-fixes": "4.2.1",
     "postcss-loader": "3.0.0",
@@ -61,7 +63,9 @@
     "react-dnd": "^14.0.4",
     "react-dnd-html5-backend": "^14.0.2",
     "react-dom": "^17.0.2",
+    "react-helmet": "^6.1.0",
     "react-refresh": "^0.8.3",
+    "react-router-dom": "^6.3.0",
     "resolve": "1.18.1",
     "resolve-url-loader": "^3.1.2",
     "sass-loader": "^10.0.5",
@@ -89,6 +93,8 @@
     ]
   },
   "devDependencies": {
+    "@types/markdown-it": "^12.2.3",
+    "@types/react-helmet": "^6.1.5",
     "webpack-cli": "^4.9.1"
   }
 }

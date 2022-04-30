@@ -91,6 +91,8 @@ impl FixWildDfsState {
     }
 }
 
+/// Wilds has an index and a scope, which means they belong to which depth of abstraction
+/// and checks if inference is allowed to fill them via some abstract variable or not
 pub fn fix_wild_scope(term: TermRef, n: usize) -> TermRef {
     let mut state = FixWildDfsState::new(n);
     state.dfs(&term);

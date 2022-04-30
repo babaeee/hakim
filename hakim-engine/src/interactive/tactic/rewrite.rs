@@ -74,9 +74,9 @@ pub fn get_eq_params(term: &Term) -> Option<[TermRef; 3]> {
     None
 }
 
-pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn rewrite<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
-    let is_reverse = args.peek() == Some(&"<-".to_string());
+    let is_reverse = args.peek() == Some(&"<-");
     if is_reverse {
         args.next();
     }
@@ -92,13 +92,13 @@ pub fn rewrite(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<V
     Ok(vec![frame])
 }
 
-pub fn replace(frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     let mut which = None;
     if let Some(x) = args.peek() {
         if &x[..1] == "#" {
             let n: isize = x[1..].parse().map_err(|_| BadArg {
-                arg: args.next().unwrap(),
+                arg: x.to_string(),
                 tactic_name: "replace".to_string(),
             })?;
             which = Some(n);
@@ -106,18 +106,18 @@ pub fn replace(frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<F
         }
     }
     let find = next_arg(&mut args, "replace")?;
-    let find = frame.engine.parse_text(&find)?;
+    let find = frame.engine.parse_text(find)?;
     next_arg_constant(&mut args, "replace", "with")?;
     let replace = next_arg(&mut args, "replace")?;
-    let replace = frame.engine.parse_text(&replace)?;
+    let replace = frame.engine.parse_text(replace)?;
     let mut proof_eq = frame.clone();
     proof_eq.goal = build_eq_term(find.clone(), replace.clone())?;
     let mut after_replace = frame;
     if args.peek().is_some() {
         next_arg_constant(&mut args, "replace", "in")?;
         let hyp_name = next_arg(&mut args, "replace")?;
-        let hyp = after_replace.remove_hyp_with_name(hyp_name.clone())?;
-        after_replace.add_hyp_with_name(&hyp_name, replace_term(hyp, find, replace, &mut which))?;
+        let hyp = after_replace.remove_hyp_with_name(hyp_name)?;
+        after_replace.add_hyp_with_name(hyp_name, replace_term(hyp, find, replace, &mut which))?;
         deny_arg(args, "replace")?;
     } else {
         after_replace.goal = replace_term(after_replace.goal, find, replace, &mut which);

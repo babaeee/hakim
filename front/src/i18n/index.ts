@@ -26,7 +26,7 @@ export const init = () => {
 
 export const getText = (inp: string): string => {
   const [id, argsText] = inp.split('<$');
-  let r = dict[id] || id;
+  let r = dict[id] || id.replaceAll('_', ' ');
   if (!argsText) {
     return r;
   }

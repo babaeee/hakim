@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use crate::{parser::binop::BinOp, Abstraction, Term, TermRef};
+use crate::{app_ref, parser::binop::BinOp, term_ref, Abstraction, Term, TermRef};
 
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
@@ -149,10 +149,17 @@ fn term_pretty_print_inner(
     names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
     level: (u8, u8),
 ) -> String {
-    if let Some((_, fun)) = detect_exists(term) {
-        if let Term::Fun(x) = fun.as_ref() {
-            return abstraction_pretty_print("∃", x, names, level.1 < 200);
-        }
+    if let Some((ty, fun)) = detect_exists(term) {
+        if let Term::Fun(abs) = fun.as_ref() {
+            return abstraction_pretty_print("∃", abs, names, level.1 < 200);
+        } else {
+            let abs = Abstraction {
+                body: app_ref!(fun, term_ref!(v 0)),
+                hint_name: None,
+                var_ty: ty,
+            };
+            return abstraction_pretty_print("∃", &abs, names, level.1 < 200);
+        };
     }
     if let Some((_, fun)) = detect_set_fn(term) {
         if let Term::Fun(x) = fun.as_ref() {
@@ -189,9 +196,9 @@ fn term_pretty_print_inner(
         Term::Axiom { unique_name, .. } => unique_name.to_string(),
         Term::Universe { index } => {
             if *index == 0 {
-                "U".to_string()
+                "Universe".to_string()
             } else {
-                format!("U{}", index)
+                format!("Universe{}", index)
             }
         }
         Term::Forall(abs) => abstraction_pretty_print("∀", abs, names, level.1 < 200),
@@ -223,5 +230,9 @@ fn term_pretty_print_inner(
 
 pub fn term_pretty_print(term: &Term, contain_name: impl Fn(&str) -> bool) -> String {
     let r = term_pretty_print_inner(term, &mut (vec![], contain_name), (200, 200));
-    format!("\u{2068}{}\u{2069}", r)
+    if cfg!(test) {
+        r
+    } else {
+        format!("\u{2068}{}\u{2069}", r)
+    }
 }

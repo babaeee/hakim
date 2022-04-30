@@ -4,9 +4,9 @@ use crate::{
     interactive::Frame,
 };
 
-pub fn add_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn add_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "add_hyp")?;
-    let term = frame.engine.parse_text(&exp)?;
+    let term = frame.engine.parse_text(exp)?;
     let ty = type_of(term.clone())?;
     if !matches!(ty.as_ref(), Term::Universe { .. }) {
         return Err(Error::TermIsNotType(term));
@@ -17,7 +17,7 @@ pub fn add_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<V
     Ok(vec![frame, frame2])
 }
 
-pub fn remove_hyp(mut frame: Frame, args: impl Iterator<Item = String>) -> Result<Vec<Frame>> {
+pub fn remove_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "remove_hyp")?;
     frame.remove_hyp_with_name(exp)?;
     Ok(vec![frame])

@@ -12,8 +12,7 @@ const config = {
         rules: [
             {
                 test: /\.ya?ml$/i,
-                type: 'json',
-                use: 'yaml-include-loader'
+                use: 'multi-yaml-loader'
             },
             {
                 test: /\.css$/i,
@@ -57,13 +56,10 @@ const config = {
     experiments: {
         asyncWebAssembly: true
     },
-    /*devServer: {
-        static: path.join(__dirname, "build"),
-        historyApiFallback: true,
+    devServer: {
         port: 4000,
-        open: true,
-        hot: true
-    },*/
+        historyApiFallback: true,
+    },
 };
 
 module.exports = (_, argv) => {
