@@ -222,7 +222,17 @@ impl BinOp {
                         "mult" => (op.clone(), BinOp::Mult, op2.clone()),
                         "lt" => (op.clone(), BinOp::Lt, op2.clone()),
                         "or" => (op.clone(), BinOp::Or, op2.clone()),
-                        "and" => (op.clone(), BinOp::And, op2.clone()),
+                        #[allow(clippy::never_loop)]
+                        "and" => loop {
+                            if let Some((a1, BinOp::Imply, b1)) = BinOp::detect(op) {
+                                if let Some((b2, BinOp::Imply, a2)) = BinOp::detect(op2) {
+                                    if a1 == a2 && b1 == b2 {
+                                        break (a1, BinOp::Iff, b1);
+                                    }
+                                }
+                            }
+                            break (op.clone(), BinOp::And, op2.clone());
+                        },
                         _ => return None,
                     },
                     _ => return None,
