@@ -101,7 +101,7 @@ fn find_args_in_apply_hyp(
             flag = true;
         }
         let ty = infers.fill(ty);
-        if flag || predict_axiom(&ty, &|x| x == name) {
+        if flag || predict_axiom(&ty, |x| x == name) {
             func = app_ref!(func, term_ref!(_ ic));
             continue;
         }

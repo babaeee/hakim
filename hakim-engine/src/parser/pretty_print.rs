@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use crate::{parser::binop::BinOp, Abstraction, Term, TermRef};
+use crate::{app_ref, parser::binop::BinOp, term_ref, Abstraction, Term, TermRef};
 
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
@@ -149,10 +149,17 @@ fn term_pretty_print_inner(
     names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
     level: (u8, u8),
 ) -> String {
-    if let Some((_, fun)) = detect_exists(term) {
-        if let Term::Fun(x) = fun.as_ref() {
-            return abstraction_pretty_print("∃", x, names, level.1 < 200);
-        }
+    if let Some((ty, fun)) = detect_exists(term) {
+        if let Term::Fun(abs) = fun.as_ref() {
+            return abstraction_pretty_print("∃", abs, names, level.1 < 200);
+        } else {
+            let abs = Abstraction {
+                body: app_ref!(fun, term_ref!(v 0)),
+                hint_name: None,
+                var_ty: ty,
+            };
+            return abstraction_pretty_print("∃", &abs, names, level.1 < 200);
+        };
     }
     if let Some((_, fun)) = detect_set_fn(term) {
         if let Term::Fun(x) = fun.as_ref() {

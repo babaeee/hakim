@@ -69,6 +69,11 @@ fn simple_exists() {
 }
 
 #[test]
+fn exists_raw() {
+    parse_not_pretty("ex ℤ (lt 5)", "∃ x: ℤ, 5 < x");
+}
+
+#[test]
 fn universes() {
     parse_pretty("U");
     parse_pretty("U1");

@@ -258,14 +258,14 @@ impl Frame {
 
     pub fn deny_dependency(&self, name: &str) -> tactic::Result<()> {
         for (_, hyp) in &self.hyps {
-            if predict_axiom(hyp, &|x| x == name) {
+            if predict_axiom(hyp, |x| x == name) {
                 return Err(tactic::Error::ContextDependOnHyp(
                     name.to_string(),
                     hyp.clone(),
                 ));
             }
         }
-        if predict_axiom(&self.goal, &|x| x == name) {
+        if predict_axiom(&self.goal, |x| x == name) {
             return Err(tactic::Error::ContextDependOnHyp(
                 name.to_string(),
                 self.goal.clone(),
