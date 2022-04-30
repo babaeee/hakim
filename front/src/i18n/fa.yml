@@ -63,6 +63,7 @@ submit: ارسال
 tactic_intros: معرفی
 tactic_left: چپ
 tactic_right: راست
+this_page_is_not_optimized_for_mobile: این صفحه برای موبایل بهینه سازی نشده است. لطفا با کامپیوتر وارد شوید یا حداقل صفحه گوشی را در حالت افقی بگیرید.
 type_a_goal_to_proof: یک هدف را برای اثبات کردن تایپ کنید
 we_know: ما می دانیم
 we_consider: در نظر می گیریم

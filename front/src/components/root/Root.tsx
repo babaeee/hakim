@@ -1,5 +1,5 @@
 import { toBackup } from "../../hakim";
-import { isRTL } from "../../i18n";
+import { g, isRTL } from "../../i18n";
 import { Adventure } from "../adventure/Adventure";
 import { LibraryViewer } from "../library_viewer/LibraryViewer";
 import { MainMenu } from "../mainmenu/MainMenu";
@@ -8,6 +8,7 @@ import { Sandbox } from "../sandbox/Sandbox";
 import { BrowserRouter, NavigateFunction, Route, Routes } from "react-router-dom";
 import css from "./Root.module.css";
 import { addToWinList } from "../adventure/winList";
+import { useState } from "react";
 
 export type State = {
     mode: 'sandbox' | 'proof' | 'mainmenu' | 'library' | 'adventure',
@@ -74,6 +75,15 @@ export const openProofSession = (navigate: NavigateFunction, afterProof: AfterPr
 };
 
 export const Root = () => {
+    const [width, setWidth] = useState(document.documentElement.clientWidth);
+    const [height, setheight] = useState(document.documentElement.clientHeight);
+    window.onresize = () => {
+        setWidth(document.documentElement.clientWidth);
+        setheight(document.documentElement.clientHeight);
+    };
+    if (height > width) {
+        return <div>{g`this_page_is_not_optimized_for_mobile`}</div>
+    }
     return (
         <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>
             <BrowserRouter>
