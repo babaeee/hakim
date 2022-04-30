@@ -12,8 +12,7 @@ const config = {
         rules: [
             {
                 test: /\.ya?ml$/i,
-                type: 'json',
-                use: 'yaml-include-loader'
+                use: 'multi-yaml-loader'
             },
             {
                 test: /\.css$/i,

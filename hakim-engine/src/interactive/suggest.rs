@@ -131,6 +131,24 @@ const GOAL_RULES: &[SuggRule] = &[
         questions: &[],
         is_default: true,
     },
+    SuggRule {
+        class: Pattern("A ∨ B", "A"),
+        tactic: &["apply or_introl"],
+        questions: &[],
+        is_default: false,
+    },
+    SuggRule {
+        class: Pattern("A ∨ B", "B"),
+        tactic: &["apply or_intror"],
+        questions: &[],
+        is_default: false,
+    },
+    SuggRule {
+        class: Pattern("A ∧ B", "A, B"),
+        tactic: &["apply and_intro"],
+        questions: &[],
+        is_default: true,
+    },
 ];
 
 pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {

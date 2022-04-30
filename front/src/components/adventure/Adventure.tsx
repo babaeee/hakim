@@ -21,6 +21,7 @@ export type Level = Node & {
     goal: string,
     text: string | undefined,
     initTactics: string[] | undefined,
+    emptyLibrary: boolean | undefined,
 };
 
 export type Collection = Node & {
@@ -110,7 +111,7 @@ const Lock: React.FC<LockProps> = ({ state }) => {
     </svg>;
     const done = <svg height="100%" width="100%" viewBox="0 0 173.52 198.57">
         <g transform="translate(-36.097 -595.93)">
-            <path id="path3157" style={{ fill: '#008000' }} d="m36.097 739.31 20-30c16.511 12.907 17.767 19.639 24.949 30.909 36.804-72.31 74.954-104.96 128.57-144.29-51.91 53.35-83.23 89.32-130 198.58-16.193-26.29-27.333-53.62-43.523-55.2z" />
+            <path id="path3157" style={{ fill: 'yellowgreen' }} d="m36.097 739.31 20-30c16.511 12.907 17.767 19.639 24.949 30.909 36.804-72.31 74.954-104.96 128.57-144.29-51.91 53.35-83.23 89.32-130 198.58-16.193-26.29-27.333-53.62-43.523-55.2z" />
         </g>
     </svg>;
     if (state === "locked") {
@@ -157,7 +158,8 @@ export const Adventure = () => {
             type: 'back',
         };
         (async () => {
-            if (await setGoal(levelToRender.goal)) {
+            // FIXME: Eq is not empty library!!!
+            if (await setGoal(levelToRender.goal, levelToRender.emptyLibrary ? 'Eq' : 'All')) {
                 if (levelToRender?.initTactics) {
                     for (const tactic of levelToRender.initTactics) {
                         if (!await sendTactic(tactic)) {

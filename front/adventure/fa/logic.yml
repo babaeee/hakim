@@ -1,20 +1,44 @@
+- id: logic_and
+  name: و منطقی
+  type: level
+  x: 0
+  y: 0
+  goal: "∀ A B: U, A ∧ B -> B ∧ A"
+- id: logic_or
+  name: یای منطقی
+  type: level
+  x: -2
+  y: 4
+  goal: "∀ A B: U, A ∨ B -> B ∨ A"
+  dependencies:
+    - logic_and
+- id: logic_iff
+  name: اگر و تنها اگر
+  type: level
+  x: -1
+  y: 4
+  goal: "∀ A B: U, A ↔ B -> B ↔ A"
+  dependencies:
+    - logic_and
 - id: exists_on_goal
   name: وجود دارد در حکم
   type: level
   x: -1
-  y: 0
+  y: 1
   goal: "∀ a: ℤ, ∃ b: ℤ, a < b"
 - id: exists_on_hyp
   name: وجود دارد در فرض
   type: level
   x: 1
-  y: 0
+  y: 1
   goal: "∀ a: ℤ, (∃ b: ℤ, a < b ∧ b < 5) → a < 5"
+  dependencies:
+    - logic_and
 - id: forall_on_hyp
   name: به ازای هر در فرض
   type: level
   x: 0
-  y: 1
+  y: 2
   dependencies:
     - exists_on_hyp
     - exists_on_goal
@@ -31,8 +55,8 @@
 - id: true1
   name: ترو
   type: level
-  x: 0
-  y: 2
+  x: 1
+  y: 3
   goal: "True"
   dependencies:
     - forall_on_hyp
@@ -49,7 +73,7 @@
     در بخش برابری می بینید که به کمک دو مساوی سه نیز می توان هر گزاره ای را ثابت کرد، که یعنی
     به نوعی همه گزاره های غلط معادل هستند و در حضور یکی از آن ها در فرض، می توان هر چیزی را ثابت کرد.
   dependencies:
-    - true1
+    - forall_on_hyp
 - id: false2
   name: فالس ۲
   type: level
@@ -74,6 +98,60 @@
   y: 5
   goal: "∀ A: U, (A ∧ (A -> False)) -> False"
   text: |
-    نقیض خیلی خوب است
+    نقیض یگ گزاره در داخل سیستم به صورت گزاره نتیجه می دهد فالس نمایش داده می شود. پس می توانید
+    برای ثابت کردن نقیض یک چیز، آن را فرض کنید (با استفاده از همان معرفی یا معرفی با نام) و فالس
+    را ثابت کنید. از نقیض های موجود در فرض نیز می توانید مثل هر گزاره شرطی دیگر استفاده کنید و آن ها
+    را در گزاره های دیگر اعمال کنید.
+
+    برای این که نقیض را در عمل ببینید، در این جا ثابت می کنیم که هیچ چیزی همراه با نقیضش هم زمان نمی تواند
+    درست باشد.
   dependencies:
     - false2
+- id: demorgan1
+  name: دمورگان ۱
+  type: level
+  x: -1
+  y: 6
+  goal: "∀ A B: U, (A ∨ B -> False) ↔ (A -> False) ∧ (B -> False)"
+  text: |
+    حالا با چیز هایی که یاد گرفتید، قانون دمورگان را ثابت کنید.
+  dependencies:
+    - negate1
+    - logic_or
+    - logic_iff
+- id: double_negation
+  name: برهان خلف
+  type: level
+  x: 1
+  y: 6
+  goal: "(∀ A B: U, A -> A ∨ B) -> (∀ A B: U, B -> A ∨ B) -> (∀ T: U, ((T → False) → False) → T) → ∀ A: U, A ∨ (A → False)"
+  text: |
+    در این قسمت به برهان خلف می رسیم. برهان خلف یکی از ابزار های اساسی اثبات است که
+    در آن به جای این که یک گزاره را ثابت کنیم، نقیض آن را در فرض ها می آوریم و با کمک
+    آن به تناقض می رسیم (فالس را ثابت می کنیم). در این جا با توجه به تعریف ما از نقیض
+    کافیست گزاره را با نقیض نقیض آن جایگزین کنیم و سپس از معرفی استفاده کنیم.
+
+    قضیه جفت نقیض که آن را در فرض ها می بینید در هر چیز که اعمال شود آن را دو بار نقیض
+    می کند. به کمک آن ثابت کنید که هر گزاره ای یا درست است و یا نقیض آن درست است.
+
+    در حالت عادی هم جفت نقیض و هم آ یا نقیض آ در کتاب خانه هستند اما در این قسمت برای چالش
+    بیشتر کتاب خانه غیر فعال شده است. این مساله سخت است! زود تسلیم نشوید.
+  initTactics:
+    - intros or_introl or_intror NNPP
+  emptyLibrary: true
+  dependencies:
+    - negate1
+    - logic_or
+- id: demorgan2
+  name: دمورگان ۲
+  type: level
+  x: 0
+  y: 7
+  goal: "∀ A B: U, (A ∧ B -> False) ↔ (A -> False) ∨ (B -> False)"
+  text: |
+    نوبت قسمت دوم قانون دمورگان است. این قسمت نیاز به برهان خلف دارد. آن را از کتاب خانه
+    وارد کنید.
+  dependencies:
+    - demorgan1
+    - double_negation
+
