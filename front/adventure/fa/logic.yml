@@ -9,7 +9,7 @@
   type: level
   x: -2
   y: 4
-  goal: "∀ A B: U, A ∨ B -> B ∨ A"
+  goal: "∀ X Y: U, X ∨ Y -> Y ∨ X"
   dependencies:
     - logic_and
 - id: logic_iff
@@ -47,10 +47,12 @@
     راست کلیک کنید و با کمک نمونه گیری، حکم را ثابت کنید.
 
     اگر باهوش باشید، متوجه می شوید که به ازای هر در فرض خیلی شبیه به وجود دارد در حکم است (هر دو
-    به یک نمونه نیاز دارند) و به ازای هر در جکم خیلی شبیه به وجود دارد در فرض است.
+    به یک نمونه نیاز دارند) و به ازای هر در حکم خیلی شبیه به وجود دارد در فرض است.
 
     معمولا به نمونه گیری به ازای هر ها کمتر نیاز پیدا می کنیم چون در اعمال کردن نمونه لازم به طور
     خودکار تشخیص داده می شود (همان طور که اولین بار با گرفتن و انداختن انجام دادید)
+  initTactics:
+    - intros
   goal: "(∀ a b: ℤ, a < b -> 0 < a -> 2 * a < 3 * b) -> 2 * 100 < 3 * 200"
 - id: true1
   name: ترو
@@ -107,6 +109,8 @@
     درست باشد.
   dependencies:
     - false2
+    - logic_or
+    - logic_iff
 - id: demorgan1
   name: دمورگان ۱
   type: level
@@ -117,8 +121,6 @@
     حالا با چیز هایی که یاد گرفتید، قانون دمورگان را ثابت کنید.
   dependencies:
     - negate1
-    - logic_or
-    - logic_iff
 - id: double_negation
   name: برهان خلف
   type: level
@@ -141,7 +143,21 @@
   emptyLibrary: true
   dependencies:
     - negate1
-    - logic_or
+- id: negate_exists
+  name: نقیض وجود دارد
+  type: level
+  x: 0
+  y: 6
+  goal: "∀ P: ℤ -> U, (∀ x: ℤ, P x -> False) ↔ ((∃ x: ℤ, P x) -> False)"
+  text: |
+    در این قسمت ثابت می کنیم که نقیض وجود دارد عددی که فلان خاصیت را داشته باشد، معادل
+    این است که همه اعداد ممکن نقیض آن خاصیت را دارند. در این جا
+    P
+    همان خاصیت دلخواه است و مثلا
+    P 2
+    یعنی دو این خاصیت را دارد.
+  dependencies:
+    - negate1
 - id: demorgan2
   name: دمورگان ۲
   type: level
@@ -154,4 +170,4 @@
   dependencies:
     - demorgan1
     - double_negation
-
+    - negate_exists
