@@ -20,12 +20,12 @@ fn parse_error(exp: &str) {
 
 #[test]
 fn simple_forall() {
-    parse_pretty("∀ x0: U, x0");
+    parse_pretty("∀ x0: Universe, x0");
 }
 
 #[test]
 fn forall_arrow() {
-    parse_pretty("∀ x0: U, ∀ x1: U, x0 → x1");
+    parse_pretty("∀ x0: Universe, ∀ x1: Universe, x0 → x1");
 }
 
 #[test]
@@ -75,12 +75,12 @@ fn exists_raw() {
 
 #[test]
 fn universes() {
-    parse_pretty("U");
-    parse_pretty("U1");
-    parse_pretty("U2");
-    parse_pretty("U3");
-    parse_pretty("U → U1");
-    parse_pretty("U3 → U2");
+    parse_pretty("Universe");
+    parse_pretty("Universe1");
+    parse_pretty("Universe2");
+    parse_pretty("Universe3");
+    parse_pretty("Universe → Universe1");
+    parse_pretty("Universe3 → Universe2");
 }
 
 #[test]
@@ -116,15 +116,18 @@ fn sets() {
 
 #[test]
 fn set_and_app() {
-    parse_pretty("∀ f: set ℤ → U, f {}");
-    parse_pretty("∀ f: set ℤ → U, f {1, 2, 3}");
-    parse_pretty("∀ f: set ℤ → U, ∀ X: set ℤ, f {1, 2, 3} → f X → X = {1, 2, 3}");
+    parse_pretty("∀ f: set ℤ → Universe, f {}");
+    parse_pretty("∀ f: set ℤ → Universe, f {1, 2, 3}");
+    parse_pretty("∀ f: set ℤ → Universe, ∀ X: set ℤ, f {1, 2, 3} → f X → X = {1, 2, 3}");
 }
 
 #[test]
 fn pretty_names() {
     parse_pretty("∀ salam: ℤ, ∀ x2: ℤ, salam < x2");
-    parse_not_pretty("∀ x: U, x → ∀ x: ℤ, x < x", "∀ x: U, x → ∀ x0: ℤ, x0 < x0");
+    parse_not_pretty(
+        "∀ x: Universe, x → ∀ x: ℤ, x < x",
+        "∀ x: Universe, x → ∀ x0: ℤ, x0 < x0",
+    );
 }
 
 #[test]

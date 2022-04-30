@@ -118,14 +118,14 @@ mod tests {
     #[test]
     fn dependecy_order1() {
         let x = run_interactive(
-            "∀ A: U, ∀ P: A → U, (∀ x: A, P x) → (∃ x: A, P x → False) → False",
+            "∀ A: Universe, ∀ P: A → Universe, (∀ x: A, P x) → (∃ x: A, P x → False) → False",
             "intros",
             EngineLevel::Full,
         );
         assert_eq!(
             x.monitor_string(),
-            r#" A: U
- P: A → U
+            r#" A: Universe
+ P: A → Universe
  H: ∀ x: A, P x
  H0: ∃ x: A, P x → False
 --------------------------------------------(1/1)
@@ -137,7 +137,7 @@ mod tests {
     #[test]
     fn dependecy_order2() {
         let x = run_interactive(
-            "∀ A: U, ∀ P: A → U, (∀ x: A, P x) → (∃ x: A, P x → False) → False",
+            "∀ A: Universe, ∀ P: A → Universe, (∀ x: A, P x) → (∃ x: A, P x → False) → False",
             r#"
             intros
             apply (ex_ind ? ? H0)
@@ -148,9 +148,9 @@ mod tests {
         );
         assert_eq!(
             x.monitor_string(),
-            r#" A: U
+            r#" A: Universe
  H0_value: A
- P: A → U
+ P: A → Universe
  H: ∀ x: A, P x
  H0_proof: P H0_value → False
 --------------------------------------------(1/1)

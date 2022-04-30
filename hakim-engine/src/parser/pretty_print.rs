@@ -196,9 +196,9 @@ fn term_pretty_print_inner(
         Term::Axiom { unique_name, .. } => unique_name.to_string(),
         Term::Universe { index } => {
             if *index == 0 {
-                "U".to_string()
+                "Universe".to_string()
             } else {
-                format!("U{}", index)
+                format!("Universe{}", index)
             }
         }
         Term::Forall(abs) => abstraction_pretty_print("∀", abs, names, level.1 < 200),

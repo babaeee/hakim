@@ -21,6 +21,7 @@ pub enum Error {
     ExpectedSignButGot(String, Token),
     ExpectedExprButGot(Token),
     UndefinedName(String),
+    InvalidUniverseIndex(String),
     RemainTokens(Vec<Token>),
 }
 

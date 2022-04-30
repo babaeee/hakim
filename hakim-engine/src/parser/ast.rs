@@ -30,6 +30,7 @@ pub enum AstSet {
 
 #[derive(Debug)]
 pub enum AstTerm {
+    Universe(usize),
     Abs(AbsSign, AstAbs),
     Ident(String),
     App(Box<AstTerm>, Box<AstTerm>),
@@ -113,8 +114,19 @@ trait TokenEater {
     fn eat_ast_without_app(&mut self) -> Result<AstTerm> {
         match self.eat_token()? {
             Token::Ident(s) => {
-                let ident = Ident(s);
-                Ok(ident)
+                if let Some(index) = s.strip_prefix("Universe") {
+                    if index.is_empty() {
+                        Ok(Universe(0))
+                    } else {
+                        let parsed: std::result::Result<usize, _> = index.parse();
+                        match parsed {
+                            Ok(x) if x < 1000 => Ok(Universe(x)),
+                            _ => Err(InvalidUniverseIndex(s)),
+                        }
+                    }
+                } else {
+                    Ok(Ident(s))
+                }
             }
             Token::Wild(i) => {
                 let t = Wild(i);
@@ -243,6 +255,7 @@ pub fn ast_to_term(
     infer_cnt: &mut InferGenerator,
 ) -> Result<TermRef> {
     match ast {
+        Universe(x) => Ok(term_ref!(universe x)),
         Set(AstSet::Abs(AstAbs { name, ty, body })) => {
             let var_ty = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
             assert_eq!(name.len(), 1);
