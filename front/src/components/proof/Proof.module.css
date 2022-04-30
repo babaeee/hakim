@@ -17,6 +17,10 @@
   flex: 1;
 }
 
+.text {
+  color: white;
+}
+
 .title {
   display: flex;
   justify-content: center;

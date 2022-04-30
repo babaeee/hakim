@@ -2,7 +2,7 @@ import { g } from "../../i18n";
 import css from "./Adventure.module.css";
 import dataNotTyped from "../../../adventure/fa/root.yml";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { setGoal } from "../../hakim";
+import { sendTactic, setGoal } from "../../hakim";
 import { AfterProofAction, openProofSession } from "../root/Root";
 import { isWinNode } from "./winList";
 import { Title } from "../util/Title";
@@ -19,6 +19,8 @@ export type Node = {
 export type Level = Node & {
     type: "level",
     goal: string,
+    text: string | undefined,
+    initTactics: string[] | undefined,
 };
 
 export type Collection = Node & {
@@ -64,7 +66,7 @@ const isLocked = (node: Node, parent: (Level | Collection)[]) => {
     if (!node.dependencies) {
         return false;
     }
-    return node.dependencies.find((x) => isWinNode(parent.find((y) => y.id === x)!)) === undefined;
+    return node.dependencies.find((x) => !isWinNode(parent.find((y) => y.id === x)!)) !== undefined;
 };
 
 try {
@@ -127,7 +129,6 @@ export const Adventure = () => {
     const xt = (x: number) => x * 10 + 50;
     const yt = (x: number) => x * 17 + 20;
     let d = data.children;
-    let cpath = "/adventure";
     let myname = undefined;
     let levelToRender: Level | undefined = undefined;
     let levelIs404 = false;
@@ -147,7 +148,6 @@ export const Adventure = () => {
             myname = x.name;
             break;
         }
-        cpath += `/${x.id}`;
         d = x.children;
         myname = x.name;
     }
@@ -158,14 +158,26 @@ export const Adventure = () => {
         };
         (async () => {
             if (await setGoal(levelToRender.goal)) {
+                if (levelToRender?.initTactics) {
+                    for (const tactic of levelToRender.initTactics) {
+                        if (!await sendTactic(tactic)) {
+                            alert(`error in initializing: ${tactic} failed`);
+                            return;
+                        }
+                    }
+                }
                 openProofSession(navigator, {
-                    onCancel: back,
-                    onSolve: {
-                        type: 'win',
-                        level: levelToRender.id,
-                        then: back,
+                    afterProof: {
+                        onCancel: back,
+                        onSolve: {
+                            type: 'win',
+                            level: levelToRender.id,
+                            then: back,
+                        },
                     },
-                }, true);
+                    text: levelToRender.text,
+                    replace: true,
+                });
             }
         })();
         // cpath is function of levelToRender

@@ -11,7 +11,7 @@ import { addToWinList } from "../adventure/winList";
 import { useState } from "react";
 
 export type State = {
-    mode: 'sandbox' | 'proof' | 'mainmenu' | 'library' | 'adventure',
+    proofState: ProofState,
 };
 
 const storedState = (): State => {
@@ -19,7 +19,12 @@ const storedState = (): State => {
     if (json) {
         return JSON.parse(json);
     } else {
-        return { mode: 'mainmenu' };
+        return {
+            proofState: {
+                afterProof: {},
+                text: "",
+            }
+        };
     }
 };
 
@@ -46,7 +51,12 @@ type AfterProof = {
     onCancel?: AfterProofAction | undefined,
 };
 
-let todoAfterProof: AfterProof = {};
+type ProofState = {
+    afterProof: AfterProof,
+    text: string,
+};
+
+export let proofState: ProofState = stateToStore.proofState;
 
 const runProofAction = (navigate: NavigateFunction, action: AfterProofAction) => {
     if (action.type === 'back') {
@@ -62,15 +72,25 @@ const runProofAction = (navigate: NavigateFunction, action: AfterProofAction) =>
 };
 
 export const solveProof = (navigate: NavigateFunction) => {
-    runProofAction(navigate, todoAfterProof.onSolve || { type: 'back' });
+    runProofAction(navigate, proofState.afterProof.onSolve || { type: 'back' });
 };
 
 export const cancelProof = (navigate: NavigateFunction) => {
-    runProofAction(navigate, todoAfterProof.onCancel || { type: 'back' });
+    runProofAction(navigate, proofState.afterProof.onCancel || { type: 'back' });
 };
 
-export const openProofSession = (navigate: NavigateFunction, afterProof: AfterProof, replace: boolean = false) => {
-    todoAfterProof = afterProof;
+type OpenProofOptions = {
+    replace?: boolean,
+    afterProof?: AfterProof,
+    text?: string,
+};
+
+export const openProofSession = (navigate: NavigateFunction, options: OpenProofOptions = {}) => {
+    const afterProof = options.afterProof || {};
+    const text = options.text || "";
+    const replace = options.replace || false;
+    proofState = { afterProof, text };
+    stateToStore.proofState = proofState;
     navigate('/proof', { replace });
 };
 

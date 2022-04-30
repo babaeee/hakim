@@ -47,6 +47,7 @@
     "jest-circus": "26.6.0",
     "jest-resolve": "26.6.0",
     "jest-watch-typeahead": "0.6.1",
+    "markdown-it": "^13.0.0",
     "mini-css-extract-plugin": "0.11.3",
     "pnp-webpack-plugin": "1.6.4",
     "postcss-flexbugs-fixes": "4.2.1",
@@ -91,6 +92,7 @@
     ]
   },
   "devDependencies": {
+    "@types/markdown-it": "^12.2.3",
     "@types/react-helmet": "^6.1.5",
     "webpack-cli": "^4.9.1"
   }

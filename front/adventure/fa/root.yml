@@ -11,7 +11,7 @@
   y: 1
   dependencies:
    - tutorial
-  children: !include ./todo.yml
+  children: !include ./logic.yml
 - id: equality
   name: برابری
   type: collection

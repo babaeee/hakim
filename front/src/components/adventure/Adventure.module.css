@@ -16,7 +16,8 @@
 }
 
 .lines {
-    position: fixed;
+    position: absolute;
+    overflow: visible;
     top: 0;
     left: 0;
     height: 100vh;
@@ -27,7 +28,7 @@
 .item {
     height: 6vw;
     width: 6vw;
-    position: fixed;
+    position: absolute;
     color: white;
     text-align: center;
     vertical-align: middle;

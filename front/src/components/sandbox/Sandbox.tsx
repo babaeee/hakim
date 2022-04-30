@@ -46,7 +46,7 @@ export const Sandbox = () => {
             toProof = true;
         }
         if (toProof) {
-            openProofSession(navigator, {});
+            openProofSession(navigator);
         }
     };
     return (

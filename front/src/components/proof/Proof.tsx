@@ -7,9 +7,12 @@ import { LemmaBox } from './sidebar/LemmaBox';
 import { createContext, useState } from 'react';
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { cancelProof, solveProof } from '../root/Root';
+import { cancelProof, proofState, solveProof } from '../root/Root';
 import { useNavigate } from 'react-router-dom';
 import { Title } from '../util/Title';
+import Markdown from "markdown-it";
+
+const markdown = new Markdown();
 
 type Lemma = {
   name: string,
@@ -57,10 +60,13 @@ export const Proof = () => {
     <DndProvider backend={HTML5Backend}><ProofContext.Provider value={ctx}>
       <Title title={g`proof_screen`} />
       <div className={css.main}>
-        <h1 className={css.title}>
+        {proofState.text === "" && <h1 className={css.title}>
           <span>{g`babaeee_coq`}</span>
           <button className={css.changeLangButton} onClick={() => onFinish(false)}>{g`exit`}</button>
-        </h1>
+        </h1>}
+        <div className={css.text} dangerouslySetInnerHTML={{
+          __html: markdown.render(proofState.text),
+        }} />
         <div className={css.bottomContainer}>
           <Toolbar />
           <Tabs />
