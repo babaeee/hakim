@@ -5,3 +5,5 @@ Proof.
     rewrite H.
     apply eq_refl.
 Qed.
+
+Axiom eq_subtract_positive_lt: ∀ a b c: ℤ, 0 < b -> a + b = c -> a < c.

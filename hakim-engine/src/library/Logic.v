@@ -9,7 +9,9 @@ Axiom and_intro: ∀ A B: U, A -> B -> A ∧ B.
 Axiom and_ind: ∀ A B: U, A ∧ B -> ∀ Q: U, (A -> B -> Q) -> Q.
 Axiom or_introl: ∀ A B: U, A -> A ∨ B.
 Axiom or_intror: ∀ A B: U, B -> A ∨ B.
+Axiom or_sym: ∀ A B: U, B ∨ A -> A ∨ B.
 Axiom or_ind: ∀ A B: U, A ∨ B -> ∀ Q: U, (A -> Q) -> (B -> Q) -> Q.
+Axiom or_to_imply: ∀ A B: U, ((B -> False) -> A) -> A ∨ B.
 Axiom p_or_not_p: ∀ A: U, A ∨ (A → False).
 Todo NNPP: ∀ A: U, ((A -> False) -> False) -> A.
 Todo or_not_intro: ∀ A B: U, ((B -> False) -> A) -> A ∨ B.

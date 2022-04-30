@@ -102,6 +102,24 @@ impl Suggestion {
 
 const GOAL_RULES: &[SuggRule] = &[
     SuggRule {
+        class: Destruct,
+        tactic: &["apply and_intro"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("A ∨ B", "~ B ⊢ A"),
+        tactic: &["apply or_to_imply", "intros"],
+        questions: &[],
+        is_default: true,
+    },
+    SuggRule {
+        class: Pattern("A ∨ B", "~ A ⊢ B"),
+        tactic: &["apply or_sym", "apply or_to_imply", "intros"],
+        questions: &[],
+        is_default: false,
+    },
+    SuggRule {
         class: Pattern("A = B", "A ⊆ B ∧ B ⊆ A"),
         tactic: &["apply set_equality"],
         questions: &[],
