@@ -84,6 +84,17 @@ fn universes() {
 }
 
 #[test]
+fn uniop() {
+    parse_pretty("~ 2 = 3");
+    parse_pretty("~ - 2 = 3");
+    parse_pretty("- (2 + 3)");
+    parse_pretty("- 2 + 3");
+    parse_pretty("- - - (- 2 + 3)");
+    parse_pretty("~ - 2 < - - 5");
+    parse_pretty("2 * - (3 + 5)");
+}
+
+#[test]
 fn and_or_not() {
     parse_pretty("∃ x0: ℤ, x0 < 2 ∨ 5 < x0 ∧ x0 < 7");
 }

@@ -61,7 +61,7 @@ macro_rules! term {
     {axiom $name:expr , $($i:tt)*} => (crate::Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
     {universe $input:expr} => (crate::Term::Universe { index: ($input) });
     {v $input:expr} => (crate::Term::Var { index: ($input) });
-    {n $input:expr} => (crate::Term::Number { value: ($input) });
+    {n $input:expr} => (crate::Term::Number { value: ($input).into() });
     {_ $input:expr} => (crate::Term::Wild { index: ($input), scope: 0 });
     {$input:expr} => ($input);
 }

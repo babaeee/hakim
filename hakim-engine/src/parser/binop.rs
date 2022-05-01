@@ -62,17 +62,17 @@ use crate::{
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::InferGenerator;
+use super::{InferGenerator, PrecLevel};
 
 impl BinOp {
-    pub fn level_left(&self) -> u8 {
+    pub fn level_left(&self) -> PrecLevel {
         match self.assoc() {
             Left => self.prec(),
             No | Right => self.prec() - 1,
         }
     }
 
-    pub fn level_right(&self) -> u8 {
+    pub fn level_right(&self) -> PrecLevel {
         match self.assoc() {
             Right => self.prec(),
             No | Left => self.prec() - 1,
@@ -80,9 +80,9 @@ impl BinOp {
     }
 
     // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
-    pub fn prec(&self) -> u8 {
-        match self {
-            App => 0,
+    pub fn prec(&self) -> PrecLevel {
+        PrecLevel(match self {
+            App => 1,
             And => 79,
             Divide => 70,
             Eq => 70,
@@ -99,7 +99,7 @@ impl BinOp {
             Or => 85,
             Union => 50,
             Setminus => 30,
-        }
+        })
     }
 
     // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
@@ -199,7 +199,10 @@ impl BinOp {
 
     pub fn detect(t: &Term) -> Option<(TermRef, Self, TermRef)> {
         Some(match t {
-            Term::App { func, op: op2 } => match func.as_ref() {
+            Term::App {
+                func: original_func,
+                op: op2,
+            } => match original_func.as_ref() {
                 Term::App { func, op } => match func.as_ref() {
                     Term::App { func, op: _ } => match func.as_ref() {
                         Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
@@ -209,9 +212,9 @@ impl BinOp {
                             "intersection" => (op.clone(), BinOp::Intersection, op2.clone()),
                             "union" => (op.clone(), BinOp::Union, op2.clone()),
                             "setminus" => (op.clone(), BinOp::Setminus, op2.clone()),
-                            _ => return None,
+                            _ => (original_func.clone(), BinOp::App, op2.clone()),
                         },
-                        _ => return None,
+                        _ => (original_func.clone(), BinOp::App, op2.clone()),
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                         "divide" => (op.clone(), BinOp::Divide, op2.clone()),
@@ -233,11 +236,11 @@ impl BinOp {
                             }
                             break (op.clone(), BinOp::And, op2.clone());
                         },
-                        _ => return None,
+                        _ => (original_func.clone(), BinOp::App, op2.clone()),
                     },
-                    _ => return None,
+                    _ => (original_func.clone(), BinOp::App, op2.clone()),
                 },
-                _ => return None,
+                _ => (original_func.clone(), BinOp::App, op2.clone()),
             },
             Term::Forall(Abstraction {
                 body,

@@ -2,7 +2,10 @@ mod ast;
 mod binop;
 mod pretty_print;
 mod tokenizer;
+mod uniop;
 mod wild;
+
+use std::ops::Sub;
 
 pub use self::ast::{ast_to_term, AstTerm};
 pub use self::pretty_print::term_pretty_print;
@@ -30,6 +33,21 @@ type Result<T> = std::result::Result<T, Error>;
 pub fn parse(text: &str) -> Result<AstTerm> {
     let tokens = tokenize(text).unwrap();
     tokens_to_ast(&tokens)
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+pub struct PrecLevel(u8);
+
+impl PrecLevel {
+    const MAX: Self = PrecLevel(200);
+}
+
+impl Sub<u8> for PrecLevel {
+    type Output = PrecLevel;
+
+    fn sub(self, rhs: u8) -> Self::Output {
+        Self(self.0 - rhs)
+    }
 }
 
 #[cfg(test)]
