@@ -48,6 +48,7 @@ main_menu: صفحه اصلی
 new_assertion: ادعای جدید
 no_action_for_goal: اقدامی برای این نوع هدف تعریف نشده است
 no_more_subgoal: هدف دیگری برای اثبات وجود ندارد.
+no_suggestion: پیشنهادی وجود ندارد.
 not_solved: هنوز ثابت نشده است
 one: یک
 or_choose_one_prop: یا یکی از گزاره های زیر را انتخاب کنید

@@ -107,6 +107,7 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 >{ty}</span>
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
+                    {suggs.length === 0 && <MenuItem disabled>{g`no_suggestion`}</MenuItem>}
                     {suggs.map((x, i) => <MenuItem disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
                 </ControlledMenu>
             </div>
@@ -168,6 +169,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             {ty}
             <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                 onClose={() => toggleMenu(false)}>
+                {suggs.length === 0 && <MenuItem disabled>{g`no_suggestion`}</MenuItem>}
                 {suggs.map((x) => <MenuItem disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
             </ControlledMenu>
         </div>
