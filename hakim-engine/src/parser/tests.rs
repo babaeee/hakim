@@ -166,3 +166,8 @@ fn basic_fails() {
 fn divid_and_mod() {
     parse_pretty("∀ a: ℤ, ∀ b: ℤ, a mod b | a");
 }
+
+#[test]
+fn ge() {
+    parse_not_pretty("3 > 2", "2 < 3");
+}

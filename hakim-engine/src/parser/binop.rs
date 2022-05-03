@@ -4,6 +4,7 @@ pub enum BinOp {
     App,
     Divide,
     Eq,
+    Ge,
     Iff,
     Imply,
     Included,
@@ -33,6 +34,7 @@ impl Display for BinOp {
             App => " ",
             Divide => "|",
             Eq => "=",
+            Ge => ">",
             Iff => "↔",
             Imply => "→",
             Included => "⊆",
@@ -86,6 +88,7 @@ impl BinOp {
             And => 79,
             Divide => 70,
             Eq => 70,
+            Ge => 70,
             Imply => 99,
             Iff => 98,
             Included => 70,
@@ -109,6 +112,7 @@ impl BinOp {
             App => Left,
             Divide => No,
             Eq => No,
+            Ge => No,
             Iff => No,
             Imply => Right,
             Included => No,
@@ -130,6 +134,7 @@ impl BinOp {
             "∧" => And,
             "|" => Divide,
             "=" => Eq,
+            ">" => Ge,
             "↔" => Iff,
             "→" => Imply,
             "⊆" => Included,
@@ -157,6 +162,7 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(eq(), w, l, r)
             }
+            Ge => app_ref!(lt(), r, l),
             Iff => app_ref!(
                 and(),
                 term_ref!(forall l, increase_foreign_vars(r.clone(), 0)),
