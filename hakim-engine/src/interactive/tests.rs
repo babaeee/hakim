@@ -24,7 +24,9 @@ fn build_engine(level: EngineLevel) -> Engine {
 
 pub fn run_interactive(goal: &str, tactics: &str, level: EngineLevel) -> Session {
     let eng = build_engine(level);
-    let mut session = eng.interactive_session(goal).unwrap();
+    let mut session = eng
+        .interactive_session(goal)
+        .expect("fail to start session");
     for tactic in tactics.lines() {
         let tactic = tactic.trim();
         if tactic.is_empty() {

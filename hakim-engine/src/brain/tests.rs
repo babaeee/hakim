@@ -37,8 +37,8 @@ fn check_type(exp: &str, ty: &str) {
 
 fn fail_type(exp: &str) {
     let eng = Engine::default();
-    let exp_term = eng.parse_text(exp).unwrap();
-    if let Ok(t) = type_of(exp_term) {
+    let exp_term = eng.parse_text(exp);
+    if let Ok(t) = exp_term {
         panic!("We expect fail but type {:?} found for {}", t, exp)
     }
 }
@@ -131,4 +131,20 @@ fn iff_fail() {
 fn local_wild() {
     wild_need_local("∀ f: U1 -> U, ?x ∧ f ∀ T: U, ∀ a b: T, eq ?x a b");
     check_type("∀ T: U, ∀ a b: T, eq ?x a b -> eq ?x b a", "U1");
+}
+
+#[test]
+fn fn_app() {
+    check_type(
+        "∀ A B: Universe, ∀ f: A -> B, ∀ g: B -> Universe, ∀ x: A, g (f x)",
+        "Universe1",
+    );
+}
+
+#[test]
+fn eq_explicit() {
+    check_type(
+        "∀ x0: U, ∀ x1: U, ∀ x2: x0 → x1, ∀ x3: x0, ∀ x4: x0, eq x0 x3 x4 → eq x1 (x2 x3) (x2 x4)",
+        "Universe1",
+    );
 }

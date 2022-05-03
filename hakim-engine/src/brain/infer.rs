@@ -1,3 +1,4 @@
+use super::subtype_and_infer;
 use super::{
     fill_wild, increase_foreign_vars, normalize, predict_wild, remove_unused_var, subst, Error::*,
     Result, Term, TermRef,
@@ -9,7 +10,7 @@ use crate::{brain::get_universe, term_ref};
 use std::cmp::max;
 use std::iter::once;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InferResults {
     pub n: usize,
     pub terms: Vec<TermRef>,
@@ -362,7 +363,7 @@ pub fn type_of_inner(
                     })
                 }
             };
-            match_and_infer(var_ty.clone(), op_ty, infers)?;
+            subtype_and_infer(op_ty, var_ty.clone(), infers)?;
             subst(body.clone(), op.clone())
         }
         Term::Wild { index, scope } => infers.type_of_with_scope(*index, *scope),

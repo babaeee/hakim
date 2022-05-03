@@ -177,9 +177,6 @@ impl Engine {
 
     pub fn parse_text(&self, text: &str) -> Result<TermRef> {
         let (term, infer_cnt) = self.parse_text_with_wild(text)?;
-        if infer_cnt == 0 {
-            return Ok(term);
-        }
         let mut infers = InferResults::new(infer_cnt);
         let ty = type_of_and_infer(term.clone(), &mut infers)?;
         type_of_and_infer(ty, &mut infers)?;

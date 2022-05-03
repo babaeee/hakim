@@ -58,7 +58,7 @@ fn simple_fun() {
     parse_pretty("(λ x0: ℤ, 3 * x0 + 2) 7");
     // Paranthesis around second function is not neccessary, but it helps clearness
     // and coq does it, so don't remove it
-    parse_pretty("(λ x0: ℤ, x0) 7 (λ x0: ℤ, 3 * x0 + 2)");
+    parse_pretty("(λ x0: ℤ, λ x1: ℤ → ℤ, x0) 7 (λ x0: ℤ, 3 * x0 + 2)");
 }
 
 #[test]
@@ -113,8 +113,8 @@ fn iff_check() {
 #[test]
 fn set_and_divide() {
     parse_pretty("{ x0: ℤ | x0 < 5 }");
-    parse_pretty("{ x0: set (2 | 3) | x0 < 5 }");
-    // TODO: parse_pretty("{ x0: (2 | 3) | x0 < 5 }");
+    parse_pretty("{ x0: set (2 | 3) | x0 ∈ {x0} }");
+    // TODO: parse_pretty("{ x0: (2 | 3) | x0 = x0 }");
 }
 
 #[test]
