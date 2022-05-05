@@ -10,8 +10,11 @@ Axiom divide_minus: ∀ a b c: ℤ, a | b -> a | b + c -> a | c.
 Axiom divide_linear_combination: ∀ a b c: ℤ, a | b -> a | c -> (∀ k l: ℤ, a | k * b + l * c).
 
 Axiom prime: ℤ -> U.
-Axiom prime_intro_l: ∀ x: ℤ, prime x -> 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 0 ∨ y = x).
-Axiom prime_intro_r: ∀ x: ℤ, 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 0 ∨ y = x) -> prime x.
+Axiom prime_intro_l: ∀ x: ℤ, prime x -> 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x).
+Axiom prime_intro_r: ∀ x: ℤ, 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x) -> prime x.
 Axiom prime_gt_2: ∀ x: ℤ, prime x -> 2 < x.
+Axiom prime_is_positive: ∀ x: ℤ, prime x -> 0 < x.
+Axiom prime_divisor_for_positive: ∀ x: ℤ, 0 < x -> (x = 1 -> False) -> ∃ p: ℤ, prime p ∧ p | x.
 
-Axiom prime_divisor: ∀ x: ℤ, (x = 0 -> False) -> ∃ p: ℤ, prime p ∧ p | x.
+Import ProductOperator.
+Axiom divide_multi:   ∀ A: set ℤ, ∀ a : ℤ, a ∈ A -> a | multi A.
