@@ -125,7 +125,7 @@ impl BinOp {
             Included => No,
             Intersection => Left,
             Inset => No,
-            Le => No, 
+            Le => No,
             Lt => No,
             Minus => Left,
             ModOf => Left,
@@ -172,7 +172,7 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(eq(), w, l, r)
             }
-            Ge => app_ref!(le(), l, r),
+            Ge => Le.run_on_term(infer_cnt, r, l),
             Gt => app_ref!(lt(), r, l),
             Iff => app_ref!(
                 and(),
@@ -195,7 +195,7 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(inset(), w, l, r)
             }
-            Le => app_ref!(le(), l, r),
+            Le => app_ref!(or(), app_ref!(lt(), l, r), app_ref!(eq(), z(), l, r)),
             Lt => app_ref!(lt(), l, r),
             Minus => app_ref!(minus(), l, r),
             ModOf => app_ref!(mod_of(), l, r),
@@ -241,9 +241,18 @@ impl BinOp {
                         "minus" => (op.clone(), BinOp::Minus, op2.clone()),
                         "mod" => (op.clone(), BinOp::ModOf, op2.clone()),
                         "mult" => (op.clone(), BinOp::Mult, op2.clone()),
-                        "le" => (op.clone(), BinOp::Le, op2.clone()),
                         "lt" => (op.clone(), BinOp::Lt, op2.clone()),
-                        "or" => (op.clone(), BinOp::Or, op2.clone()),
+                        #[allow(clippy::never_loop)]
+                        "or" => loop {
+                            if let Some((a1, BinOp::Lt, b1)) = BinOp::detect(op) {
+                                if let Some((a2, BinOp::Eq, b2)) = BinOp::detect(op2) {
+                                    if a1 == a2 && b1 == b2 {
+                                        break (a1, BinOp::Le, b1);
+                                    }
+                                }
+                            }
+                            break (op.clone(), BinOp::Or, op2.clone());
+                        },
                         #[allow(clippy::never_loop)]
                         "and" => loop {
                             if let Some((a1, BinOp::Imply, b1)) = BinOp::detect(op) {
