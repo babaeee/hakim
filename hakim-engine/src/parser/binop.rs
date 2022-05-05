@@ -4,11 +4,14 @@ pub enum BinOp {
     App,
     Divide,
     Eq,
+    Ge,
+    Gt,
     Iff,
     Imply,
     Included,
     Inset,
     Intersection,
+    Le,
     Lt,
     Minus,
     ModOf,
@@ -33,11 +36,14 @@ impl Display for BinOp {
             App => " ",
             Divide => "|",
             Eq => "=",
+            Ge => "≥",
+            Gt => ">",
             Iff => "↔",
             Imply => "→",
             Included => "⊆",
             Intersection => "∩",
             Inset => "∈",
+            Le => "≤",
             Lt => "<",
             Minus => "-",
             ModOf => "mod",
@@ -62,17 +68,17 @@ use crate::{
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::InferGenerator;
+use super::{InferGenerator, PrecLevel};
 
 impl BinOp {
-    pub fn level_left(&self) -> u8 {
+    pub fn level_left(&self) -> PrecLevel {
         match self.assoc() {
             Left => self.prec(),
             No | Right => self.prec() - 1,
         }
     }
 
-    pub fn level_right(&self) -> u8 {
+    pub fn level_right(&self) -> PrecLevel {
         match self.assoc() {
             Right => self.prec(),
             No | Left => self.prec() - 1,
@@ -80,17 +86,20 @@ impl BinOp {
     }
 
     // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
-    pub fn prec(&self) -> u8 {
-        match self {
-            App => 0,
+    pub fn prec(&self) -> PrecLevel {
+        PrecLevel(match self {
+            App => 1,
             And => 79,
             Divide => 70,
             Eq => 70,
+            Ge => 70,
+            Gt => 70,
             Imply => 99,
             Iff => 98,
             Included => 70,
             Intersection => 40,
             Inset => 70,
+            Le => 70,
             Lt => 70,
             ModOf => 60,
             Mult => 40,
@@ -99,7 +108,7 @@ impl BinOp {
             Or => 85,
             Union => 50,
             Setminus => 30,
-        }
+        })
     }
 
     // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
@@ -109,11 +118,14 @@ impl BinOp {
             App => Left,
             Divide => No,
             Eq => No,
+            Ge => No,
+            Gt => No,
             Iff => No,
             Imply => Right,
             Included => No,
             Intersection => Left,
             Inset => No,
+            Le => No, 
             Lt => No,
             Minus => Left,
             ModOf => Left,
@@ -130,11 +142,14 @@ impl BinOp {
             "∧" => And,
             "|" => Divide,
             "=" => Eq,
+            "≥" => Ge,
+            ">" => Gt,
             "↔" => Iff,
             "→" => Imply,
             "⊆" => Included,
             "∩" => Intersection,
             "∈" => Inset,
+            "≤" => Le,
             "<" => Lt,
             "-" => Minus,
             "mod" => ModOf,
@@ -157,6 +172,8 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(eq(), w, l, r)
             }
+            Ge => app_ref!(le(), l, r),
+            Gt => app_ref!(lt(), r, l),
             Iff => app_ref!(
                 and(),
                 term_ref!(forall l, increase_foreign_vars(r.clone(), 0)),
@@ -178,6 +195,7 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(inset(), w, l, r)
             }
+            Le => app_ref!(le(), l, r),
             Lt => app_ref!(lt(), l, r),
             Minus => app_ref!(minus(), l, r),
             ModOf => app_ref!(mod_of(), l, r),
@@ -199,7 +217,10 @@ impl BinOp {
 
     pub fn detect(t: &Term) -> Option<(TermRef, Self, TermRef)> {
         Some(match t {
-            Term::App { func, op: op2 } => match func.as_ref() {
+            Term::App {
+                func: original_func,
+                op: op2,
+            } => match original_func.as_ref() {
                 Term::App { func, op } => match func.as_ref() {
                     Term::App { func, op: _ } => match func.as_ref() {
                         Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
@@ -209,9 +230,9 @@ impl BinOp {
                             "intersection" => (op.clone(), BinOp::Intersection, op2.clone()),
                             "union" => (op.clone(), BinOp::Union, op2.clone()),
                             "setminus" => (op.clone(), BinOp::Setminus, op2.clone()),
-                            _ => return None,
+                            _ => (original_func.clone(), BinOp::App, op2.clone()),
                         },
-                        _ => return None,
+                        _ => (original_func.clone(), BinOp::App, op2.clone()),
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                         "divide" => (op.clone(), BinOp::Divide, op2.clone()),
@@ -220,6 +241,7 @@ impl BinOp {
                         "minus" => (op.clone(), BinOp::Minus, op2.clone()),
                         "mod" => (op.clone(), BinOp::ModOf, op2.clone()),
                         "mult" => (op.clone(), BinOp::Mult, op2.clone()),
+                        "le" => (op.clone(), BinOp::Le, op2.clone()),
                         "lt" => (op.clone(), BinOp::Lt, op2.clone()),
                         "or" => (op.clone(), BinOp::Or, op2.clone()),
                         #[allow(clippy::never_loop)]
@@ -233,11 +255,11 @@ impl BinOp {
                             }
                             break (op.clone(), BinOp::And, op2.clone());
                         },
-                        _ => return None,
+                        _ => (original_func.clone(), BinOp::App, op2.clone()),
                     },
-                    _ => return None,
+                    _ => (original_func.clone(), BinOp::App, op2.clone()),
                 },
-                _ => return None,
+                _ => (original_func.clone(), BinOp::App, op2.clone()),
             },
             Term::Forall(Abstraction {
                 body,

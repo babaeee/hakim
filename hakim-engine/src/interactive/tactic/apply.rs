@@ -2,8 +2,8 @@ use crate::{
     app_ref,
     brain::{
         contains_wild, fill_wild, get_forall_depth,
-        infer::{match_and_infer, type_of_and_infer, InferResults},
-        map_reduce_wild, normalize, predict_axiom, Term, TermRef,
+        infer::{type_of_and_infer, InferResults},
+        map_reduce_wild, normalize, predict_axiom, subtype_and_infer, Term, TermRef,
     },
     engine::Engine,
     interactive::Frame,
@@ -136,7 +136,7 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
     }
     let mut infers = InferResults::new(inf_num);
     let twa_ty = type_of_and_infer(twa.clone(), &mut infers)?;
-    match_and_infer(twa_ty.clone(), goal, &mut infers)?;
+    subtype_and_infer(twa_ty.clone(), goal, &mut infers)?;
     let mut v = vec![];
     for i in 0..inf_num {
         let mut frame = frame.clone();

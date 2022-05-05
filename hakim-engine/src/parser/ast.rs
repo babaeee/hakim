@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::{
     tokenizer::{AbsSign, Token},
+    uniop::UniOp,
     wild::InferGenerator,
     Error::*,
     Result,
@@ -33,8 +34,8 @@ pub enum AstTerm {
     Universe(usize),
     Abs(AbsSign, AstAbs),
     Ident(String),
-    App(Box<AstTerm>, Box<AstTerm>),
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
+    UniOp(UniOp, Box<AstTerm>),
     Number(BigInt),
     Wild(Option<String>),
     Set(AstSet),
@@ -158,61 +159,95 @@ trait TokenEater {
     }
 
     fn eat_ast_with_disallowed_sign(&mut self, disallow_sign: fn(&str) -> bool) -> Result<AstTerm> {
-        fn build_ast(a: AstTerm, op: BinOp, b: AstTerm) -> AstTerm {
-            if op == BinOp::App {
-                App(Box::new(a), Box::new(b))
-            } else {
-                BinOp(Box::new(a), op, Box::new(b))
-            }
+        enum Op {
+            Bin(AstTerm, BinOp),
+            Uni(UniOp),
         }
-        fn push_to_stack(stack: &mut Vec<(AstTerm, BinOp)>, op: BinOp, mut n: AstTerm) {
-            while let Some((_, op2)) = stack.last() {
-                if op2.prec() > op.prec() {
-                    break;
-                }
-                if op2.prec() == op.prec() && op.assoc() == Assoc::Right {
-                    break;
-                }
-                let (n2, op2) = stack.pop().unwrap();
-                n = build_ast(n2, op2, n);
-            }
-            stack.push((n, op));
-        }
-        let mut cur = self.eat_ast_without_app()?;
-        let mut stack: Vec<(AstTerm, BinOp)> = vec![];
-        loop {
-            let t = match self.peek_token() {
-                Ok(k) => k,
-                Err(err) => {
-                    if err == UnexpectedEOF {
-                        break;
-                    } else {
-                        return Err(err);
+        use Op::*;
+        fn push_to_stack(stack: &mut Vec<Op>, op: BinOp, mut n: AstTerm) {
+            while let Some(x) = stack.last() {
+                match x {
+                    Bin(_, op2) => {
+                        if op2.prec() > op.prec() {
+                            break;
+                        }
+                        if op2.prec() == op.prec() && op.assoc() == Assoc::Right {
+                            break;
+                        }
+                    }
+                    Uni(x) => {
+                        if x.prec() > op.prec() {
+                            break;
+                        }
                     }
                 }
+                match stack.pop().unwrap() {
+                    Bin(n2, op2) => {
+                        n = BinOp(Box::new(n2), op2, Box::new(n));
+                    }
+                    Uni(op2) => {
+                        n = UniOp(op2, Box::new(n));
+                    }
+                };
+            }
+            stack.push(Bin(n, op));
+        }
+        let mut cur_opt = None;
+        let mut stack: Vec<Op> = vec![];
+        loop {
+            let cur = if let Some(c) = cur_opt {
+                c
+            } else {
+                if let Ok(Token::Sign(s)) = self.peek_token() {
+                    if let Some(op) = UniOp::from_str(&s) {
+                        self.eat_token()?;
+                        stack.push(Uni(op));
+                        continue;
+                    }
+                }
+                cur_opt = Some(self.eat_ast_without_app()?);
+                continue;
+            };
+            let t = match self.peek_token() {
+                Ok(k) => k,
+                Err(UnexpectedEOF) => {
+                    cur_opt = Some(cur);
+                    break;
+                }
+                Err(err) => return Err(err),
             };
             if let Token::Sign(s) = t {
                 if disallow_sign(&s) {
+                    cur_opt = Some(cur);
                     break;
                 }
                 if let Some(op) = BinOp::from_str(&s) {
                     self.eat_token()?;
                     push_to_stack(&mut stack, op, cur);
-                    cur = self.eat_ast_without_app()?;
+                    cur_opt = None;
                     continue;
                 }
                 if s == "(" || s == "{" {
                     push_to_stack(&mut stack, BinOp::App, cur);
-                    cur = self.eat_ast_without_app()?;
+                    cur_opt = None;
                     continue;
                 }
+                cur_opt = Some(cur);
                 break;
             }
             push_to_stack(&mut stack, BinOp::App, cur);
-            cur = self.eat_ast_without_app()?;
+            cur_opt = None;
         }
-        for (t, op) in stack.into_iter().rev() {
-            cur = build_ast(t, op, cur);
+        let mut cur = cur_opt.unwrap();
+        for x in stack.into_iter().rev() {
+            match x {
+                Bin(t, op) => {
+                    cur = BinOp(Box::new(t), op, Box::new(cur));
+                }
+                Uni(op) => {
+                    cur = UniOp(op, Box::new(cur));
+                }
+            }
         }
         Ok(cur)
     }
@@ -318,10 +353,6 @@ pub fn ast_to_term(
                 Err(UndefinedName(s))
             }
         }
-        App(a, b) => Ok(app_ref!(
-            ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?,
-            ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt)?
-        )),
         Number(num) => Ok(term_ref!(n num)),
         Wild(n) => {
             let i = match n {
@@ -337,6 +368,10 @@ pub fn ast_to_term(
                 None => infer_cnt.generate(),
             };
             Ok(term_ref!(_ i))
+        }
+        UniOp(op, a) => {
+            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
+            Ok(op.run_on_term(infer_cnt, ta))
         }
         BinOp(a, op, b) => {
             let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;

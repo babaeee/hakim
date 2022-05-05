@@ -127,7 +127,7 @@ mod tests {
             r#" A: Universe
  P: A → Universe
  H: ∀ x: A, P x
- H0: ∃ x: A, P x → False
+ H0: ∃ x: A, ~ P x
 --------------------------------------------(1/1)
     False
 "#
@@ -152,7 +152,7 @@ mod tests {
  H0_value: A
  P: A → Universe
  H: ∀ x: A, P x
- H0_proof: P H0_value → False
+ H0_proof: ~ P H0_value
 --------------------------------------------(1/1)
     False
 "#

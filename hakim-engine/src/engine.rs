@@ -37,6 +37,7 @@ impl Default for Engine {
         name_dict.insert("mod".to_string(), prelude::mod_of());
         name_dict.insert("mult".to_string(), prelude::mult());
         name_dict.insert("or".to_string(), prelude::or());
+        name_dict.insert("le".to_string(), prelude::le());
         name_dict.insert("lt".to_string(), prelude::lt());
         name_dict.insert("and".to_string(), prelude::and());
         name_dict.insert("set".to_string(), prelude::set());
@@ -177,9 +178,6 @@ impl Engine {
 
     pub fn parse_text(&self, text: &str) -> Result<TermRef> {
         let (term, infer_cnt) = self.parse_text_with_wild(text)?;
-        if infer_cnt == 0 {
-            return Ok(term);
-        }
         let mut infers = InferResults::new(infer_cnt);
         let ty = type_of_and_infer(term.clone(), &mut infers)?;
         type_of_and_infer(ty, &mut infers)?;

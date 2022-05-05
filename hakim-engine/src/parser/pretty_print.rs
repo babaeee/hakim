@@ -2,6 +2,8 @@ use std::cmp::min;
 
 use crate::{app_ref, parser::binop::BinOp, term_ref, Abstraction, Term, TermRef};
 
+use super::{uniop::UniOp, PrecLevel};
+
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
         if let Term::App { func, op: _ } = func.as_ref() {
@@ -106,9 +108,9 @@ fn abstraction_pretty_print_inner(
     } else {
         generate_name(names, "x")
     };
-    let var_ty_str = term_pretty_print_inner(var_ty, names, (200, 200));
+    let var_ty_str = term_pretty_print_inner(var_ty, names, (PrecLevel::MAX, PrecLevel::MAX));
     names.0.push((name.clone(), 0));
-    let body_str = term_pretty_print_inner(body, names, (200, 200));
+    let body_str = term_pretty_print_inner(body, names, (PrecLevel::MAX, PrecLevel::MAX));
     names.0.pop();
     (name, var_ty_str, body_str)
 }
@@ -134,10 +136,10 @@ fn abstraction_pretty_print(
     sign: &str,
     abs: &Abstraction,
     name_stack: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
-    should_paren: bool,
+    level: (PrecLevel, PrecLevel),
 ) -> String {
     let (name, var_ty_str, body_str) = abstraction_pretty_print_inner(abs, name_stack);
-    if should_paren {
+    if level.1 < PrecLevel::MAX || level.0 == BinOp::App.level_right() {
         format!("({} {}: {}, {})", sign, name, var_ty_str, body_str)
     } else {
         format!("{} {}: {}, {}", sign, name, var_ty_str, body_str)
@@ -147,18 +149,18 @@ fn abstraction_pretty_print(
 fn term_pretty_print_inner(
     term: &Term,
     names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
-    level: (u8, u8),
+    level: (PrecLevel, PrecLevel),
 ) -> String {
     if let Some((ty, fun)) = detect_exists(term) {
         if let Term::Fun(abs) = fun.as_ref() {
-            return abstraction_pretty_print("∃", abs, names, level.1 < 200);
+            return abstraction_pretty_print("∃", abs, names, level);
         } else {
             let abs = Abstraction {
                 body: app_ref!(fun, term_ref!(v 0)),
                 hint_name: None,
                 var_ty: ty,
             };
-            return abstraction_pretty_print("∃", &abs, names, level.1 < 200);
+            return abstraction_pretty_print("∃", &abs, names, level);
         };
     }
     if let Some((_, fun)) = detect_set_fn(term) {
@@ -171,26 +173,37 @@ fn term_pretty_print_inner(
         let r = exp
             .into_iter()
             .rev()
-            .map(|x| term_pretty_print_inner(&x, names, (200, 200)))
+            .map(|x| term_pretty_print_inner(&x, names, (PrecLevel::MAX, PrecLevel::MAX)))
             .collect::<Vec<_>>();
         return format!("{{{}}}", r.join(", "));
     }
-    if let Some((l, op, r)) = BinOp::detect(term) {
-        return if min(level.0, level.1) < op.prec() {
-            format!(
-                "({} {} {})",
-                term_pretty_print_inner(&l, names, (200, op.level_left())),
-                op,
-                term_pretty_print_inner(&r, names, (op.level_right(), 200))
-            )
+    if let Some((op, t)) = UniOp::detect(term) {
+        let (level, should_paren) = if level.1 < op.prec() || level.0 == BinOp::App.level_right() {
+            ((PrecLevel::MAX, PrecLevel::MAX), true)
         } else {
-            format!(
-                "{} {} {}",
-                term_pretty_print_inner(&l, names, (level.0, op.level_left())),
-                op,
-                term_pretty_print_inner(&r, names, (op.level_right(), level.1))
-            )
+            (level, false)
         };
+        let s = format!(
+            "{} {}",
+            op,
+            term_pretty_print_inner(&t, names, (op.prec(), level.1))
+        );
+        return if should_paren { format!("({})", s) } else { s };
+    }
+    if let Some((l, op, r)) = BinOp::detect(term) {
+        let (level, should_paren) = if min(level.0, level.1) < op.prec() {
+            ((PrecLevel::MAX, PrecLevel::MAX), true)
+        } else {
+            (level, false)
+        };
+        let left = term_pretty_print_inner(&l, names, (level.0, op.level_left()));
+        let right = term_pretty_print_inner(&r, names, (op.level_right(), level.1));
+        let s = if op != BinOp::App {
+            format!("{} {} {}", left, op, right)
+        } else {
+            format!("{} {}", left, right)
+        };
+        return if should_paren { format!("({})", s) } else { s };
     }
     match term {
         Term::Axiom { unique_name, .. } => unique_name.to_string(),
@@ -201,8 +214,8 @@ fn term_pretty_print_inner(
                 format!("Universe{}", index)
             }
         }
-        Term::Forall(abs) => abstraction_pretty_print("∀", abs, names, level.1 < 200),
-        Term::Fun(abs) => abstraction_pretty_print("λ", abs, names, level.1 < 200),
+        Term::Forall(abs) => abstraction_pretty_print("∀", abs, names, level),
+        Term::Fun(abs) => abstraction_pretty_print("λ", abs, names, level),
         Term::Var { index } => {
             if let Some(x) = names.0.iter_mut().rev().nth(*index) {
                 x.1 += 1;
@@ -212,24 +225,17 @@ fn term_pretty_print_inner(
             }
         }
         Term::Number { value } => value.to_string(),
-        Term::App { func, op } => {
-            let s = format!(
-                "{} {}",
-                term_pretty_print_inner(func, names, (1, 1)),
-                term_pretty_print_inner(op, names, (0, 0))
-            );
-            if min(level.0, level.1) < 1 {
-                format!("({})", s)
-            } else {
-                s
-            }
-        }
+        Term::App { .. } => unreachable!(), // handled in BinOp::detect
         Term::Wild { index, scope: _ } => format!("?w{}", index),
     }
 }
 
 pub fn term_pretty_print(term: &Term, contain_name: impl Fn(&str) -> bool) -> String {
-    let r = term_pretty_print_inner(term, &mut (vec![], contain_name), (200, 200));
+    let r = term_pretty_print_inner(
+        term,
+        &mut (vec![], contain_name),
+        (PrecLevel::MAX, PrecLevel::MAX),
+    );
     if cfg!(test) {
         r
     } else {

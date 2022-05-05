@@ -2,6 +2,9 @@ use crate::parser::term_pretty_print;
 use std::{cmp::Ordering, fmt::Debug, hash::Hash, rc::Rc};
 
 pub mod infer;
+mod subtyping;
+
+pub use subtyping::subtype_and_infer;
 
 #[cfg(test)]
 mod tests;
@@ -61,7 +64,7 @@ macro_rules! term {
     {axiom $name:expr , $($i:tt)*} => (crate::Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
     {universe $input:expr} => (crate::Term::Universe { index: ($input) });
     {v $input:expr} => (crate::Term::Var { index: ($input) });
-    {n $input:expr} => (crate::Term::Number { value: ($input) });
+    {n $input:expr} => (crate::Term::Number { value: ($input).into() });
     {_ $input:expr} => (crate::Term::Wild { index: ($input), scope: 0 });
     {$input:expr} => ($input);
 }
@@ -341,6 +344,7 @@ pub fn normalize(t: TermRef) -> TermRef {
 pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
     fn for_abs(abs: Abstraction, to_put: TermRef, i: usize) -> Abstraction {
         let var_ty = inner(abs.var_ty, to_put.clone(), i);
+        let to_put = increase_foreign_vars(to_put, 0);
         let body = inner(abs.body, to_put, i + 1);
         Abstraction {
             var_ty,
@@ -350,9 +354,15 @@ pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
     }
     fn inner(exp: TermRef, to_put: TermRef, i: usize) -> TermRef {
         match exp.as_ref() {
-            Term::Var { index } if *index == i => to_put,
-            Term::Var { .. }
-            | Term::Axiom { .. }
+            Term::Var { index } => match i.cmp(index) {
+                Ordering::Less => term_ref!(v index - 1),
+                Ordering::Equal => to_put,
+                Ordering::Greater => {
+                    let x = *index;
+                    term_ref!(v x)
+                }
+            },
+            Term::Axiom { .. }
             | Term::Universe { .. }
             | Term::Number { .. }
             | Term::Wild { .. } => exp,
