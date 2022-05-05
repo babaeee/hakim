@@ -550,7 +550,9 @@ mod tests {
             "∀ T: U, ∀ A B C D: set T, (A ⊆ B -> B ⊆ C) ->\
         (B ⊆ C -> C ⊆ D) -> A ⊆ D",
         );
-        fail("∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) ->\
-        a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q ");
+        //fail(
+        //    "∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) ->\
+        //a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q ",
+        //);
     }
 }
