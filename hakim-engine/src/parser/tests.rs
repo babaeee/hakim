@@ -123,6 +123,7 @@ fn sets() {
     parse_pretty("{ x0: ℤ | 5 < x0 } ∩ { x0: ℤ | x0 < 10 }");
     parse_pretty("{2} ∩ {}");
     parse_pretty("{1, 2, 3}");
+    parse_not_pretty("set_from_func ℤ (lt 5)", "{ x: ℤ | 5 < x }");
 }
 
 #[test]
@@ -168,6 +169,8 @@ fn divid_and_mod() {
 }
 
 #[test]
-fn ge() {
+fn gt_le_ge() {
     parse_not_pretty("3 > 2", "2 < 3");
+    parse_pretty("1 ≤ 5");
+    parse_not_pretty("3 ≥ 2", "2 ≤ 3");
 }
