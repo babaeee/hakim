@@ -146,28 +146,30 @@ fn abstraction_pretty_print(
     }
 }
 
+fn extract_fun_from_term(term: TermRef, ty: TermRef) -> Abstraction {
+    if let Term::Fun(abs) = term.as_ref() {
+        abs.clone()
+    } else {
+        Abstraction {
+            body: app_ref!(term, term_ref!(v 0)),
+            hint_name: None,
+            var_ty: ty,
+        }
+    }
+}
+
 fn term_pretty_print_inner(
     term: &Term,
     names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
     level: (PrecLevel, PrecLevel),
 ) -> String {
     if let Some((ty, fun)) = detect_exists(term) {
-        if let Term::Fun(abs) = fun.as_ref() {
-            return abstraction_pretty_print("∃", abs, names, level);
-        } else {
-            let abs = Abstraction {
-                body: app_ref!(fun, term_ref!(v 0)),
-                hint_name: None,
-                var_ty: ty,
-            };
-            return abstraction_pretty_print("∃", &abs, names, level);
-        };
+        return abstraction_pretty_print("∃", &extract_fun_from_term(fun, ty), names, level);
     }
-    if let Some((_, fun)) = detect_set_fn(term) {
-        if let Term::Fun(x) = fun.as_ref() {
-            let (name, ty, body) = abstraction_pretty_print_inner(x, names);
-            return format!("{{ {}: {} | {} }}", name, ty, body);
-        }
+    if let Some((ty, fun)) = detect_set_fn(term) {
+        let x = extract_fun_from_term(fun, ty);
+        let (name, ty, body) = abstraction_pretty_print_inner(&x, names);
+        return format!("{{ {}: {} | {} }}", name, ty, body);
     }
     if let Some(exp) = detect_set_items(term) {
         let r = exp
