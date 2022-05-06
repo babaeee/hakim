@@ -1,4 +1,4 @@
-use super::{apply::apply, intros::intros, Error::*, Result};
+use super::{apply::apply, intros::intros, Result};
 use crate::{
     analysis::logic::{LogicArena, LogicBuilder, LogicValue},
     app_ref,
@@ -409,16 +409,7 @@ fn pre_process_frame(frame: Frame) -> Frame {
 
 pub fn auto_set(frame: Frame) -> Result<Vec<Frame>> {
     let frame = pre_process_frame(frame);
-    let logic_builder = LogicBuilder::new(convert);
-    logic_builder.and_not_term(frame.goal);
-    for (_, hyp) in frame.hyps {
-        logic_builder.and_term(hyp);
-    }
-    if logic_builder.check_contradiction(check_contradiction, negator) {
-        Ok(vec![])
-    } else {
-        Err(CanNotSolve("auto_set"))
-    }
+    LogicBuilder::build_tactic("auto_set", frame, convert, check_contradiction, negator)
 }
 
 #[cfg(test)]

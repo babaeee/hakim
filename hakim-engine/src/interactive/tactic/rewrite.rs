@@ -116,7 +116,7 @@ pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<
     if args.peek().is_some() {
         next_arg_constant(&mut args, "replace", "in")?;
         let hyp_name = next_arg(&mut args, "replace")?;
-        let hyp = after_replace.remove_hyp_with_name(hyp_name)?;
+        let hyp = after_replace.remove_hyp_with_name(hyp_name)?.ty;
         after_replace.add_hyp_with_name(hyp_name, replace_term(hyp, find, replace, &mut which))?;
         deny_arg(args, "replace")?;
     } else {

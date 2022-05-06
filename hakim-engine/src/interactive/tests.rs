@@ -338,3 +338,22 @@ fn auto_set_test() {
     "#,
     );
 }
+
+#[test]
+fn add_from_lib_test() {
+    run_interactive(
+        "∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) -> a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q",
+        r#"
+        intros A P Q R S a H1 H2 H3
+        add_from_lib NNPP
+        apply NNPP
+    "#,
+    EngineLevel::Full
+    );
+    run_interactive_to_fail("∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) -> a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q",
+    r#"
+    intros A P Q R S a H1 H2 H3
+    add_from_lib NNPP
+    "#,
+    "remove_hyp NNPP");
+}

@@ -3,7 +3,10 @@ use std::fmt::Debug;
 
 use typed_arena::Arena;
 
-use crate::brain::{remove_unused_var, Abstraction, Term, TermRef};
+use crate::{
+    brain::{remove_unused_var, Abstraction, Term, TermRef},
+    interactive::{self, Frame},
+};
 
 #[derive(Debug, Clone)]
 pub enum LogicTree<'a, T> {
@@ -165,6 +168,29 @@ pub struct LogicBuilder<'a, T> {
     root: Cell<LogicValue<'a, T>>,
     f: fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>,
 }
+
+impl<T: Clone + Debug> LogicBuilder<'_, T> {
+    pub fn build_tactic(
+        name: &'static str,
+        frame: Frame,
+        convert: for<'a> fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>,
+        check_contradiction: fn(&[T]) -> bool,
+        negator: fn(T) -> T,
+    ) -> interactive::tactic::Result<Vec<Frame>> {
+        use interactive::tactic::Error::*;
+        let logic_builder = LogicBuilder::new(convert);
+        logic_builder.and_not_term(frame.goal);
+        for (_, hyp) in frame.hyps {
+            logic_builder.and_term(hyp.ty);
+        }
+        if logic_builder.check_contradiction(check_contradiction, negator) {
+            Ok(vec![])
+        } else {
+            Err(CanNotSolve(name))
+        }
+    }
+}
+
 impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
     pub fn new(f: fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>) -> Self {
         let arena = Arena::new();

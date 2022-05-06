@@ -56,9 +56,9 @@ impl Frame {
         let n = frame.hyps.len();
         let mut edge = vec![vec![]; n];
         let mut cnt = vec![0; n];
-        for (i, (_, ty)) in frame.hyps.iter().enumerate() {
+        for (i, (_, hyp)) in frame.hyps.iter().enumerate() {
             map_reduce_axiom(
-                ty,
+                &hyp.ty,
                 &mut |x| {
                     let j = *id_map.get(x)?;
                     edge[j].push(i);
@@ -103,7 +103,7 @@ impl Snapshot {
             .order_hyps()
             .into_iter()
             .map(|x| {
-                let rc = frame.hyps.get(&x).unwrap();
+                let rc = &frame.hyps.get(&x).unwrap().ty;
                 (x, frame.engine.pretty_print(rc))
             })
             .collect();

@@ -94,7 +94,7 @@ impl From<Session> for NaturalProof {
                 if next.deny_dependency(hn).is_ok() {
                     continue;
                 }
-                let ty = next.engine.pretty_print(next.hyps.get(hn).unwrap());
+                let ty = next.engine.pretty_print(&next.hyps.get(hn).unwrap().ty);
                 r += &format!("$one {} $random_like {}, ", ty, hn);
             }
             r += "$we_consider. $we_know ";
@@ -105,7 +105,7 @@ impl From<Session> for NaturalProof {
                 if next.deny_dependency(hn).is_err() {
                     continue;
                 }
-                let ty = next.engine.pretty_print(next.hyps.get(hn).unwrap());
+                let ty = next.engine.pretty_print(&next.hyps.get(hn).unwrap().ty);
                 r += &format!("{} ($hyp {}) $and ", ty, hn);
             }
             r += "$its_enough_to_proof ";
@@ -113,7 +113,7 @@ impl From<Session> for NaturalProof {
             r
         }
         fn apply_hyp(lem: &str, hyp: &str, next: usize, pt: &[ProofTree]) -> NaturalProof {
-            let ty = pt[next].frame().hyps.get(hyp).unwrap();
+            let ty = &pt[next].frame().hyps.get(hyp).unwrap().ty;
             let ty = pt[next].frame().engine.pretty_print(ty);
             Sibling(
                 Box::new(Statement(format!(

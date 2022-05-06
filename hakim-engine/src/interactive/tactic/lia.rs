@@ -1,4 +1,4 @@
-use super::{Error::*, Result};
+use super::Result;
 use crate::{
     analysis::{
         arith::{LinearPoly, Poly},
@@ -99,16 +99,7 @@ fn negator(mut poly: Poly) -> Poly {
 }
 
 pub fn lia(frame: Frame) -> Result<Vec<Frame>> {
-    let logic_builder = LogicBuilder::new(convert);
-    logic_builder.and_not_term(frame.goal);
-    for (_, hyp) in frame.hyps {
-        logic_builder.and_term(hyp);
-    }
-    if logic_builder.check_contradiction(check_contradiction, negator) {
-        Ok(vec![])
-    } else {
-        Err(CanNotSolve("lia"))
-    }
+    LogicBuilder::build_tactic("lia", frame, convert, check_contradiction, negator)
 }
 
 #[cfg(test)]

@@ -16,7 +16,7 @@ mod apply;
 pub(crate) use apply::apply;
 
 mod hyps;
-pub(crate) use hyps::{add_hyp, remove_hyp};
+pub(crate) use hyps::{add_from_lib, add_hyp, remove_hyp};
 
 mod auto_set;
 pub(crate) use auto_set::auto_set;
@@ -39,6 +39,7 @@ pub enum Error {
     CanNotSolve(&'static str),
     CanNotUndo,
     EmptyTactic,
+    HypIsFromLib(String),
     EngineError(super::Error),
     CanNotFindInstance(FindInstance),
     ContextDependOnHyp(String, TermRef),

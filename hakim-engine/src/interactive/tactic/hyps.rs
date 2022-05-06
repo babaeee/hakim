@@ -4,6 +4,23 @@ use crate::{
     interactive::Frame,
 };
 
+pub fn add_from_lib<'a>(
+    mut frame: Frame,
+    args: impl Iterator<Item = &'a str>,
+) -> Result<Vec<Frame>> {
+    let name = get_one_arg(args, "add_hyp")?;
+    let ty = frame.engine.type_of_name(name)?;
+    frame.hyps.insert(
+        name.to_string(),
+        crate::interactive::Hyp {
+            ty,
+            name: name.to_string(),
+            from_lib: true,
+        },
+    );
+    Ok(vec![frame])
+}
+
 pub fn add_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "add_hyp")?;
     let term = frame.engine.parse_text(exp)?;

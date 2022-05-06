@@ -5,7 +5,6 @@ use super::Result;
 use crate::{
     analysis::logic::{LogicArena, LogicBuilder, LogicValue},
     brain::TermRef,
-    interactive::tactic::Error::CanNotSolve,
     interactive::Frame,
 };
 #[derive(Debug, Clone)]
@@ -55,16 +54,7 @@ fn negator(x: PropStatement) -> PropStatement {
     }
 }
 pub fn assumption(frame: Frame) -> Result<Vec<Frame>> {
-    let logic_builder = LogicBuilder::new(convert);
-    logic_builder.and_not_term(frame.goal);
-    for (_, hyp) in frame.hyps {
-        logic_builder.and_term(hyp);
-    }
-    if logic_builder.check_contradiction(check_contradiction, negator) {
-        Ok(vec![])
-    } else {
-        Err(CanNotSolve("assumption"))
-    }
+    LogicBuilder::build_tactic("assumption", frame, convert, check_contradiction, negator)
 }
 
 #[cfg(test)]

@@ -112,7 +112,7 @@ fn find_args_in_apply_hyp(
 
 fn apply_for_hyp(mut frame: Frame, exp: &str, name: &str) -> Result<Vec<Frame>> {
     let (term, ic) = frame.engine.parse_text_with_wild(exp)?;
-    let prev_hyp = frame.remove_hyp_with_name(name)?;
+    let prev_hyp = frame.remove_hyp_with_name(name)?.ty;
     let op = term_ref!(axiom name, prev_hyp);
     let ty = match find_args_in_apply_hyp(term, op, ic, name) {
         Some(x) => x,

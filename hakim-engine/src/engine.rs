@@ -195,4 +195,9 @@ impl Engine {
     pub fn pretty_print(&self, term: &Term) -> String {
         term_pretty_print(term, |x| !self.name_dict.contains_key(x))
     }
+
+    pub(crate) fn type_of_name(&self, name: &str) -> Result<TermRef> {
+        let x = self.parse_text(name)?;
+        Ok(type_of(x)?)
+    }
 }

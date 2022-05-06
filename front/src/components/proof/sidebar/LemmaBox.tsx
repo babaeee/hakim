@@ -1,5 +1,6 @@
 import { Fragment, useContext } from "react";
 import { useDrag } from "react-dnd";
+import { sendTactic } from "../../../hakim";
 import { ProofContext } from "../Proof";
 import css from "./Sidebar.module.css";
 
@@ -9,7 +10,11 @@ const Lemma = ({ name, ty }: { name: string, ty: string }) => {
         item: () => ({ name }),
     }), [name]);
     return (
-        <div ref={drag} dir="ltr" className={css.lemma} title={ty}>{name}</div>
+        <div ref={drag}
+            onDoubleClick={async () => {
+                await sendTactic(`add_from_lib ${name}`);
+            }}
+            dir="ltr" className={css.lemma} title={ty}>{name}</div>
     );
 };
 

@@ -24,12 +24,19 @@ use self::suggest::{
 };
 
 pub use self::suggest::Suggestion;
-use self::tactic::{assumption, auto_set, chain, remove_hyp};
+use self::tactic::{add_from_lib, assumption, auto_set, chain, remove_hyp};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Hyp {
+    pub ty: TermRef,
+    name: String,
+    from_lib: bool,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Frame {
     pub goal: TermRef,
-    pub hyps: im::HashMap<String, TermRef>,
+    pub hyps: im::HashMap<String, Hyp>,
     pub engine: Engine,
 }
 
@@ -252,16 +259,26 @@ impl Snapshot {
 impl Frame {
     pub fn add_hyp_with_name(&mut self, name: &str, ty: TermRef) -> tactic::Result<()> {
         self.engine.add_axiom_with_term(name, ty.clone())?;
-        self.hyps.insert(name.to_string(), ty);
+        let hyp = Hyp {
+            name: name.to_string(),
+            ty,
+            from_lib: false,
+        };
+        self.hyps.insert(name.to_string(), hyp);
         Ok(())
     }
 
     pub fn deny_dependency(&self, name: &str) -> tactic::Result<()> {
+        if let Some(hyp) = self.hyps.get(name) {
+            if hyp.from_lib {
+                return Err(tactic::Error::HypIsFromLib(name.to_string()));
+            }
+        }
         for (_, hyp) in &self.hyps {
-            if predict_axiom(hyp, |x| x == name) {
+            if predict_axiom(&hyp.ty, |x| x == name) {
                 return Err(tactic::Error::ContextDependOnHyp(
                     name.to_string(),
-                    hyp.clone(),
+                    hyp.ty.clone(),
                 ));
             }
         }
@@ -274,7 +291,7 @@ impl Frame {
         Ok(())
     }
 
-    pub fn remove_hyp_with_name(&mut self, name: &str) -> tactic::Result<TermRef> {
+    pub fn remove_hyp_with_name(&mut self, name: &str) -> tactic::Result<Hyp> {
         self.deny_dependency(name)?;
         if let Some(hyp) = self.hyps.remove(name) {
             self.engine.remove_name_unchecked(name);
@@ -313,6 +330,7 @@ impl Frame {
             "remove_hyp" => remove_hyp(frame, parts),
             "chain" => chain(frame, parts),
             "destruct" => destruct(frame, parts),
+            "add_from_lib" => add_from_lib(frame, parts),
             "ring" => ring(frame),
             "lia" => lia(frame),
             "auto_set" => auto_set(frame),
