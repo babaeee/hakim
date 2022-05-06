@@ -82,7 +82,16 @@ fn exists_hyp() {
             intros f
             "#,
         "f",
-        SuggRec::vc([SuggClass::Destruct]),
+        vec![
+            SuggRec {
+                ans: vec![],
+                class: SuggClass::Destruct,
+            },
+            SuggRec {
+                ans: vec!["baghali".to_string()],
+                class: SuggClass::DestructWithName,
+            },
+        ],
         EngineLevel::Full,
     );
     check_hyp_menu(
@@ -158,6 +167,20 @@ fn eq_hyp() {
         "eq_2_3",
         SuggRec::vc([SuggClass::Rewrite]),
         EngineLevel::Empty,
+    );
+}
+
+#[test]
+fn add_from_lib() {
+    check_hyp_menu(
+        "False",
+        "add_from_lib le_multiply_positive",
+        "le_multiply_positive",
+        vec![SuggRec {
+            class: SuggClass::Instantiate,
+            ans: vec!["2".to_string()],
+        }],
+        EngineLevel::Full,
     );
 }
 

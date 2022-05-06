@@ -83,7 +83,7 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
                 let new_name = frame.engine.generate_name(&format!("{name}_ex"));
                 r.push(Suggestion::newq1default(
                     Instantiate,
-                    &format!("add_hyp {new_name} := ({name} ())"),
+                    &format!("add_hyp {new_name} := ({name} ($0))"),
                     &format!("$enter_value_that_you_want_to_put_on_foreign<${body:?}$>"),
                 ));
             }
@@ -91,7 +91,7 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
         Term::App { func, op: _ } => {
             if let Term::App { func, op: _ } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                    if unique_name.as_str() == "ex" {
+                    if unique_name.as_str() == "ex" && frame.engine.has_library("Logic") {
                         r.push(Suggestion::newq1default(
                             DestructWithName,
                             &format!("destruct {name} with (ex_ind ? ?) to ($0 $0_property)"),

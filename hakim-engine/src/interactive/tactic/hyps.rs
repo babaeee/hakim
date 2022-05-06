@@ -112,6 +112,18 @@ mod tests {
     }
 
     #[test]
+    fn add_hyp_and_add_from_lib() {
+        run_interactive(
+            "False",
+            r#"
+            add_from_lib le_multiply_positive
+            add_hyp H := (le_multiply_positive (2))
+            "#,
+            EngineLevel::Full,
+        );
+    }
+
+    #[test]
     fn from_lib() {
         run_interactive(
         "∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) -> a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q",
