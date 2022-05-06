@@ -1,4 +1,4 @@
-use super::{get_one_arg, Error, Result};
+use super::{get_one_arg, next_arg, next_arg_constant, Error, Result};
 use crate::{
     brain::{type_of, Term},
     interactive::Frame,
@@ -22,7 +22,17 @@ pub fn add_from_lib<'a>(
 }
 
 pub fn add_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
-    let exp = get_one_arg(args, "add_hyp")?;
+    let mut args = args.peekable();
+    let exp = next_arg(&mut args, "add_hyp")?;
+    if args.peek().is_some() {
+        next_arg_constant(&mut args, "add_hyp", ":=")?;
+        let name = exp;
+        let term = next_arg(&mut args, "add_hyp")?;
+        let term = frame.engine.parse_text(term)?;
+        let ty = type_of(term)?;
+        frame.add_hyp_with_name(name, ty)?;
+        return Ok(vec![frame]);
+    }
     let term = frame.engine.parse_text(exp)?;
     let ty = type_of(term.clone())?;
     if !matches!(ty.as_ref(), Term::Universe { .. }) {
@@ -85,6 +95,18 @@ mod tests {
             remove_hyp fp
             intros fp
             apply fp
+            "#,
+        );
+    }
+
+    #[test]
+    fn pose_style_add_hyp() {
+        run_interactive_to_end(
+            "∀ A: Universe, ∀ P: A → Universe, (∀ x: A, P x) → ∀ x: A, P x",
+            r#"
+            intros A P f x
+            add_hyp H := (f x)
+            apply H
             "#,
         );
     }

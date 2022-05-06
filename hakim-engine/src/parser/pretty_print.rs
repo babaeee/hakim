@@ -223,7 +223,7 @@ fn term_pretty_print_inner(
                 x.1 += 1;
                 x.0.clone()
             } else {
-                format!("f{}", index - names.0.len())
+                format!("@{}", index - names.0.len())
             }
         }
         Term::Number { value } => value.to_string(),

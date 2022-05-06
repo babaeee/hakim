@@ -1,4 +1,7 @@
-use crate::interactive::Frame;
+use crate::{
+    brain::{remove_unused_var, Abstraction, Term},
+    interactive::Frame,
+};
 
 use super::{SuggClass::*, SuggRule, Suggestion};
 
@@ -70,6 +73,18 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
     for rule in HYP_RULES {
         if let Some(x) = rule.try_on_hyp(name, frame.clone()) {
             r.push(x);
+        }
+    }
+    let hyp = frame.hyps.get(name).unwrap().ty.clone();
+    if let Term::Forall(Abstraction { body, .. }) = hyp.as_ref() {
+        if remove_unused_var(body.clone(), 0).is_some() {
+        } else {
+            let new_name = frame.engine.generate_name(&format!("{name}_ex"));
+            r.push(Suggestion::newq1default(
+                Instantiate,
+                &format!("add_hyp {new_name} := ({name} ($0))"),
+                &format!("$enter_value_that_you_want_to_put_on_foreign<${body:?}$>"),
+            ));
         }
     }
     r

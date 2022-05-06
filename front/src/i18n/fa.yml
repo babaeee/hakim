@@ -16,6 +16,7 @@ destruct: شکستن
 enter_tactic: تاکتیک خود را وارد کنید
 enter_a_name: یک نام وارد کنید
 enter_value_that_satisfy: مقداری که در عبارت صدق می کند را وارد کنید
+enter_value_that_you_want_to_put_on_foreign: "مقداری که می خواهید به جای ‪@0‬ در $0 قرار دهید را وارد کنید"
 enter_value_of1: مقدار
 enter_value_of2: را وارد کنید
 exit: خروج
@@ -27,6 +28,7 @@ in_applying: در حین اعمال کردن
 in_natural: به زبان طبیعی
 induction_on: استقرا روی
 input_assertion: ادعای خود را وارد کنید
+instantiate: نمونه گیری
 intros: معرفی
 intros_with_name: معرفی با نام
 inl_apply_on_hyp: طبق $0 و $1 می توان $2 را نتیجه گرفت که در ادامه فرض $1 را این گزاره در نظر می گیریم.

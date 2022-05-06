@@ -15,6 +15,7 @@ pub enum SuggClass {
     Destruct,
     Rewrite,
     Contradiction,
+    Instantiate,
     Pattern(&'static str, &'static str),
 }
 
@@ -26,6 +27,7 @@ impl Display for SuggClass {
             Destruct => write!(f, "$destruct"),
             Rewrite => write!(f, "$rewrite"),
             Contradiction => write!(f, "$contradiction"),
+            Instantiate => write!(f, "$instantiate"),
             Pattern(a, b) => write!(f, "{a} ⇒ {b}"),
         }
     }

@@ -126,6 +126,20 @@ fn false_hyp() {
 }
 
 #[test]
+fn instantiate_hyp() {
+    check_hyp_menu(
+        "∀ A: Universe, ∀ P: A → Universe, (∀ x: A, P x) → ∀ x: A, P x",
+        "intros A P f x",
+        "f",
+        vec![SuggRec {
+            class: SuggClass::Instantiate,
+            ans: vec!["x".to_string()],
+        }],
+        EngineLevel::Empty,
+    );
+}
+
+#[test]
 fn eq_hyp() {
     check_hyp_menu(
         "∀ x0: U, ∀ x1: U, ∀ x2: x0 → x1, ∀ x3: x0, ∀ x4: x0, x3 = x4 → x2 x3 = x2 x4",
