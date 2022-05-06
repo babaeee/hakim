@@ -5,12 +5,15 @@ mod tests;
 
 mod hyp;
 pub use hyp::{suggest_on_hyp, suggest_on_hyp_dblclk};
+mod goal;
+pub use goal::{suggest_on_goal, suggest_on_goal_dblclk};
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum SuggClass {
     Intros,
     IntrosWithName,
     Destruct,
+    DestructWithName,
     Rewrite,
     Contradiction,
     Instantiate,
@@ -23,6 +26,7 @@ impl Display for SuggClass {
             Intros => write!(f, "$intros"),
             IntrosWithName => write!(f, "$intros_with_name"),
             Destruct => write!(f, "$destruct"),
+            DestructWithName => write!(f, "$destruct_with_name"),
             Rewrite => write!(f, "$rewrite"),
             Contradiction => write!(f, "$contradiction"),
             Instantiate => write!(f, "$instantiate"),
@@ -99,5 +103,3 @@ impl Suggestion {
         }
     }
 }
-
-mod goal;
