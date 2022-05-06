@@ -216,7 +216,8 @@ export type TryAutoResult = {
     available: false,
 } | {
     available: true,
-    tactic: string,
+    type: "normal" | "history",
+    tactic: string[],
 };
 
 export const tryAuto = (): TryAutoResult => {
@@ -224,7 +225,16 @@ export const tryAuto = (): TryAutoResult => {
     if (tactic) {
         return {
             available: true,
-            tactic,
+            type: "normal",
+            tactic: [tactic],
+        };
+    }
+    const history_tactics = instance.try_auto_history();
+    if (history_tactics) {
+        return {
+            available: true,
+            type: "history",
+            tactic: history_tactics,
         };
     }
     return { available: false };

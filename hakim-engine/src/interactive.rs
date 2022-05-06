@@ -10,13 +10,16 @@ use crate::parser::is_whity_char;
 #[cfg(test)]
 mod tests;
 
+mod history_auto;
 mod monitor;
 mod natural;
+mod proof_tree;
 mod suggest;
 pub mod tactic;
 
 use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite, ring};
 
+use self::history_auto::history_lookup_auto;
 use self::monitor::Monitor;
 use self::natural::NaturalProof;
 use self::suggest::{
@@ -206,6 +209,18 @@ impl Session {
         let frame = self.last_snapshot().clone().pop_frame();
         frame.suggest_on_hyp_menu(hyp_name)
     }
+
+    pub fn history_based_auto(&self) -> Option<Vec<String>> {
+        history_lookup_auto(self.clone())
+    }
+}
+
+impl From<Frame> for Snapshot {
+    fn from(frame: Frame) -> Self {
+        Self {
+            frames: vector![frame],
+        }
+    }
 }
 
 impl Snapshot {
@@ -219,9 +234,7 @@ impl Snapshot {
             goal: goal_term,
             engine,
         };
-        Ok(Snapshot {
-            frames: vector![frame],
-        })
+        Ok(frame.into())
     }
 
     pub fn monitor_string(&self) -> String {

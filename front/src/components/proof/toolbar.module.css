@@ -38,7 +38,7 @@
   display: inline-block;
   width: 2rem;
   height: 2rem;
-  font-size: 2rem;
+  font-size: 1.5rem;
   border-radius: 0.5rem;
   background-color: greenyellow;
   animation: col 0.5s infinite alternate-reverse;

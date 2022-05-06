@@ -27,7 +27,11 @@ const AutoProofButton = () => {
     return (
         <button className={css.toolButton} onClick={() => { }}>
             {g`auto_proof`}
-            {s.available && <><br /><span className={css.autoProof} onClick={() => sendTactic(s.tactic)}>✓</span></>}
+            {s.available && <><br /><span className={css.autoProof} onClick={async () => {
+                for (const tac of s.tactic) {
+                    await sendTactic(tac);
+                }
+            }}>{s.type === 'normal' ? '✓' : '🕮'}</span></>}
         </button>
     );
 };

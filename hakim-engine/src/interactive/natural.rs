@@ -1,75 +1,9 @@
-use crate::interactive::smart_split;
+use crate::interactive::{
+    proof_tree::{ProofNode, ProofTree},
+    smart_split,
+};
 
 use super::{Frame, Session};
-
-enum ProofTree {
-    RemainingGoal(Frame),
-    Tactic {
-        frame: Frame,
-        tactic: String,
-        children: Vec<usize>,
-    },
-}
-
-impl ProofTree {
-    fn frame(&self) -> &Frame {
-        match self {
-            RemainingGoal(frame) => frame,
-            Tactic { frame, .. } => frame,
-        }
-    }
-    fn goal_string(&self) -> String {
-        let f = self.frame();
-        f.engine.pretty_print(&f.goal)
-    }
-}
-
-use ProofTree::*;
-
-impl ProofTree {
-    fn from(session: Session) -> Vec<Self> {
-        let mut it = session.history.into_iter();
-        let mut r = vec![RemainingGoal(
-            it.next()
-                .unwrap()
-                .snapshot
-                .frames
-                .into_iter()
-                .next()
-                .unwrap(),
-        )];
-        let mut going = vec![0];
-        let mut pf = 1;
-        for h in it {
-            if let Some(x) = h.tactic.strip_prefix("Switch ") {
-                let x: usize = x.parse().unwrap();
-                let len = going.len();
-                going.swap(len - 1, len - 1 - x);
-                continue;
-            }
-            let now = going.pop().unwrap();
-            let frames = h.snapshot.frames;
-            let cnt = frames.len() + 1 - pf;
-            pf = frames.len();
-            let children: Vec<_> = frames
-                .into_iter()
-                .rev()
-                .take(cnt)
-                .map(|x| {
-                    r.push(RemainingGoal(x));
-                    r.len() - 1
-                })
-                .collect();
-            going.extend(children.iter().rev());
-            r[now] = Tactic {
-                frame: r[now].frame().clone(),
-                tactic: h.tactic,
-                children,
-            };
-        }
-        r
-    }
-}
 
 pub enum NaturalProof {
     Statement(String),
@@ -112,7 +46,7 @@ impl From<Session> for NaturalProof {
             r += &next.engine.pretty_print(&next.goal);
             r
         }
-        fn apply_hyp(lem: &str, hyp: &str, next: usize, pt: &[ProofTree]) -> NaturalProof {
+        fn apply_hyp(lem: &str, hyp: &str, next: usize, pt: &[ProofNode]) -> NaturalProof {
             let ty = &pt[next].frame().hyps.get(hyp).unwrap().ty;
             let ty = pt[next].frame().engine.pretty_print(ty);
             Sibling(
@@ -123,7 +57,7 @@ impl From<Session> for NaturalProof {
                 Box::new(dfs(next, pt)),
             )
         }
-        fn apply_goal(lem: &str, children: &[usize], pt: &[ProofTree]) -> NaturalProof {
+        fn apply_goal(lem: &str, children: &[usize], pt: &[ProofNode]) -> NaturalProof {
             match children {
                 [] => Statement(format!("$by {} $goal_solved", lem)),
                 [x] => Sibling(
@@ -149,7 +83,7 @@ impl From<Session> for NaturalProof {
                 }
             }
         }
-        fn fallback(tactic: &str, children: &[usize], pt: &[ProofTree]) -> NaturalProof {
+        fn fallback(tactic: &str, children: &[usize], pt: &[ProofNode]) -> NaturalProof {
             match children {
                 [] => Statement(tactic.to_string()),
                 [x] => Sibling(
@@ -163,11 +97,11 @@ impl From<Session> for NaturalProof {
                 }
             }
         }
-        fn dfs(x: usize, pt: &[ProofTree]) -> NaturalProof {
+        fn dfs(x: usize, pt: &[ProofNode]) -> NaturalProof {
             let x = &pt[x];
             match x {
-                RemainingGoal(f) => Statement(format!("$goal {:?} $not_solved", f.goal)),
-                Tactic {
+                ProofNode::RemainingGoal(f) => Statement(format!("$goal {:?} $not_solved", f.goal)),
+                ProofNode::Tactic {
                     frame,
                     tactic,
                     children,
@@ -209,7 +143,7 @@ impl From<Session> for NaturalProof {
             }
         }
         let pt = ProofTree::from(session);
-        dfs(0, &pt)
+        dfs(0, &pt.0)
     }
 }
 

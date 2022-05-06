@@ -139,6 +139,14 @@ impl Instance {
         Some(s.natural())
     }
 
+    pub fn try_auto_history(&self) -> JsValue {
+        if let Some(x) = &self.session {
+            serde_wasm_bindgen::to_value(&x.history_based_auto()).unwrap()
+        } else {
+            JsValue::UNDEFINED
+        }
+    }
+
     pub fn try_auto(&self) -> Option<String> {
         let mut s = (&self.session).as_ref()?.last_snapshot().clone();
         if s.is_finished() {
