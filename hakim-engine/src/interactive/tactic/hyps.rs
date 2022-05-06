@@ -42,7 +42,9 @@ pub fn remove_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> 
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail};
+    use crate::interactive::tests::{
+        run_interactive, run_interactive_to_end, run_interactive_to_fail, EngineLevel,
+    };
 
     #[test]
     fn success_add_hyp() {
@@ -85,5 +87,24 @@ mod tests {
             apply fp
             "#,
         );
+    }
+
+    #[test]
+    fn from_lib() {
+        run_interactive(
+        "∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) -> a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q",
+        r#"
+        intros A P Q R S a H1 H2 H3
+        add_from_lib NNPP
+        apply NNPP
+    "#,
+    EngineLevel::Full
+    );
+        run_interactive_to_fail("∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) -> a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q",
+    r#"
+    intros A P Q R S a H1 H2 H3
+    add_from_lib NNPP
+    "#,
+    "remove_hyp NNPP");
     }
 }
