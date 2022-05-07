@@ -61,6 +61,11 @@ const GOAL_RULES: &[SuggRule] = &[
         tactic: &["apply and_intro"],
         is_default: true,
     },
+    SuggRule {
+        class: Pattern("a | b", "∃ c, a * c = b"),
+        tactic: &["apply divide_fold"],
+        is_default: true,
+    },
 ];
 
 pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {

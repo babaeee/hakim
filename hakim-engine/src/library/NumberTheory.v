@@ -1,5 +1,5 @@
-Axiom divide_introl: ∀ a b: ℤ, a | b -> ∃ c: ℤ, a * c = b.
-Axiom divide_intror: ∀ a b: ℤ, (∃ c: ℤ, a * c = b) -> a | b.
+Axiom divide_unfold: ∀ a b: ℤ, a | b -> ∃ c: ℤ, a * c = b.
+Axiom divide_fold: ∀ a b: ℤ, (∃ c: ℤ, a * c = b) -> a | b.
 Todo divide_refl: ∀ a: ℤ, a | a.
 Todo divide_trans: ∀ a b c: ℤ, a | b -> b | c -> a | c.
 Todo divide_0: ∀ a: ℤ, a | 0 -> a = 0.

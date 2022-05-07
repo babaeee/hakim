@@ -56,6 +56,11 @@ const HYP_RULES: &[SuggRule] = &[
         tactic: &["destruct $n with (and_ind ? ?) to ($n_l $n_r)"],
         is_default: true,
     },
+    SuggRule {
+        class: Pattern("a | b", "∃ c, a * c = b"),
+        tactic: &["apply divide_unfold in $n"],
+        is_default: true,
+    },
 ];
 
 pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
