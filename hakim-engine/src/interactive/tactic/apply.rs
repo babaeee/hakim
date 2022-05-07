@@ -12,7 +12,7 @@ use crate::{
 
 use super::{next_arg, Error::*, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FindInstance {
     infer: InferResults,
     exp: TermRef,

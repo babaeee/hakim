@@ -62,10 +62,30 @@ async fn run_tactic_inner(session: &mut Session, tactic: &str) -> Option<String>
     match session.run_tactic(tactic) {
         Ok(_) => None,
         Err(Error::CanNotFindInstance(e)) => {
-            if let Some(ans) = ask_question(&e.question_text()).await.as_string() {
-                run_tactic_inner(session, &e.tactic_by_answer(&ans).ok()?).await
-            } else {
-                Some("bad output of ask_question".to_string())
+            let mut qt = e.question_text();
+            loop {
+                if let Some(ans) = ask_question(&qt).await.as_string() {
+                    if ans.trim() == "" {
+                        return None;
+                    } else {
+                        let e = e.clone();
+                        match e.tactic_by_answer(&ans) {
+                            Ok(t) => match run_tactic_inner(session, &t).await {
+                                None => return None,
+                                Some(e) => {
+                                    qt = format!("$error: {e:?}\n{qt}");
+                                    continue;
+                                }
+                            },
+                            Err(e) => {
+                                qt = format!("$error: {e:?}\n{qt}");
+                                continue;
+                            }
+                        }
+                    }
+                } else {
+                    return Some("bad output of ask_question".to_string());
+                }
             }
         }
         Err(e) => Some(format!("{:?}", e)),
@@ -208,6 +228,9 @@ impl Instance {
                 Some(x) => x,
                 None => return Some("invalid question type".to_string()),
             };
+            if x.trim() == "" {
+                return None;
+            }
             v.push(x);
         }
         match session.run_suggestion(sugg, v) {

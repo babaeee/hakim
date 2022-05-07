@@ -60,10 +60,6 @@ export const Proof = () => {
     <DndProvider backend={HTML5Backend}><ProofContext.Provider value={ctx}>
       <Title title={g`proof_screen`} />
       <div className={css.main}>
-        {proofState.text === "" && <h1 className={css.title}>
-          <span>{g`babaeee_coq`}</span>
-          <button className={css.changeLangButton} onClick={() => onFinish(false)}>{g`exit`}</button>
-        </h1>}
         <div className={css.text} dangerouslySetInnerHTML={{
           __html: markdown.render(proofState.text),
         }} />
