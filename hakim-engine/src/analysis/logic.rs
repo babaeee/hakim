@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use typed_arena::Arena;
 
 use crate::{
-    brain::{remove_unused_var, Abstraction, Term, TermRef},
+    brain::{normalize, remove_unused_var, Abstraction, Term, TermRef},
     interactive::{self, Frame},
 };
 
@@ -179,9 +179,9 @@ impl<T: Clone + Debug> LogicBuilder<'_, T> {
     ) -> interactive::tactic::Result<Vec<Frame>> {
         use interactive::tactic::Error::*;
         let logic_builder = LogicBuilder::new(convert);
-        logic_builder.and_not_term(frame.goal);
+        logic_builder.and_not_term(normalize(frame.goal));
         for (_, hyp) in frame.hyps {
-            logic_builder.and_term(hyp.ty);
+            logic_builder.and_term(normalize(hyp.ty));
         }
         if logic_builder.check_contradiction(check_contradiction, negator) {
             Ok(vec![])
