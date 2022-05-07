@@ -124,10 +124,10 @@ use Error::*;
 
 pub fn map_reduce_wild<T>(
     t: &Term,
-    map: &impl Fn(usize, usize) -> Option<T>,
+    map: &mut impl FnMut(usize, usize) -> Option<T>,
     reduce: &impl Fn(T, T) -> T,
 ) -> Option<T> {
-    let combine = |a, b| {
+    let mut combine = |a, b| {
         let a = map_reduce_wild(a, map, reduce);
         let b = map_reduce_wild(b, map, reduce);
         match (a, b) {
@@ -153,12 +153,23 @@ pub fn map_reduce_wild<T>(
     }
 }
 
+pub fn for_each_wild(t: &Term, mut work: impl FnMut(usize, usize)) {
+    map_reduce_wild(
+        t,
+        &mut |i, s| {
+            work(i, s);
+            Some(())
+        },
+        &|_, _| (),
+    );
+}
+
 /// if expression contains some wilds, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is id of wilds. In case of no wild, it will return false
 pub fn predict_wild(t: &Term, predict: &impl Fn(usize, usize) -> bool) -> bool {
     map_reduce_wild(
         t,
-        &|x, y| if predict(x, y) { Some(()) } else { None },
+        &mut |x, y| if predict(x, y) { Some(()) } else { None },
         &|_, _| (),
     )
     .is_some()

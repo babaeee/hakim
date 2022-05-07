@@ -1,7 +1,7 @@
 use crate::{
     app_ref,
     brain::{
-        contains_wild, fill_wild, get_forall_depth,
+        contains_wild, fill_wild, for_each_wild, get_forall_depth,
         infer::{type_of_and_infer, InferResults},
         map_reduce_wild, normalize, predict_axiom, subtype_and_infer, Term, TermRef,
     },
@@ -24,7 +24,7 @@ impl FindInstance {
     pub(crate) fn first_needed_wild(&self) -> usize {
         let mut r = None;
         for ty in &self.infer.tys {
-            let t = map_reduce_wild(ty, &|x, _| Some(x), &std::cmp::min);
+            let t = map_reduce_wild(ty, &mut |x, _| Some(x), &std::cmp::min);
             if let Some(tv) = t {
                 if let Some(rv) = r {
                     if rv > tv {
@@ -39,19 +39,41 @@ impl FindInstance {
     }
 
     pub fn question_text(&self) -> String {
+        let exp = self.infer.fill(self.exp.clone());
+        let ty = self.infer.fill(self.ty.clone());
         let mut r = format!(
             "$in_applying \u{2068}{:?}\u{2069}\n$with_type \u{2068}{:?}\u{2069}\n$we_know:\n",
-            self.exp, self.ty
+            exp, ty
         );
+        let mut dep_list = vec![false; self.infer.n];
+        let mut explore = |e| {
+            for_each_wild(e, |t, _| {
+                if t < dep_list.len() {
+                    dep_list[t] = true;
+                }
+            });
+        };
         for i in 0..self.infer.n {
-            r += &if (Term::Wild { index: i, scope: 0 }) == *self.infer.terms[i].as_ref() {
-                format!("\u{2068}?w{} : {:?}\u{2069}\n", i, self.infer.tys[i])
-            } else {
-                format!(
-                    "\u{2068}?w{} = {:?} : {:?}\u{2069}\n",
-                    i, self.infer.terms[i], self.infer.tys[i]
-                )
-            };
+            explore(&self.infer.tys[i]);
+        }
+        for i in dep_list
+            .iter()
+            .enumerate()
+            .filter_map(|(i, x)| x.then(|| i))
+        {
+            if (Term::Wild { index: i, scope: 0 }) == *self.infer.terms[i].as_ref() {
+                r += &format!("\u{2068}?w{} : {:?}\u{2069}\n", i, self.infer.tys[i]);
+            }
+        }
+        r += "$and_we_should_proof:\n";
+        for i in dep_list
+            .iter()
+            .enumerate()
+            .filter_map(|(i, x)| (!x).then(|| i))
+        {
+            if (Term::Wild { index: i, scope: 0 }) == *self.infer.terms[i].as_ref() {
+                r += &format!("\u{2068}{:?}\u{2069}\n", self.infer.tys[i]);
+            }
         }
         r += &format!(
             "\n$enter_value_of1 \u{2068}?w{}\u{2069} $enter_value_of2:\n",

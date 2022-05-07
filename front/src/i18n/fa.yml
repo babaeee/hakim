@@ -1,5 +1,6 @@
 adventure: ماجراجویی
 and: و
+and_we_should_proof: و باید ثابت کنیم
 auto_proof: اثبات خودکار
 babaeee_coq: اثبات چک کن ببعییی
 back: بازگشت
@@ -13,6 +14,7 @@ copy: رونوشت
 copied_in_clipboard: در بریده دان رونویسی شد
 custom_tactic: تاکتیک سفارشی
 destruct: شکستن
+destruct_with_name: شکستن با نام
 enter_tactic: تاکتیک خود را وارد کنید
 enter_a_name: یک نام وارد کنید
 enter_value_that_satisfy: مقداری که در عبارت صدق می کند را وارد کنید
