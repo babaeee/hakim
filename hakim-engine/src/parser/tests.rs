@@ -143,6 +143,12 @@ fn pretty_names() {
 }
 
 #[test]
+fn abstr_infer() {
+    parse_not_pretty("∃ x, 2 < x", "∃ x: ℤ, 2 < x");
+    parse_not_pretty("∀ x, 2 = x", "∀ x: ℤ, 2 = x");
+}
+
+#[test]
 fn abstr_prec() {
     parse_pretty("(∃ x: ℤ, 2 < x) → 2 | 5");
     parse_pretty("∃ x: ℤ, 2 < x → 2 | 5");

@@ -4,8 +4,7 @@ use super::{
     Result, Term, TermRef,
 };
 use crate::library::prelude;
-use crate::{app_ref, Abstraction};
-use crate::{brain::get_universe, term_ref};
+use crate::{app_ref, term_ref, Abstraction};
 
 use std::cmp::max;
 use std::iter::once;
@@ -316,13 +315,19 @@ pub fn type_of_inner(
             body,
             hint_name: _,
         }) => {
-            let vtt = get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
+            let vtt = get_universe_and_infer(
+                type_of_inner(var_ty.clone(), var_ty_stack, infers)?.as_ref(),
+                infers,
+            )?;
             let new_var_stack = var_ty_stack
                 .iter()
                 .chain(once(var_ty))
                 .map(|x| increase_foreign_vars(x.clone(), 0))
                 .collect::<Vec<_>>();
-            let body_ty = get_universe(type_of_inner(body.clone(), &new_var_stack, infers)?)?;
+            let body_ty = get_universe_and_infer(
+                type_of_inner(body.clone(), &new_var_stack, infers)?.as_ref(),
+                infers,
+            )?;
             term_ref!(universe max(vtt, body_ty))
         }
         Term::Fun(Abstraction {
@@ -330,7 +335,10 @@ pub fn type_of_inner(
             body,
             hint_name: _,
         }) => {
-            get_universe(type_of_inner(var_ty.clone(), var_ty_stack, infers)?)?;
+            get_universe_and_infer(
+                type_of_inner(var_ty.clone(), var_ty_stack, infers)?.as_ref(),
+                infers,
+            )?;
             let new_var_stack = var_ty_stack
                 .iter()
                 .chain(once(var_ty))
@@ -373,4 +381,15 @@ pub fn type_of_inner(
 
 pub fn type_of_and_infer(term: TermRef, infers: &mut InferResults) -> Result<TermRef> {
     type_of_inner(term, &[], infers)
+}
+
+fn get_universe_and_infer(term: &Term, infers: &mut InferResults) -> Result<usize> {
+    match term {
+        Term::Universe { index } => Ok(*index),
+        Term::Wild { index, scope: _ } => {
+            infers.set(*index, term_ref!(universe 0))?;
+            Ok(0)
+        }
+        _ => Err(IsNotUniverse),
+    }
 }

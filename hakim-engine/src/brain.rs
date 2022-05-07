@@ -261,14 +261,6 @@ pub fn remove_unused_var(t: TermRef, depth: usize) -> Option<TermRef> {
     })
 }
 
-fn get_universe(t: TermRef) -> Result<usize> {
-    if let Term::Universe { index } = t.as_ref() {
-        Ok(*index)
-    } else {
-        Err(IsNotUniverse)
-    }
-}
-
 fn deny_wild(t: &Term) -> Result<()> {
     if contains_wild(t) {
         Err(ContainsWild)

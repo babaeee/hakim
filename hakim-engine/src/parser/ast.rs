@@ -19,7 +19,7 @@ use crate::{
 #[derive(Debug)]
 pub struct AstAbs {
     name: Vec<String>,
-    ty: Box<AstTerm>,
+    ty: Option<Box<AstTerm>>,
     body: Box<AstTerm>,
 }
 
@@ -90,7 +90,7 @@ trait TokenEater {
         if self.look_ahead(1) == Ok(Token::Sign(":".to_string())) {
             let name = vec![self.eat_ident()?];
             self.eat_sign(":")?;
-            let ty = Box::new(self.eat_ast_with_disallowed_sign(|x| x == "|")?);
+            let ty = Some(Box::new(self.eat_ast_with_disallowed_sign(|x| x == "|")?));
             self.eat_sign("|")?;
             let body = Box::new(self.eat_ast()?);
             self.eat_sign("}")?;
@@ -135,8 +135,12 @@ trait TokenEater {
             }
             Token::Abs(sign) => {
                 let name = self.eat_ident_vec()?;
-                self.eat_sign(":")?;
-                let ty = Box::new(self.eat_ast()?);
+                let ty = if self.peek_token()? == Token::Sign(",".to_string()) {
+                    None
+                } else {
+                    self.eat_sign(":")?;
+                    Some(Box::new(self.eat_ast()?))
+                };
                 self.eat_sign(",")?;
                 let body = Box::new(self.eat_ast()?);
                 Ok(Abs(sign, AstAbs { name, ty, body }))
@@ -292,7 +296,10 @@ pub fn ast_to_term(
     match ast {
         Universe(x) => Ok(term_ref!(universe x)),
         Set(AstSet::Abs(AstAbs { name, ty, body })) => {
-            let var_ty = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
+            let var_ty = match ty {
+                Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?,
+                None => term_ref!(_ infer_cnt.generate()),
+            };
             assert_eq!(name.len(), 1);
             let name = name.into_iter().next().unwrap();
             name_stack.push(name);
@@ -324,7 +331,10 @@ pub fn ast_to_term(
             Ok(bag)
         }
         Abs(sign, AstAbs { name, ty, body }) => {
-            let mut ty_term = ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?;
+            let mut ty_term = match ty {
+                Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?,
+                None => term_ref!(_ infer_cnt.generate()),
+            };
             let mut tys = vec![];
             for n in name {
                 tys.push(ty_term.clone());
