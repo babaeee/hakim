@@ -86,6 +86,11 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
         }
         if text.eat_prefix("mod") {
             result.push(Sign("mod".to_string()));
+            continue;
+        }
+        if text.eat_prefix("<->") {
+            result.push(Sign("↔".to_string()));
+            continue;
         }
         if text.eat_prefix("->") {
             result.push(Sign("→".to_string()));
