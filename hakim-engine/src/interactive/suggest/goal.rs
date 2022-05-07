@@ -9,67 +9,56 @@ const GOAL_RULES: &[SuggRule] = &[
     SuggRule {
         class: Destruct,
         tactic: &["apply and_intro"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("A ∨ B", "~ B ⊢ A"),
         tactic: &["apply or_to_imply", "intros"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("A ∨ B", "~ A ⊢ B"),
         tactic: &["apply or_sym", "apply or_to_imply", "intros"],
-        questions: &[],
         is_default: false,
     },
     SuggRule {
         class: Pattern("A = B", "A ⊆ B ∧ B ⊆ A"),
         tactic: &["apply set_equality"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("a ∈ x ∪ y", "a ∈ x ∨ a ∈ y"),
         tactic: &["apply union_fold"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("a ∈ {b}", "a = b"),
         tactic: &["apply singleton_fold"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("a ∈ {b | f b}", "f a"),
         tactic: &["apply set_from_func_fold"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
         tactic: &["apply included_fold"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("A ∨ B", "A"),
         tactic: &["apply or_introl"],
-        questions: &[],
         is_default: false,
     },
     SuggRule {
         class: Pattern("A ∨ B", "B"),
         tactic: &["apply or_intror"],
-        questions: &[],
         is_default: false,
     },
     SuggRule {
         class: Pattern("A ∧ B", "A, B"),
         tactic: &["apply and_intro"],
-        questions: &[],
         is_default: true,
     },
 ];

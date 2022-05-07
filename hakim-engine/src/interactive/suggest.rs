@@ -43,7 +43,6 @@ use super::Frame;
 pub struct SuggRule {
     pub class: SuggClass,
     pub tactic: &'static [&'static str],
-    pub questions: &'static [&'static str],
     pub is_default: bool,
 }
 
@@ -52,7 +51,7 @@ impl From<SuggRule> for Suggestion {
         Self {
             class: sugg.class,
             tactic: sugg.tactic.iter().map(|x| x.to_string()).collect(),
-            questions: sugg.questions.iter().map(|x| x.to_string()).collect(),
+            questions: vec![],
             is_default: sugg.is_default,
         }
     }

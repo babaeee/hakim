@@ -9,61 +9,51 @@ const HYP_RULES: &[SuggRule] = &[
     SuggRule {
         class: Destruct,
         tactic: &["destruct $n with (ex_ind ? ?) to ($n_value $n_proof)"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Rewrite,
         tactic: &["rewrite $n"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("a = b", "b = a"),
         tactic: &["apply eq_sym in $n"],
-        questions: &[],
         is_default: false,
     },
     SuggRule {
         class: Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
         tactic: &["apply included_unfold in $n"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("a ∈ {b}", "a = b"),
         tactic: &["apply singleton_unfold in $n"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Pattern("a ∈ {b | f b}", "f a"),
         tactic: &["apply set_from_func_unfold in $n"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Contradiction,
         tactic: &["apply empty_intro in $n", "apply (False_ind $n ?)"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Contradiction,
         tactic: &["apply (False_ind $n ?)"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Destruct,
         tactic: &["destruct $n with (or_ind ? ?)"],
-        questions: &[],
         is_default: true,
     },
     SuggRule {
         class: Destruct,
         tactic: &["destruct $n with (and_ind ? ?) to ($n_l $n_r)"],
-        questions: &[],
         is_default: true,
     },
 ];
