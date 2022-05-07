@@ -2,75 +2,11 @@ use crate::brain::Term;
 use crate::interactive::Frame;
 
 use super::SuggClass::*;
-use super::SuggRule;
 use super::Suggestion;
-
-const GOAL_RULES: &[SuggRule] = &[
-    SuggRule {
-        class: Destruct,
-        tactic: &["apply and_intro"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("A ∨ B", "~ B ⊢ A"),
-        tactic: &["apply or_to_imply", "intros"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("A ∨ B", "~ A ⊢ B"),
-        tactic: &["apply or_sym", "apply or_to_imply", "intros"],
-        is_default: false,
-    },
-    SuggRule {
-        class: Pattern("A = B", "A ⊆ B ∧ B ⊆ A"),
-        tactic: &["apply set_equality"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a ∈ x ∪ y", "a ∈ x ∨ a ∈ y"),
-        tactic: &["apply union_fold"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a ∈ {b}", "a = b"),
-        tactic: &["apply singleton_fold"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a ∈ {b | f b}", "f a"),
-        tactic: &["apply set_from_func_fold"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
-        tactic: &["apply included_fold"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("A ∨ B", "A"),
-        tactic: &["apply or_introl"],
-        is_default: false,
-    },
-    SuggRule {
-        class: Pattern("A ∨ B", "B"),
-        tactic: &["apply or_intror"],
-        is_default: false,
-    },
-    SuggRule {
-        class: Pattern("A ∧ B", "A, B"),
-        tactic: &["apply and_intro"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a | b", "∃ c, a * c = b"),
-        tactic: &["apply divide_fold"],
-        is_default: true,
-    },
-];
 
 pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {
     let mut r = vec![];
-    for rule in GOAL_RULES {
+    for rule in &frame.engine.goal_suggs {
         if let Some(x) = rule.try_on_goal(frame.clone()) {
             r.push(x);
         }

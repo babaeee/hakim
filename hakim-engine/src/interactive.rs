@@ -26,7 +26,7 @@ use self::suggest::{
     suggest_on_goal, suggest_on_goal_dblclk, suggest_on_hyp, suggest_on_hyp_dblclk,
 };
 
-pub use self::suggest::Suggestion;
+pub use self::suggest::{SuggClass, SuggRule, Suggestion};
 use self::tactic::{add_from_lib, assumption, auto_set, chain, remove_hyp};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

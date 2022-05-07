@@ -8,7 +8,7 @@ pub use hyp::{suggest_on_hyp, suggest_on_hyp_dblclk};
 mod goal;
 pub use goal::{suggest_on_goal, suggest_on_goal_dblclk};
 
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub enum SuggClass {
     Intros,
     IntrosWithName,
@@ -17,7 +17,14 @@ pub enum SuggClass {
     Rewrite,
     Contradiction,
     Instantiate,
-    Pattern(&'static str, &'static str),
+    Pattern(String, String),
+}
+
+impl SuggClass {
+    #[cfg(test)]
+    fn pattern(a: &str, b: &str) -> Self {
+        Self::Pattern(a.to_string(), b.to_string())
+    }
 }
 
 impl Display for SuggClass {
@@ -35,14 +42,15 @@ impl Display for SuggClass {
     }
 }
 
+use serde::{Deserialize, Serialize};
 use SuggClass::*;
 
 use super::Frame;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SuggRule {
     pub class: SuggClass,
-    pub tactic: &'static [&'static str],
+    pub tactic: Vec<String>,
     pub is_default: bool,
 }
 
@@ -58,14 +66,14 @@ impl From<SuggRule> for Suggestion {
 }
 
 impl SuggRule {
-    fn try_on_goal(self, frame: Frame) -> Option<Suggestion> {
-        frame.run_tactic(self.tactic[0]).ok()?;
-        Some(self.into())
+    fn try_on_goal(&self, frame: Frame) -> Option<Suggestion> {
+        frame.run_tactic(&self.tactic[0]).ok()?;
+        Some(self.clone().into())
     }
 
-    fn try_on_hyp(self, name: &str, frame: Frame) -> Option<Suggestion> {
+    fn try_on_hyp(&self, name: &str, frame: Frame) -> Option<Suggestion> {
         frame.run_tactic(&self.tactic[0].replace("$n", name)).ok()?;
-        let mut r: Suggestion = self.into();
+        let mut r: Suggestion = self.clone().into();
         r.tactic = r
             .tactic
             .into_iter()

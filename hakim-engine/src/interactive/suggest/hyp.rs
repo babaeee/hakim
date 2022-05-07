@@ -3,69 +3,11 @@ use crate::{
     interactive::Frame,
 };
 
-use super::{SuggClass::*, SuggRule, Suggestion};
-
-const HYP_RULES: &[SuggRule] = &[
-    SuggRule {
-        class: Destruct,
-        tactic: &["destruct $n with (ex_ind ? ?) to ($n_value $n_proof)"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Rewrite,
-        tactic: &["rewrite $n"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a = b", "b = a"),
-        tactic: &["apply eq_sym in $n"],
-        is_default: false,
-    },
-    SuggRule {
-        class: Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b"),
-        tactic: &["apply included_unfold in $n"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a ∈ {b}", "a = b"),
-        tactic: &["apply singleton_unfold in $n"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a ∈ {b | f b}", "f a"),
-        tactic: &["apply set_from_func_unfold in $n"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Contradiction,
-        tactic: &["apply empty_intro in $n", "apply (False_ind $n ?)"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Contradiction,
-        tactic: &["apply (False_ind $n ?)"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Destruct,
-        tactic: &["destruct $n with (or_ind ? ?)"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Destruct,
-        tactic: &["destruct $n with (and_ind ? ?) to ($n_l $n_r)"],
-        is_default: true,
-    },
-    SuggRule {
-        class: Pattern("a | b", "∃ c, a * c = b"),
-        tactic: &["apply divide_unfold in $n"],
-        is_default: true,
-    },
-];
+use super::{SuggClass::*, Suggestion};
 
 pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
     let mut r = vec![];
-    for rule in HYP_RULES {
+    for rule in dbg!(&frame.engine.hyp_suggs) {
         if let Some(x) = rule.try_on_hyp(name, frame.clone()) {
             r.push(x);
         }

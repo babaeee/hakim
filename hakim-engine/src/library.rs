@@ -32,7 +32,7 @@ pub(crate) fn engine_from_middle_of_lib(lib: &str, name: &str) -> Option<(Engine
     let mut eng = Engine::default();
     let lib = File::parse(text_of_name(lib).ok()?);
     for x in lib.0 {
-        if x.name() == name {
+        if x.name() == Some(name) {
             return Some((eng, x.ty()?.to_string()));
         }
         x.add_to_engine(&mut eng).ok()?;

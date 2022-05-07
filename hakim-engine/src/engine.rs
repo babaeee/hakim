@@ -7,6 +7,7 @@ use crate::{
         infer::{type_of_and_infer, InferResults},
         normalize, predict_axiom, type_of, Term, TermRef,
     },
+    interactive::SuggRule,
     library::{load_library_by_name, prelude},
     parser::{self, ast_to_term, fix_wild_scope, is_valid_ident, parse, term_pretty_print},
     search::search,
@@ -17,6 +18,8 @@ use crate::{
 pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
     libs: im::HashMap<String, ()>,
+    pub hyp_suggs: im::Vector<SuggRule>,
+    pub goal_suggs: im::Vector<SuggRule>,
 }
 
 impl Default for Engine {
@@ -49,7 +52,14 @@ impl Default for Engine {
         name_dict.insert("inset".to_string(), prelude::inset());
         name_dict.insert("included".to_string(), prelude::included());
         let libs = im::HashMap::<String, ()>::default();
-        Self { name_dict, libs }
+        let hyp_suggs = im::Vector::default();
+        let goal_suggs = im::Vector::default();
+        Self {
+            name_dict,
+            libs,
+            hyp_suggs,
+            goal_suggs,
+        }
     }
 }
 
@@ -199,5 +209,13 @@ impl Engine {
     pub(crate) fn type_of_name(&self, name: &str) -> Result<TermRef> {
         let x = self.parse_text(name)?;
         Ok(type_of(x)?)
+    }
+
+    pub(crate) fn add_hyp_sugg(&mut self, sugg: SuggRule) {
+        self.hyp_suggs.push_back(sugg);
+    }
+
+    pub(crate) fn add_goal_sugg(&mut self, sugg: SuggRule) {
+        self.goal_suggs.push_back(sugg);
     }
 }

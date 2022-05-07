@@ -156,17 +156,8 @@ fn eq_hyp() {
             intros A B f a1 a2 eqa1a2
             "#,
         "eqa1a2",
-        SuggRec::vc([SuggClass::Rewrite, SuggClass::Pattern("a = b", "b = a")]),
+        SuggRec::vc([SuggClass::Rewrite, SuggClass::pattern("a = b", "b = a")]),
         EngineLevel::Full,
-    );
-    check_hyp_menu(
-        "2 = 3 -> 3 = 2",
-        r#"
-            intros eq_2_3
-            "#,
-        "eq_2_3",
-        SuggRec::vc([SuggClass::Rewrite]),
-        EngineLevel::Empty,
     );
 }
 
@@ -201,7 +192,7 @@ fn set_hyp() {
             intros t s a b in_set_proof
             "#,
         "in_set_proof",
-        SuggRec::vc([SuggClass::Pattern("a ∈ {b}", "a = b")]),
+        SuggRec::vc([SuggClass::pattern("a ∈ {b}", "a = b")]),
         EngineLevel::Full,
     );
     check_hyp_menu(
@@ -219,7 +210,7 @@ fn set_hyp() {
             intros t A B incl
             "#,
         "incl",
-        SuggRec::vc([SuggClass::Pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b")]),
+        SuggRec::vc([SuggClass::pattern("a ⊆ b", "∀ x: T, x ∈ a -> x ∈ b")]),
         EngineLevel::Full,
     );
 }
