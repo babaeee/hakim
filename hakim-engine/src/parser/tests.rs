@@ -146,6 +146,8 @@ fn pretty_names() {
 fn abstr_infer() {
     parse_not_pretty("∃ x, 2 < x", "∃ x: ℤ, 2 < x");
     parse_not_pretty("∀ x, 2 = x", "∀ x: ℤ, 2 = x");
+    parse_not_pretty("∀ x, 2 = x", "∀ x: ℤ, 2 = x");
+    parse_not_pretty("{ x | 5 < x }", "{ x: ℤ | 5 < x }");
 }
 
 #[test]

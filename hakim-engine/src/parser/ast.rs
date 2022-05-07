@@ -95,6 +95,16 @@ trait TokenEater {
             let body = Box::new(self.eat_ast()?);
             self.eat_sign("}")?;
             Ok(Set(AstSet::Abs(AstAbs { name, ty, body })))
+        } else if self.look_ahead(1) == Ok(Token::Sign("|".to_string())) {
+            let name = vec![self.eat_ident()?];
+            self.eat_sign("|")?;
+            let body = Box::new(self.eat_ast()?);
+            self.eat_sign("}")?;
+            Ok(Set(AstSet::Abs(AstAbs {
+                name,
+                ty: None,
+                body,
+            })))
         } else {
             let mut r = vec![];
             loop {
