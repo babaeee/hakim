@@ -43,11 +43,27 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
                     return None;
                 }
             }
-            if let Term::Wild { .. } = ty_subst.as_ref() {
-                return None;
-            }
             let mut infers = InferResults::new(our_infer_cnt);
             match_and_infer(qt.clone(), ty_subst, &mut infers).ok()?;
+            let mut good = vec![false; infer_cnt];
+            for i in infer_cnt..our_infer_cnt {
+                let t = infers.get(i);
+                if let Term::Wild { index, .. } = t.as_ref() {
+                    if *index < infer_cnt {
+                        good[*index] = true;
+                    }
+                }
+            }
+            for (i, is_good) in good.into_iter().enumerate() {
+                if is_good {
+                    continue;
+                }
+                if let Term::Wild { index, .. } = infers.get(i).as_ref() {
+                    if *index == i {
+                        return None;
+                    }
+                }
+            }
             Some(name.to_string())
         })
         .collect())
@@ -55,6 +71,8 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
 
 #[cfg(test)]
 mod tests {
+    use std::panic::catch_unwind;
+
     use crate::engine::Engine;
 
     fn build_engine() -> Engine {
@@ -63,6 +81,18 @@ mod tests {
         eng.load_library("Logic").unwrap();
         eng.load_library("Eq").unwrap();
         eng
+    }
+
+    fn do_search(query: &str) {
+        let eng = build_engine();
+        let r = eng.search(query).unwrap();
+        for x in r {
+            let r = catch_unwind(|| {
+                let ty = eng.calc_type(&x).unwrap();
+                format!("{}: {:?}\n", x, ty);
+            });
+            r.unwrap_or_else(|_| panic!("broken search item showing in {x}"));
+        }
     }
 
     fn check_search(query: &str, list: &str) {
@@ -87,6 +117,22 @@ mod tests {
             lt_plus_l
         "#,
         );
+    }
+
+    #[test]
+    fn lt_plus() {
+        check_search(
+            "? + ? < ? + ?",
+            r#"
+            lt_plus_r
+            lt_plus_l
+        "#,
+        );
+    }
+
+    #[test]
+    fn empty_search_dont_panic() {
+        do_search("?");
     }
 
     #[test]

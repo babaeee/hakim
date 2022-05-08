@@ -94,5 +94,5 @@ pub fn divide() -> TermRef {
     term_ref!(axiom "divide", forall z(), forall z(), u())
 }
 pub fn mod_of() -> TermRef {
-    term_ref!(axiom "mod", forall z(), forall z(), z())
+    term_ref!(axiom "mod_of", forall z(), forall z(), z())
 }

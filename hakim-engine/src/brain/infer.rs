@@ -28,7 +28,7 @@ impl InferResults {
         }
         InferResults { terms, tys, n }
     }
-    fn get(&self, i: usize) -> TermRef {
+    pub fn get(&self, i: usize) -> TermRef {
         if i < self.n {
             self.terms[i].clone()
         } else {

@@ -72,20 +72,16 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
         if text.is_empty() {
             return Ok(result);
         }
-        if text.eat_prefix("forall") || text.eat_prefix("∀") {
+        if text.eat_prefix("∀") {
             result.push(Abs(AbsSign::Forall));
             continue;
         }
-        if text.eat_prefix("exists") || text.eat_prefix("∃") {
+        if text.eat_prefix("∃") {
             result.push(Abs(AbsSign::Exists));
             continue;
         }
-        if text.eat_prefix("fun") || text.eat_prefix("λ") {
+        if text.eat_prefix("λ") {
             result.push(Abs(AbsSign::Fun));
-            continue;
-        }
-        if text.eat_prefix("mod") {
-            result.push(Sign("mod".to_string()));
             continue;
         }
         if text.eat_prefix("<->") {
@@ -105,7 +101,13 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             while text.pick_char().map(is_valid_ident_char) == Some(true) {
                 ident.push(text.eat_char());
             }
-            result.push(Ident(ident));
+            result.push(match ident.as_str() {
+                "forall" => Abs(AbsSign::Forall),
+                "exists" => Abs(AbsSign::Exists),
+                "fn" => Abs(AbsSign::Fun),
+                "mod" => Sign(ident),
+                _ => Ident(ident),
+            });
             continue;
         }
         if c == '?' {

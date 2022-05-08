@@ -163,12 +163,13 @@ fn basic_fails() {
     parse_error("(2+3");
     parse_error("()");
     parse_error("(2+)+3");
-    parse_error("forall");
-    parse_error("forall x");
-    parse_error("forall x:");
-    parse_error("forall x: ℤ");
-    parse_error("forall x: ℤ,");
-    parse_error("forall 2: 5");
+    parse_error("∀");
+    parse_error("∀ x");
+    parse_error("∀ x:");
+    parse_error("∀ x: ℤ");
+    parse_error("∀ x: ℤ,");
+    parse_error("∀ 2: 5");
+    parse_error("∀ : 5 = 5");
     parse_error("{2: ℤ}");
     parse_error("forall x ℤ");
     parse_error("forall x -> ℤ");
@@ -176,6 +177,12 @@ fn basic_fails() {
 #[test]
 fn divid_and_mod() {
     parse_pretty("∀ a: ℤ, ∀ b: ℤ, a mod b | a");
+}
+
+#[test]
+fn mod_in_name() {
+    parse_pretty("∀ a: ℤ, ∀ b: ℤ, ∀ mod_a_b: ℤ, mod_a_b = a mod b");
+    parse_pretty("∀ forall_x: ℤ, forall_x = forall_x");
 }
 
 #[test]

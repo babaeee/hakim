@@ -186,7 +186,7 @@ impl BinOp {
                         "plus" => (op.clone(), BinOp::Plus, op2.clone()),
                         "pow" => (op.clone(), BinOp::Pow, op2.clone()),
                         "minus" => (op.clone(), BinOp::Minus, op2.clone()),
-                        "mod" => (op.clone(), BinOp::ModOf, op2.clone()),
+                        "mod_of" => (op.clone(), BinOp::ModOf, op2.clone()),
                         "mult" => (op.clone(), BinOp::Mult, op2.clone()),
                         "lt" => (op.clone(), BinOp::Lt, op2.clone()),
                         #[allow(clippy::never_loop)]
