@@ -10,14 +10,11 @@ pub fn add_from_lib<'a>(
 ) -> Result<Vec<Frame>> {
     let name = get_one_arg(args, "add_hyp")?;
     let ty = frame.engine.type_of_name(name)?;
-    frame.hyps.insert(
-        name.to_string(),
-        crate::interactive::Hyp {
-            ty,
-            name: name.to_string(),
-            from_lib: true,
-        },
-    );
+    frame.hyps.push_back(crate::interactive::Hyp {
+        ty,
+        name: name.to_string(),
+        from_lib: true,
+    });
     Ok(vec![frame])
 }
 

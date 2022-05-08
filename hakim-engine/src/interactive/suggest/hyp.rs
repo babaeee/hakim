@@ -12,7 +12,7 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
             r.push(x);
         }
     }
-    let hyp = frame.hyps.get(name).unwrap().ty.clone();
+    let hyp = frame.get_hyp_by_name(name).unwrap().ty.clone();
     match hyp.as_ref() {
         Term::Forall(Abstraction { body, .. }) => {
             if remove_unused_var(body.clone(), 0).is_some() {

@@ -1,10 +1,4 @@
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-    fmt::{Display, Formatter},
-};
-
-use crate::brain::map_reduce_axiom;
+use std::fmt::{Display, Formatter};
 
 use super::*;
 
@@ -43,51 +37,6 @@ impl Display for Monitor {
     }
 }
 
-impl Frame {
-    pub fn order_hyps(&self) -> Vec<String> {
-        let frame = self;
-        let id_map = {
-            let mut x = HashMap::<String, usize>::new();
-            for (i, (hyp, _)) in frame.hyps.iter().enumerate() {
-                x.insert(hyp.clone(), i);
-            }
-            x
-        };
-        let n = frame.hyps.len();
-        let mut edge = vec![vec![]; n];
-        let mut cnt = vec![0; n];
-        for (i, (_, hyp)) in frame.hyps.iter().enumerate() {
-            map_reduce_axiom(
-                &hyp.ty,
-                &mut |x| {
-                    let j = *id_map.get(x)?;
-                    edge[j].push(i);
-                    cnt[i] += 1;
-                    Some(())
-                },
-                &|_, _| (),
-            );
-        }
-        let mut queue = BinaryHeap::new();
-        let hyp_vec: Vec<_> = frame.hyps.iter().map(|(a, _)| a).collect();
-        cnt.iter().enumerate().filter(|x| *x.1 == 0).for_each(|x| {
-            queue.push(Reverse(hyp_vec[x.0]));
-        });
-        let mut r = vec![];
-        while let Some(Reverse(x)) = queue.pop() {
-            r.push(x.clone());
-            let x = *id_map.get(x).unwrap();
-            for &y in &edge[x] {
-                cnt[y] -= 1;
-                if cnt[y] == 0 {
-                    queue.push(Reverse(hyp_vec[y]));
-                }
-            }
-        }
-        r
-    }
-}
-
 impl Snapshot {
     pub fn monitor(&self) -> Monitor {
         if self.is_finished() {
@@ -100,12 +49,9 @@ impl Snapshot {
             .collect();
         let frame = self.frames.last().unwrap();
         let hyps = frame
-            .order_hyps()
-            .into_iter()
-            .map(|x| {
-                let rc = &frame.hyps.get(&x).unwrap().ty;
-                (x, frame.engine.pretty_print(rc))
-            })
+            .hyps
+            .iter()
+            .map(|x| (x.name.clone(), frame.engine.pretty_print(&x.ty)))
             .collect();
         Monitor::Running { goals, hyps }
     }
@@ -149,9 +95,9 @@ mod tests {
         assert_eq!(
             x.monitor_string(),
             r#" A: Universe
- H0_value: A
  P: A → Universe
  H: ∀ x: A, P x
+ H0_value: A
  H0_proof: ~ P H0_value
 --------------------------------------------(1/1)
     False

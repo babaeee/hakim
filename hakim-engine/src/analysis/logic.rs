@@ -180,7 +180,7 @@ impl<T: Clone + Debug> LogicBuilder<'_, T> {
         use interactive::tactic::Error::*;
         let logic_builder = LogicBuilder::new(convert);
         logic_builder.and_not_term(normalize(frame.goal));
-        for (_, hyp) in frame.hyps {
+        for hyp in frame.hyps {
             logic_builder.and_term(normalize(hyp.ty));
         }
         if logic_builder.check_contradiction(check_contradiction, negator) {

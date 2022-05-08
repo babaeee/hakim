@@ -39,7 +39,7 @@ pub struct Hyp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Frame {
     pub goal: TermRef,
-    pub hyps: im::HashMap<String, Hyp>,
+    pub hyps: im::Vector<Hyp>,
     pub engine: Engine,
 }
 
@@ -277,17 +277,21 @@ impl Frame {
             ty,
             from_lib: false,
         };
-        self.hyps.insert(name.to_string(), hyp);
+        self.hyps.push_back(hyp);
         Ok(())
     }
 
+    pub fn get_hyp_by_name(&self, name: &str) -> Option<&Hyp> {
+        self.hyps.iter().find(|x| x.name == name)
+    }
+
     pub fn deny_dependency(&self, name: &str) -> tactic::Result<()> {
-        if let Some(hyp) = self.hyps.get(name) {
+        if let Some(hyp) = self.get_hyp_by_name(name) {
             if hyp.from_lib {
                 return Err(tactic::Error::HypIsFromLib(name.to_string()));
             }
         }
-        for (_, hyp) in &self.hyps {
+        for hyp in &self.hyps {
             if predict_axiom(&hyp.ty, |x| x == name) {
                 return Err(tactic::Error::ContextDependOnHyp(
                     name.to_string(),
@@ -306,8 +310,9 @@ impl Frame {
 
     pub fn remove_hyp_with_name(&mut self, name: &str) -> tactic::Result<Hyp> {
         self.deny_dependency(name)?;
-        if let Some(hyp) = self.hyps.remove(name) {
+        if let Some((i, _)) = self.hyps.iter().enumerate().find(|(_, x)| x.name == name) {
             self.engine.remove_name_unchecked(name);
+            let hyp = self.hyps.remove(i);
             return Ok(hyp);
         }
         Err(tactic::Error::UnknownHyp(name.to_string()))
