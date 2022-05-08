@@ -122,7 +122,8 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     const [suggs, setSuggs] = useState([] as Sugg[]);
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === 'z') {
+            console.log(event.code);
+            if (event.ctrlKey && event.code === 'KeyZ') {
                 sendTactic('Undo');
             }
         }
