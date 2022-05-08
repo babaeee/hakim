@@ -3,7 +3,7 @@
   type: level
   x: 0
   y: 0
-  goal: "(∀ a b: ℤ, a < b -> 0 < a -> 2 * a < 3 * b) -> 2 * 100 < 3 * 200"
+  goal: "(∀ a b: ℤ, a < b -> 0 < a -> 2 ^ a < 3 ^ b) -> 2 ^ 100 < 3 ^ 200"
   initTactics:
     - intros
 - id: apply2

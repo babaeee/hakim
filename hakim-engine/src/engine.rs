@@ -36,6 +36,7 @@ impl Default for Engine {
         name_dict.insert("eq".to_string(), prelude::eq());
         name_dict.insert("ex".to_string(), prelude::ex());
         name_dict.insert("plus".to_string(), prelude::plus());
+        name_dict.insert("pow".to_string(), prelude::pow());
         name_dict.insert("minus".to_string(), prelude::minus());
         name_dict.insert("mod".to_string(), prelude::mod_of());
         name_dict.insert("mult".to_string(), prelude::mult());
