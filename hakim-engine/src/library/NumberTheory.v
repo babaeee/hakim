@@ -47,7 +47,19 @@ Todo divide_factor: ∀ a b c: ℤ, a | b -> a | b * c.
 Todo divide_plus: ∀ a b c: ℤ, a | b -> a | c -> a | b + c.
 Todo divide_minus: ∀ a b c: ℤ, a | b -> a | b + c -> a | c.
 Todo divide_le: ∀ a b: ℤ, 0 < b -> a | b -> a ≤ b.
-Todo divide_linear_combination: ∀ a b c: ℤ, a | b -> a | c -> (∀ k l: ℤ, a | k * b + l * c).
+Theorem divide_linear_combination: ∀ a b c: ℤ, a | b -> a | c -> (∀ k l: ℤ, a | k * b + l * c).
+Proof.
+    intros.
+    apply divide_plus.
+    replace #1 (l * c) with (c * l).
+    ring.
+    apply divide_factor.
+    assumption.
+    replace #1 (k * b) with (b * k).
+    ring.
+    apply divide_factor.
+    assumption.
+Qed.
 
 Axiom prime: ℤ -> U.
 Axiom prime_intro_l: ∀ x: ℤ, prime x -> 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x).
