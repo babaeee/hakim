@@ -22,6 +22,7 @@ const storedState = (): State => {
         return {
             proofState: {
                 afterProof: {},
+                suggestedLemmas: [],
                 text: "",
             }
         };
@@ -53,6 +54,7 @@ type AfterProof = {
 
 type ProofState = {
     afterProof: AfterProof,
+    suggestedLemmas: string[],
     text: string,
 };
 
@@ -83,13 +85,15 @@ type OpenProofOptions = {
     replace?: boolean,
     afterProof?: AfterProof,
     text?: string,
+    suggestedLemmas?: string[] | undefined,
 };
 
 export const openProofSession = (navigate: NavigateFunction, options: OpenProofOptions = {}) => {
     const afterProof = options.afterProof || {};
     const text = options.text || "";
     const replace = options.replace || false;
-    proofState = { afterProof, text };
+    const suggestedLemmas = options.suggestedLemmas || [];
+    proofState = { afterProof, text, suggestedLemmas };
     stateToStore.proofState = proofState;
     navigate('/proof', { replace });
 };

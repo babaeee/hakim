@@ -339,6 +339,18 @@ impl Instance {
         })
     }
 
+    pub fn check(&self, query: &str) -> String {
+        let eng = if let Some(s) = &self.session {
+            s.initial_engine()
+        } else {
+            return "No session".to_string();
+        };
+        match eng.check(query) {
+            Ok(r) => r,
+            Err(e) => format!("{:?}", e),
+        }
+    }
+
     pub fn search(&self, query: &str) -> String {
         let eng = if let Some(s) = &self.session {
             s.initial_engine()

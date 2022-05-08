@@ -26,3 +26,6 @@ Theorem lt_0_1: 0 < 1.
 Proof.
     lia.
 Qed.
+
+Todo pow_lt_l: ∀ a b c: ℤ, 0 < a -> a < b -> 0 < c -> a ^ c < b ^ c.
+Todo pow_lt_r: ∀ a b c: ℤ, 0 < a -> a < b -> 1 < c -> c ^ a < c ^ b.

@@ -29,20 +29,20 @@ const instance = new Instance();
 
 window.instance = instance;
 
-const hardReset = () => {
-    localStorage.clear();
+const wasmReset = () => {
+    localStorage.removeItem('wasmState');
     window.onbeforeunload = null;
     window.location.reload();
 };
 
-window.hardReset = hardReset;
+window.hardReset = wasmReset;
 
 const prevBackup = localStorage.getItem('wasmState');
 
 if (prevBackup) {
     if (!instance.from_backup(JSON.parse(prevBackup))) {
         window.alert('backup version is incompatible. reloading...');
-        hardReset();
+        wasmReset();
     }
 }
 
@@ -133,7 +133,11 @@ export const getNatural = (): string => {
 
 export const tryTactic = (tactic: string): boolean => {
     return instance.try_tactic(tactic);
-}
+};
+
+export const check = (query: string): string => {
+    return instance.check(query);
+};
 
 export type SearchResult = {
     name: string,

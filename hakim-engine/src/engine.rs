@@ -159,6 +159,12 @@ impl Engine {
         Ok(())
     }
 
+    pub fn check(&self, query: &str) -> Result<String> {
+        let term = self.parse_text(query)?;
+        let ty = type_of(term)?;
+        Ok(self.pretty_print(&ty))
+    }
+
     pub fn search(&self, query: &str) -> Result<Vec<String>> {
         search(self, query)
     }

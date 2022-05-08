@@ -21,6 +21,7 @@ export type Level = Node & {
     goal: string,
     text: string | undefined,
     initTactics: string[] | undefined,
+    suggestedLemmas: string[] | undefined,
     emptyLibrary: boolean | undefined,
 };
 
@@ -178,6 +179,7 @@ export const Adventure = () => {
                         },
                     },
                     text: levelToRender.text,
+                    suggestedLemmas: levelToRender.suggestedLemmas,
                     replace: true,
                 });
             }

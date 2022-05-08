@@ -11,6 +11,7 @@ import { cancelProof, proofState, solveProof } from '../root/Root';
 import { useNavigate } from 'react-router-dom';
 import { Title } from '../util/Title';
 import Markdown from "markdown-it";
+import { check } from '../../hakim';
 
 const markdown = new Markdown();
 
@@ -28,7 +29,10 @@ type ProofContextType = {
 export const ProofContext = createContext({} as ProofContextType);
 
 export const Proof = () => {
-  const [lemmaBox, setLemmaBox] = useState([] as Lemma[]);
+  const [lemmaBox, setLemmaBox] = useState(proofState.suggestedLemmas.map((x) => ({
+    name: x,
+    ty: check(x),
+  })) as Lemma[]);
   const navigator = useNavigate();
   const [natural, setNatural] = useState(undefined as string | undefined);
   if (natural) {
