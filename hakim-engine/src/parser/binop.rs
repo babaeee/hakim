@@ -1,25 +1,73 @@
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum BinOp {
-    And,
-    App,
-    Divide,
-    Eq,
-    Ge,
-    Gt,
-    Iff,
-    Imply,
-    Included,
-    Inset,
-    Intersection,
-    Le,
-    Lt,
-    Minus,
-    ModOf,
-    Mult,
-    Or,
-    Plus,
-    Setminus,
-    Union,
+macro_rules! binop {
+    ($($name:ident, $prec:literal, $assoc:ident, $txt:literal);*;) => {
+        #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+        pub enum BinOp {
+            $(
+                $name,
+            )*
+        }
+
+        impl Display for BinOp {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+                f.write_str(match self {
+                    $(
+                        $name => $txt,
+                    )*
+                })
+            }
+        }
+
+        impl BinOp {
+            pub fn from_str(op: &str) -> Option<Self> {
+                Some(match op {
+                    $(
+                        $txt => $name,
+                    )*
+                    _ => return None,
+                })
+            }
+
+            pub fn prec(&self) -> PrecLevel {
+                PrecLevel(match self {
+                    $(
+                        $name => $prec,
+                    )*
+                })
+            }
+
+            pub fn assoc(&self) -> Assoc {
+                match self {
+                    $(
+                        $name => $assoc,
+                    )*
+                }
+            }
+        }
+    };
+}
+
+// Source of prec and assoc: https://coq.inria.fr/library/Coq.Init.Notations.html
+binop! {
+    And, 79, Right, "∧";
+    App, 1, Left, " ";
+    Divide, 70, No, "|";
+    Eq, 70, No, "=";
+    Ge, 70, No, "≥";
+    Gt, 70, No, ">";
+    Iff, 99, No, "↔";
+    Imply, 98, Right, "→";
+    Included, 70, No, "⊆";
+    Intersection, 40, Left, "∩";
+    Inset, 70, No, "∈";
+    Le, 70, No, "≤";
+    Lt, 70, No, "<";
+    Minus, 50, Left, "-";
+    ModOf, 60, Left, "mod";
+    Mult, 40, Left, "*";
+    Or, 85, Right, "∨";
+    Plus, 50, Left, "+";
+    Union, 50, Left, "∪";
+    Setminus, 30, Left, "∖";
 }
 
 #[derive(PartialEq, Eq)]
@@ -27,33 +75,6 @@ pub enum Assoc {
     Left,
     Right,
     No,
-}
-
-impl Display for BinOp {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        f.write_str(match self {
-            And => "∧",
-            App => " ",
-            Divide => "|",
-            Eq => "=",
-            Ge => "≥",
-            Gt => ">",
-            Iff => "↔",
-            Imply => "→",
-            Included => "⊆",
-            Intersection => "∩",
-            Inset => "∈",
-            Le => "≤",
-            Lt => "<",
-            Minus => "-",
-            ModOf => "mod",
-            Mult => "*",
-            Or => "∨",
-            Plus => "+",
-            Union => "∪",
-            Setminus => "∖",
-        })
-    }
 }
 
 use std::fmt::{Display, Formatter};
@@ -83,83 +104,6 @@ impl BinOp {
             Right => self.prec(),
             No | Left => self.prec() - 1,
         }
-    }
-
-    // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
-    pub fn prec(&self) -> PrecLevel {
-        PrecLevel(match self {
-            App => 1,
-            And => 79,
-            Divide => 70,
-            Eq => 70,
-            Ge => 70,
-            Gt => 70,
-            Imply => 99,
-            Iff => 98,
-            Included => 70,
-            Intersection => 40,
-            Inset => 70,
-            Le => 70,
-            Lt => 70,
-            ModOf => 60,
-            Mult => 40,
-            Plus => 50,
-            Minus => 50,
-            Or => 85,
-            Union => 50,
-            Setminus => 30,
-        })
-    }
-
-    // Source: https://coq.inria.fr/library/Coq.Init.Notations.html
-    pub fn assoc(&self) -> Assoc {
-        match self {
-            And => Right,
-            App => Left,
-            Divide => No,
-            Eq => No,
-            Ge => No,
-            Gt => No,
-            Iff => No,
-            Imply => Right,
-            Included => No,
-            Intersection => Left,
-            Inset => No,
-            Le => No,
-            Lt => No,
-            Minus => Left,
-            ModOf => Left,
-            Mult => Left,
-            Or => Right,
-            Plus => Left,
-            Union => Left,
-            Setminus => Left,
-        }
-    }
-
-    pub fn from_str(op: &str) -> Option<Self> {
-        Some(match op {
-            "∧" => And,
-            "|" => Divide,
-            "=" => Eq,
-            "≥" => Ge,
-            ">" => Gt,
-            "↔" => Iff,
-            "→" => Imply,
-            "⊆" => Included,
-            "∩" => Intersection,
-            "∈" => Inset,
-            "≤" => Le,
-            "<" => Lt,
-            "-" => Minus,
-            "mod" => ModOf,
-            "*" => Mult,
-            "∨" => Or,
-            "+" => Plus,
-            "∪" => Union,
-            "∖" => Setminus,
-            _ => return None,
-        })
     }
 
     pub fn run_on_term(&self, infer_cnt: &mut InferGenerator, l: TermRef, r: TermRef) -> TermRef {
