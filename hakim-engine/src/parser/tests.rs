@@ -110,6 +110,8 @@ fn eq() {
 #[test]
 fn iff_check() {
     parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, x0 = x1 ↔ x0 + 3 = x1 + 3");
+    parse_pretty("∀ A: Universe, ∀ B: Universe, A ↔ B → B ↔ A");
+    parse_pretty("∀ A: Universe, A ↔ (A → A)");
 }
 
 #[test]

@@ -48,14 +48,14 @@ macro_rules! binop {
 
 // Source of prec and assoc: https://coq.inria.fr/library/Coq.Init.Notations.html
 binop! {
-    And, 79, Right, "∧";
+    And, 80, Right, "∧";
     App, 1, Left, " ";
     Divide, 70, No, "|";
     Eq, 70, No, "=";
     Ge, 70, No, "≥";
     Gt, 70, No, ">";
-    Iff, 99, No, "↔";
-    Imply, 98, Right, "→";
+    Iff, 95, No, "↔";
+    Imply, 99, Right, "→";
     Included, 70, No, "⊆";
     Intersection, 40, Left, "∩";
     Inset, 70, No, "∈";
