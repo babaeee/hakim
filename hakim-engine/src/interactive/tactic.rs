@@ -30,6 +30,7 @@ pub(crate) use assumption::assumption;
 #[derive(Debug)]
 pub enum Error {
     UnknownTactic(String),
+    DisabledTactic(String),
     UnknownHyp(String),
     BadHyp(&'static str, TermRef),
     BadGoal(&'static str),

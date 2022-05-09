@@ -86,14 +86,14 @@ fn forall_bad_ty() {
 fn lambda_bad_ty() {
     check_type("λ A: U, 2", "U → ℤ");
     fail_type("λ A: 2, U");
-    check_type("λ A: U, U", "U → U1");
+    check_type("λ A: U, U", "U → Universe1");
 }
 
 #[test]
 fn forall_universe() {
     check_type("ℤ → ℤ → ℤ", "U");
     check_type("∀ x: ℤ, x + 2 < 7", "U");
-    check_type("∀ A: U, A → A", "U1");
+    check_type("∀ A: U, A → A", "Universe1");
 }
 
 #[test]
@@ -123,14 +123,14 @@ fn infer_stack_overflow() {
 fn iff_fail() {
     check_type(
         "∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∪ y ↔ a ∈ x ∨ a ∈ y",
-        "U1",
+        "Universe1",
     );
 }
 
 #[test]
 fn local_wild() {
-    wild_need_local("∀ f: U1 -> U, ?x ∧ f ∀ T: U, ∀ a b: T, eq ?x a b");
-    check_type("∀ T: U, ∀ a b: T, eq ?x a b -> eq ?x b a", "U1");
+    wild_need_local("∀ f: Universe1 -> U, ?x ∧ f ∀ T: U, ∀ a b: T, eq ?x a b");
+    check_type("∀ T: U, ∀ a b: T, eq ?x a b -> eq ?x b a", "Universe1");
 }
 
 #[test]

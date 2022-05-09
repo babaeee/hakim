@@ -18,50 +18,9 @@ use crate::{
 pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
     libs: im::HashMap<String, ()>,
+    pub params: im::HashMap<String, String>,
     pub hyp_suggs: im::Vector<SuggRule>,
     pub goal_suggs: im::Vector<SuggRule>,
-}
-
-impl Default for Engine {
-    fn default() -> Self {
-        let mut name_dict: im::HashMap<String, TermRef> = Default::default();
-        name_dict.insert("U".to_string(), prelude::u());
-        name_dict.insert("U1".to_string(), prelude::u1());
-        name_dict.insert("U2".to_string(), prelude::u2());
-        name_dict.insert("U3".to_string(), prelude::u3());
-        name_dict.insert("ℤ".to_string(), prelude::z());
-        name_dict.insert("False".to_string(), prelude::false_ty());
-        name_dict.insert("True".to_string(), prelude::true_ty());
-        name_dict.insert("divide".to_string(), prelude::divide());
-        name_dict.insert("eq".to_string(), prelude::eq());
-        name_dict.insert("ex".to_string(), prelude::ex());
-        name_dict.insert("plus".to_string(), prelude::plus());
-        name_dict.insert("pow".to_string(), prelude::pow());
-        name_dict.insert("minus".to_string(), prelude::minus());
-        name_dict.insert("mod_of".to_string(), prelude::mod_of());
-        name_dict.insert("mult".to_string(), prelude::mult());
-        name_dict.insert("or".to_string(), prelude::or());
-        name_dict.insert("lt".to_string(), prelude::lt());
-        name_dict.insert("and".to_string(), prelude::and());
-        name_dict.insert("set".to_string(), prelude::set());
-        name_dict.insert("set_from_func".to_string(), prelude::set_from_func());
-        name_dict.insert("set_empty".to_string(), prelude::set_empty());
-        name_dict.insert("set_singleton".to_string(), prelude::set_singleton());
-        name_dict.insert("setminus".to_string(), prelude::setminus());
-        name_dict.insert("union".to_string(), prelude::union());
-        name_dict.insert("intersection".to_string(), prelude::intersection());
-        name_dict.insert("inset".to_string(), prelude::inset());
-        name_dict.insert("included".to_string(), prelude::included());
-        let libs = im::HashMap::<String, ()>::default();
-        let hyp_suggs = im::Vector::default();
-        let goal_suggs = im::Vector::default();
-        Self {
-            name_dict,
-            libs,
-            hyp_suggs,
-            goal_suggs,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -93,7 +52,32 @@ use Error::*;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+impl Default for Engine {
+    fn default() -> Self {
+        Self::new("")
+    }
+}
+
 impl Engine {
+    pub fn new(params: &str) -> Self {
+        let name_dict = prelude::init_dict();
+        let libs = im::HashMap::<String, ()>::default();
+        let hyp_suggs = im::Vector::default();
+        let goal_suggs = im::Vector::default();
+        let params = params
+            .split('&')
+            .filter_map(|x| x.trim().split_once('='))
+            .map(|(x, y)| (x.to_owned(), y.to_owned()))
+            .collect();
+        Self {
+            name_dict,
+            libs,
+            params,
+            hyp_suggs,
+            goal_suggs,
+        }
+    }
+
     pub fn generate_name(&self, base: &str) -> String {
         if !self.name_dict.contains_key(base) {
             return base.to_string();
@@ -224,5 +208,13 @@ impl Engine {
 
     pub(crate) fn add_goal_sugg(&mut self, sugg: SuggRule) {
         self.goal_suggs.push_back(sugg);
+    }
+
+    pub(crate) fn is_disabled_tactic(&self, name: &str) -> bool {
+        self.params
+            .get("disabled_tactics")
+            .unwrap_or(&String::new())
+            .split(',')
+            .any(|x| x.trim() == name)
     }
 }

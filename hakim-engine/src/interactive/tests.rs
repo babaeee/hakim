@@ -1,3 +1,6 @@
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+
 use crate::interactive::tactic::Error;
 
 use super::{Engine, Session};
@@ -8,8 +11,22 @@ pub enum EngineLevel {
     Full,
 }
 
+lazy_static! {
+    static ref ENGINE_PARAMS: Mutex<String> = Mutex::new(String::new());
+}
+
+pub fn with_params(params: &str, work: impl FnOnce()) {
+    let mut guard = ENGINE_PARAMS.lock().unwrap();
+    *guard = params.to_string();
+    drop(guard);
+    work();
+    let mut guard = ENGINE_PARAMS.lock().unwrap();
+    *guard = "".to_string();
+    drop(guard);
+}
+
 fn build_engine(level: EngineLevel) -> Engine {
-    let mut eng = Engine::default();
+    let mut eng = Engine::new(&ENGINE_PARAMS.lock().unwrap());
     if level == EngineLevel::Empty {
         return eng;
     }

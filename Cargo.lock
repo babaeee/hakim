@@ -193,6 +193,7 @@ name = "hakim-engine"
 version = "0.1.0"
 dependencies = [
  "im-rc",
+ "lazy_static",
  "num-bigint",
  "serde",
  "typed-arena",

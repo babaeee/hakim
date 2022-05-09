@@ -3,15 +3,6 @@ use crate::{app_ref, term_ref, TermRef};
 pub fn u() -> TermRef {
     term_ref!(universe 0)
 }
-pub fn u1() -> TermRef {
-    term_ref!(universe 1)
-}
-pub fn u2() -> TermRef {
-    term_ref!(universe 2)
-}
-pub fn u3() -> TermRef {
-    term_ref!(universe 3)
-}
 pub fn z() -> TermRef {
     term_ref!(axiom "ℤ" , u())
 }
@@ -95,4 +86,33 @@ pub fn divide() -> TermRef {
 }
 pub fn mod_of() -> TermRef {
     term_ref!(axiom "mod_of", forall z(), forall z(), z())
+}
+
+pub fn init_dict() -> im::HashMap<String, TermRef> {
+    let mut name_dict = im::HashMap::<String, TermRef>::default();
+    name_dict.insert("U".to_string(), u());
+    name_dict.insert("ℤ".to_string(), z());
+    name_dict.insert("False".to_string(), false_ty());
+    name_dict.insert("True".to_string(), true_ty());
+    name_dict.insert("divide".to_string(), divide());
+    name_dict.insert("eq".to_string(), eq());
+    name_dict.insert("ex".to_string(), ex());
+    name_dict.insert("plus".to_string(), plus());
+    name_dict.insert("pow".to_string(), pow());
+    name_dict.insert("minus".to_string(), minus());
+    name_dict.insert("mod_of".to_string(), mod_of());
+    name_dict.insert("mult".to_string(), mult());
+    name_dict.insert("or".to_string(), or());
+    name_dict.insert("lt".to_string(), lt());
+    name_dict.insert("and".to_string(), and());
+    name_dict.insert("set".to_string(), set());
+    name_dict.insert("set_from_func".to_string(), set_from_func());
+    name_dict.insert("set_empty".to_string(), set_empty());
+    name_dict.insert("set_singleton".to_string(), set_singleton());
+    name_dict.insert("setminus".to_string(), setminus());
+    name_dict.insert("union".to_string(), union());
+    name_dict.insert("intersection".to_string(), intersection());
+    name_dict.insert("inset".to_string(), inset());
+    name_dict.insert("included".to_string(), included());
+    name_dict
 }

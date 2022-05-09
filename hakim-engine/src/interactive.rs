@@ -338,6 +338,9 @@ impl Frame {
         let parts = smart_split(line);
         let mut parts = parts.iter().map(|x| x.as_str());
         let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
+        if self.engine.is_disabled_tactic(name) {
+            return Err(tactic::Error::DisabledTactic(name.to_string()));
+        }
         let frame = self.clone();
         match name {
             "intros" => intros(frame, parts),

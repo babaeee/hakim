@@ -14,6 +14,7 @@ export type Node = {
     x: number,
     y: number,
     dependencies?: string[] | undefined,
+    engineParams?: string | undefined,
 };
 
 export type Level = Node & {
@@ -135,6 +136,7 @@ export const Adventure = () => {
     let levelToRender: Level | undefined = undefined;
     let levelIs404 = false;
     let levelIsLocked = false;
+    let engineParams = "";
     for (const p of path) {
         const x = d.find((x) => x.id === p);
         if (!x) {
@@ -145,6 +147,7 @@ export const Adventure = () => {
             levelIsLocked = true;
             break;
         }
+        engineParams += `&${x.engineParams || ""}`;
         if (x.type === "level") {
             levelToRender = x;
             myname = x.name;
@@ -160,7 +163,7 @@ export const Adventure = () => {
         };
         (async () => {
             // FIXME: Eq is not empty library!!!
-            if (await setGoal(levelToRender.goal, levelToRender.emptyLibrary ? 'Eq' : 'All')) {
+            if (await setGoal(levelToRender.goal, levelToRender.emptyLibrary ? 'Eq' : 'All', engineParams)) {
                 if (levelToRender?.initTactics) {
                     for (const tactic of levelToRender.initTactics) {
                         if (!await sendTactic(tactic)) {

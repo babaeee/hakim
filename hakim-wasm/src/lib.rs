@@ -118,8 +118,8 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn start_session(&mut self, goal: &str, libs: &str) -> Option<String> {
-        let mut eng = Engine::default();
+    pub fn start_session(&mut self, goal: &str, libs: &str, params: &str) -> Option<String> {
+        let mut eng = Engine::new(params);
         for lib in libs.split(',') {
             if let Err(e) = eng.load_library(lib) {
                 return Some(format!("{:?}", e));
