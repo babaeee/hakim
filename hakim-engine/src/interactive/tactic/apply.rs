@@ -62,7 +62,7 @@ impl FindInstance {
             .filter_map(|(i, x)| x.then(|| i))
         {
             if (Term::Wild { index: i, scope: 0 }) == *self.infer.terms[i].as_ref() {
-                r += &format!("\u{2068}?w{} : {:?}\u{2069}\n", i, self.infer.tys[i]);
+                r += &format!("\u{2068}?{} : {:?}\u{2069}\n", i, self.infer.tys[i]);
             }
         }
         r += "$and_we_should_proof:\n";
@@ -76,7 +76,7 @@ impl FindInstance {
             }
         }
         r += &format!(
-            "\n$enter_value_of1 \u{2068}?w{}\u{2069} $enter_value_of2:\n",
+            "\n$enter_value_of1 \u{2068}?{}\u{2069} $enter_value_of2:\n",
             self.first_needed_wild()
         );
         r
