@@ -1,5 +1,4 @@
-use lazy_static::lazy_static;
-use std::sync::Mutex;
+use std::cell::Cell;
 
 use crate::interactive::tactic::Error;
 
@@ -11,22 +10,25 @@ pub enum EngineLevel {
     Full,
 }
 
-lazy_static! {
-    static ref ENGINE_PARAMS: Mutex<String> = Mutex::new(String::new());
+thread_local! {
+    static ENGINE_PARAMS: Cell<String>  = Cell::new(String::new());
 }
 
+// this function is only for single threaded testing!!!!
 pub fn with_params(params: &str, work: impl FnOnce()) {
-    let mut guard = ENGINE_PARAMS.lock().unwrap();
-    *guard = params.to_string();
-    drop(guard);
+    ENGINE_PARAMS.with(|x| {
+        x.set(params.to_string());
+    });
     work();
-    let mut guard = ENGINE_PARAMS.lock().unwrap();
-    *guard = "".to_string();
-    drop(guard);
+    ENGINE_PARAMS.with(|x| x.take());
 }
 
 fn build_engine(level: EngineLevel) -> Engine {
-    let mut eng = Engine::new(&ENGINE_PARAMS.lock().unwrap());
+    let mut eng = Engine::new(&ENGINE_PARAMS.with(|x| {
+        let s = x.take();
+        x.set(s.clone());
+        s
+    }));
     if level == EngineLevel::Empty {
         return eng;
     }

@@ -1,8 +1,18 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum AbsSign {
     Forall,
     Fun,
     Exists,
+}
+
+impl Display for AbsSign {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_char(match self {
+            AbsSign::Forall => '∀',
+            AbsSign::Fun => 'λ',
+            AbsSign::Exists => '∃',
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,6 +23,8 @@ pub enum Token {
     Number(BigInt),
     Wild(Option<String>),
 }
+
+use std::fmt::{Display, Write};
 
 use num_bigint::BigInt;
 use Token::*;
@@ -112,7 +124,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
         }
         if c == '?' {
             let mut name = match text.pick_char() {
-                Some(c) if is_valid_ident_first_char(c) => {
+                Some(c) if is_valid_ident_char(c) => {
                     text.eat_char();
                     c.to_string()
                 }

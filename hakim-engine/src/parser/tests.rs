@@ -25,13 +25,13 @@ fn simple_forall() {
 
 #[test]
 fn forall_arrow() {
-    parse_pretty("∀ x0: Universe, ∀ x1: Universe, x0 → x1");
+    parse_pretty("∀ x0 x1: Universe, x0 → x1");
 }
 
 #[test]
 fn number_ops() {
-    parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, ∀ x2: ℤ, x0 < x1 → x0 + x2 < x1 + x2");
-    parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, (x0 + x1) * (x0 + x1) < x0 * x0 + x1 * x1");
+    parse_pretty("∀ x0 x1 x2: ℤ, x0 < x1 → x0 + x2 < x1 + x2");
+    parse_pretty("∀ x0 x1: ℤ, (x0 + x1) * (x0 + x1) < x0 * x0 + x1 * x1");
     parse_pretty("1 + 2 * 3 * 4 + 5 * 6 < 7 + 8 * 9");
     parse_pretty("(1 * 2 + 3 * 4) * (1 * 2 + 3 * 4)");
     parse_pretty("3 * 2 ^ 5 + 4 = 100");
@@ -109,8 +109,8 @@ fn eq() {
 
 #[test]
 fn iff_check() {
-    parse_pretty("∀ x0: ℤ, ∀ x1: ℤ, x0 = x1 ↔ x0 + 3 = x1 + 3");
-    parse_pretty("∀ A: Universe, ∀ B: Universe, A ↔ B → B ↔ A");
+    parse_pretty("∀ x0 x1: ℤ, x0 = x1 ↔ x0 + 3 = x1 + 3");
+    parse_pretty("∀ A B: Universe, A ↔ B → B ↔ A");
     parse_pretty("∀ A: Universe, A ↔ (A → A)");
 }
 
@@ -139,7 +139,7 @@ fn set_and_app() {
 
 #[test]
 fn pretty_names() {
-    parse_pretty("∀ salam: ℤ, ∀ x2: ℤ, salam < x2");
+    parse_pretty("∀ salam x2: ℤ, salam < x2");
     parse_not_pretty(
         "∀ x: Universe, x → ∀ x: ℤ, x < x",
         "∀ x: Universe, x → ∀ x0: ℤ, x0 < x0",
@@ -178,12 +178,12 @@ fn basic_fails() {
 }
 #[test]
 fn divid_and_mod() {
-    parse_pretty("∀ a: ℤ, ∀ b: ℤ, a mod b | a");
+    parse_pretty("∀ a b: ℤ, a mod b | a");
 }
 
 #[test]
 fn mod_in_name() {
-    parse_pretty("∀ a: ℤ, ∀ b: ℤ, ∀ mod_a_b: ℤ, mod_a_b = a mod b");
+    parse_pretty("∀ a b mod_a_b: ℤ, mod_a_b = a mod b");
     parse_pretty("∀ forall_x: ℤ, forall_x = forall_x");
 }
 

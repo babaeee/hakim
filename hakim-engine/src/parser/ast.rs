@@ -16,20 +16,20 @@ use crate::{
     term_ref,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct AstAbs {
-    name: Vec<String>,
-    ty: Option<Box<AstTerm>>,
-    body: Box<AstTerm>,
+    pub name: Vec<String>,
+    pub ty: Option<Box<AstTerm>>,
+    pub body: Box<AstTerm>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum AstSet {
     Abs(AstAbs),
     Items(Vec<AstTerm>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum AstTerm {
     Universe(usize),
     Abs(AbsSign, AstAbs),
