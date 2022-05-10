@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::{brain::Term, TermRef};
+use crate::brain::{self, type_of};
+use crate::library::prelude::{mult, plus, sigma, z};
+use crate::{app_ref, brain::Term, term_ref, TermRef};
 use num_bigint::BigInt;
 use typed_arena::Arena;
 
@@ -123,36 +125,104 @@ fn tree_to_d2(tree: &ArithTree<'_>) -> Poly {
     }
 }
 
+fn sigma_to_arith(l: TermRef, r: TermRef, f: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
+    if l != term_ref!(n 0) {
+        return arena.alloc(minus(
+            sigma_to_arith(term_ref!(n 0), r, f.clone(), arena),
+            sigma_to_arith(term_ref!(n 0), l, f, arena),
+            arena,
+        ));
+    }
+    let rp = Poly::from(r);
+    let rpc = rp.constant();
+    if *rpc > 5i32.into() || *rpc < (-5i32).into() {
+        return arena.alloc(Atom(app_ref!(sigma(), l, rp.into_term(), f)));
+    }
+    let rpc: i32 = rpc.try_into().unwrap();
+    let mut t = if rp.variables().is_empty() {
+        arena.alloc(Const(0.into()))
+    } else {
+        arena.alloc(Atom(app_ref!(
+            sigma(),
+            l,
+            rp.with_constant(0).into_term(),
+            f
+        )))
+    };
+    for i in 0..rpc {
+        let f_i = brain::normalize(app_ref!(f, rp.with_constant(i).into_term()));
+        t = arena.alloc(Plus(t, term_ref_to_arith(f_i, arena)));
+    }
+    for i in rpc..0 {
+        let f_i = brain::normalize(app_ref!(f, rp.with_constant(i).into_term()));
+        t = arena.alloc(minus(t, term_ref_to_arith(f_i, arena), arena));
+    }
+    t
+}
+
+fn atom_normalizer(t: TermRef) -> ArithTree<'static> {
+    fn f(t: TermRef) -> TermRef {
+        match t.as_ref() {
+            Term::App { func, op } => {
+                let op = if type_of(op.clone()) == Ok(z()) {
+                    Poly::from(op.clone()).into_term()
+                } else {
+                    f(op.clone())
+                };
+                let func = f(func.clone());
+                app_ref!(func, op)
+            }
+            _ => t,
+        }
+    }
+    Atom(f(t))
+}
+
 fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
     let arith_tree = match t.as_ref() {
         Term::App { func, op: op2 } => match func.as_ref() {
             Term::App { func, op: op1 } => match func.as_ref() {
+                Term::App { func, op } => match func.as_ref() {
+                    Term::Axiom { unique_name, .. } => match unique_name.as_str() {
+                        "sigma" => {
+                            return sigma_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
+                        }
+                        _ => atom_normalizer(t),
+                    },
+                    _ => atom_normalizer(t),
+                },
                 Term::Axiom { unique_name, .. } => match unique_name.as_str() {
                     "plus" => Plus(
                         term_ref_to_arith(op1.clone(), arena),
                         term_ref_to_arith(op2.clone(), arena),
                     ),
-                    "minus" => Plus(
+                    "minus" => minus(
                         term_ref_to_arith(op1.clone(), arena),
-                        arena.alloc(Mult(
-                            arena.alloc(Const((-1).into())),
-                            term_ref_to_arith(op2.clone(), arena),
-                        )),
+                        term_ref_to_arith(op2.clone(), arena),
+                        arena,
                     ),
                     "mult" => Mult(
                         term_ref_to_arith(op1.clone(), arena),
                         term_ref_to_arith(op2.clone(), arena),
                     ),
-                    _ => Atom(t),
+                    _ => atom_normalizer(t),
                 },
-                _ => Atom(t),
+                _ => atom_normalizer(t),
             },
-            _ => Atom(t),
+            _ => atom_normalizer(t),
         },
         Term::Number { value } => Const(value.clone()),
-        _ => Atom(t),
+        _ => atom_normalizer(t),
     };
     arena.alloc(arith_tree)
+}
+
+fn minus<'a>(
+    op1: &'a ArithTree<'a>,
+    op2: &'a ArithTree<'a>,
+    arena: ArithArena<'a>,
+) -> ArithTree<'a> {
+    Plus(op1, arena.alloc(Mult(arena.alloc(Const((-1).into())), op2)))
 }
 
 fn sorter(x: Poly) -> Poly {
@@ -192,7 +262,27 @@ fn canonical<'a>(x: &'a ArithTree<'a>, arena: ArithArena<'a>) -> Poly {
     sorter(x)
 }
 
+impl From<TermRef> for Poly {
+    fn from(t: TermRef) -> Self {
+        let arena = &Arena::new();
+        let a = term_ref_to_arith(t, arena);
+        canonical(a, arena)
+    }
+}
+
 impl Poly {
+    fn into_term(self) -> TermRef {
+        let mut t = term_ref!(n self.0);
+        for (c, zz) in self.1 {
+            let mut tx = term_ref!(n c);
+            for z in zz {
+                tx = app_ref!(mult(), tx, z);
+            }
+            t = app_ref!(plus(), t, tx);
+        }
+        t
+    }
+
     pub fn from_subtract(t1: TermRef, t2: TermRef) -> Self {
         let arena = &Arena::with_capacity(32);
         let a1 = term_ref_to_arith(t1, arena);
@@ -205,6 +295,16 @@ impl Poly {
 
     pub fn constant(&self) -> &BigInt {
         &self.0
+    }
+
+    pub fn set_constant(&mut self, i: i32) {
+        self.0 = i.into();
+    }
+
+    pub fn with_constant(&self, i: i32) -> Self {
+        let mut c = self.clone();
+        c.set_constant(i);
+        c
     }
 
     pub fn variables(&self) -> &[(BigInt, Vec<TermRef>)] {

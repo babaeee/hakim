@@ -105,7 +105,7 @@ macro_rules! app {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     ForiegnVariableInTerm(usize),
     TypeMismatch(TermRef, TermRef),

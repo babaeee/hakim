@@ -220,6 +220,15 @@ mod tests {
     }
 
     #[test]
+    fn sigma_simple() {
+        success("∀ n: ℤ, sigma 0 (n + 1 + 1) (λ i: ℤ, i) = sigma 0 (n + 1) (λ i: ℤ, i) + n + 1");
+        fail("∀ n: ℤ, sigma 0 (n + 1 + 1) (λ i: ℤ, i) = sigma 0 (n + 1) (λ i: ℤ, i) + n");
+        success("sigma (-2) (4) (λ i: ℤ, i * i) = 19");
+        success("sigma 2 4 (λ i: ℤ, i * i) = 13");
+        success("2 * sigma 0 (0 + 1) (λ i: ℤ, i) = 0 * (0 + 1)");
+    }
+
+    #[test]
     fn calculator_mode() {
         with_params("lia=calculator", || {
             success("1 < 2");
@@ -228,6 +237,7 @@ mod tests {
             fail("2 < 1");
             success("-1000000000000000000 < 1");
             fail("∀ x: ℤ, 2 * x = 4 -> x = 2");
+            success("∀ x: ℤ, x + x = 2 * x");
         });
         success("∀ x: ℤ, 2 * x = 4 -> x = 2");
     }

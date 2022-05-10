@@ -87,6 +87,9 @@ pub fn divide() -> TermRef {
 pub fn mod_of() -> TermRef {
     term_ref!(axiom "mod_of", forall z(), forall z(), z())
 }
+pub fn sigma() -> TermRef {
+    term_ref!(axiom "sigma", forall z(), forall z(), forall term_ref!( forall z(), z()), z())
+}
 
 pub fn init_dict() -> im::HashMap<String, TermRef> {
     let mut name_dict = im::HashMap::<String, TermRef>::default();
@@ -114,5 +117,6 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());
     name_dict.insert("included".to_string(), included());
+    name_dict.insert("sigma".to_string(), sigma());
     name_dict
 }
