@@ -21,6 +21,12 @@
   color: white;
 }
 
+.text code {
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+
 .title {
   display: flex;
   justify-content: center;

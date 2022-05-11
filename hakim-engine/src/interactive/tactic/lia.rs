@@ -1,3 +1,5 @@
+use num_bigint::Sign;
+
 use super::Result;
 use crate::{
     analysis::{
@@ -6,6 +8,8 @@ use crate::{
     },
     brain::{Term, TermRef},
     interactive::Frame,
+    parser::BinOp,
+    term_ref,
 };
 
 fn convert_calculator_mode(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
@@ -63,8 +67,31 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
     LogicValue::unknown()
 }
 
+fn inject_div_mod(polies: Vec<Poly>) -> Vec<Poly> {
+    let div_mods = polies
+        .iter()
+        .flat_map(|x| x.variables().iter().flat_map(|x| x.1.iter()))
+        .flat_map(|x| {
+            if let Some((_, BinOp::ModOf, b)) = BinOp::detect(x) {
+                if let Term::Number { value: bval } = b.as_ref() {
+                    if bval.sign() == Sign::Plus {
+                        let m1 = -1;
+                        return vec![
+                            Poly::from_subtract(b, x.clone()),
+                            Poly::from_subtract(x.clone(), term_ref!(n m1)),
+                        ]
+                        .into_iter();
+                    }
+                }
+            }
+            vec![].into_iter()
+        })
+        .collect();
+    [div_mods, polies].concat()
+}
+
 fn check_contradiction(polies: &[Poly]) -> bool {
-    dbg!(polies);
+    let polies = &inject_div_mod(polies.to_vec());
     let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
     let mut lower_bounds = vec![None; var_cnt];
     let mut upper_bounds = vec![None; var_cnt];
@@ -217,6 +244,14 @@ mod tests {
     #[test]
     fn success_lia_hyp() {
         run_interactive_to_end("forall x: ℤ, x + 2 < x + 1 -> False", "intros\nlia");
+    }
+
+    #[test]
+    fn div_mod() {
+        success("∀ a, a mod 2 = 0 ∨ a mod 2 = 1");
+        fail("∀ a, a mod 2 = 1");
+        fail("∀ a, a mod 2 = 0");
+        success("∀ a, a mod 2 = 2 -> False");
     }
 
     #[test]
