@@ -283,7 +283,7 @@ fn exists_number() {
 #[test]
 fn sigma_1_n() {
     run_interactive_to_end(
-        "∀ n: ℤ, 0 < n + 1 -> 2 * sigma 0 (n+1) (λ i: ℤ, i) = n * (n + 1)",
+        "∀ n: ℤ, 0 ≤ n -> 2 * sigma 0 (n+1) (λ i: ℤ, i) = n * (n + 1)",
         r#"
         apply simple_induction
         intros n n_pos gam_farz
