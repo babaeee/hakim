@@ -26,8 +26,11 @@ type ProofContextType = {
   appendLemma: (lemma: Lemma) => void,
 };
 
-const HeadText: React.FC<{ text: string }> = ({ text }) => {
+const HeadText: React.FC<{ text: string | undefined }> = ({ text }) => {
   const [hide, setHide] = useState(false);
+  if (!text || text === '') {
+    return <></>;
+  }
   if (hide) {
     const t = text.trim().split(/(\s+)/).slice(0, 5).join(' ');
     return <div className={css.text}>{t} ... <button onClick={() => setHide(!hide)}>{g`show_it`}</button></div>

@@ -104,6 +104,12 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                         ty, setAnchorPoint, setSuggs, toggleMenu,
                         replaceTactic: ({ cnt, text, userInp }) => `replace #${cnt} (${text}) with (${userInp}) in ${name}`,
                     })}
+                    onMouseDown={(e) => {
+                        // prevent text select in double clicks
+                        if (e.detail === 2) {
+                            e.preventDefault();
+                        }
+                    }}
                 >{ty}</span>
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
