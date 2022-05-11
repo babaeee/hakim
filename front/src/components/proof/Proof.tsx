@@ -26,6 +26,17 @@ type ProofContextType = {
   appendLemma: (lemma: Lemma) => void,
 };
 
+const HeadText: React.FC<{ text: string }> = ({ text }) => {
+  const [hide, setHide] = useState(false);
+  if (hide) {
+    const t = text.trim().split(/(\s+)/).slice(0, 5).join(' ');
+    return <div className={css.text}>{t} ... <button onClick={() => setHide(!hide)}>{g`show_it`}</button></div>
+  }
+  return <><div className={css.text} dangerouslySetInnerHTML={{
+    __html: markdown.render(text),
+  }} /> <button onClick={() => setHide(!hide)}>{g`hide_it`}</button></>;
+}
+
 export const ProofContext = createContext({} as ProofContextType);
 
 export const Proof = () => {
@@ -64,9 +75,7 @@ export const Proof = () => {
     <DndProvider backend={HTML5Backend}><ProofContext.Provider value={ctx}>
       <Title title={g`proof_screen`} />
       <div className={css.main}>
-        <div className={css.text} dangerouslySetInnerHTML={{
-          __html: markdown.render(proofState.text),
-        }} />
+        <HeadText text={proofState.text} />
         <div className={css.bottomContainer}>
           <Toolbar />
           <Tabs />

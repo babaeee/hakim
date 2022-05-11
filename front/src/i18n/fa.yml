@@ -26,6 +26,7 @@ exit: خروج
 export: صادر کردن
 goal: حکم
 goal_solved: حکم برقرار است
+hide_it: پنهان کن
 hyp: فرض
 in_applying: در حین اعمال کردن
 in_natural: به زبان طبیعی
@@ -65,6 +66,7 @@ replace_with_what1: می خواهید
 replace_with_what2: را با چه چیزی جایگزین کنید؟
 sandbox: جعبه شنی
 search: جستجو
+show_it: آشکار کن
 submit: ارسال
 tactic_intros: معرفی
 tactic_left: چپ

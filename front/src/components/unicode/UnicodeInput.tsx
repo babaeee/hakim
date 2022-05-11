@@ -21,14 +21,16 @@ const transform = (s: string | undefined) => {
 
 export const UnicodeInput = ({ autoFocus, value, onChange, enableHelp, onEnter, className }: Props) => {
     return (
-        <input autoFocus={autoFocus} dir="ltr" className={className} type="text" value={value} onChange={(e) => {
-            const txt = transform(e.target.value);
-            enableHelp(txt.endsWith(';'));
-            onChange(txt);
-        }} onKeyPress={(e) => {
-            if (e.code === 'Enter' || e.code === 'NumpadEnter') {
-                onEnter();
-            }
-        }} />
+        <input autoFocus={autoFocus} dir="ltr" className={className} type="text"
+            onFocus={(e) => e.target.select()}
+            value={value} onChange={(e) => {
+                const txt = transform(e.target.value);
+                enableHelp(txt.endsWith(';'));
+                onChange(txt);
+            }} onKeyPress={(e) => {
+                if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+                    onEnter();
+                }
+            }} />
     );
 };
