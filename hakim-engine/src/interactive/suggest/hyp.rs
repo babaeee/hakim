@@ -14,8 +14,23 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
     }
     let hyp = frame.get_hyp_by_name(name).unwrap().ty.clone();
     match hyp.as_ref() {
-        Term::Forall(Abstraction { body, .. }) => {
+        Term::Forall(Abstraction { body, var_ty, .. }) => {
             if remove_unused_var(body.clone(), 0).is_some() {
+                let next_h = frame.engine.generate_name("H");
+                let new_name = frame.engine.generate_name(&format!("{name}_o"));
+                let ty_str = frame.engine.pretty_print(var_ty);
+                r.push(Suggestion {
+                    class: Instantiate,
+                    tactic: vec![
+                        format!("add_hyp ({ty_str})"),
+                        format!("Switch 1"),
+                        format!("add_hyp {new_name} := ({name} {next_h})"),
+                        format!("remove_hyp {next_h}"),
+                        format!("remove_hyp {name}"),
+                    ],
+                    questions: vec![],
+                    is_default: true,
+                });
             } else {
                 let new_name = frame.engine.generate_name(&format!("{name}_ex"));
                 r.push(Suggestion::newq1default(

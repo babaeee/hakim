@@ -146,6 +146,13 @@ fn instantiate_hyp() {
         }],
         EngineLevel::Empty,
     );
+    check_hyp_menu(
+        "∀ A B: Universe, (A -> B) -> A -> B",
+        "intros A B f x",
+        "f",
+        SuggRec::vc([SuggClass::Instantiate]),
+        EngineLevel::Empty,
+    );
 }
 
 #[test]

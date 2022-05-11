@@ -123,7 +123,7 @@ impl Session {
                 arg: x.to_string(),
                 tactic_name: "Switch".to_string(),
             })?;
-            let snapshot = self.last_snapshot().switch_frame(t);
+            let snapshot = self.last_snapshot().switch_frame(t)?;
             self.history.push_back(HistoryRecord {
                 tactic: line.to_string(),
                 snapshot,
@@ -256,12 +256,18 @@ impl Snapshot {
         self.frames.pop_back().unwrap()
     }
 
-    fn switch_frame(&self, i: usize) -> Self {
+    fn switch_frame(&self, i: usize) -> tactic::Result<Self> {
         let mut result = self.clone();
+        if i >= result.frames.len() {
+            return Err(tactic::Error::InvalidGoalNumber {
+                i,
+                n: result.frames.len(),
+            });
+        }
         result
             .frames
             .swap(result.frames.len() - 1, result.frames.len() - 1 - i);
-        result
+        Ok(result)
     }
 
     pub fn is_finished(&self) -> bool {

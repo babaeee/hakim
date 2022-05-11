@@ -320,6 +320,13 @@ fn switch() {
         ring
         "#,
     );
+    run_interactive_to_fail(
+        "∀ a: ℤ, ∃ b: ℤ, a < b",
+        r#"
+        intros a
+        "#,
+        "Switch 1",
+    );
 }
 
 #[test]

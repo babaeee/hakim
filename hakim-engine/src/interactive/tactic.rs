@@ -40,6 +40,7 @@ pub enum Error {
     CanNotSolve(&'static str),
     CanNotUndo,
     EmptyTactic,
+    InvalidGoalNumber { i: usize, n: usize },
     HypIsFromLib(String),
     EngineError(super::Error),
     CanNotFindInstance(FindInstance),
