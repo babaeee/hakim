@@ -5,7 +5,7 @@ import Induction from "../../../library/Induction.v";
 import Logic from "../../../library/Logic.v";
 import NumberTheory from "../../../library/NumberTheory.v";
 import ProductOperator from "../../../library/ProductOperator.v";
-import Set from "../../../library/All.v";
+import Set from "../../../library/Set.v";
 import Sigma from "../../../library/Sigma.v";
 
 export const loadLibText = () => {
