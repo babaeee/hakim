@@ -15,6 +15,10 @@ const config = {
                 use: 'multi-yaml-loader'
             },
             {
+                test: /\.v$/i,
+                type: 'asset/source',
+            },
+            {
                 test: /\.css$/i,
                 use: [
                     'style-loader',

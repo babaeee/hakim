@@ -196,7 +196,9 @@ dependencies = [
  "lazy_static",
  "num-bigint",
  "serde",
+ "serde-wasm-bindgen",
  "typed-arena",
+ "wasm-bindgen",
 ]
 
 [[package]]

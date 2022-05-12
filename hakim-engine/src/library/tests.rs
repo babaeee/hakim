@@ -2,39 +2,28 @@ use crate::engine::Engine;
 
 use super::{
     ast::{File, Sentence},
+    text::all_names,
     text_of_name,
 };
-
-const LIB_NAMES: [&str; 9] = [
-    "All",
-    "Arith",
-    "Logic",
-    "Eq",
-    "NumberTheory",
-    "ProductOperator",
-    "Sigma",
-    "Set",
-    "Induction",
-];
 
 #[test]
 fn all() {
     let mut eng = Engine::default();
-    for lib in LIB_NAMES {
+    for lib in all_names() {
         eng.load_library(lib).unwrap();
     }
 }
 
 #[test]
 fn any() {
-    for lib in LIB_NAMES {
+    for lib in all_names() {
         Engine::default().load_library(lib).unwrap();
     }
 }
 
 #[test]
 fn check_library_proofs() {
-    for lib_name in LIB_NAMES {
+    for lib_name in all_names() {
         let mut eng = Engine::default();
         let lib = File::parse(text_of_name(lib_name).unwrap());
         for st in lib.0 {

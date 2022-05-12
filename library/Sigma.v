@@ -6,4 +6,4 @@ Theorem sigma_atom_minus: ∀ a: ℤ, ∀ f: ℤ -> ℤ, eq ℤ (sigma (a-1) a f
 Proof. intros. lia. Qed.
 Theorem sigma_plus: ∀ a b c: ℤ, ∀ f: ℤ -> ℤ, eq ℤ (sigma a b f + sigma b c f) (sigma a c f).
 Proof. intros. lia. Qed.
-Axiom sigma_factor: ∀ a b c: ℤ, ∀ f: ℤ -> ℤ, c * sigma a b f = sigma a b (λ i: ℤ, c * f i).
+Todo sigma_factor: ∀ a b c: ℤ, ∀ f: ℤ -> ℤ, c * sigma a b f = sigma a b (λ i: ℤ, c * f i).

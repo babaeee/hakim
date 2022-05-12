@@ -1,10 +1,12 @@
 import { Instance } from "../../../hakim-wasm/pkg/hakim_wasm";
 import { normalPrompt } from "../dialog";
 import { fromRust } from "../i18n";
+import { loadLibText } from "./lib_text";
 
 declare let window: Window & {
     ask_question: (q: string) => Promise<string>;
     panic_handler: (s: string) => void;
+    load_lib_json: (s: string) => object;
     instance: Instance;
     hardReset: () => void;
 };
@@ -15,7 +17,7 @@ window.ask_question = (x) => {
 window.panic_handler = (x) => {
     document.body.innerHTML = `<pre>${x}</pre>`;
 };
-
+window.load_lib_json = loadLibText;
 
 const checkError = (error?: string) => {
     if (error) {
