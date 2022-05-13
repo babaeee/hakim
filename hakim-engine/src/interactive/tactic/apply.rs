@@ -101,7 +101,7 @@ fn find_args_in_apply_hyp(
     op: TermRef,
     base_ic: usize,
     name: &str,
-) -> Option<TermRef> {
+) -> Option<(TermRef, InferResults)> {
     let fd = {
         let ty = type_of_and_infer(func.clone(), &mut InferResults::new(base_ic)).ok()?;
         get_forall_depth(&ty)
@@ -115,33 +115,40 @@ fn find_args_in_apply_hyp(
                 continue;
             }
         };
-        let mut flag = false;
-        for i in 0..ic {
-            if !contains_wild(&infers.terms[i]) {
-                continue;
-            }
-            flag = true;
-        }
         let ty = infers.fill(ty);
-        if flag || predict_axiom(&ty, |x| x == name) {
+        if predict_axiom(&ty, |x| x == name) {
             func = app_ref!(func, term_ref!(_ ic));
             continue;
         }
-        return Some(ty);
+        return Some((ty, infers));
     }
     None
 }
 
 fn apply_for_hyp(mut frame: Frame, exp: &str, name: &str) -> Result<Vec<Frame>> {
+    let orig_frame = frame.clone();
     let (term, ic) = frame.engine.parse_text_with_wild(exp)?;
     let prev_hyp = frame.remove_hyp_with_name(name)?.ty;
     let op = term_ref!(axiom name, prev_hyp);
-    let ty = match find_args_in_apply_hyp(term, op, ic, name) {
+    let (ty, infers) = match find_args_in_apply_hyp(term, op, ic, name) {
         Some(x) => x,
         None => return Err(CanNotSolve("apply")),
     };
     frame.add_hyp_with_name(name, ty)?;
-    Ok(vec![frame])
+    let mut fs = vec![frame];
+    for i in 0..infers.n {
+        let mut frame = orig_frame.clone();
+        if !contains_wild(&infers.terms[i]) {
+            continue;
+        }
+        if !contains_wild(&infers.tys[i]) {
+            frame.goal = normalize(infers.tys[i].clone());
+            fs.push(frame);
+        } else {
+            return Err(CanNotSolve("apply_hyp"));
+        }
+    }
+    Ok(fs)
 }
 
 fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
@@ -289,6 +296,19 @@ mod tests {
             }
             Err(e) => panic!("We need CanNotFindInstance but found {:?}", e),
         }
+    }
+
+    #[test]
+    fn apply_hyp_multi_inp() {
+        run_interactive_to_end(
+            "∀ x, 2 * x = 2 * 4 -> x = 4",
+            r#"
+            intros x H
+            apply eq_mult_l in H
+            lia
+            apply H
+        "#,
+        );
     }
 
     #[test]
