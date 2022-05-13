@@ -30,7 +30,7 @@ lazy_static! {
             let name = f.file_name().unwrap().to_str().unwrap().to_string();
             if let Some(name) = name.strip_suffix(".v") {
                 let text = std::fs::read_to_string(f).unwrap();
-                r.insert(name.to_string(), text);
+                r.insert(format!("/{name}"), text);
             }
         }
         r
@@ -41,7 +41,6 @@ pub fn load_text(name: &str) -> Option<&str> {
     LIB_TEXT_STORE.get(name).map(|x| x.as_str())
 }
 
-#[cfg(test)]
 pub fn all_names() -> impl Iterator<Item = &'static String> {
     LIB_TEXT_STORE.keys()
 }

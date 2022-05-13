@@ -1,4 +1,4 @@
-Import Set.
+Import /Set.
 
 Axiom multi: (set ℤ) -> ℤ.
 Axiom multi_empty: multi {} = 1.

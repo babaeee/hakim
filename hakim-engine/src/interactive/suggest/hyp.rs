@@ -43,7 +43,7 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
         Term::App { func, op: _ } => {
             if let Term::App { func, op: _ } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                    if unique_name.as_str() == "ex" && frame.engine.has_library("Logic") {
+                    if unique_name.as_str() == "ex" && frame.engine.has_library("/Logic") {
                         r.push(Suggestion::newq1default(
                             DestructWithName,
                             &format!("destruct {name} with (ex_ind ? ?) to ($0 $0_property)"),

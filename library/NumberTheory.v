@@ -1,4 +1,4 @@
-Import Arith.
+Import /Arith.
 
 Axiom divide_unfold: ∀ a b: ℤ, a | b -> ∃ c: ℤ, a * c = b.
 Axiom divide_fold: ∀ a b: ℤ, (∃ c: ℤ, a * c = b) -> a | b.
@@ -68,5 +68,5 @@ Todo prime_gt_2: ∀ x: ℤ, prime x -> 2 < x.
 Todo prime_is_positive: ∀ x: ℤ, prime x -> 0 < x.
 Todo prime_divisor_for_positive: ∀ x: ℤ, 0 < x -> (x = 1 -> False) -> ∃ p: ℤ, prime p ∧ p | x.
 
-Import ProductOperator.
+Import /ProductOperator.
 Axiom divide_multi:   ∀ A: set ℤ, ∀ a : ℤ, a ∈ A -> a | multi A.

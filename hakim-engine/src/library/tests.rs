@@ -10,7 +10,7 @@ use super::{
 fn all() {
     let mut eng = Engine::default();
     for lib in all_names() {
-        eng.load_library(lib).unwrap();
+        eng.load_library(dbg!(lib)).unwrap();
     }
 }
 

@@ -163,7 +163,7 @@ export const Adventure = () => {
         };
         (async () => {
             // FIXME: Eq is not empty library!!!
-            if (await setGoal(levelToRender.goal, levelToRender.emptyLibrary ? 'Eq' : 'All', engineParams)) {
+            if (await setGoal(levelToRender.goal, levelToRender.emptyLibrary ? '/Eq' : '/', engineParams)) {
                 if (levelToRender?.initTactics) {
                     for (const tactic of levelToRender.initTactics) {
                         if (!await sendTactic(tactic)) {

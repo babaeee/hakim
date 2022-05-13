@@ -8,7 +8,7 @@ use crate::{
         normalize, predict_axiom, type_of, Term, TermRef,
     },
     interactive::SuggRule,
-    library::{load_library_by_name, prelude},
+    library::{all_names, load_library_by_name, prelude},
     parser::{self, ast_to_term, fix_wild_scope, is_valid_ident, parse, term_pretty_print},
     search::search,
     term_ref,
@@ -135,6 +135,15 @@ impl Engine {
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {
+        for lib in all_names() {
+            if lib.starts_with(name) {
+                self.load_library_single(lib)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn load_library_single(&mut self, name: &str) -> Result<()> {
         if self.has_library(name) {
             return Ok(());
         }

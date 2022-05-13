@@ -1,10 +1,8 @@
 use im::HashMap;
 
-use crate::{
-    engine::{Engine, Error, Result},
-    library::ast::Sentence,
-};
+use crate::engine::{Engine, Error, Result};
 
+pub use self::text::all_names;
 use self::{ast::File, text::load_text};
 
 pub mod prelude;
@@ -46,15 +44,12 @@ pub fn all_library_data() -> HashMap<String, ast::File> {
             return Ok(());
         }
         let x = ast::File::parse(text_of_name(&name)?);
-        r.insert(name, x.clone());
-        for a in x.0 {
-            if let Sentence::Import { name } = a {
-                f(name, r)?;
-            }
-        }
+        r.insert(name, x);
         Ok(())
     }
     let mut r = HashMap::new();
-    f("All".to_string(), &mut r).unwrap();
+    for x in all_names() {
+        f(x.to_string(), &mut r).unwrap();
+    }
     r
 }

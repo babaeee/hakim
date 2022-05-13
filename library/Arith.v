@@ -1,5 +1,5 @@
-Import Logic.
-Import Eq.
+Import /Logic.
+Import /Eq.
 
 Todo zero_lt_mult: ∀ a b: ℤ, 0 < a -> 0 < b -> 0 < a * b.
 Todo lt_plus_r: ∀ a b c: ℤ, a < b -> a + c < b + c.
