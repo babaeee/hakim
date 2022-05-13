@@ -31,7 +31,8 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     const sel = window.getSelection();
     if (!sel) return;
     if (sel.toString() === '') return;
-    if (!(sel.anchorNode?.parentElement === e.target)) return;
+    if (sel.anchorNode?.parentElement !== e.target
+        && sel.anchorNode?.parentElement?.parentElement !== e.target) return;
     const range = sel.getRangeAt(0);
     const start = range.startOffset;
     const end = range.endOffset;
@@ -87,29 +88,31 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
     );
     return (
         <div ref={drop}>
-            <div ref={preview} className={classNames({
-                [css.hyp]: true,
-                [css.drop]: canDrop,
-                [css.over]: isOver,
-            })} onContextMenu={(e) => {
-                e.preventDefault();
-                setSuggs(suggMenuHyp(name));
-                setAnchorPoint({ x: e.clientX, y: e.clientY });
-                toggleMenu(true);
-            }}
+            <div ref={preview}
+                className={classNames({
+                    [css.hyp]: true,
+                    [css.drop]: canDrop,
+                    [css.over]: isOver,
+                })}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    setSuggs(suggMenuHyp(name));
+                    setAnchorPoint({ x: e.clientX, y: e.clientY });
+                    toggleMenu(true);
+                }}
+                onMouseUp={onSelectLogic({
+                    ty, setAnchorPoint, setSuggs, toggleMenu,
+                    replaceTactic: ({ cnt, text, userInp }) => `replace #${cnt} (${text}) with (${userInp}) in ${name}`,
+                })}
+                onMouseDown={(e) => {
+                    // prevent text select in double clicks
+                    if (e.detail === 2) {
+                        e.preventDefault();
+                    }
+                }}
                 onDoubleClick={() => runSuggDblHyp(name)}>
                 <span ref={drag} className={css.dragHandler}>&#x25CE;</span>{' '}
                 {name}: <span
-                    onMouseUp={onSelectLogic({
-                        ty, setAnchorPoint, setSuggs, toggleMenu,
-                        replaceTactic: ({ cnt, text, userInp }) => `replace #${cnt} (${text}) with (${userInp}) in ${name}`,
-                    })}
-                    onMouseDown={(e) => {
-                        // prevent text select in double clicks
-                        if (e.detail === 2) {
-                            e.preventDefault();
-                        }
-                    }}
                 >{ty}</span>
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
