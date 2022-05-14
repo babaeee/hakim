@@ -32,7 +32,7 @@ const HeadText: React.FC<{ text: string | undefined }> = ({ text }) => {
     return <></>;
   }
   if (hide) {
-    const t = text.trim().split(/(\s+)/).slice(0, 5).join(' ');
+    const t = text.trim().split(/(\s+)/).slice(0, 20).join(' ');
     return <div className={css.text}>{t} ... <button onClick={() => setHide(!hide)}>{g`show_it`}</button></div>
   }
   return <><div className={css.text} dangerouslySetInnerHTML={{
