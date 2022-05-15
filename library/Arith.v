@@ -33,6 +33,5 @@ Qed.
 Todo pow_lt_l: ∀ a b c: ℤ, 0 < a -> a < b -> 0 < c -> a ^ c < b ^ c.
 Todo pow_lt_r: ∀ a b c: ℤ, 0 < a -> a < b -> 1 < c -> c ^ a < c ^ b.
 
-Axiom abs: ℤ -> ℤ.
-Axiom abs_pos: ∀ a: ℤ, 0 ≤ abs a.
-Axiom abs_eq: ∀ a: ℤ, abs a = a ∨ abs a = -a.
+Axiom abs_pos: ∀ a: ℤ, 0 ≤ |a|.
+Axiom abs_eq: ∀ a: ℤ, |a| = a ∨ |a| = -a.

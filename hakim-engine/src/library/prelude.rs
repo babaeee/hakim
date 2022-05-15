@@ -81,6 +81,9 @@ pub fn included() -> TermRef {
     term_ref!(axiom "included", forall u(), 
         forall app_ref!(set(), v0()), forall app_ref!(set(), v1()), u())
 }
+pub fn len1() -> TermRef {
+    term_ref!(axiom "len1", forall u(), forall v0(), z())
+}
 pub fn divide() -> TermRef {
     term_ref!(axiom "divide", forall z(), forall z(), u())
 }
@@ -118,5 +121,6 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("inset".to_string(), inset());
     name_dict.insert("included".to_string(), included());
     name_dict.insert("sigma".to_string(), sigma());
+    name_dict.insert("len1".to_string(), len1());
     name_dict
 }

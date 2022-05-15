@@ -193,3 +193,13 @@ fn gt_le_ge() {
     parse_pretty("1 ≤ 5");
     parse_not_pretty("3 ≥ 2", "2 ≤ 3");
 }
+
+#[test]
+fn len() {
+    parse_pretty("|2|");
+    parse_pretty("|- 2| * 5");
+    parse_pretty("|{1, 2, 5}| = 3");
+    parse_pretty("|{ x: ℤ | x = 2 * x }| = 3");
+    parse_pretty("∀ f: ℤ → ℤ, |2| = f (|2|)");
+    parse_pretty("∀ x: ℤ, x | |x|");
+}

@@ -11,7 +11,7 @@ use super::{
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, Abstraction, Term, TermRef},
-    library::prelude::{ex, set_empty, set_from_func, set_singleton, union},
+    library::prelude::{ex, len1, set_empty, set_from_func, set_singleton, union},
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
@@ -38,6 +38,7 @@ pub enum AstTerm {
     UniOp(UniOp, Box<AstTerm>),
     Number(BigInt),
     Wild(Option<String>),
+    Len(Box<AstTerm>),
     Set(AstSet),
 }
 
@@ -162,6 +163,11 @@ trait TokenEater {
                     Ok(r)
                 }
                 "{" => self.eat_set(),
+                "|" => {
+                    let r = self.eat_ast_with_disallowed_sign(|x| x == "|")?;
+                    self.eat_sign("|")?;
+                    Ok(Len(Box::new(r)))
+                }
                 _ => Err(ExpectedExprButGot(Token::Sign(s))),
             },
             Token::Number(x) => Ok(Number(x)),
@@ -374,6 +380,12 @@ pub fn ast_to_term(
             }
         }
         Number(num) => Ok(term_ref!(n num)),
+        Len(a) => {
+            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
+            let vn = infer_cnt.generate();
+            let v = term_ref!(_ vn);
+            Ok(app_ref!(len1(), v, ta))
+        }
         Wild(n) => {
             let i = match n {
                 Some(x) => {

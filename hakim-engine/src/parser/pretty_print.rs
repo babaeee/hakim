@@ -83,6 +83,25 @@ fn detect_set_fn(t: &Term) -> Option<(TermRef, TermRef)> {
     }
 }
 
+fn detect_len(t: &Term) -> Option<(TermRef, TermRef)> {
+    match t {
+        Term::App { func, op: op2 } => match func.as_ref() {
+            Term::App { func, op: op1 } => match func.as_ref() {
+                Term::Axiom { ty: _, unique_name } => {
+                    if unique_name == "len1" {
+                        Some((op1.clone(), op2.clone()))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 fn detect_exists(t: &Term) -> Option<(TermRef, TermRef)> {
     match t {
         Term::App { func, op: op2 } => match func.as_ref() {
@@ -167,6 +186,9 @@ fn term_to_ast(term: &Term, names: &mut (Vec<(String, usize)>, impl Fn(&str) -> 
             _ => Abs(sign, body),
         }
     }
+    if let Some((_, exp)) = detect_len(term) {
+        return Len(Box::new(term_to_ast(&exp, names)));
+    }
     if let Some((ty, fun)) = detect_exists(term) {
         return compress_abs(
             AbsSign::Exists,
@@ -218,26 +240,41 @@ fn pretty_print_ast(
     level: (PrecLevel, PrecLevel),
     r: &mut std::fmt::Formatter<'_>,
 ) -> Result<(), std::fmt::Error> {
+    fn with_paren(
+        should_paren: bool,
+        r: &mut std::fmt::Formatter<'_>,
+        f: impl FnOnce(&mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>,
+    ) -> Result<(), std::fmt::Error> {
+        if should_paren {
+            write!(r, "(")?;
+        }
+        f(r)?;
+        if should_paren {
+            write!(r, ")")?;
+        }
+        Ok(())
+    }
     use super::binop::BinOp::App;
     match ast {
         AstTerm::Universe(0) => write!(r, "Universe")?,
         AstTerm::Universe(x) => write!(r, "Universe{x}")?,
+        AstTerm::Len(x) => {
+            let should_paren = level.1 == App.level_right() || level.0 == App.level_right();
+            with_paren(should_paren, r, |r| write!(r, "|{x}|"))?;
+        }
         AstTerm::Abs(sign, AstAbs { name, ty, body }) => {
             let should_paren = level.1 < PrecLevel::MAX || level.0 == App.level_right();
-            if should_paren {
-                write!(r, "(")?;
-            }
-            write!(r, "{sign}")?;
-            for n in name {
-                write!(r, " {n}")?;
-            }
-            if let Some(ty) = ty {
-                write!(r, ": {ty}")?;
-            }
-            write!(r, ", {body}")?;
-            if should_paren {
-                write!(r, ")")?;
-            }
+            with_paren(should_paren, r, |r| {
+                write!(r, "{sign}")?;
+                for n in name {
+                    write!(r, " {n}")?;
+                }
+                if let Some(ty) = ty {
+                    write!(r, ": {ty}")?;
+                }
+                write!(r, ", {body}")?;
+                Ok(())
+            })?;
         }
         AstTerm::Ident(x) => write!(r, "{x}")?,
         AstTerm::BinOp(a, op, b) => {
