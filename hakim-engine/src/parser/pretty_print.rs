@@ -272,8 +272,7 @@ fn pretty_print_ast(
                 if let Some(ty) = ty {
                     write!(r, ": {ty}")?;
                 }
-                write!(r, ", {body}")?;
-                Ok(())
+                write!(r, ", {body}")
             })?;
         }
         AstTerm::Ident(x) => write!(r, "{x}")?,
@@ -283,34 +282,26 @@ fn pretty_print_ast(
             } else {
                 (level, false)
             };
-            if should_paren {
-                write!(r, "(")?;
-            }
-            pretty_print_ast(a, (level.0, op.level_left()), r)?;
-            match op {
-                App => write!(r, " ")?,
-                _ => write!(r, " {op} ")?,
-            }
-            pretty_print_ast(b, (op.level_right(), level.1), r)?;
-            if should_paren {
-                write!(r, ")")?;
-            }
+            with_paren(should_paren, r, |r| {
+                pretty_print_ast(a, (level.0, op.level_left()), r)?;
+                match op {
+                    App => write!(r, " ")?,
+                    _ => write!(r, " {op} ")?,
+                }
+                pretty_print_ast(b, (op.level_right(), level.1), r)
+            })?;
         }
         AstTerm::UniOp(op, t) => {
             let should_paren = level.1 < op.prec() || level.0 == App.level_right();
-            if should_paren {
-                write!(r, "(")?;
-            }
-            write!(r, "{op} ")?;
-            let level_r = if should_paren {
-                PrecLevel::MAX
-            } else {
-                level.1
-            };
-            pretty_print_ast(t, (op.prec(), level_r), r)?;
-            if should_paren {
-                write!(r, ")")?;
-            }
+            with_paren(should_paren, r, |r| {
+                write!(r, "{op} ")?;
+                let level_r = if should_paren {
+                    PrecLevel::MAX
+                } else {
+                    level.1
+                };
+                pretty_print_ast(t, (op.prec(), level_r), r)
+            })?;
         }
         AstTerm::Number(x) => write!(r, "{x}")?,
         AstTerm::Wild(Some(x)) => write!(r, "?{x}")?,
