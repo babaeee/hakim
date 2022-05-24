@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { runSuggDblGoal, runSuggDblHyp, sendTactic, State, subscribe, suggMenuGoal, suggMenuHyp, tryTactic } from "../../../hakim";
+import { runSuggDblGoal, runSuggDblHyp, sendTactic, spanPosOfGoal, spanPosOfHyp, State, subscribe, suggMenuGoal, suggMenuHyp, tryTactic } from "../../../hakim";
 import css from "./Monitor.module.css";
 import { useMenuState, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import '@szhsin/react-menu/dist/index.css';
@@ -25,7 +25,7 @@ type onSelectLogicType = (x: {
     setSuggs: (x: Sugg[]) => void,
     setAnchorPoint: (a: { x: number, y: number }) => void,
     toggleMenu: (x: boolean) => void,
-    replaceTactic: (x: { cnt: number, text: string, userInp: string }) => string,
+    replaceTactic: (x: { start: number, end: number, text: string, userInp: string }) => string | undefined,
 }) => (e: any) => Promise<void>;
 const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggleMenu, replaceTactic }) => async (e) => {
     const sel = window.getSelection();
@@ -34,14 +34,15 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     if (sel.anchorNode?.parentElement !== e.target
         && sel.anchorNode?.parentElement?.parentElement !== e.target) return;
     const range = sel.getRangeAt(0);
-    const start = range.startOffset;
-    const end = range.endOffset;
+    let start = range.startOffset;
+    let end = range.endOffset;
+    while (ty[start] === ' ') start += 1;
+    while (ty[end - 1] === ' ') end -= 1;
     const text = ty.slice(start, end).trim().replaceAll('\u2068', '').replaceAll('\u2069', '');
-    const len = text.length;
-    let cnt = 1;
-    for (let i = 0; i < start; i += 1) {
-        if (ty.slice(i, i + len) === text) {
-            cnt += 1;
+    for (let i = 0; i < ty.length; i += 1) {
+        if (ty[i] === '\u2068' || ty[i] === '\u2069') {
+            if (i <= start) start -= 1;
+            if (i <= end) end -= 1;
         }
     }
     setSuggs([{
@@ -57,7 +58,9 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
         label: g`replace`,
         action: async () => {
             const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`, text);
-            sendTactic(replaceTactic({ cnt, text, userInp }));
+            const tac = replaceTactic({ start, end, text, userInp });
+            if (!tac) return;
+            sendTactic(tac);
         },
     }]);
     setAnchorPoint({ x: e.clientX, y: e.clientY });
@@ -102,7 +105,11 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 }}
                 onMouseUp={onSelectLogic({
                     ty, setAnchorPoint, setSuggs, toggleMenu,
-                    replaceTactic: ({ cnt, text, userInp }) => `replace #${cnt} (${text}) with (${userInp}) in ${name}`,
+                    replaceTactic: ({ start, end, text, userInp }) => {
+                        let cnt = spanPosOfHyp(name, start, end);
+                        if (!cnt) return;
+                        return `replace #${cnt} (${text}) with (${userInp}) in ${name}`;
+                    },
                 })}
                 onMouseDown={(e) => {
                     // prevent text select in double clicks
@@ -161,7 +168,11 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             })}
             onMouseUp={onSelectLogic({
                 ty, setAnchorPoint, setSuggs, toggleMenu,
-                replaceTactic: ({ cnt, text, userInp }) => `replace #${cnt} (${text}) with (${userInp})`,
+                replaceTactic: ({ start, end, text, userInp }) => {
+                    const cnt = spanPosOfGoal(start, end);
+                    if (!cnt) return;
+                    return `replace #${cnt} (${text}) with (${userInp})`;
+                },
             })}
             onDoubleClick={() => runSuggDblGoal()}
             onMouseDown={(e) => {

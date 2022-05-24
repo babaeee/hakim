@@ -9,7 +9,10 @@ use crate::{
     },
     interactive::SuggRule,
     library::{all_names, load_library_by_name, prelude},
-    parser::{self, ast_to_term, fix_wild_scope, is_valid_ident, parse, term_pretty_print},
+    parser::{
+        self, ast_to_term, fix_wild_scope, is_valid_ident, parse, pos_of_span, term_pretty_print,
+        term_to_ast,
+    },
     search::search,
     term_ref,
 };
@@ -204,6 +207,11 @@ impl Engine {
 
     pub fn pretty_print(&self, term: &Term) -> String {
         term_pretty_print(term, |x| !self.name_dict.contains_key(x))
+    }
+
+    pub fn pos_of_span(&self, term: &Term, span: (usize, usize)) -> Option<usize> {
+        let ast = term_to_ast(term, &mut (vec![], |x| !self.name_dict.contains_key(x)));
+        pos_of_span(&ast, span)
     }
 
     pub(crate) fn type_of_name(&self, name: &str) -> Result<TermRef> {

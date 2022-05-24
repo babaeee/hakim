@@ -213,6 +213,16 @@ impl Session {
     pub fn history_based_auto(&self) -> Option<Vec<String>> {
         history_lookup_auto(self.clone())
     }
+
+    pub fn pos_of_span_hyp(&self, hyp_name: &str, span: (usize, usize)) -> Option<usize> {
+        self.last_snapshot()
+            .last_frame()
+            .pos_of_span_hyp(hyp_name, span)
+    }
+
+    pub fn pos_of_span_goal(&self, span: (usize, usize)) -> Option<usize> {
+        self.last_snapshot().last_frame().pos_of_span_goal(span)
+    }
 }
 
 impl From<Frame> for Snapshot {
@@ -250,6 +260,10 @@ impl Snapshot {
         let new_frames = frame.run_tactic(line)?;
         snapshot.frames.extend(new_frames);
         Ok(snapshot)
+    }
+
+    pub fn last_frame(&self) -> &Frame {
+        self.frames.last().unwrap()
     }
 
     pub fn pop_frame(&mut self) -> Frame {
@@ -364,5 +378,14 @@ impl Frame {
             "assumption" => assumption(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }
+    }
+
+    pub fn pos_of_span_hyp(&self, hyp_name: &str, span: (usize, usize)) -> Option<usize> {
+        let hyp = &self.get_hyp_by_name(hyp_name)?.ty;
+        self.engine.pos_of_span(hyp, span)
+    }
+
+    pub fn pos_of_span_goal(&self, span: (usize, usize)) -> Option<usize> {
+        self.engine.pos_of_span(&self.goal, span)
     }
 }

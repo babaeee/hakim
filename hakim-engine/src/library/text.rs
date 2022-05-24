@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
@@ -20,6 +20,7 @@ lazy_static! {
 #[cfg(not(target_arch = "wasm32"))]
 lazy_static! {
     static ref LIB_TEXT_STORE: HashMap<String, String> = {
+        use std::path::PathBuf;
         let mut r = HashMap::default();
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.pop();

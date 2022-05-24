@@ -339,6 +339,14 @@ impl Instance {
         })
     }
 
+    pub fn pos_of_span_hyp(&self, hyp: &str, l: usize, r: usize) -> Option<usize> {
+        self.session.as_ref()?.pos_of_span_hyp(hyp, (l, r))
+    }
+
+    pub fn pos_of_span_goal(&self, l: usize, r: usize) -> Option<usize> {
+        self.session.as_ref()?.pos_of_span_goal((l, r))
+    }
+
     pub fn check(&self, query: &str) -> String {
         let eng = if let Some(s) = &self.session {
             s.initial_engine()

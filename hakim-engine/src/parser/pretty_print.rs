@@ -1,4 +1,7 @@
-use std::{cmp::min, fmt::Display};
+use std::{
+    cmp::min,
+    fmt::{Display, Write},
+};
 
 use crate::{
     app_ref,
@@ -9,7 +12,7 @@ use crate::{
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::{AstTerm, PrecLevel};
+use super::{span_counter::AstStacker, AstTerm, PrecLevel};
 
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
@@ -150,7 +153,10 @@ fn extract_fun_from_term(term: TermRef, ty: TermRef) -> Abstraction {
     }
 }
 
-fn term_to_ast(term: &Term, names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool)) -> AstTerm {
+pub fn term_to_ast(
+    term: &Term,
+    names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
+) -> AstTerm {
     use super::{binop::BinOp, uniop::UniOp};
     use AstTerm::*;
     fn for_abs(
@@ -229,38 +235,57 @@ fn term_to_ast(term: &Term, names: &mut (Vec<(String, usize)>, impl Fn(&str) -> 
     }
 }
 
+impl AstStacker for std::fmt::Formatter<'_> {
+    fn push(&mut self, _: &AstTerm) {}
+
+    fn pop(&mut self) {}
+
+    fn paren_open(&mut self) {}
+
+    fn paren_close(&mut self) {}
+}
+
 impl Display for AstTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        pretty_print_ast(self, (PrecLevel::MAX, PrecLevel::MAX), f)
+        pretty_print_ast(self, PMX, f)
     }
 }
 
-fn pretty_print_ast(
+const PMX: (PrecLevel, PrecLevel) = (PrecLevel::MAX, PrecLevel::MAX);
+
+pub fn pretty_print_ast(
     ast: &AstTerm,
     level: (PrecLevel, PrecLevel),
-    r: &mut std::fmt::Formatter<'_>,
+    r: &mut (impl Write + AstStacker),
 ) -> Result<(), std::fmt::Error> {
-    fn with_paren(
+    fn with_paren<T: Write + AstStacker>(
         should_paren: bool,
-        r: &mut std::fmt::Formatter<'_>,
-        f: impl FnOnce(&mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>,
+        r: &mut T,
+        f: impl FnOnce(&mut T) -> Result<(), std::fmt::Error>,
     ) -> Result<(), std::fmt::Error> {
         if should_paren {
             write!(r, "(")?;
         }
+        r.paren_open();
         f(r)?;
+        r.paren_close();
         if should_paren {
             write!(r, ")")?;
         }
         Ok(())
     }
     use super::binop::BinOp::App;
+    r.push(ast);
     match ast {
         AstTerm::Universe(0) => write!(r, "Universe")?,
         AstTerm::Universe(x) => write!(r, "Universe{x}")?,
         AstTerm::Len(x) => {
             let should_paren = level.1 == App.level_right() || level.0 == App.level_right();
-            with_paren(should_paren, r, |r| write!(r, "|{x}|"))?;
+            with_paren(should_paren, r, |r| {
+                write!(r, "|")?;
+                pretty_print_ast(x, PMX, r)?;
+                write!(r, "|")
+            })?;
         }
         AstTerm::Abs(sign, AstAbs { name, ty, body }) => {
             let should_paren = level.1 < PrecLevel::MAX || level.0 == App.level_right();
@@ -270,9 +295,11 @@ fn pretty_print_ast(
                     write!(r, " {n}")?;
                 }
                 if let Some(ty) = ty {
-                    write!(r, ": {ty}")?;
+                    write!(r, ": ")?;
+                    pretty_print_ast(ty, level, r)?;
                 }
-                write!(r, ", {body}")
+                write!(r, ", ")?;
+                pretty_print_ast(body, PMX, r)
             })?;
         }
         AstTerm::Ident(x) => write!(r, "{x}")?,
@@ -311,22 +338,27 @@ fn pretty_print_ast(
             let name = name.iter().next().unwrap();
             write!(r, "{{ {name}")?;
             if let Some(ty) = ty {
-                write!(r, ": {ty}")?;
+                write!(r, ": ")?;
+                pretty_print_ast(ty, PMX, r)?;
             }
-            write!(r, " | {body} }}")?;
+            write!(r, " | ")?;
+            pretty_print_ast(body, PMX, r)?;
+            write!(r, " }}")?;
         }
         AstTerm::Set(AstSet::Items(v)) => {
             write!(r, "{{")?;
             let mut it = v.iter();
             if let Some(x) = it.next() {
-                write!(r, "{x}")?;
+                pretty_print_ast(x, PMX, r)?;
                 for x in it {
-                    write!(r, ", {x}")?;
+                    write!(r, ", ")?;
+                    pretty_print_ast(x, PMX, r)?;
                 }
             }
             write!(r, "}}")?;
         }
     }
+    r.pop();
     Ok(())
 }
 

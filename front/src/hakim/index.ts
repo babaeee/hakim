@@ -1,6 +1,6 @@
 import { Instance } from "../../../hakim-wasm/pkg/hakim_wasm";
 import { normalPrompt } from "../dialog";
-import { fromRust } from "../i18n";
+import { fromRust, g } from "../i18n";
 import { loadLibText } from "./lib_text";
 
 declare let window: Window & {
@@ -175,6 +175,21 @@ export const runSuggDblGoal = () => {
 
 export const runSuggDblHyp = (hyp: string) => {
     return checkErrorAndUpdate(() => instance.suggest_dblclk_hyp(hyp));
+};
+
+export const spanPosOfHyp = (hyp: string, l: number, r: number): number | undefined => {
+    const x = instance.pos_of_span_hyp(hyp, l, r);
+    if (!x) {
+        alert(g`selected_part_is_not_full_subexpression`);
+    }
+    return x;
+};
+export const spanPosOfGoal = (l: number, r: number): number | undefined => {
+    const x = instance.pos_of_span_goal(l, r);
+    if (!x) {
+        alert(g`selected_part_is_not_full_subexpression`);
+    }
+    return x;
 };
 
 const parenSplit = (txt: string): string[] => {
