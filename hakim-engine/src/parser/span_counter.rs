@@ -31,7 +31,7 @@ impl Write for Counter {
 }
 
 impl AstStacker for Counter {
-    fn push(&mut self, ast: &AstTerm) {
+    fn push_ast(&mut self, ast: &AstTerm) {
         let is_our = self.ast == *ast;
         if is_our {
             self.cnt += 1;
@@ -41,7 +41,7 @@ impl AstStacker for Counter {
         }
     }
 
-    fn pop(&mut self) {
+    fn pop_ast(&mut self) {
         if let Some(x) = self.stack.pop().unwrap() {
             if self.l == x && self.r == self.pos {
                 self.result = self.cnt;
@@ -55,7 +55,7 @@ impl AstStacker for Counter {
     }
 
     fn paren_close(&mut self) {
-        self.pop()
+        self.pop_ast()
     }
 }
 
@@ -72,14 +72,14 @@ impl Write for Finder {
 }
 
 pub trait AstStacker {
-    fn push(&mut self, ast: &AstTerm);
-    fn pop(&mut self);
+    fn push_ast(&mut self, ast: &AstTerm);
+    fn pop_ast(&mut self);
     fn paren_open(&mut self);
     fn paren_close(&mut self);
 }
 
 impl AstStacker for Finder {
-    fn push(&mut self, ast: &AstTerm) {
+    fn push_ast(&mut self, ast: &AstTerm) {
         match self {
             Finder::Found(_) => (),
             Finder::Looking { pos, stack, .. } => {
@@ -88,7 +88,7 @@ impl AstStacker for Finder {
         }
     }
 
-    fn pop(&mut self) {
+    fn pop_ast(&mut self) {
         match self {
             Finder::Found(_) => (),
             Finder::Looking { pos, stack, l, r } => {
@@ -105,13 +105,13 @@ impl AstStacker for Finder {
             Finder::Found(_) => (),
             Finder::Looking { stack, .. } => {
                 let t = &stack.last().unwrap().1.clone();
-                self.push(t);
+                self.push_ast(t);
             }
         }
     }
 
     fn paren_close(&mut self) {
-        self.pop();
+        self.pop_ast();
     }
 }
 

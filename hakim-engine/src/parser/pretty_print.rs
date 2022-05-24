@@ -236,9 +236,9 @@ pub fn term_to_ast(
 }
 
 impl AstStacker for std::fmt::Formatter<'_> {
-    fn push(&mut self, _: &AstTerm) {}
+    fn push_ast(&mut self, _: &AstTerm) {}
 
-    fn pop(&mut self) {}
+    fn pop_ast(&mut self) {}
 
     fn paren_open(&mut self) {}
 
@@ -275,7 +275,7 @@ pub fn pretty_print_ast(
         Ok(())
     }
     use super::binop::BinOp::App;
-    r.push(ast);
+    r.push_ast(ast);
     match ast {
         AstTerm::Universe(0) => write!(r, "Universe")?,
         AstTerm::Universe(x) => write!(r, "Universe{x}")?,
@@ -358,7 +358,7 @@ pub fn pretty_print_ast(
             write!(r, "}}")?;
         }
     }
-    r.pop();
+    r.pop_ast();
     Ok(())
 }
 
