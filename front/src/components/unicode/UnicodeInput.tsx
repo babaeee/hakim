@@ -7,6 +7,7 @@ type Props = {
     enableHelp: (x: boolean) => any,
     className?: string,
     autoFocus?: boolean,
+    style?: React.CSSProperties,
 };
 
 const transform = (s: string | undefined) => {
@@ -19,10 +20,12 @@ const transform = (s: string | undefined) => {
     return s;
 }
 
-export const UnicodeInput: React.FC<Props> = ({ autoFocus, value, onChange, enableHelp, onEnter, className }) => {
+export const UnicodeInput: React.FC<Props> = ({
+    autoFocus, value, onChange, enableHelp, onEnter, className, style,
+}) => {
     const oe = onEnter || (() => { });
     return (
-        <input autoFocus={autoFocus} dir="ltr" className={className} type="text"
+        <input style={style} autoFocus={autoFocus} dir="ltr" className={className} type="text"
             onFocus={(e) => e.target.select()}
             value={value} onChange={(e) => {
                 const txt = transform(e.target.value);

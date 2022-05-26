@@ -15,6 +15,7 @@ copied_in_clipboard: در بریده دان رونویسی شد
 custom_tactic: تاکتیک سفارشی
 destruct: شکستن
 destruct_with_name: شکستن با نام
+engine_params: پارامتر های موتور
 enter_tactic: تاکتیک خود را وارد کنید
 enter_a_name: یک نام وارد کنید
 enter_value_that_satisfy: مقداری که در عبارت صدق می کند را وارد کنید

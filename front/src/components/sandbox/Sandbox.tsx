@@ -60,7 +60,12 @@ export const Sandbox = () => {
             <p className={css.text}>{g`type_a_goal_to_proof`}</p>
             <UnicodeInput value={text} onChange={setText} enableHelp={setHelp} onEnter={done} />
             <button onClick={() => done()}>{g`submit`}</button>
-            <UnicodeInput value={engineParams} onChange={setEngineParams} enableHelp={setHelp} />
+            <div>
+                <span className={css.text}>{g`engine_params`}:</span>
+                <UnicodeInput
+                    style={{ width: '80%' }}
+                    value={engineParams} onChange={setEngineParams} enableHelp={setHelp} />
+            </div>
             {help && <div className={css.unicodeHelp} dir="ltr"><UnicodeHelp /></div>}
             <p className={css.text}>{g`or_choose_one_prop`}</p>
             <ul dir="ltr" className={css.exampleSection}>
