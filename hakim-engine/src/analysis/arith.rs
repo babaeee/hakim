@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use crate::brain::{self, type_of};
-use crate::library::prelude::{mult, plus, sigma, z};
+use crate::library::prelude::{mult, plus, pow, sigma, z};
 use crate::{app_ref, brain::Term, term_ref, TermRef};
-use num_bigint::BigInt;
+use num_bigint::{BigInt, Sign};
 use typed_arena::Arena;
 
 #[derive(Debug, Clone)]
@@ -125,6 +125,24 @@ fn tree_to_d2(tree: &ArithTree<'_>) -> Poly {
     }
 }
 
+fn pow_to_arith(op1: TermRef, op2: TermRef, arena: ArithArena<'_>) -> ArithTree<'_> {
+    if let Term::Number { value } = op2.as_ref() {
+        if value.sign() == Sign::Minus {
+            return Const(0i32.into());
+        }
+        if *value < 5i32.into() {
+            let v = value.try_into().unwrap();
+            let mut r = Const(1i32.into());
+            let op1a = term_ref_to_arith(op1, arena);
+            for _ in 0i32..v {
+                r = Mult(op1a, arena.alloc(r));
+            }
+            return r;
+        }
+    }
+    atom_normalizer(app_ref!(pow(), op1, op2))
+}
+
 fn sigma_to_arith(l: TermRef, r: TermRef, f: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
     if l != term_ref!(n 0) {
         return arena.alloc(minus(
@@ -201,6 +219,7 @@ fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
                         term_ref_to_arith(op2.clone(), arena),
                         arena,
                     ),
+                    "pow" => pow_to_arith(op1.clone(), op2.clone(), arena),
                     "mult" => Mult(
                         term_ref_to_arith(op1.clone(), arena),
                         term_ref_to_arith(op2.clone(), arena),

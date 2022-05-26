@@ -152,19 +152,36 @@ fn apply_for_hyp(mut frame: Frame, exp: &str, name: &str) -> Result<Vec<Frame>> 
 }
 
 fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
-    let (term, mut inf_num) = frame.engine.parse_text_with_wild(exp)?;
+    let (term, inf_num) = frame.engine.parse_text_with_wild(exp)?;
     let ty = type_of_and_infer(term.clone(), &mut InferResults::new(inf_num))?;
     let goal = frame.goal.clone();
-    let d_forall = get_forall_depth(&ty)
+    let d_forall = get_forall_depth(&ty);
+    for i in 0..=d_forall {
+        if let Ok(x) =
+            try_argument_count_for_goal(term.clone(), i, inf_num, goal.clone(), frame.clone())
+        {
+            return Ok(x);
+        }
+    }
+    let d_forall = d_forall
         .checked_sub(get_forall_depth(&goal))
         .ok_or(CanNotSolve("apply"))?;
-    let mut twa = term;
+    try_argument_count_for_goal(term, d_forall, inf_num, goal, frame)
+}
+
+fn try_argument_count_for_goal(
+    mut term: std::rc::Rc<Term>,
+    d_forall: usize,
+    mut inf_num: usize,
+    goal: std::rc::Rc<Term>,
+    frame: Frame,
+) -> Result<Vec<Frame>> {
     for _ in 0..d_forall {
-        twa = app_ref!(twa, term_ref!(_ inf_num));
+        term = app_ref!(term, term_ref!(_ inf_num));
         inf_num += 1;
     }
     let mut infers = InferResults::new(inf_num);
-    let twa_ty = type_of_and_infer(twa.clone(), &mut infers)?;
+    let twa_ty = type_of_and_infer(term.clone(), &mut infers)?;
     subtype_and_infer(twa_ty.clone(), goal, &mut infers)?;
     let mut v = vec![];
     for i in 0..inf_num {
@@ -179,7 +196,7 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
             return Err(CanNotFindInstance(FindInstance {
                 engine: frame.engine,
                 infer: infers,
-                exp: twa,
+                exp: term,
                 ty: twa_ty,
             }));
         }
@@ -331,6 +348,17 @@ mod tests {
             apply exv_not_p
             apply fa
         "#,
+        );
+    }
+
+    #[test]
+    fn infer_induction_p() {
+        run_interactive(
+            "∀ a n: ℤ, 0 ≤ n → 0 < a → 0 < a ^ n",
+            r#"
+            intros a
+            apply simple_induction"#,
+            EngineLevel::Full,
         );
     }
 }
