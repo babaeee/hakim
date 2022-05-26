@@ -3,7 +3,7 @@ import { convertTable } from "./table";
 type Props = {
     value: string,
     onChange: (x: string) => any,
-    onEnter: () => any,
+    onEnter?: () => any,
     enableHelp: (x: boolean) => any,
     className?: string,
     autoFocus?: boolean,
@@ -19,7 +19,8 @@ const transform = (s: string | undefined) => {
     return s;
 }
 
-export const UnicodeInput = ({ autoFocus, value, onChange, enableHelp, onEnter, className }: Props) => {
+export const UnicodeInput: React.FC<Props> = ({ autoFocus, value, onChange, enableHelp, onEnter, className }) => {
+    const oe = onEnter || (() => { });
     return (
         <input autoFocus={autoFocus} dir="ltr" className={className} type="text"
             onFocus={(e) => e.target.select()}
@@ -29,7 +30,7 @@ export const UnicodeInput = ({ autoFocus, value, onChange, enableHelp, onEnter, 
                 onChange(txt);
             }} onKeyPress={(e) => {
                 if (e.code === 'Enter' || e.code === 'NumpadEnter') {
-                    onEnter();
+                    oe();
                 }
             }} />
     );

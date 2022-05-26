@@ -27,6 +27,7 @@ const exampleGoals = [
 
 export const Sandbox = () => {
     const [text, setText] = useState("");
+    const [engineParams, setEngineParams] = useState("");
     const [help, setHelp] = useState(false);
     const navigator = useNavigate();
     const done = async (t = text) => {
@@ -45,7 +46,7 @@ export const Sandbox = () => {
                 }
             }
             toProof = true;
-        } else if (await setGoal(t)) {
+        } else if (await setGoal(t, '/', engineParams)) {
             toProof = true;
         }
         if (toProof) {
@@ -59,6 +60,7 @@ export const Sandbox = () => {
             <p className={css.text}>{g`type_a_goal_to_proof`}</p>
             <UnicodeInput value={text} onChange={setText} enableHelp={setHelp} onEnter={done} />
             <button onClick={() => done()}>{g`submit`}</button>
+            <UnicodeInput value={engineParams} onChange={setEngineParams} enableHelp={setHelp} />
             {help && <div className={css.unicodeHelp} dir="ltr"><UnicodeHelp /></div>}
             <p className={css.text}>{g`or_choose_one_prop`}</p>
             <ul dir="ltr" className={css.exampleSection}>
