@@ -11,7 +11,7 @@ use crate::{
     library::{all_names, load_library_by_name, prelude},
     parser::{
         self, ast_to_term, fix_wild_scope, is_valid_ident, parse, pos_of_span, term_pretty_print,
-        term_to_ast,
+        term_to_ast, BinOp, PrettyPrintConfig,
     },
     search::search,
     term_ref,
@@ -205,13 +205,31 @@ impl Engine {
         self.libs.contains_key(arg)
     }
 
+    fn pretty_print_config(&self) -> PrettyPrintConfig {
+        PrettyPrintConfig {
+            disabled_binops: self
+                .params
+                .get("disabled_binops")
+                .and_then(|x| x.strip_prefix('[')?.strip_suffix(']'))
+                .unwrap_or(&String::new())
+                .split(',')
+                .filter_map(BinOp::from_str)
+                .collect(),
+        }
+    }
+
     pub fn pretty_print(&self, term: &Term) -> String {
-        term_pretty_print(term, |x| !self.name_dict.contains_key(x))
+        term_pretty_print(
+            term,
+            |x| !self.name_dict.contains_key(x),
+            &self.pretty_print_config(),
+        )
     }
 
     pub fn pos_of_span(&self, term: &Term, span: (usize, usize)) -> Option<usize> {
-        let ast = term_to_ast(term, &mut (vec![], |x| !self.name_dict.contains_key(x)));
-        pos_of_span(&ast, span)
+        let c = self.pretty_print_config();
+        let ast = term_to_ast(term, &mut (vec![], |x| !self.name_dict.contains_key(x)), &c);
+        pos_of_span(&ast, span, &c)
     }
 
     pub(crate) fn type_of_name(&self, name: &str) -> Result<TermRef> {
@@ -233,5 +251,45 @@ impl Engine {
             .unwrap_or(&String::new())
             .split(',')
             .any(|x| x.trim() == name)
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+
+    use std::cell::Cell;
+
+    use super::Engine;
+
+    #[derive(PartialEq, Eq)]
+    pub enum EngineLevel {
+        Empty,
+        Full,
+    }
+
+    thread_local! {
+        static ENGINE_PARAMS: Cell<String>  = Cell::new(String::new());
+    }
+
+    // this function is only for single threaded testing!!!!
+    pub fn with_params(params: &str, work: impl FnOnce()) {
+        ENGINE_PARAMS.with(|x| {
+            x.set(params.to_string());
+        });
+        work();
+        ENGINE_PARAMS.with(|x| x.take());
+    }
+
+    pub fn build_engine(level: EngineLevel) -> Engine {
+        let mut eng = Engine::new(&ENGINE_PARAMS.with(|x| {
+            let s = x.take();
+            x.set(s.clone());
+            s
+        }));
+        if level == EngineLevel::Empty {
+            return eng;
+        }
+        eng.load_library("/").unwrap();
+        eng
     }
 }

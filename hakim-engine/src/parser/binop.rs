@@ -1,6 +1,6 @@
 macro_rules! binop {
     ($($name:ident, $prec:literal, $assoc:ident, $txt:literal);*;) => {
-        #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+        #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
         pub enum BinOp {
             $(
                 $name,

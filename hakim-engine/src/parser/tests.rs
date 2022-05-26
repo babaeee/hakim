@@ -1,13 +1,16 @@
-use crate::engine::Engine;
+use crate::engine::{
+    tests::{build_engine, with_params, EngineLevel},
+    Engine,
+};
 
 fn parse_pretty(exp: &str) {
     parse_not_pretty(exp, exp);
 }
 
 fn parse_not_pretty(exp: &str, pretty: &str) {
-    let eng = Engine::default();
+    let eng = build_engine(EngineLevel::Full);
     let exp_term = eng.parse_text(exp).unwrap();
-    let exp_pretty = format!("{:?}", exp_term);
+    let exp_pretty = eng.pretty_print(&exp_term);
     assert_eq!(exp_pretty, pretty);
 }
 
@@ -104,6 +107,9 @@ fn and_or_not() {
 #[test]
 fn eq() {
     parse_pretty("2 = 3");
+    with_params("disabled_binops=[=]", || {
+        parse_pretty("eq ℤ 2 3");
+    });
     parse_pretty("∃ x0: ℤ, x0 = x0 + x0");
 }
 

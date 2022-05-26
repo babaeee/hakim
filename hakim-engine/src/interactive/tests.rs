@@ -1,40 +1,8 @@
-use std::cell::Cell;
+pub use crate::engine::tests::{with_params, EngineLevel};
 
-use crate::interactive::tactic::Error;
+use crate::{engine::tests::build_engine, interactive::tactic::Error};
 
-use super::{Engine, Session};
-
-#[derive(PartialEq, Eq)]
-pub enum EngineLevel {
-    Empty,
-    Full,
-}
-
-thread_local! {
-    static ENGINE_PARAMS: Cell<String>  = Cell::new(String::new());
-}
-
-// this function is only for single threaded testing!!!!
-pub fn with_params(params: &str, work: impl FnOnce()) {
-    ENGINE_PARAMS.with(|x| {
-        x.set(params.to_string());
-    });
-    work();
-    ENGINE_PARAMS.with(|x| x.take());
-}
-
-fn build_engine(level: EngineLevel) -> Engine {
-    let mut eng = Engine::new(&ENGINE_PARAMS.with(|x| {
-        let s = x.take();
-        x.set(s.clone());
-        s
-    }));
-    if level == EngineLevel::Empty {
-        return eng;
-    }
-    eng.load_library("/").unwrap();
-    eng
-}
+use super::Session;
 
 pub fn run_interactive(goal: &str, tactics: &str, level: EngineLevel) -> Session {
     let eng = build_engine(level);

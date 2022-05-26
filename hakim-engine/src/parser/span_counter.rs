@@ -1,6 +1,9 @@
 use std::fmt::Write;
 
-use super::{pretty_print::pretty_print_ast, AstTerm, PrecLevel};
+use super::{
+    pretty_print::{pretty_print_ast, PrettyPrintConfig},
+    AstTerm, PrecLevel,
+};
 
 #[derive(Debug)]
 enum Finder {
@@ -115,23 +118,23 @@ impl AstStacker for Finder {
     }
 }
 
-fn ast_of_span(ast: &AstTerm, span: (usize, usize)) -> Option<AstTerm> {
+fn ast_of_span(ast: &AstTerm, span: (usize, usize), c: &PrettyPrintConfig) -> Option<AstTerm> {
     let mut w = Finder::Looking {
         l: span.0,
         r: span.1,
         pos: 0,
         stack: vec![],
     };
-    pretty_print_ast(ast, (PrecLevel::MAX, PrecLevel::MAX), &mut w).ok()?;
+    pretty_print_ast(ast, (PrecLevel::MAX, PrecLevel::MAX), &mut w, c).ok()?;
     match w {
         Finder::Found(x) => Some(x),
         Finder::Looking { .. } => None,
     }
 }
 
-pub fn pos_of_span(ast: &AstTerm, span: (usize, usize)) -> Option<usize> {
+pub fn pos_of_span(ast: &AstTerm, span: (usize, usize), c: &PrettyPrintConfig) -> Option<usize> {
     let mut w = Counter {
-        ast: ast_of_span(ast, span)?,
+        ast: ast_of_span(ast, span, c)?,
         pos: 0,
         l: span.0,
         r: span.1,
@@ -139,27 +142,27 @@ pub fn pos_of_span(ast: &AstTerm, span: (usize, usize)) -> Option<usize> {
         cnt: 0,
         stack: vec![],
     };
-    pretty_print_ast(ast, (PrecLevel::MAX, PrecLevel::MAX), &mut w).ok()?;
+    pretty_print_ast(ast, (PrecLevel::MAX, PrecLevel::MAX), &mut w, c).ok()?;
     Some(w.result)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::parse;
+    use crate::parser::{parse, pretty_print::PrettyPrintConfig};
 
     use super::{ast_of_span, pos_of_span};
 
     fn not_found(s: &str, span: (usize, usize)) {
         let x = parse(s).unwrap();
         assert_eq!(x.to_string(), s);
-        let y = ast_of_span(&x, span);
+        let y = ast_of_span(&x, span, &PrettyPrintConfig::default());
         assert!(y.is_none());
     }
 
     fn one(s: &str, span: (usize, usize), r: &str) {
         let x = parse(s).unwrap();
         assert_eq!(x.to_string(), s);
-        let y = ast_of_span(&x, span).unwrap_or_else(|| {
+        let y = ast_of_span(&x, span, &PrettyPrintConfig::default()).unwrap_or_else(|| {
             panic!("bad span {span:?} for {s}");
         });
         assert_eq!(y.to_string(), r);
@@ -168,7 +171,7 @@ mod tests {
     fn pos(s: &str, span: (usize, usize), r: usize) {
         let x = parse(s).unwrap();
         assert_eq!(x.to_string(), s);
-        let y = pos_of_span(&x, span).unwrap_or_else(|| {
+        let y = pos_of_span(&x, span, &PrettyPrintConfig::default()).unwrap_or_else(|| {
             panic!("bad span {span:?} for {s}");
         });
         assert_eq!(y, r, "failed in {span:?} and {s}");
