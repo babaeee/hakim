@@ -1,4 +1,5 @@
 import Arith from "../../../library/Arith.v";
+import Combinatorics from "../../../library/Combinatorics.v";
 import Eq from "../../../library/Eq.v";
 import Function from "../../../library/Function.v";
 import Induction from "../../../library/Induction.v";
@@ -11,6 +12,7 @@ import Sigma from "../../../library/Sigma.v";
 export const loadLibText = () => {
     return {
         '/Arith': Arith,
+        '/Combinatorics': Combinatorics,
         '/Eq': Eq,
         '/Function': Function,
         '/Induction': Induction,

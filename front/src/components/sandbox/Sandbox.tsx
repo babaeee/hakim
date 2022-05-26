@@ -19,6 +19,7 @@ const exampleGoals = [
     '∀ A: U, ∀ P: A -> U, (∀ x: A, P x) -> (∃ x: A, P x -> False) -> False',
     '∀ n: ℤ, 0 ≤ n -> 2 * sigma 0 (n+1) (λ i: ℤ, i) = n * (n + 1)',
     '∀ n: ℤ, 0 ≤ n -> sigma 0 n (λ i: ℤ, 2 ^ i) = 2 ^ n - 1',
+    '∀ n: ℤ, 0 ≤ n → sigma 0 n (λ i: ℤ, 2 * i + 1) = n * n',
     '∀ n: ℤ, 0 ≤ n -> sigma (-n) (n+1) (λ i: ℤ, |i|) = 2 * sigma 0 (n+1) (λ i: ℤ, |i|)',
     '∀ A B: U, ∀ f: A -> B, ∀ x y: A, x = y -> f x = f y',
     '∀ T: U, ∀ A B C: set T, A ⊆ B -> B ⊆ C -> A ⊆ C',
