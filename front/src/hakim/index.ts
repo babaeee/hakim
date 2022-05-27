@@ -264,7 +264,7 @@ export const tryAuto = (): TryAutoResult => {
 type LibraryData = {
     name: string,
     rules: {
-        kind: 'Import' | 'Axiom',
+        kind: 'Import' | 'Axiom' | 'Suggestion' | 'Theorem',
         name: string,
         ty?: string,
     }[],
