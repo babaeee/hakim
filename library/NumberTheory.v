@@ -5,9 +5,21 @@ Axiom divide_fold: ∀ a b: ℤ, (∃ c: ℤ, a * c = b) -> a | b.
 Suggest hyp default apply divide_unfold in $n; a | b => ∃ c, a * c = b.
 Suggest goal default apply divide_fold; a | b => ∃ c, a * c = b.
 
-Todo divide_refl: ∀ a: ℤ, a | a.
+Theorem divide_refl: ∀ a: ℤ, a | a.
+Proof.
+    intros.
+    apply divide_fold.
+    apply (ex_intro ? ? (1)).
+    ring.
+Qed.
 Todo divide_trans: ∀ a b c: ℤ, a | b -> b | c -> a | c.
-Todo divide_0: ∀ a: ℤ, a | 0 -> a = 0.
+Theorem divide_0: ∀ a: ℤ, a | 0.
+Proof.
+    intros.
+    apply divide_fold.
+    apply (ex_intro ? ? (0)).
+    ring.
+Qed.
 Theorem divide_1_positive: ∀ a: ℤ, 0 < a -> a | 1 -> a = 1.
 Proof.
     intros.
@@ -66,7 +78,7 @@ Axiom prime_intro_l: ∀ x: ℤ, prime x -> 0 < x ∧ (∀ y: ℤ, 0 < y -> y | 
 Axiom prime_intro_r: ∀ x: ℤ, 0 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x) -> prime x.
 Todo prime_gt_2: ∀ x: ℤ, prime x -> 2 < x.
 Todo prime_is_positive: ∀ x: ℤ, prime x -> 0 < x.
-Todo prime_divisor_for_positive: ∀ x: ℤ, 0 < x -> (x = 1 -> False) -> ∃ p: ℤ, prime p ∧ p | x.
+Todo prime_divisor_for_positive: ∀ x: ℤ, 1 < x -> ∃ p: ℤ, prime p ∧ p | x.
 
 Import /ProductOperator.
 Axiom divide_multi:   ∀ A: set ℤ, ∀ a : ℤ, a ∈ A -> a | multi A.

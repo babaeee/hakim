@@ -17,21 +17,47 @@ const newAssert = async () => {
     sendTactic(`add_hyp (${inp})`);
 };
 
+let isWorking = false;
+
 const AutoProofButton = () => {
     const [s, setS] = useState({ available: false } as TryAutoResult);
+    const [mode, setMode] = useState('normal' as 'boost' | 'normal');
     useEffect(() => {
-        return subscribe(() => {
-            setS(tryAuto());
+        return subscribe(async () => {
+            // lock this function so it won't be multiple instances of it sending tactics
+            while (isWorking) {
+                await new Promise((res) => setTimeout(res, 10));
+            }
+            // removing lock will lead to errors and panics!
+            isWorking = true;
+            const r = tryAuto();
+            if (mode === 'boost') {
+                if (r.available) {
+                    for (const tac of r.tactic) {
+                        await sendTactic(tac);
+                    }
+                }
+            } else {
+                setS(r);
+            }
+            isWorking = false;
         });
-    }, []);
+    }, [mode]);
     return (
-        <button className={css.toolButton} onClick={() => { }}>
-            {g`auto_proof`}
-            {s.available && <><br /><span className={css.autoProof} onClick={async () => {
+        <button className={css.toolButton} onClick={async () => {
+            if (s.available) {
                 for (const tac of s.tactic) {
                     await sendTactic(tac);
                 }
-            }}>{s.type === 'normal' ? '✓' : '🕮'}</span></>}
+            } else if (mode === 'boost') {
+                setMode('normal');
+            } else {
+                setMode('boost');
+            }
+        }}>
+            {g`auto_proof`}
+            {s.available && <><br /><span className={css.autoProof}>{s.type === 'normal' ? '✓' : '🕮'}</span></>}
+            {mode === 'boost' && <><br /><span className={css.autoProof}>{'>>'}</span></>}
         </button>
     );
 };

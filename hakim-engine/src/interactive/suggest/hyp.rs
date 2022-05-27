@@ -23,6 +23,7 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
                     class: Instantiate,
                     tactic: vec![
                         format!("add_hyp ({ty_str})"),
+                        format!("remove_hyp {name}"),
                         format!("Switch 1"),
                         format!("add_hyp {new_name} := ({name} {next_h})"),
                         format!("remove_hyp {next_h}"),

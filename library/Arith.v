@@ -2,7 +2,11 @@ Import /Logic.
 Import /Eq.
 Import /Induction.
 
-Todo zero_lt_mult: ∀ a b: ℤ, 0 < a -> 0 < b -> 0 < a * b.
+Todo zero_lt_mult_pos: ∀ a b: ℤ, 0 < a -> 0 < b -> 0 < a * b.
+Todo zero_lt_mult_neg: ∀ a b: ℤ, a < 0 -> b < 0 -> 0 < a * b.
+Suggest goal apply zero_lt_mult_pos; 0 < a * b => 0 < a ∧ 0 < b.
+Suggest goal apply zero_lt_mult_neg; 0 < a * b => a < 0 ∧ b < 0.
+
 Todo lt_plus_r: ∀ a b c: ℤ, a < b -> a + c < b + c.
 Todo lt_plus_l: ∀ a b c: ℤ, a < b -> c + a < c + b.
 Todo lt_trans: ∀ n m p : ℤ, n < m -> m < p -> n < p.
@@ -55,7 +59,7 @@ Proof.
     replace #1 (a ^ (n + 1)) with (a * a ^ n).
     apply pow_unfold_l.
     assumption.
-    apply zero_lt_mult.
+    apply zero_lt_mult_pos.
     assumption.
     assumption.
     assumption.
