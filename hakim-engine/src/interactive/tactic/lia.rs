@@ -12,6 +12,8 @@ use crate::{
     term_ref,
 };
 
+use minilp::{ComparisonOp, OptimizationDirection, Problem};
+
 fn convert_calculator_mode(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
     let r = convert(term, arena);
     fn is_good(x: &LogicValue<'_, Poly>) -> bool {
@@ -90,61 +92,62 @@ fn inject_div_mod(polies: Vec<Poly>) -> Vec<Poly> {
     [div_mods, polies].concat()
 }
 
-fn check_contradiction(polies: &[Poly]) -> bool {
-    let polies = &inject_div_mod(polies.to_vec());
-    let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
-    let mut lower_bounds = vec![None; var_cnt];
-    let mut upper_bounds = vec![None; var_cnt];
-    for poly in linear_polies {
-        match poly.variables() {
-            [] => {
-                if *poly.constant() <= 0.into() {
+fn check_contradiction_lp(var_cnt: usize, linear_polies: &[LinearPoly]) -> bool {
+    let bounded = |v, minmax| {
+        let mut problem = Problem::new(OptimizationDirection::Maximize);
+        let vars = (0..var_cnt)
+            .map(|x| {
+                problem.add_var(
+                    if x == v { minmax } else { 0. },
+                    (-f64::INFINITY, f64::INFINITY),
+                )
+            })
+            .collect::<Vec<_>>();
+        for poly in linear_polies {
+            let x = poly
+                .variables()
+                .iter()
+                .map(|(x, c)| {
+                    let t: i32 = x.try_into().ok()?;
+                    Some((vars[*c], f64::from(t)))
+                })
+                .collect::<Option<Vec<_>>>();
+            let x = match x {
+                Some(x) => x,
+                None => continue,
+            };
+            let c: i32 = match poly.constant().try_into() {
+                Ok(x) => x,
+                Err(_) => continue,
+            };
+            let c = -c + 1;
+            problem.add_constraint(&x, ComparisonOp::Ge, f64::from(c))
+        }
+        match problem.solve() {
+            Ok(x) => Some(x[vars[v]]),
+            Err(minilp::Error::Infeasible) => None,
+            Err(_) => Some(minmax * f64::INFINITY),
+        }
+    };
+    for i in 0..var_cnt {
+        let lb = bounded(i, -1.);
+        let ub = bounded(i, 1.);
+        match (lb, ub) {
+            (Some(lb), Some(ub)) => {
+                if lb.ceil() > ub.floor() {
                     return true;
                 }
             }
-            [(a, x)] => {
-                let b = -poly.constant();
-                // ax > b
-                match a.cmp(&0.into()) {
-                    std::cmp::Ordering::Less => {
-                        // x < b / a
-                        let mut ub = &b / a;
-                        if b % a == 0.into() {
-                            ub -= 1i32;
-                        }
-                        if let Some(prev_ub) = &upper_bounds[*x] {
-                            if ub >= *prev_ub {
-                                continue;
-                            }
-                        }
-                        upper_bounds[*x] = Some(ub);
-                    }
-                    std::cmp::Ordering::Equal => {
-                        panic!("Bug in the poly normalizer");
-                    }
-                    std::cmp::Ordering::Greater => {
-                        // x > b / a
-                        let lb = b / a + 1i32;
-                        if let Some(prev_lb) = &lower_bounds[*x] {
-                            if lb <= *prev_lb {
-                                continue;
-                            }
-                        }
-                        lower_bounds[*x] = Some(lb);
-                    }
-                }
-            }
-            _ => (),
-        }
-    }
-    for (lb, ub) in lower_bounds.iter().zip(upper_bounds.iter()) {
-        if let (Some(lb), Some(ub)) = dbg!(lb, ub) {
-            if lb > ub {
-                return true;
-            }
+            _ => return true,
         }
     }
     false
+}
+
+fn check_contradiction(polies: &[Poly]) -> bool {
+    let polies = &inject_div_mod(polies.to_vec());
+    let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
+    check_contradiction_lp(var_cnt, &linear_polies)
 }
 
 fn negator(mut poly: Poly) -> Poly {
@@ -187,10 +190,13 @@ mod tests {
 
     #[test]
     fn success_lia_one_var() {
-        run_interactive_to_end(
-            "forall x: ℤ, 2 * x < 5 -> 6 * x < 10 + 2 * x",
-            "intros\nlia",
-        );
+        success("forall x: ℤ, 2 * x < 5 -> 6 * x < 10 + 2 * x");
+    }
+
+    #[test]
+    fn unused_var() {
+        success("forall x y: ℤ, y = 2 -> y + 2 = 4");
+        fail("forall x y: ℤ, y = 2 -> y + 2 = 5");
     }
 
     #[test]
@@ -219,6 +225,11 @@ mod tests {
     fn success_lia_use_integer() {
         success("forall x: ℤ, 4 < 2 * x -> 5 < 2 * x");
         success("forall x: ℤ, 2 * x < 6 -> 2 * x < 5");
+    }
+
+    #[test]
+    fn big_integer() {
+        fail("∀ x: ℤ, 10000000000000000000000000000000000000000001 * x = 10000000000000000000000000000000000000000000");
     }
 
     #[test]
@@ -264,10 +275,23 @@ mod tests {
     }
 
     #[test]
+    fn sigma_hard() {
+        success("∀ n: ℤ, 0 ≤ n → sigma 0 n (λ i: ℤ, 2 * i + 1) = n * n → sigma 0 (n + 1) (λ i: ℤ, 2 * i + 1) = (n + 1) * (n + 1)");
+    }
+
+    #[test]
+    fn transitivity() {
+        success("∀ a b c d: ℤ, a < b -> b < c -> c < d -> a < d");
+        success("∀ a b c d: ℤ, a ≤ b -> b ≤ c -> c ≤ d -> a ≤ d");
+        fail("∀ a b c d: ℤ, a ≤ b -> b ≤ c -> c ≤ d -> a < d");
+        success("∀ a b c d: ℤ, a ≤ b -> b < c -> c ≤ d -> a < d");
+    }
+
+    #[test]
     fn pow_simple() {
         success("∀ n: ℤ, n ^ 2 = n * n");
-        fail("∀ n: ℤ, 2 * 2 ^ n = 2 ^ (n+1)");
-        fail("∀ n: ℤ, 0 ^ n = 0");
+        fail("∀ n: ℤ, 2 * 2 ^ n = 2 ^ (n+1)"); // wrong for n = -1
+        fail("∀ n: ℤ, 0 ^ n = 0"); // wrong for n = 0
         success("0 ^ 0 = 1");
         success("0 ^ 1 = 0");
         success("∀ n: ℤ, n ^ 1 = n");
