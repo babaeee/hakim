@@ -357,7 +357,7 @@ mod tests {
             "∀ a n: ℤ, 0 ≤ n → 0 < a → 0 < a ^ n",
             r#"
             intros a
-            apply simple_induction"#,
+            apply z_simple_induction"#,
             EngineLevel::Full,
         );
     }

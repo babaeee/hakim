@@ -49,7 +49,7 @@ Suggest goal apply pow_unfold_r;  a ^ (n + 1) = a ^ n * a => 0 ≤ n.
 Theorem pow_pos: ∀ a n: ℤ, 0 ≤ n -> 0 < a -> 0 < a ^ n.
 Proof.
     intros a.
-    apply simple_induction.
+    apply z_simple_induction.
     intros.
     add_hyp (0 < a).
     Switch 1.
