@@ -299,6 +299,28 @@ mod tests {
     }
 
     #[test]
+    fn very_huge_variables() {
+        use std::fmt::{Error, Write};
+        (|| -> Result<(), Error> {
+            let mut s = String::new();
+            write!(s, "∀ x y ")?;
+            let t = 30;
+            for i in 1..=t {
+                write!(s, "a{i} ")?;
+            }
+            write!(s, ": ℤ, a1 = 1 -> ")?;
+            for i in 2..=t {
+                write!(s, "a{} = a{} * 1000 -> ", i, i - 1)?;
+            }
+            write!(s, "x = a{t} -> y = a{t} + 1 -> x = y")?;
+            dbg!(&s);
+            fail(&s);
+            Ok(())
+        })()
+        .unwrap();
+    }
+
+    #[test]
     fn calculator_mode() {
         with_params("lia=calculator", || {
             success("1 < 2");

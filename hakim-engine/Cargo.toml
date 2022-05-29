@@ -11,7 +11,7 @@ num-bigint = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 typed-arena = "2.0.1"
 lazy_static = "1.2.0"
-minilp = "0.2.2"
+minilp = { git = "https://github.com/HKalbasi/minilp" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 serde-wasm-bindgen = "0.4.2"
