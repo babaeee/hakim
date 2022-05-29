@@ -139,7 +139,7 @@ impl From<Session> for NaturalProof {
                                 fallback(tactic, children, pt)
                             }
                         }
-                        x @ ("lia" | "ring" | "auto_set" | "assumption") => {
+                        x @ ("lia" | "auto_set" | "assumption") => {
                             Statement(format!("$inl_by_{}", x))
                         }
                         _ => fallback(tactic, children, pt),

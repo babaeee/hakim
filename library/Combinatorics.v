@@ -18,5 +18,5 @@ Proof.
     auto_set.
     assumption.
     rewrite H1.
-    ring.
+    lia.
 Qed.

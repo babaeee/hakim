@@ -163,7 +163,7 @@ mod tests {
             r#"
             intros a hyp
             replace (a + a) with (2 * a) in hyp
-            ring
+            lia
             apply hyp
             "#,
         );
@@ -176,7 +176,7 @@ mod tests {
             r#"
             intros a hyp
             replace (2 * a) with (a + a)
-            ring
+            lia
             apply hyp
             "#,
         );
@@ -189,7 +189,7 @@ mod tests {
             r#"
             intros a
             replace #1 (2 * a) with (a + a)
-            ring
+            lia
             chain (apply and_intro) (intros x) (apply x)
             "#,
         );

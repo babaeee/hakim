@@ -10,7 +10,7 @@ Proof.
     intros.
     apply divide_fold.
     apply (ex_intro ? ? (1)).
-    ring.
+    lia.
 Qed.
 Todo divide_trans: ∀ a b c: ℤ, a | b -> b | c -> a | c.
 Theorem divide_0: ∀ a: ℤ, a | 0.
@@ -18,7 +18,7 @@ Proof.
     intros.
     apply divide_fold.
     apply (ex_intro ? ? (0)).
-    ring.
+    lia.
 Qed.
 Theorem divide_1_positive: ∀ a: ℤ, 0 < a -> a | 1 -> a = 1.
 Proof.
@@ -37,9 +37,9 @@ Proof.
     destruct H2 with (or_ind ? ?).
     add_hyp (a * c < 0).
     replace #1 (a * c) with (c * a).
-    ring.
+    lia.
     replace #1 (0) with (c * 0).
-    ring.
+    lia.
     apply lt_multiply_negative.
     assumption.
     assumption.
@@ -64,11 +64,11 @@ Proof.
     intros.
     apply divide_plus.
     replace #1 (l * c) with (c * l).
-    ring.
+    lia.
     apply divide_factor.
     assumption.
     replace #1 (k * b) with (b * k).
-    ring.
+    lia.
     apply divide_factor.
     assumption.
 Qed.

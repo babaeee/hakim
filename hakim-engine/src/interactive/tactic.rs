@@ -3,9 +3,6 @@ use crate::brain::{self, TermRef};
 mod rewrite;
 pub(crate) use rewrite::{replace, rewrite};
 
-mod ring;
-pub(crate) use ring::ring;
-
 mod lia;
 pub(crate) use lia::lia;
 

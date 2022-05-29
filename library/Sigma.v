@@ -15,12 +15,12 @@ Proof.
     apply simple_induction.
     Switch 1.
     intros.
-    ring.
+    lia.
     intros.
     replace #1 (sigma a (n + 1) f) with (sigma a n f + f n).
-    ring.
+    lia.
     replace #1 (sigma a (n + 1) g) with (sigma a n g + g n).
-    ring.
+    lia.
     replace #1 (sigma a n f) with (sigma a n g).
     apply H0.
     intros.
@@ -33,6 +33,6 @@ Proof.
     apply H1.
     lia.
     assumption.
-    ring.
+    lia.
 Qed.
 Todo sigma_neg1: ∀ n: ℤ, ∀ f: ℤ -> ℤ, sigma (-n) 0 (λ i: ℤ, - f i) = sigma 0 (n+1) f.

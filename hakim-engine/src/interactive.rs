@@ -17,7 +17,7 @@ mod proof_tree;
 mod suggest;
 pub mod tactic;
 
-use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite, ring};
+use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite};
 
 use self::history_auto::history_lookup_auto;
 use self::monitor::Monitor;
@@ -372,7 +372,6 @@ impl Frame {
             "chain" => chain(frame, parts),
             "destruct" => destruct(frame, parts),
             "add_from_lib" => add_from_lib(frame, parts),
-            "ring" => ring(frame),
             "lia" => lia(frame),
             "auto_set" => auto_set(frame),
             "assumption" => assumption(frame),

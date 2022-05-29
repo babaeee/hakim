@@ -232,10 +232,10 @@ fn exists_number() {
         intros a
         apply (ex_intro ℤ (λ t: ℤ, a < t) (a + 1))
         add_hyp (eq ℤ a (a+0))
-        ring
+        lia
         rewrite H
         add_hyp (eq ℤ ((a+0)+1) (a+1))
-        ring
+        lia
         rewrite H0
         apply lt_plus_l
         apply lt_0_1
@@ -256,11 +256,11 @@ fn sigma_1_n() {
         add_hyp (2 * (sigma 0 (n + 1) (λ x0: ℤ, x0) + sigma (n + 1) ((n + 1) + 1) (λ x0: ℤ, x0)) = n * (n + 1) + 2 * (n + 1))
         rewrite (sigma_atom (n+1) (λ x0: ℤ, x0))
         rewrite <- gam_farz
-        ring
+        lia
         rewrite H0
-        ring
+        lia
         rewrite (sigma_atom 0 (λ x0: ℤ, x0))
-        ring
+        lia
         "#,
     );
 }
@@ -273,14 +273,14 @@ fn switch() {
         intros a
         apply (ex_intro ? ? (a + 1))
         add_hyp (a = a+0)
-        ring
+        lia
         rewrite H
         add_hyp ((a+0)+1 = a+1)
         Switch 1
         rewrite H0
         apply lt_plus_l
         apply lt_0_1
-        ring
+        lia
         "#,
     );
     run_interactive_to_fail(
