@@ -201,6 +201,11 @@ fn gt_le_ge() {
 }
 
 #[test]
+fn abs_in_type_pos() {
+    parse_pretty("∀ y: ∀ t: ℤ, t = t, y = y");
+}
+
+#[test]
 fn len() {
     parse_pretty("|2|");
     parse_pretty("|- 2| * 5");

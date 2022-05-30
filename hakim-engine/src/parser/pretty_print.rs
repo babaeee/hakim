@@ -6,6 +6,7 @@ use std::{
 
 use crate::{
     app_ref,
+    brain::increase_foreign_vars,
     parser::{
         ast::{AstAbs, AstSet},
         tokenizer::AbsSign,
@@ -147,7 +148,7 @@ fn extract_fun_from_term(term: TermRef, ty: TermRef) -> Abstraction {
         abs.clone()
     } else {
         Abstraction {
-            body: app_ref!(term, term_ref!(v 0)),
+            body: app_ref!(increase_foreign_vars(term, 0), term_ref!(v 0)),
             hint_name: None,
             var_ty: ty,
         }
@@ -171,12 +172,12 @@ pub fn term_to_ast(
             body,
             hint_name,
         } = abs;
+        let ty = term_to_ast(var_ty, names, c);
         let name = if let Some(hint) = hint_name {
             generate_name(names, hint)
         } else {
             generate_name(names, "x")
         };
-        let ty = term_to_ast(var_ty, names, c);
         names.0.push((name.clone(), 0));
         let body = term_to_ast(body, names, c);
         names.0.pop();

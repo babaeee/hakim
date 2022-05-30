@@ -1,5 +1,12 @@
 Axiom ex_intro: ∀ A: U, ∀ P: A → U, ∀ x: A, P x -> ∃ y: A, P y.
-Axiom ex_ind: ∀ A: U, ∀ P: A → U, (∃ y: A, P y) -> ∀ Q: U, (∀ x: A, P x -> Q) -> Q.
+Axiom ex_value: ∀ A: U, ∀ P: A → U, (∃ y: A, P y) -> A.
+Axiom ex_proof: ∀ A: U, ∀ P: A → U, ∀ e: (∃ y: A, P y), P (ex_value ? ? e).
+Theorem ex_ind: ∀ A: U, ∀ P: A → U, (∃ y: A, P y) -> ∀ Q: U, (∀ x: A, P x -> Q) -> Q.
+Proof.
+    intros.
+    apply (H0 (ex_value A P H) ?1).
+    apply (ex_proof A P ?1).
+Qed.
 Suggest hyp default destruct $n with (ex_ind ? ?) to ($n_value $n_proof); Destruct.
 
 Theorem False_ind: False -> ∀ A: U, A.

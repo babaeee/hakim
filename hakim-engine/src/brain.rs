@@ -9,7 +9,7 @@ pub use subtyping::subtype_and_infer;
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Abstraction {
     pub var_ty: TermRef,
     pub hint_name: Option<String>,

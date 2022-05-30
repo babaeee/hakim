@@ -259,6 +259,8 @@ pub mod tests {
 
     use std::cell::Cell;
 
+    use crate::brain::{Abstraction, Term};
+
     use super::Engine;
 
     #[derive(PartialEq, Eq)]
@@ -291,5 +293,58 @@ pub mod tests {
         }
         eng.load_library("/").unwrap();
         eng
+    }
+
+    fn structural_print(term: &Term) -> String {
+        fn g(
+            w: &mut impl std::fmt::Write,
+            c: char,
+            abs: &Abstraction,
+        ) -> Result<(), std::fmt::Error> {
+            write!(
+                w,
+                "({c} {}: ",
+                abs.hint_name.as_ref().unwrap_or(&"*".to_string())
+            )?;
+            f(w, &abs.var_ty)?;
+            write!(w, ", ")?;
+            f(w, &abs.body)?;
+            write!(w, ")")
+        }
+        fn f(w: &mut impl std::fmt::Write, term: &Term) -> Result<(), std::fmt::Error> {
+            match term {
+                Term::Axiom { unique_name, .. } => write!(w, "{unique_name}"),
+                Term::Universe { index } => write!(w, "Universe{index}"),
+                Term::Forall(abs) => g(w, '∀', abs),
+                Term::Fun(abs) => g(w, 'λ', abs),
+                Term::Var { index } => write!(w, "@{index}"),
+                Term::Number { value } => write!(w, "{value}"),
+                Term::App { func, op } => {
+                    write!(w, "(")?;
+                    f(w, func)?;
+                    write!(w, " ")?;
+                    f(w, op)?;
+                    write!(w, ")")
+                }
+                Term::Wild { index, .. } => write!(w, "?{index}"),
+            }
+        }
+        let mut s = "".to_string();
+        f(&mut s, term).unwrap();
+        s
+    }
+
+    #[test]
+    fn bug_ex_proof_ty() {
+        let eng = build_engine(EngineLevel::Full);
+        let ex_proof_ty = eng.type_of_name("ex_proof").unwrap();
+        // (∀ A: Universe0,
+        //      (∀ P: (∀ *: @0, Universe0),
+        //          (∀ e: ((ex @1) @0), (@1 (((ex_value @2) @1) @0)))))
+        assert_eq!(structural_print(&ex_proof_ty), "(∀ A: Universe0, (∀ P: (∀ *: @0, Universe0), (∀ e: ((ex @1) @0), (@1 (((ex_value @2) @1) @0)))))");
+        assert_eq!(
+            eng.pretty_print(&ex_proof_ty),
+            "∀ A: Universe, ∀ P: A → Universe, ∀ e: ∃ x: A, P x, P (ex_value A P e)"
+        );
     }
 }
