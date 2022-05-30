@@ -17,7 +17,7 @@ destruct: شکستن
 destruct_with_name: شکستن با نام
 engine_params: پارامتر های موتور
 enter_tactic: تاکتیک خود را وارد کنید
-enter_a_name: یک نام وارد کنید
+enter_a_name: یک نام وارد کنید (می توانید چند مورد را با کلید فاصله از هم جدا کنید)
 enter_value_that_satisfy: مقداری که در عبارت صدق می کند را وارد کنید
 enter_value_that_you_want_to_put_on_foreign: "مقداری که می خواهید به جای ‪@0‬ در $0 قرار دهید را وارد کنید"
 enter_value_of1: مقدار
