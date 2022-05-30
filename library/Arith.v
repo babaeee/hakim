@@ -37,6 +37,8 @@ Theorem eq_plus_l: ∀ a b c: ℤ, c + a = c + b -> a = b.
 Proof. intros. lia. Qed.
 Todo eq_mult_r: ∀ a b c: ℤ, ~ c = 0 -> a * c = b * c -> a = b.
 Todo eq_mult_l: ∀ a b c: ℤ, ~ c = 0 -> c * a = c * b -> a = b.
+Theorem eq_subtract_positive_lt: ∀ a b c: ℤ, 0 < b -> a + b = c -> a < c.
+Proof. intros. lia. Qed.
 
 Theorem le_refl: ∀ a: ℤ, a ≤ a. 
 Proof. intros. lia. Qed.

@@ -3,7 +3,7 @@ use crate::{
     engine::Engine,
 };
 
-use super::{infer::type_of_and_infer, type_of, Error};
+use super::{infer::type_of_and_infer, type_of};
 
 fn wild_need_local(exp: &str) {
     let eng = Engine::default();
@@ -11,7 +11,7 @@ fn wild_need_local(exp: &str) {
     let mut infers = InferResults::new(cnt);
     let ty = match type_of_and_infer(term.clone(), &mut infers) {
         Ok(x) => x,
-        Err(Error::WildNeedLocalVar(_)) => return,
+        Err(e) if matches!(e.reason, super::ErrorReason::WildNeedLocalVar(_)) => return,
         Err(e) => panic!("Expected WildNeedLocalVar error but got {:?}", e),
     };
     match type_of_and_infer(ty.clone(), &mut infers) {
@@ -23,7 +23,7 @@ fn wild_need_local(exp: &str) {
             ty,
             x
         ),
-        Err(Error::WildNeedLocalVar(_)) => (),
+        Err(e) if matches!(e.reason, super::ErrorReason::WildNeedLocalVar(_)) => (),
         Err(e) => panic!("Expected WildNeedLocalVar error but got {:?}", e),
     }
 }

@@ -335,6 +335,15 @@ pub mod tests {
     }
 
     #[test]
+    fn most_simple_test() {
+        let eng = build_engine(EngineLevel::Empty);
+        let term = eng.parse_text("2 + 3").unwrap();
+        assert_eq!(structural_print(&term), "((plus 2) 3)");
+        let term = eng.parse_text("2 + 3 = 5").unwrap();
+        assert_eq!(structural_print(&term), "(((eq ℤ) ((plus 2) 3)) 5)");
+    }
+
+    #[test]
     fn bug_ex_proof_ty() {
         let eng = build_engine(EngineLevel::Full);
         let ex_proof_ty = eng.type_of_name("ex_proof").unwrap();

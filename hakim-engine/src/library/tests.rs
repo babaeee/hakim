@@ -1,3 +1,5 @@
+use std::panic::catch_unwind;
+
 use crate::engine::Engine;
 
 use super::{
@@ -17,7 +19,13 @@ fn all() {
 #[test]
 fn any() {
     for lib in all_names() {
-        Engine::default().load_library(lib).unwrap();
+        let r = catch_unwind(|| {
+            Engine::default().load_library(lib).unwrap();
+        });
+        dbg!(&lib);
+        if let Err(e) = r {
+            panic!("error in {lib}, {e:?}");
+        }
     }
 }
 

@@ -139,4 +139,9 @@ mod tests {
     fn dont_stack_overflow() {
         check_search("?x -> ?x -> ?x -> ?x", "");
     }
+
+    #[test]
+    fn panic_in_infer() {
+        do_search("∃ x, ?");
+    }
 }

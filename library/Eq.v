@@ -9,5 +9,3 @@ Proof.
 Qed.
 Suggest hyp apply eq_sym in $n; a = b => b = a.
 Suggest goal apply eq_sym; a = b => b = a.
-
-Axiom eq_subtract_positive_lt: ∀ a b c: ℤ, 0 < b -> a + b = c -> a < c.

@@ -106,7 +106,7 @@ macro_rules! app {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Error {
+pub enum ErrorReason {
     ForiegnVariableInTerm(usize),
     TypeMismatch(TermRef, TermRef),
     IsNotFunc { value: TermRef, ty: TermRef },
@@ -116,11 +116,49 @@ pub enum Error {
     WildNeedLocalVar(usize),
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum ErrorContext {
+    InMatching(TermRef, TermRef),
+    InTypechecking(TermRef),
+}
+
+#[derive(PartialEq, Eq)]
+pub struct Error {
+    reason: ErrorReason,
+    context: Vec<ErrorContext>,
+}
+
+impl Debug for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "$error:\n    {:?}\n$in_context:\n", self.reason)?;
+        for x in &self.context {
+            writeln!(f, "    {x:?}")?;
+        }
+        Ok(())
+    }
+}
+
+impl From<ErrorReason> for Error {
+    fn from(reason: ErrorReason) -> Self {
+        Error {
+            reason,
+            context: vec![],
+        }
+    }
+}
+
+impl Error {
+    fn with_context(mut self, context: ErrorContext) -> Self {
+        self.context.push(context);
+        self
+    }
+}
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
-use Error::*;
+use ErrorReason::*;
 
 pub fn map_reduce_wild<T>(
     t: &Term,
@@ -263,7 +301,7 @@ pub fn remove_unused_var(t: TermRef, depth: usize) -> Option<TermRef> {
 
 fn deny_wild(t: &Term) -> Result<()> {
     if contains_wild(t) {
-        Err(ContainsWild)
+        Err(ContainsWild.into())
     } else {
         Ok(())
     }
