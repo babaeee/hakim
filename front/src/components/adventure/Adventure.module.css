@@ -6,6 +6,7 @@
 .lock {
     height: 2rem;
     width: 100%;
+    padding-top: 8px;
 }
 
 .title {
@@ -23,20 +24,29 @@
     height: 100vh;
     width: 100vw;
     z-index: 1;
+    stroke: white;
 }
 
 .item {
-    height: 6vw;
-    width: 6vw;
+    height: 6rem;
+    width: 6rem;
     position: absolute;
     color: white;
     text-align: center;
     vertical-align: middle;
-    background-color: red;
-    border: 0;
-    border-radius: 1vw;
+    background-color: black;
+    border: 1px white solid;
+    border-radius: var(--rounded-2);
     outline: none;
     z-index: 2;
+    box-shadow: black 0 0 10px 10px;
+    cursor: pointer;
+    transform: translateX(calc(3vw - 3rem));
+}
+
+.item:hover {
+    transform: translateX(calc(3vw - 3rem)) scale(0.9);
+    box-shadow: black 0 0 27px 32px;
 }
 
 .text,

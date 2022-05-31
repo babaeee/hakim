@@ -1,11 +1,13 @@
 .base {
     flex: 1;
-    border-radius: 1rem;
-    background-color: black;
     color: white;
-    margin: 1rem;
-    padding: 1rem;
+    padding: 2rem;
 }
+
+.base:first-child {
+    border-bottom: var(--border);
+}
+
 .scroll {
     max-height: 25vh;
     overflow: auto;

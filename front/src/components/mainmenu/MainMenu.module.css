@@ -28,13 +28,35 @@
 }
 
 .exampleItem {
-    background-color: yellow;
+    background-color: var(--gray-1);
     display: block;
     margin: 2rem;
-    padding: 1rem;
-    border-radius: 1rem;
+    padding: 1rem 2rem;
+    border-radius: var(--rounded-2);
     text-decoration: none;
-    color: black;
+    color: white;
     white-space: nowrap;
     text-align: center;
+    position: relative;
+}
+
+.exampleItem::before {
+    content: '';
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    transform: translateX(-50%);
+    width: 3rem;
+    height: 4px;
+    background-color: var(--primary);
+    border-radius: 100px;
+}
+
+.exampleItem:hover {
+    background-color: var(--gray-2);
+}
+
+.exampleItem:hover::before {
+    width: 5rem;
 }

@@ -33,11 +33,11 @@ const HeadText: React.FC<{ text: string | undefined }> = ({ text }) => {
   }
   if (hide) {
     const t = text.trim().split(/(\s+)/).slice(0, 20).join(' ');
-    return <div className={css.text}>{t} ... <button onClick={() => setHide(!hide)}>{g`show_it`}</button></div>
+    return <p className={css.text}>{t} ... <button onClick={() => setHide(!hide)}>{g`show_it`}</button></p>
   }
-  return <><div className={css.text} dangerouslySetInnerHTML={{
+  return <><div className={css.text}><p dangerouslySetInnerHTML={{
     __html: markdown.render(text),
-  }} /> <button onClick={() => setHide(!hide)}>{g`hide_it`}</button></>;
+}} /> <button onClick={() => setHide(!hide)}>{g`hide_it`}</button></div></>;
 }
 
 export const ProofContext = createContext({} as ProofContextType);

@@ -216,8 +216,7 @@ export const Adventure = () => {
             </button></Link>)}
             <svg className={css.lines} viewBox="0 0 100 100" preserveAspectRatio="none">
                 {edges.map(([[x1, y1], [x2, y2]]) => <line
-                    stroke="black"
-                    strokeWidth={1}
+                    strokeWidth=".1px"
                     x1={x1} x2={x2} y1={y1 + 4} y2={y2 + 4} />)}
             </svg>
         </div>
