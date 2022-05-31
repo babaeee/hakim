@@ -2,28 +2,41 @@
     flex: 2;
     display: flex;
     flex-direction: column;
-    margin: 1rem;
+    border-right: var(--border);
+    border-left: var(--border);
 }
 
 .tabs {
-    padding: .1rem;
+    border-bottom: var(--border);
 }
 
 .tab {
-    background-color: yellow;
-    border-radius: .4rem;
-    margin-left: 1rem;
+    background-color: inherit;
+    color: white;
+    padding: 8px 16px;
+    outline: none;
+    border: none;
+    border-bottom: 2px transparent solid;
+    transform: translateY(1px);
+}
+
+.tab:not(.selected) {
+    cursor: pointer;
+}
+
+.tab:not(.selected):hover {
+    background-color: var(--gray-1);
 }
 
 .tab.selected {
-    background-color: red;
-    color: white;
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: bold;
 }
 
 .body {
     flex: 1;
-    border-radius: 1rem;
     background-color: black;
     color: white;
-    padding: 1rem;
+    padding: 2rem;
 }
