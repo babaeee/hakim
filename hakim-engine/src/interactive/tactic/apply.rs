@@ -2,7 +2,7 @@ use crate::{
     app_ref,
     brain::{
         contains_wild, fill_wild, for_each_wild, get_forall_depth,
-        infer::{type_of_and_infer, InferResults},
+        infer::{type_of_and_infer, InferResults, VarCategory},
         map_reduce_wild, normalize, predict_axiom, subtype_and_infer, Term, TermRef,
     },
     engine::Engine,
@@ -47,10 +47,9 @@ impl FindInstance {
         );
         let mut dep_list = vec![false; self.infer.n];
         let mut explore = |e| {
-            for_each_wild(e, |t, _| {
-                if t < dep_list.len() {
-                    dep_list[t] = true;
-                }
+            for_each_wild(e, |t, _| match VarCategory::from(t) {
+                VarCategory::Term(i) => dep_list[i] = true,
+                VarCategory::Ty(_) => (),
             });
         };
         for i in 0..self.infer.n {
@@ -61,7 +60,7 @@ impl FindInstance {
             .enumerate()
             .filter_map(|(i, x)| x.then(|| i))
         {
-            if (Term::Wild { index: i, scope: 0 }) == *self.infer.terms[i].as_ref() {
+            if self.infer.terms[i] == VarCategory::Term(i).to_term(0) {
                 r += &format!("\u{2068}?{} : {:?}\u{2069}\n", i, self.infer.tys[i]);
             }
         }
@@ -71,7 +70,7 @@ impl FindInstance {
             .enumerate()
             .filter_map(|(i, x)| (!x).then(|| i))
         {
-            if (Term::Wild { index: i, scope: 0 }) == *self.infer.terms[i].as_ref() {
+            if self.infer.terms[i] == VarCategory::Term(i).to_term(0) {
                 r += &format!("\u{2068}{:?}\u{2069}\n", self.infer.tys[i]);
             }
         }
@@ -102,22 +101,23 @@ fn find_args_in_apply_hyp(
     base_ic: usize,
     name: &str,
 ) -> Option<(TermRef, InferResults)> {
+    let mut global_infers = InferResults::new(base_ic);
     let fd = {
-        let ty = type_of_and_infer(func.clone(), &mut InferResults::new(base_ic)).ok()?;
+        let ty = type_of_and_infer(func.clone(), &mut global_infers).ok()?;
         get_forall_depth(&ty)
     };
-    for ic in base_ic..base_ic + fd {
-        let mut infers = InferResults::new(ic);
+    for _ in base_ic..base_ic + fd {
+        let mut infers = global_infers.clone();
         let ty = match type_of_and_infer(app_ref!(func, op), &mut infers) {
             Ok(x) => x,
             Err(_) => {
-                func = app_ref!(func, term_ref!(_ ic));
+                func = app_ref!(func, global_infers.add_var());
                 continue;
             }
         };
         let ty = infers.fill(ty);
         if predict_axiom(&ty, |x| x == name) {
-            func = app_ref!(func, term_ref!(_ ic));
+            func = app_ref!(func, global_infers.add_var());
             continue;
         }
         return Some((ty, infers));
@@ -172,19 +172,19 @@ fn apply_for_goal(frame: Frame, exp: &str) -> Result<Vec<Frame>> {
 fn try_argument_count_for_goal(
     mut term: std::rc::Rc<Term>,
     d_forall: usize,
-    mut inf_num: usize,
+    inf_num: usize,
     goal: std::rc::Rc<Term>,
     frame: Frame,
 ) -> Result<Vec<Frame>> {
-    for _ in 0..d_forall {
-        term = app_ref!(term, term_ref!(_ inf_num));
-        inf_num += 1;
-    }
     let mut infers = InferResults::new(inf_num);
+    for _ in 0..d_forall {
+        term = app_ref!(term, infers.add_var());
+    }
+    dbg!(&term);
     let twa_ty = type_of_and_infer(term.clone(), &mut infers)?;
     subtype_and_infer(twa_ty.clone(), goal, &mut infers)?;
     let mut v = vec![];
-    for i in 0..inf_num {
+    for i in 0..infers.n {
         let mut frame = frame.clone();
         if !contains_wild(&infers.terms[i]) {
             continue;

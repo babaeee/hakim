@@ -189,7 +189,7 @@ fn fail_instance_recovery() {
     );
     let e = se.run_tactic("apply lt_trans");
     if let Err(Error::CanNotFindInstance(e)) = e {
-        assert_eq!(e.first_needed_wild(), 1);
+        assert_eq!(e.first_needed_wild(), 2);
         let tac = e.tactic_by_answer("b + c").unwrap();
         se.run_tactic(&tac).unwrap();
         return;

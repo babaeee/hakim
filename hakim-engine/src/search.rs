@@ -1,12 +1,12 @@
 use crate::{
     brain::{
         get_forall_depth,
-        infer::{match_and_infer, InferResults},
+        infer::{match_and_infer, InferResults, VarCategory},
         subst,
     },
     engine::{Engine, Result},
     parser::is_valid_ident,
-    term_ref, Abstraction, Term,
+    Abstraction, Term,
 };
 
 fn search_with_name(engine: &Engine, name: &str) -> Vec<String> {
@@ -27,7 +27,7 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
     Ok(engine
         .lib_iter()
         .filter_map(|(name, ty)| {
-            let mut our_infer_cnt = infer_cnt;
+            let mut infers = InferResults::new(infer_cnt);
             let their_forall_cnt = get_forall_depth(&ty);
             if forall_cnt > their_forall_cnt {
                 return None;
@@ -36,21 +36,19 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
             let mut ty_subst = ty;
             for _ in 0..forall_diff {
                 if let Term::Forall(Abstraction { body, .. }) = ty_subst.as_ref() {
-                    let w = term_ref!(_ our_infer_cnt);
-                    our_infer_cnt += 1;
-                    ty_subst = subst(body.clone(), w);
+                    ty_subst = subst(body.clone(), infers.add_var());
                 } else {
                     return None;
                 }
             }
-            let mut infers = InferResults::new(our_infer_cnt);
             match_and_infer(qt.clone(), ty_subst, &mut infers).ok()?;
             let mut good = vec![false; infer_cnt];
-            for i in infer_cnt..our_infer_cnt {
+            for i in infer_cnt..infers.n {
                 let t = infers.get(i);
                 if let Term::Wild { index, .. } = t.as_ref() {
-                    if *index < infer_cnt {
-                        good[*index] = true;
+                    let index = *index / 2;
+                    if index < infer_cnt {
+                        good[index] = true;
                     }
                 }
             }
@@ -58,8 +56,8 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
                 if is_good {
                     continue;
                 }
-                if let Term::Wild { index, .. } = infers.get(i).as_ref() {
-                    if *index == i {
+                if let Term::Wild { index, .. } = &infers.terms[i].as_ref() {
+                    if VarCategory::from(*index) == VarCategory::Term(i) {
                         return None;
                     }
                 }

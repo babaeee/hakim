@@ -15,10 +15,32 @@ pub struct InferResults {
     pub tys: Vec<TermRef>,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-enum VarCategory {
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+pub enum VarCategory {
     Term(usize),
     Ty(usize),
+}
+
+pub const RESERVED_SPACE: usize = 2;
+
+impl From<usize> for VarCategory {
+    fn from(i: usize) -> Self {
+        if i % RESERVED_SPACE == 0 {
+            VarCategory::Term(i / RESERVED_SPACE)
+        } else {
+            VarCategory::Ty(i / RESERVED_SPACE)
+        }
+    }
+}
+
+impl VarCategory {
+    pub fn to_term(self, scope: usize) -> TermRef {
+        let index = match self {
+            VarCategory::Term(i) => RESERVED_SPACE * i,
+            VarCategory::Ty(i) => RESERVED_SPACE * i + 1,
+        };
+        TermRef::new(Term::Wild { index, scope })
+    }
 }
 
 impl InferResults {
@@ -26,25 +48,26 @@ impl InferResults {
         let mut terms = vec![];
         let mut tys = vec![];
         for i in 0..n {
-            terms.push(TermRef::new(Term::Wild { index: i, scope: 0 }));
-            tys.push(TermRef::new(Term::Wild {
-                index: i + n,
-                scope: 0,
-            }));
+            terms.push(VarCategory::Term(i).to_term(0));
+            tys.push(VarCategory::Ty(i).to_term(0));
         }
         InferResults { terms, tys, n }
     }
 
-    fn category(&self, i: usize) -> VarCategory {
-        if i < self.n {
-            VarCategory::Term(i)
-        } else {
-            VarCategory::Ty(i - self.n)
-        }
+    pub fn add_var(&mut self) -> TermRef {
+        self.add_var_with_scope(0)
+    }
+
+    pub fn add_var_with_scope(&mut self, scope: usize) -> TermRef {
+        let r = VarCategory::Term(self.n).to_term(scope);
+        self.terms.push(r.clone());
+        self.tys.push(VarCategory::Ty(self.n).to_term(scope));
+        self.n += 1;
+        r
     }
 
     pub fn get(&self, i: usize) -> TermRef {
-        match self.category(i) {
+        match VarCategory::from(i) {
             VarCategory::Term(i) => self.terms[i].clone(),
             VarCategory::Ty(i) => self.tys[i].clone(),
         }
@@ -62,7 +85,7 @@ impl InferResults {
 
     fn set(&mut self, i: usize, term: TermRef) -> Result<()> {
         let term_clone = term.clone();
-        match self.category(i) {
+        match VarCategory::from(i) {
             VarCategory::Term(i) => self.terms[i] = term,
             VarCategory::Ty(i) => self.tys[i] = term,
         }
@@ -72,7 +95,7 @@ impl InferResults {
             self.relax();
         }
         let mut loop_free = true;
-        for x in 0..self.n {
+        for x in 0..RESERVED_SPACE * self.n {
             let t = self.get(x);
             if t != term_ref!(_ x) && predict_wild(&t, &|j, _| x == j) {
                 loop_free = false;
@@ -96,7 +119,7 @@ impl InferResults {
     }
 
     fn type_of(&self, i: usize) -> TermRef {
-        match self.category(i) {
+        match VarCategory::from(i) {
             VarCategory::Term(i) => self.tys[i].clone(),
             VarCategory::Ty(_) => term_ref!(universe 0), // TODO: this can be more general
         }
@@ -256,11 +279,16 @@ fn match_and_infer_without_normalize(
                 // function uniquely
                 return Ok(());
             }
-            let var_ty = if let Term::Forall(x) = infers.type_of(wild).as_ref() {
-                x.var_ty.clone()
-            } else {
+            let var_ty = match infers.type_of(wild).as_ref() {
+                Term::Forall(x) => x.var_ty.clone(),
+                Term::Wild { index, scope } => {
+                    let a = infers.add_var_with_scope(*scope);
+                    let b = infers.add_var_with_scope(*scope + 1);
+                    infers.set(*index, term_ref!(forall a, b))?;
+                    a
+                }
                 // I think it should always infer the type of functions.
-                panic!("Fail in inference");
+                _ => unreachable!("Strange type appears in infer"),
             };
             let fbody = if var == 0 {
                 exp

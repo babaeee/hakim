@@ -1,4 +1,4 @@
-use crate::brain::{fill_wild_with_depth, Term, TermRef};
+use crate::brain::{fill_wild_with_depth, infer::RESERVED_SPACE, Term, TermRef};
 
 #[derive(Default)]
 pub struct InferGenerator(pub usize);
@@ -7,7 +7,7 @@ impl InferGenerator {
     pub fn generate(&mut self) -> usize {
         let i = self.0;
         self.0 += 1;
-        i
+        RESERVED_SPACE * i
     }
 }
 
@@ -46,6 +46,7 @@ struct FixWildDfsState {
 
 impl FixWildDfsState {
     fn new(n: usize) -> Self {
+        let n = RESERVED_SPACE * n;
         Self {
             dsu: Dsu::new(n + 1),
             lca: vec![0; n],
