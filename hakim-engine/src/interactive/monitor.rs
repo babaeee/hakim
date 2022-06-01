@@ -17,7 +17,7 @@ impl Monitor {
     #[cfg(test)]
     fn hyp_names(&self) -> Vec<String> {
         match self {
-            Running { hyps, .. } => hyps.iter().map(|(x, y)| x.clone()).collect(),
+            Running { hyps, .. } => hyps.iter().map(|(x, _)| x.clone()).collect(),
             Finished => unreachable!(),
         }
     }

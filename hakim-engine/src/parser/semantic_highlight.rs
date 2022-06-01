@@ -1,11 +1,8 @@
 use std::fmt::Write;
 
-use crate::{
-    brain::Term,
-    parser::ast::{AstAbs, AstSet},
-};
+use crate::brain::Term;
 
-use super::{span_counter::AstStacker, AstTerm};
+use super::span_counter::AstStacker;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum HighlightTag {
@@ -36,6 +33,13 @@ impl HighlightTag {
     }
 }
 
+#[cfg(test)]
+use super::{
+    ast::{AstAbs, AstSet},
+    AstTerm,
+};
+
+#[cfg(test)]
 pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
     fn e(a: &mut Option<HighlightTag>) {
         if a.is_none() {
