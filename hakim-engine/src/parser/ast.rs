@@ -5,7 +5,7 @@ use super::{
     uniop::UniOp,
     wild::InferGenerator,
     Error::*,
-    Result,
+    HighlightTag, Result,
 };
 
 use crate::{
@@ -19,6 +19,7 @@ use crate::{
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AstAbs {
     pub name: Vec<String>,
+    pub tag: Option<HighlightTag>,
     pub ty: Option<Box<AstTerm>>,
     pub body: Box<AstTerm>,
 }
@@ -33,7 +34,7 @@ pub enum AstSet {
 pub enum AstTerm {
     Universe(usize),
     Abs(AbsSign, AstAbs),
-    Ident(String),
+    Ident(String, Option<HighlightTag>),
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
     UniOp(UniOp, Box<AstTerm>),
     Number(BigInt),
@@ -95,7 +96,12 @@ trait TokenEater {
             self.eat_sign("|")?;
             let body = Box::new(self.eat_ast()?);
             self.eat_sign("}")?;
-            Ok(Set(AstSet::Abs(AstAbs { name, ty, body })))
+            Ok(Set(AstSet::Abs(AstAbs {
+                name,
+                ty,
+                body,
+                tag: None,
+            })))
         } else if self.look_ahead(1) == Ok(Token::Sign("|".to_string())) {
             let name = vec![self.eat_ident()?];
             self.eat_sign("|")?;
@@ -105,6 +111,7 @@ trait TokenEater {
                 name,
                 ty: None,
                 body,
+                tag: None,
             })))
         } else {
             let mut r = vec![];
@@ -137,7 +144,7 @@ trait TokenEater {
                         }
                     }
                 } else {
-                    Ok(Ident(s))
+                    Ok(Ident(s, None))
                 }
             }
             Token::Wild(i) => {
@@ -154,7 +161,15 @@ trait TokenEater {
                 };
                 self.eat_sign(",")?;
                 let body = Box::new(self.eat_ast()?);
-                Ok(Abs(sign, AstAbs { name, ty, body }))
+                Ok(Abs(
+                    sign,
+                    AstAbs {
+                        name,
+                        ty,
+                        body,
+                        tag: None,
+                    },
+                ))
             }
             Token::Sign(s) => match s.as_str() {
                 "(" => {
@@ -311,7 +326,7 @@ pub fn ast_to_term(
 ) -> Result<TermRef> {
     match ast {
         Universe(x) => Ok(term_ref!(universe x)),
-        Set(AstSet::Abs(AstAbs { name, ty, body })) => {
+        Set(AstSet::Abs(AstAbs { name, ty, body, .. })) => {
             let var_ty = match ty {
                 Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?,
                 None => term_ref!(_ infer_cnt.generate()),
@@ -346,7 +361,7 @@ pub fn ast_to_term(
             }
             Ok(bag)
         }
-        Abs(sign, AstAbs { name, ty, body }) => {
+        Abs(sign, AstAbs { name, ty, body, .. }) => {
             let mut ty_term = match ty {
                 Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?,
                 None => term_ref!(_ infer_cnt.generate()),
@@ -369,7 +384,7 @@ pub fn ast_to_term(
             }
             Ok(r)
         }
-        Ident(s) => {
+        Ident(s, _) => {
             if let Some(i) = name_stack.iter().rev().position(|x| *x == s) {
                 return Ok(term_ref!(v i));
             }

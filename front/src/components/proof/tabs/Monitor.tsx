@@ -8,6 +8,7 @@ import { useDrag, useDrop } from 'react-dnd'
 import classNames from "classnames";
 import { ProofContext } from "../Proof";
 import { normalPrompt } from "../../../dialog";
+import "./highlight.css";
 
 type HypProps = {
     name: string,
@@ -28,7 +29,14 @@ type onSelectLogicType = (x: {
     replaceTactic: (x: { start: number, end: number, text: string, userInp: string }) => string | undefined,
 }) => (e: any) => Promise<void>;
 const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggleMenu, replaceTactic }) => async (e) => {
+    ty = ty.replaceAll('<span class="highlightLiteral">', '');
+    ty = ty.replaceAll('<span class="highlightType">', '');
+    ty = ty.replaceAll('<span class="highlightIdent">', '');
+    ty = ty.replaceAll('<span class="highlightFunction">', '');
+    ty = ty.replaceAll('</span>', '');
+    console.log(ty);
     const sel = window.getSelection();
+    console.log(sel);
     if (!sel) return;
     if (sel.toString() === '') return;
     if (sel.anchorNode?.parentElement !== e.target
@@ -119,12 +127,11 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 }}
                 onDoubleClick={() => runSuggDblHyp(name)}>
                 <span ref={drag} className={css.dragHandler}>&#x25CE;</span>{' '}
-                {name}: <span
-                >{ty}</span>
+                {name}: <span dangerouslySetInnerHTML={{ __html: ty }} />
                 <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                     onClose={() => toggleMenu(false)}>
                     {suggs.length === 0 && <MenuItem disabled>{g`no_suggestion`}</MenuItem>}
-                    {suggs.map((x, i) => <MenuItem disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
+                    {suggs.map((x, i) => <MenuItem key={x.label} disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
                 </ControlledMenu>
             </div>
         </div>
@@ -187,11 +194,11 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
                 setAnchorPoint({ x: e.clientX, y: e.clientY });
                 toggleMenu(true);
             }}>
-            {ty}
+            <span dangerouslySetInnerHTML={{ __html: ty }} />
             <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
                 onClose={() => toggleMenu(false)}>
                 {suggs.length === 0 && <MenuItem disabled>{g`no_suggestion`}</MenuItem>}
-                {suggs.map((x) => <MenuItem disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
+                {suggs.map((x) => <MenuItem key={x.label} disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
             </ControlledMenu>
         </div>
     );
@@ -200,7 +207,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
 const NextGoal = ({ ty, i }: { ty: string, i: number }) => {
     return (
         <div className={css.hyp} onDoubleClick={() => sendTactic(`Switch ${i + 1}`)}>
-            {ty}
+            <span dangerouslySetInnerHTML={{ __html: ty }} />
         </div>
     )
 };

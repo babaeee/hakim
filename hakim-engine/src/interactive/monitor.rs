@@ -45,13 +45,13 @@ impl Snapshot {
         let goals = self
             .frames
             .iter()
-            .map(|x| x.engine.pretty_print(&x.goal))
+            .map(|x| x.engine.pretty_print_to_html(&x.goal))
             .collect();
         let frame = self.frames.last().unwrap();
         let hyps = frame
             .hyps
             .iter()
-            .map(|x| (x.name.clone(), frame.engine.pretty_print(&x.ty)))
+            .map(|x| (x.name.clone(), frame.engine.pretty_print_to_html(&x.ty)))
             .collect();
         Monitor::Running { goals, hyps }
     }

@@ -47,7 +47,11 @@ pub type TermRef = Rc<Term>;
 
 impl Debug for Term {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&term_pretty_print(self, |_| true, &Default::default()))
+        f.write_str(&term_pretty_print::<String, _>(
+            self,
+            |_| true,
+            &Default::default(),
+        ))
     }
 }
 

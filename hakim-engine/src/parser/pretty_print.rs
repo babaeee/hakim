@@ -1,8 +1,4 @@
-use std::{
-    cmp::min,
-    collections::HashSet,
-    fmt::{Display, Write},
-};
+use std::{cmp::min, collections::HashSet, fmt::Display};
 
 use crate::{
     app_ref,
@@ -14,7 +10,7 @@ use crate::{
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::{span_counter::AstStacker, AstTerm, PrecLevel};
+use super::{semantic_highlight::HighlightTag, span_counter::AstStacker, AstTerm, PrecLevel};
 
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
@@ -126,11 +122,14 @@ fn detect_exists(t: &Term) -> Option<(TermRef, TermRef)> {
     }
 }
 
-fn check_name(names: &(Vec<(String, usize)>, impl Fn(&str) -> bool), name: &str) -> bool {
+fn check_name(names: &(Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool), name: &str) -> bool {
     names.1(name) && names.0.iter().all(|x| x.0 != name)
 }
 
-fn generate_name(names: &(Vec<(String, usize)>, impl Fn(&str) -> bool), hint: &str) -> String {
+fn generate_name(
+    names: &(Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
+    hint: &str,
+) -> String {
     if check_name(names, hint) {
         return hint.to_string();
     }
@@ -157,14 +156,14 @@ fn extract_fun_from_term(term: TermRef, ty: TermRef) -> Abstraction {
 
 pub fn term_to_ast(
     term: &Term,
-    names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
+    names: &mut (Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
     c: &PrettyPrintConfig,
 ) -> AstTerm {
     use super::{binop::BinOp, uniop::UniOp};
     use AstTerm::*;
     fn for_abs(
         abs: &Abstraction,
-        names: &mut (Vec<(String, usize)>, impl Fn(&str) -> bool),
+        names: &mut (Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
         c: &PrettyPrintConfig,
     ) -> AstAbs {
         let Abstraction {
@@ -178,11 +177,12 @@ pub fn term_to_ast(
         } else {
             generate_name(names, "x")
         };
-        names.0.push((name.clone(), 0));
+        names.0.push((name.clone(), 0, var_ty.clone()));
         let body = term_to_ast(body, names, c);
         names.0.pop();
         AstAbs {
             name: vec![name],
+            tag: Some(HighlightTag::from_type(var_ty)),
             ty: Some(Box::new(ty)),
             body: Box::new(body),
         }
@@ -227,16 +227,21 @@ pub fn term_to_ast(
         }
     }
     match term {
-        Term::Axiom { unique_name, .. } => Ident(unique_name.clone()),
+        Term::Axiom { unique_name, ty } => {
+            Ident(unique_name.clone(), Some(HighlightTag::from_type(ty)))
+        }
         Term::Universe { index } => Universe(*index),
         Term::Forall(abs) => compress_abs(AbsSign::Forall, for_abs(abs, names, c)),
         Term::Fun(abs) => compress_abs(AbsSign::Fun, for_abs(abs, names, c)),
-        Term::Var { index } => Ident(if let Some(x) = names.0.iter_mut().rev().nth(*index) {
-            x.1 += 1;
-            x.0.clone()
-        } else {
-            format!("@{}", index - names.0.len())
-        }),
+        Term::Var { index } => {
+            let (var_name, tag) = if let Some(x) = names.0.iter_mut().rev().nth(*index) {
+                x.1 += 1;
+                (x.0.clone(), HighlightTag::from_type(&x.2))
+            } else {
+                (format!("@{}", index - names.0.len()), HighlightTag::Ident)
+            };
+            Ident(var_name, Some(tag))
+        }
         Term::Number { value } => Number(value.clone()),
         Term::App { func, op } => BinOp(
             Box::new(term_to_ast(func, names, c)),
@@ -248,6 +253,8 @@ pub fn term_to_ast(
 }
 
 impl AstStacker for std::fmt::Formatter<'_> {
+    fn push_highlight(&mut self, _: HighlightTag) {}
+    fn pop_highlight(&mut self) {}
     fn push_ast(&mut self, _: &AstTerm) {}
     fn pop_ast(&mut self) {}
     fn paren_open(&mut self) {}
@@ -255,6 +262,8 @@ impl AstStacker for std::fmt::Formatter<'_> {
 }
 
 impl AstStacker for String {
+    fn push_highlight(&mut self, _: HighlightTag) {}
+    fn pop_highlight(&mut self) {}
     fn push_ast(&mut self, _: &AstTerm) {}
     fn pop_ast(&mut self) {}
     fn paren_open(&mut self) {}
@@ -277,10 +286,10 @@ pub struct PrettyPrintConfig {
 pub fn pretty_print_ast(
     ast: &AstTerm,
     level: (PrecLevel, PrecLevel),
-    r: &mut (impl Write + AstStacker),
+    r: &mut impl AstStacker,
     c: &PrettyPrintConfig,
 ) -> Result<(), std::fmt::Error> {
-    fn with_paren<T: Write + AstStacker>(
+    fn with_paren<T: AstStacker>(
         should_paren: bool,
         r: &mut T,
         f: impl FnOnce(&mut T) -> Result<(), std::fmt::Error>,
@@ -299,8 +308,8 @@ pub fn pretty_print_ast(
     use super::binop::BinOp::App;
     r.push_ast(ast);
     match ast {
-        AstTerm::Universe(0) => write!(r, "Universe")?,
-        AstTerm::Universe(x) => write!(r, "Universe{x}")?,
+        AstTerm::Universe(0) => HighlightTag::Type.print(r, |r| write!(r, "Universe"))?,
+        AstTerm::Universe(x) => HighlightTag::Type.print(r, |r| write!(r, "Universe{x}"))?,
         AstTerm::Len(x) => {
             let should_paren = level.1 == App.level_right() || level.0 == App.level_right();
             with_paren(should_paren, r, |r| {
@@ -309,12 +318,21 @@ pub fn pretty_print_ast(
                 write!(r, "|")
             })?;
         }
-        AstTerm::Abs(sign, AstAbs { name, ty, body }) => {
+        AstTerm::Abs(
+            sign,
+            AstAbs {
+                name,
+                ty,
+                body,
+                tag,
+            },
+        ) => {
+            let tag = tag.expect("Ast::Abs is not ready for pretty print");
             let should_paren = level.1 < PrecLevel::MAX || level.0 == App.level_right();
             with_paren(should_paren, r, |r| {
                 write!(r, "{sign}")?;
                 for n in name {
-                    write!(r, " {n}")?;
+                    tag.print(r, |r| write!(r, " {n}"))?;
                 }
                 if let Some(ty) = ty {
                     write!(r, ": ")?;
@@ -324,7 +342,9 @@ pub fn pretty_print_ast(
                 pretty_print_ast(body, PMX, r, c)
             })?;
         }
-        AstTerm::Ident(x) => write!(r, "{x}")?,
+        AstTerm::Ident(name, tag) => tag
+            .expect("Ast::Ident is not ready for pretty print")
+            .print(r, |r| write!(r, "{name}"))?,
         AstTerm::BinOp(a, op, b) => {
             let (level, should_paren) = if min(level.0, level.1) < op.prec() {
                 ((PrecLevel::MAX, PrecLevel::MAX), true)
@@ -352,13 +372,24 @@ pub fn pretty_print_ast(
                 pretty_print_ast(t, (op.prec(), level_r), r, c)
             })?;
         }
-        AstTerm::Number(x) => write!(r, "{x}")?,
+        AstTerm::Number(x) => {
+            r.push_highlight(HighlightTag::Literal);
+            write!(r, "{x}")?;
+            r.pop_highlight();
+        }
         AstTerm::Wild(Some(x)) => write!(r, "?{x}")?,
         AstTerm::Wild(None) => write!(r, "?")?,
-        AstTerm::Set(AstSet::Abs(AstAbs { name, ty, body })) => {
+        AstTerm::Set(AstSet::Abs(AstAbs {
+            name,
+            ty,
+            body,
+            tag,
+        })) => {
             assert_eq!(name.len(), 1);
             let name = name.iter().next().unwrap();
-            write!(r, "{{ {name}")?;
+            write!(r, "{{ ")?;
+            tag.expect("Ast::Set is not ready for pretty print")
+                .print(r, |r| write!(r, "{name}"))?;
             if let Some(ty) = ty {
                 write!(r, ": ")?;
                 pretty_print_ast(ty, PMX, r, c)?;
@@ -384,19 +415,19 @@ pub fn pretty_print_ast(
     Ok(())
 }
 
-pub fn term_pretty_print(
+pub fn term_pretty_print<T: Default + AstStacker, F: Fn(&str) -> bool>(
     term: &Term,
-    contain_name: impl Fn(&str) -> bool,
+    contain_name: F,
     c: &PrettyPrintConfig,
-) -> String {
+) -> T {
     let ast = term_to_ast(term, &mut (vec![], contain_name), c);
-    let mut r = String::new();
+    let mut r = T::default();
     if cfg!(test) {
         pretty_print_ast(&ast, PMX, &mut r, c).unwrap();
     } else {
-        r.push('\u{2068}');
+        write!(r, "\u{2068}").unwrap();
         pretty_print_ast(&ast, PMX, &mut r, c).unwrap();
-        r.push('\u{2069}');
+        write!(r, "\u{2069}").unwrap();
     }
     r
 }

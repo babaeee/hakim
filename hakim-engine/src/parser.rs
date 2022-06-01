@@ -1,6 +1,7 @@
 mod ast;
 mod binop;
 mod pretty_print;
+mod semantic_highlight;
 mod span_counter;
 mod tokenizer;
 mod uniop;
@@ -11,6 +12,7 @@ use std::ops::Sub;
 pub use self::ast::{ast_to_term, AstTerm};
 pub use self::binop::BinOp;
 pub use self::pretty_print::{term_pretty_print, term_to_ast, PrettyPrintConfig};
+pub use self::semantic_highlight::{HighlightTag, HtmlRenderer};
 pub use self::span_counter::pos_of_span;
 pub use self::tokenizer::{is_valid_ident, is_whity_char};
 pub use self::wild::{fix_wild_scope, InferGenerator};
