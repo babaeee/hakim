@@ -29,21 +29,34 @@ type onSelectLogicType = (x: {
     replaceTactic: (x: { start: number, end: number, text: string, userInp: string }) => string | undefined,
 }) => (e: any) => Promise<void>;
 const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggleMenu, replaceTactic }) => async (e) => {
-    ty = ty.replaceAll('<span class="highlightLiteral">', '');
-    ty = ty.replaceAll('<span class="highlightType">', '');
-    ty = ty.replaceAll('<span class="highlightIdent">', '');
-    ty = ty.replaceAll('<span class="highlightFunction">', '');
+    ty = ty.replaceAll(/<span [^>]*>/g, '');
     ty = ty.replaceAll('</span>', '');
     console.log(ty);
     const sel = window.getSelection();
     console.log(sel);
     if (!sel) return;
     if (sel.toString() === '') return;
-    if (sel.anchorNode?.parentElement !== e.target
-        && sel.anchorNode?.parentElement?.parentElement !== e.target) return;
+    console.log(sel.anchorNode);
+    console.log(e.target);
+    if (sel.anchorNode !== e.target?.parentElement
+        && sel.anchorNode?.parentElement !== e.target?.parentElement
+        && sel.anchorNode?.parentElement?.parentElement !== e.target
+        && sel.anchorNode?.parentElement?.parentElement?.parentElement !== e.target
+        && sel.anchorNode?.parentElement?.parentElement !== e.target?.parentElement) return;
     const range = sel.getRangeAt(0);
-    let start = range.startOffset;
-    let end = range.endOffset;
+    console.log(range);
+    console.log(range.toString());
+    const offsetOfNode = (node: Node): number => {
+        if (node.parentElement?.dataset.pos) {
+            return Number(node.parentElement?.dataset.pos);
+        }
+        if (node.previousSibling && node.previousSibling instanceof HTMLElement) {
+            return Number(node.previousSibling?.dataset.pos) + node.previousSibling.innerText.length;
+        }
+        return 0;
+    }
+    let start = range.startOffset + offsetOfNode(range.startContainer);
+    let end = range.endOffset + offsetOfNode(range.endContainer);
     while (ty[start] === ' ') start += 1;
     while (ty[end - 1] === ' ') end -= 1;
     const text = ty.slice(start, end).trim().replaceAll('\u2068', '').replaceAll('\u2069', '');

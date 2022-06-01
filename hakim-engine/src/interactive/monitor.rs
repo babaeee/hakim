@@ -13,6 +13,16 @@ pub enum Monitor {
 
 use Monitor::*;
 
+impl Monitor {
+    #[cfg(test)]
+    fn hyp_names(&self) -> Vec<String> {
+        match self {
+            Running { hyps, .. } => hyps.iter().map(|(x, y)| x.clone()).collect(),
+            Finished => unreachable!(),
+        }
+    }
+}
+
 impl Display for Monitor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         match self {
@@ -68,16 +78,7 @@ mod tests {
             "intros",
             EngineLevel::Full,
         );
-        assert_eq!(
-            x.monitor_string(),
-            r#" A: Universe
- P: A → Universe
- H: ∀ x: A, P x
- H0: ∃ x: A, ~ P x
---------------------------------------------(1/1)
-    False
-"#
-        );
+        assert_eq!(x.monitor().hyp_names(), vec!["A", "P", "H", "H0"]);
     }
 
     #[test]
@@ -93,15 +94,8 @@ mod tests {
             EngineLevel::Full,
         );
         assert_eq!(
-            x.monitor_string(),
-            r#" A: Universe
- P: A → Universe
- H: ∀ x: A, P x
- H0_value: A
- H0_proof: ~ P H0_value
---------------------------------------------(1/1)
-    False
-"#
+            x.monitor().hyp_names(),
+            vec!["A", "P", "H", "H0_value", "H0_proof"]
         );
     }
 }

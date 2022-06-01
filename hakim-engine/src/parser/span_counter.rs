@@ -157,19 +157,25 @@ pub fn pos_of_span(ast: &AstTerm, span: (usize, usize), c: &PrettyPrintConfig) -
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{parse, pretty_print::PrettyPrintConfig};
+    use crate::parser::{
+        parse, pretty_print::PrettyPrintConfig, semantic_highlight::fill_highlight_dummy, AstTerm,
+    };
 
     use super::{ast_of_span, pos_of_span};
 
+    fn my_parse(s: &str) -> AstTerm {
+        fill_highlight_dummy(parse(s).unwrap())
+    }
+
     fn not_found(s: &str, span: (usize, usize)) {
-        let x = parse(s).unwrap();
+        let x = my_parse(s);
         assert_eq!(x.to_string(), s);
         let y = ast_of_span(&x, span, &PrettyPrintConfig::default());
         assert!(y.is_none());
     }
 
     fn one(s: &str, span: (usize, usize), r: &str) {
-        let x = parse(s).unwrap();
+        let x = my_parse(s);
         assert_eq!(x.to_string(), s);
         let y = ast_of_span(&x, span, &PrettyPrintConfig::default()).unwrap_or_else(|| {
             panic!("bad span {span:?} for {s}");
@@ -178,7 +184,7 @@ mod tests {
     }
 
     fn pos(s: &str, span: (usize, usize), r: usize) {
-        let x = parse(s).unwrap();
+        let x = my_parse(s);
         assert_eq!(x.to_string(), s);
         let y = pos_of_span(&x, span, &PrettyPrintConfig::default()).unwrap_or_else(|| {
             panic!("bad span {span:?} for {s}");
