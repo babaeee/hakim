@@ -22,6 +22,9 @@ pub struct FindInstance {
 
 impl FindInstance {
     pub(crate) fn first_needed_wild(&self) -> usize {
+        if let Some(x) = self.infer.unresolved_obligations.get(0) {
+            return x.var;
+        }
         let mut r = None;
         for ty in &self.infer.tys {
             let t = map_reduce_wild(ty, &mut |x, _| Some(x), &std::cmp::min);
@@ -183,6 +186,14 @@ fn try_argument_count_for_goal(
     dbg!(&term);
     let twa_ty = type_of_and_infer(term.clone(), &mut infers)?;
     subtype_and_infer(twa_ty.clone(), goal, &mut infers)?;
+    if !infers.unresolved_obligations.is_empty() {
+        return Err(CanNotFindInstance(Box::new(FindInstance {
+            engine: frame.engine,
+            infer: infers,
+            exp: term,
+            ty: twa_ty,
+        })));
+    }
     let mut v = vec![];
     for i in 0..infers.n {
         let mut frame = frame.clone();
@@ -193,12 +204,12 @@ fn try_argument_count_for_goal(
             frame.goal = normalize(infers.tys[i].clone());
             v.push(frame);
         } else {
-            return Err(CanNotFindInstance(FindInstance {
+            return Err(CanNotFindInstance(Box::new(FindInstance {
                 engine: frame.engine,
                 infer: infers,
                 exp: term,
                 ty: twa_ty,
-            }));
+            })));
         }
     }
     Ok(v)
@@ -359,6 +370,62 @@ mod tests {
             intros a
             apply z_simple_induction"#,
             EngineLevel::Full,
+        );
+    }
+
+    #[test]
+    fn soundness_bug_simple_recursion() {
+        run_interactive_to_fail(
+            "∃ f: ℤ → ℤ, f 0 = 1 ∧ ∀ n: ℤ, 0 ≤ n → f (n + 1) = n * f (n + 2)",
+            r#""#,
+            "apply z_simple_recursion",
+        );
+    }
+
+    fn instance_recovery(
+        goal: &str,
+        tactics: &str,
+        fail_tactic: &str,
+        first_wild: usize,
+        answer: &str,
+    ) {
+        let mut se = run_interactive(goal, tactics, EngineLevel::Full);
+        let e = se.run_tactic(fail_tactic);
+        if let Err(Error::CanNotFindInstance(e)) = e {
+            assert_eq!(e.first_needed_wild(), first_wild);
+            let tac = e.tactic_by_answer(answer).unwrap();
+            se.run_tactic(&tac).unwrap();
+            return;
+        }
+        panic!("Expected to not finding instance");
+    }
+
+    #[test]
+    fn recover_instance_lt_trans() {
+        instance_recovery(
+            "forall a b c d: ℤ, a < b -> c < d -> a + c < b + d",
+            r#"
+        intros a b c d a_lt_b c_lt_d
+        add_hyp (a + c < b + c)
+        apply lt_plus_r
+        apply a_lt_b
+        add_hyp (b + c < b + d)
+        apply lt_plus_l
+        apply c_lt_d"#,
+            "apply lt_trans",
+            2,
+            "b + c",
+        );
+    }
+
+    #[test]
+    fn recover_instance_z_recursion() {
+        instance_recovery(
+            "∃ f: ℤ → ℤ, f 0 = 1 ∧ ∀ n: ℤ, 0 ≤ n → f (n + 1) = n * f n",
+            r#""#,
+            "apply z_simple_recursion",
+            6,
+            "λ n pf, n * pf",
         );
     }
 }

@@ -9,10 +9,17 @@ use std::cmp::max;
 use std::iter::once;
 
 #[derive(Debug, Clone)]
+pub struct Obligation {
+    pub var: usize,
+    pub eq: (TermRef, TermRef),
+}
+
+#[derive(Debug, Clone)]
 pub struct InferResults {
     pub n: usize,
     pub terms: Vec<TermRef>,
     pub tys: Vec<TermRef>,
+    pub unresolved_obligations: Vec<Obligation>,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -51,7 +58,12 @@ impl InferResults {
             terms.push(VarCategory::Term(i).to_term(0));
             tys.push(VarCategory::Ty(i).to_term(0));
         }
-        InferResults { terms, tys, n }
+        InferResults {
+            terms,
+            tys,
+            n,
+            unresolved_obligations: vec![],
+        }
     }
 
     pub fn add_var(&mut self) -> TermRef {
@@ -153,11 +165,11 @@ fn match_and_infer_without_normalize(
         if let Some((i, scope)) = is_wild(&t2) {
             return match_wild(i, scope, t1, infers);
         }
-        if func_is_wild(&t1) {
-            return match_wild_func(&t1, t2, infers);
+        if let Some(w) = func_is_wild(&t1) {
+            return match_wild_func(w, t1, t2, infers);
         }
-        if func_is_wild(&t2) {
-            return match_wild_func(&t2, t1, infers);
+        if let Some(w) = func_is_wild(&t2) {
+            return match_wild_func(w, t2, t1, infers);
         }
         match (t1.as_ref(), t2.as_ref()) {
             (
@@ -244,22 +256,30 @@ fn match_and_infer_without_normalize(
             main(infers.get_with_scope(i, scope), t, infers)
         }
     }
-    fn func_is_wild(t: &Term) -> bool {
+    fn func_is_wild(t: &Term) -> Option<(usize, usize)> {
         if let Term::App { func, .. } = t {
-            if is_wild(func).is_some() {
-                true
-            } else {
-                func_is_wild(func)
-            }
+            is_wild(func).or_else(|| func_is_wild(func))
         } else {
-            false
+            None
         }
     }
-    fn match_wild_func(wild_func: &Term, exp: TermRef, infers: &mut InferResults) -> Result<()> {
+    fn match_wild_func(
+        wild: (usize, usize),
+        wild_func: TermRef,
+        exp: TermRef,
+        infers: &mut InferResults,
+    ) -> Result<()> {
+        let mut unresolved = || {
+            infers.unresolved_obligations.push(Obligation {
+                var: wild.0,
+                eq: (wild_func.clone(), exp.clone()),
+            });
+            Ok(())
+        };
         // here we handle matching ?w f1 with an expression containing f1. This is
         // useful in infering induction. Since ?w can not contain foriegn variables, it
         // can be determined uniquely.
-        if let Term::App { func, op } = wild_func {
+        if let Term::App { func, op } = wild_func.as_ref() {
             let (wild, scope) = if let Term::Wild { index, scope } = func.as_ref() {
                 if !infers.is_unknown(*index) {
                     return Ok(());
@@ -267,7 +287,7 @@ fn match_and_infer_without_normalize(
                     (*index, *scope)
                 }
             } else {
-                return Ok(());
+                return unresolved();
             };
             let var = if let Term::Var { index } = op.as_ref() {
                 *index
@@ -296,6 +316,7 @@ fn match_and_infer_without_normalize(
                 replace_var(exp, 0, var)
             };
             infers.set(wild, term_ref!(fun var_ty, fbody))?;
+            return Ok(());
         }
         fn replace_var(exp: TermRef, depth: usize, var: usize) -> TermRef {
             fn for_abs(abs: Abstraction, depth: usize, var: usize) -> Abstraction {
@@ -332,7 +353,7 @@ fn match_and_infer_without_normalize(
                 }),
             }
         }
-        Ok(())
+        unresolved()
     }
     main(t1.clone(), t2.clone(), infers)
         .map_err(|e| e.with_context(InMatching(t1.clone(), t2.clone())))

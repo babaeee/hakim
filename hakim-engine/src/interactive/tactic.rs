@@ -40,7 +40,7 @@ pub enum Error {
     InvalidGoalNumber { i: usize, n: usize },
     HypIsFromLib(String),
     EngineError(super::Error),
-    CanNotFindInstance(FindInstance),
+    CanNotFindInstance(Box<FindInstance>),
     ContextDependOnHyp(String, TermRef),
     TermIsNotType(TermRef),
 }
