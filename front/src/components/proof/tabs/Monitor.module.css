@@ -1,3 +1,7 @@
+.hyp * {
+  color: #D4D4D4;
+}
+
 .hyp {
   touch-action: none;
   display: block !important;
