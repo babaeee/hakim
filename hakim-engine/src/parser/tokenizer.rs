@@ -17,6 +17,7 @@ impl Display for AbsSign {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
+    Char(char),
     Ident(String),
     Abs(AbsSign),
     Sign(String),
@@ -31,7 +32,7 @@ use Token::*;
 
 trait Eater {
     fn pick_char(&self) -> Option<char>;
-    fn eat_char(&mut self) -> char;
+    fn eat_char(&mut self) -> Result<char, String>;
     fn eat_prefix(&mut self, prefix: &str) -> bool;
 }
 
@@ -40,10 +41,13 @@ impl Eater for &str {
         self.chars().next()
     }
 
-    fn eat_char(&mut self) -> char {
-        let c = self.chars().next().unwrap();
+    fn eat_char(&mut self) -> Result<char, String> {
+        let c = self
+            .chars()
+            .next()
+            .ok_or_else(|| "unexpected end of file".to_string())?;
         *self = &self[c.len_utf8()..];
-        c
+        Ok(c)
     }
 
     fn eat_prefix(&mut self, prefix: &str) -> bool {
@@ -104,14 +108,14 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             result.push(Sign("→".to_string()));
             continue;
         }
-        let c = text.eat_char();
+        let c = text.eat_char()?;
         if is_whity_char(c) {
             continue;
         }
         if is_valid_ident_first_char(c) {
             let mut ident = c.to_string();
             while text.pick_char().map(is_valid_ident_char) == Some(true) {
-                ident.push(text.eat_char());
+                ident.push(text.eat_char()?);
             }
             result.push(match ident.as_str() {
                 "forall" => Abs(AbsSign::Forall),
@@ -122,10 +126,19 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             });
             continue;
         }
+        if c == '\'' {
+            let c = text.eat_char()?;
+            let end = text.eat_char()?;
+            if end != '\'' {
+                return Err("invalid char end".to_string());
+            }
+            result.push(Char(c));
+            continue;
+        }
         if c == '?' {
             let mut name = match text.pick_char() {
                 Some(c) if is_valid_ident_char(c) => {
-                    text.eat_char();
+                    text.eat_char()?;
                     c.to_string()
                 }
                 _ => {
@@ -137,7 +150,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
                 if !is_valid_ident_char(d) {
                     break;
                 }
-                text.eat_char();
+                text.eat_char()?;
                 name.push(d);
             }
             result.push(Wild(Some(name)));
@@ -146,7 +159,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
         if let Some(d) = c.to_digit(10) {
             let mut num = d.into();
             while let Some(d) = text.pick_char().and_then(|x| x.to_digit(10)) {
-                text.eat_char();
+                text.eat_char()?;
                 num = num * 10 + d;
             }
             result.push(Number(num));

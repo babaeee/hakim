@@ -11,7 +11,7 @@ use super::{
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, Abstraction, Term, TermRef},
-    library::prelude::{ex, len1, set_empty, set_from_func, set_singleton, union},
+    library::prelude::{chr, ex, len1, set_empty, set_from_func, set_singleton, union},
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
@@ -38,6 +38,7 @@ pub enum AstTerm {
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
     UniOp(UniOp, Box<AstTerm>),
     Number(BigInt),
+    Char(char),
     Wild(Option<String>),
     Len(Box<AstTerm>),
     Set(AstSet),
@@ -186,6 +187,7 @@ trait TokenEater {
                 _ => Err(ExpectedExprButGot(Token::Sign(s))),
             },
             Token::Number(x) => Ok(Number(x)),
+            Token::Char(c) => Ok(Char(c)),
         }
     }
 
@@ -395,6 +397,14 @@ pub fn ast_to_term(
             }
         }
         Number(num) => Ok(term_ref!(n num)),
+        Char(c) => {
+            if !c.is_ascii_graphic() {
+                return Err(BadChar(c));
+            }
+            let num = BigInt::from(u32::from(c));
+            let nt = term_ref!(n num);
+            Ok(app_ref!(chr(), nt))
+        }
         Len(a) => {
             let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
             let vn = infer_cnt.generate();

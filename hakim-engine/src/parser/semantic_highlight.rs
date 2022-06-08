@@ -7,6 +7,7 @@ use super::span_counter::AstStacker;
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum HighlightTag {
     Literal,
+    String,
     Type,
     Function,
     Ident,
@@ -64,7 +65,7 @@ pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
             AstTerm::Set(AstSet::Abs(t)) => g(t),
             AstTerm::Set(AstSet::Items(t)) => t.iter_mut().for_each(f),
             AstTerm::Len(x) => f(x),
-            AstTerm::Number(_) | AstTerm::Wild(_) | AstTerm::Universe(_) => (),
+            AstTerm::Char(_) | AstTerm::Number(_) | AstTerm::Wild(_) | AstTerm::Universe(_) => (),
         }
     }
     f(&mut ast);

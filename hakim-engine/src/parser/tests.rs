@@ -214,3 +214,17 @@ fn len() {
     parse_pretty("∀ f: ℤ → ℤ, |2| = f (|2|)");
     parse_pretty("∀ x: ℤ, x | |x|");
 }
+
+#[test]
+fn char_and_string() {
+    parse_pretty("'a'");
+    parse_pretty("{'a', 'b', 'c'}");
+    parse_pretty("'('");
+    parse_pretty("'!'");
+    parse_pretty("'~'");
+    parse_pretty("chr 0");
+    parse_not_pretty("chr 97", "'a'");
+    parse_not_pretty("chr 2096", "'0'");
+    parse_error("'gav'");
+    parse_error("''");
+}

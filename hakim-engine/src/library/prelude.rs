@@ -93,6 +93,12 @@ pub fn mod_of() -> TermRef {
 pub fn sigma() -> TermRef {
     term_ref!(axiom "sigma", forall z(), forall z(), forall term_ref!( forall z(), z()), z())
 }
+pub fn char_ty() -> TermRef {
+    term_ref!(axiom "char" , u())
+}
+pub fn chr() -> TermRef {
+    term_ref!(axiom "chr", forall z(), char_ty())
+}
 
 pub fn init_dict() -> im::HashMap<String, TermRef> {
     let mut name_dict = im::HashMap::<String, TermRef>::default();
@@ -122,5 +128,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("included".to_string(), included());
     name_dict.insert("sigma".to_string(), sigma());
     name_dict.insert("len1".to_string(), len1());
+    name_dict.insert("char".to_string(), char_ty());
+    name_dict.insert("chr".to_string(), chr());
     name_dict
 }

@@ -1,5 +1,7 @@
 use std::{cmp::min, collections::HashSet, fmt::Display};
 
+use num_bigint::BigInt;
+
 use crate::{
     app_ref,
     brain::increase_foreign_vars,
@@ -154,6 +156,23 @@ fn extract_fun_from_term(term: TermRef, ty: TermRef) -> Abstraction {
     }
 }
 
+fn detect_char(term: &Term) -> Option<char> {
+    if let Term::App { func, op } = term {
+        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+            if unique_name == "chr" {
+                if let Term::Number { value } = op.as_ref() {
+                    let v = value % BigInt::from(256i32);
+                    let c = char::from(u8::try_from(v).unwrap());
+                    if c.is_ascii_graphic() {
+                        return Some(c);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 pub fn term_to_ast(
     term: &Term,
     names: &mut (Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
@@ -198,6 +217,9 @@ pub fn term_to_ast(
     }
     if let Some((_, exp)) = detect_len(term) {
         return Len(Box::new(term_to_ast(&exp, names, c)));
+    }
+    if let Some(c) = detect_char(term) {
+        return Char(c);
     }
     if let Some((ty, fun)) = detect_exists(term) {
         return compress_abs(
@@ -371,6 +393,11 @@ pub fn pretty_print_ast(
                 };
                 pretty_print_ast(t, (op.prec(), level_r), r, c)
             })?;
+        }
+        AstTerm::Char(x) => {
+            r.push_highlight(HighlightTag::String);
+            write!(r, "'{x}'")?;
+            r.pop_highlight();
         }
         AstTerm::Number(x) => {
             r.push_highlight(HighlightTag::Literal);

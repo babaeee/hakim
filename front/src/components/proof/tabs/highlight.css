@@ -1,3 +1,5 @@
+/* from: https://github.com/microsoft/vscode/blob/main/extensions/theme-defaults/themes/dark_plus.json */
+
 .highlightLiteral {
     color: #b5cea8;
 }
@@ -12,4 +14,8 @@
 
 .highlightType {
     color: #4EC9B0;
+}
+
+.highlightString {
+    color: #ce9178;
 }
