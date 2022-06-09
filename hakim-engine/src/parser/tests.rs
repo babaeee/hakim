@@ -228,3 +228,9 @@ fn char_and_string() {
     parse_error("'gav'");
     parse_error("''");
 }
+
+#[test]
+fn notation_curry() {
+    parse_not_pretty("pow 2", "λ x: ℤ, 2 ^ x");
+    parse_not_pretty("len1 ℤ", "λ x: ℤ, |x|");
+}
