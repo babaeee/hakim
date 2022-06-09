@@ -268,7 +268,7 @@ pub mod tests {
 
     use std::cell::Cell;
 
-    use crate::{brain::Term, parser::structural_print};
+    use crate::parser::structural_print;
 
     use super::Engine;
 
