@@ -66,6 +66,7 @@ binop! {
     Mult, 40, Left, "*";
     Or, 85, Right, "∨";
     Plus, 50, Left, "+";
+    PlusList, 50, Left, "++";
     Pow, 30, Right, "^";
     Union, 50, Left, "∪";
     Setminus, 30, Left, "∖";
@@ -147,6 +148,11 @@ impl BinOp {
             Mult => app_ref!(mult(), l, r),
             Or => app_ref!(or(), l, r),
             Plus => app_ref!(plus(), l, r),
+            PlusList => {
+                let i = infer_cnt.generate();
+                let w = term_ref!(_ i);
+                app_ref!(plus_list(), w, l, r)
+            }
             Pow => app_ref!(pow(), l, r),
             Union => {
                 let i = infer_cnt.generate();
@@ -176,6 +182,7 @@ impl BinOp {
                             "intersection" => (op.clone(), BinOp::Intersection, op2.clone()),
                             "union" => (op.clone(), BinOp::Union, op2.clone()),
                             "setminus" => (op.clone(), BinOp::Setminus, op2.clone()),
+                            "plus_list" => (op.clone(), BinOp::PlusList, op2.clone()),
                             _ => (original_func.clone(), BinOp::App, op2.clone()),
                         },
                         _ => (original_func.clone(), BinOp::App, op2.clone()),

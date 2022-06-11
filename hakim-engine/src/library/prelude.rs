@@ -84,6 +84,20 @@ pub fn included() -> TermRef {
 pub fn len1() -> TermRef {
     term_ref!(axiom "len1", forall u(), forall v0(), z())
 }
+pub fn list() -> TermRef {
+    term_ref!(axiom "list", forall u(), u())
+}
+pub fn plus_list() -> TermRef {
+    term_ref!(axiom "plus_list", forall u(), 
+        forall app_ref!(list(), v0()), forall app_ref!(list(), v1()), app_ref!(list(), v2()))
+}
+pub fn nil() -> TermRef {
+    term_ref!(axiom "nil", forall u(), app_ref!(list(), v0()))
+}
+pub fn cons() -> TermRef {
+    term_ref!(axiom "cons", forall u(), forall v0(), forall app_ref!(list(), v1()), 
+            app_ref!(list(), v2()))
+}
 pub fn divide() -> TermRef {
     term_ref!(axiom "divide", forall z(), forall z(), u())
 }
@@ -122,6 +136,10 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("set_empty".to_string(), set_empty());
     name_dict.insert("set_singleton".to_string(), set_singleton());
     name_dict.insert("setminus".to_string(), setminus());
+    name_dict.insert("list".to_string(), list());
+    name_dict.insert("plus_list".to_string(), plus_list());
+    name_dict.insert("nil".to_string(), nil());
+    name_dict.insert("cons".to_string(), cons());
     name_dict.insert("union".to_string(), union());
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());

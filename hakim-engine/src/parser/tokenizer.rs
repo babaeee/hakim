@@ -108,6 +108,10 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             result.push(Sign("→".to_string()));
             continue;
         }
+        if text.eat_prefix("++") {
+            result.push(Sign("++".to_string()));
+            continue;
+        }
         let c = text.eat_char()?;
         if is_whity_char(c) {
             continue;

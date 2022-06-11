@@ -228,3 +228,7 @@ fn char_and_string() {
     parse_error("'gav'");
     parse_error("''");
 }
+#[test]
+fn list() {
+    parse_pretty("nil ℤ ++ nil ℤ");
+}
