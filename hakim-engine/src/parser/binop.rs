@@ -7,6 +7,8 @@ macro_rules! binop {
             )*
         }
 
+        pub(super) const ALL_BINOPS: &[BinOp] = &[$($name,)*];
+
         impl Display for BinOp {
             fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
                 f.write_str(match self {
@@ -78,7 +80,10 @@ pub enum Assoc {
     No,
 }
 
-use std::fmt::{Display, Formatter};
+use std::{
+    collections::HashSet,
+    fmt::{Display, Formatter},
+};
 
 use Assoc::*;
 use BinOp::*;
@@ -162,7 +167,18 @@ impl BinOp {
     }
 
     pub fn detect(t: &Term) -> Option<(TermRef, Self, TermRef)> {
-        Some(match t {
+        Self::detect_custom(t, &HashSet::from([]))
+    }
+
+    pub fn detect_custom(t: &Term, disabled: &HashSet<Self>) -> Option<(TermRef, Self, TermRef)> {
+        macro_rules! found {
+            ($a:expr , $op:ident , $b:expr) => {
+                if !disabled.contains(&BinOp::$op) {
+                    return Some((($a).clone(), BinOp::$op, ($b).clone()));
+                }
+            };
+        }
+        match t {
             Term::App {
                 func: original_func,
                 op: op2,
@@ -170,52 +186,50 @@ impl BinOp {
                 Term::App { func, op } => match func.as_ref() {
                     Term::App { func, op: _ } => match func.as_ref() {
                         Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
-                            "eq" => (op.clone(), BinOp::Eq, op2.clone()),
-                            "inset" => (op.clone(), BinOp::Inset, op2.clone()),
-                            "included" => (op.clone(), BinOp::Included, op2.clone()),
-                            "intersection" => (op.clone(), BinOp::Intersection, op2.clone()),
-                            "union" => (op.clone(), BinOp::Union, op2.clone()),
-                            "setminus" => (op.clone(), BinOp::Setminus, op2.clone()),
-                            _ => (original_func.clone(), BinOp::App, op2.clone()),
+                            "eq" => found!(op, Eq, op2),
+                            "inset" => found!(op, Inset, op2),
+                            "included" => found!(op, Included, op2),
+                            "intersection" => found!(op, Intersection, op2),
+                            "union" => found!(op, Union, op2),
+                            "setminus" => found!(op, Setminus, op2),
+                            _ => found!(original_func, App, op2),
                         },
-                        _ => (original_func.clone(), BinOp::App, op2.clone()),
+                        _ => found!(original_func, App, op2),
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
-                        "divide" => (op.clone(), BinOp::Divide, op2.clone()),
-                        "iff" => (op.clone(), BinOp::Iff, op2.clone()),
-                        "plus" => (op.clone(), BinOp::Plus, op2.clone()),
-                        "pow" => (op.clone(), BinOp::Pow, op2.clone()),
-                        "minus" => (op.clone(), BinOp::Minus, op2.clone()),
-                        "mod_of" => (op.clone(), BinOp::ModOf, op2.clone()),
-                        "mult" => (op.clone(), BinOp::Mult, op2.clone()),
-                        "lt" => (op.clone(), BinOp::Lt, op2.clone()),
-                        #[allow(clippy::never_loop)]
-                        "or" => loop {
+                        "divide" => found!(op, Divide, op2),
+                        "iff" => found!(op, Iff, op2),
+                        "plus" => found!(op, Plus, op2),
+                        "pow" => found!(op, Pow, op2),
+                        "minus" => found!(op, Minus, op2),
+                        "mod_of" => found!(op, ModOf, op2),
+                        "mult" => found!(op, Mult, op2),
+                        "lt" => found!(op, Lt, op2),
+                        "or" => {
                             if let Some((a1, BinOp::Lt, b1)) = BinOp::detect(op) {
                                 if let Some((a2, BinOp::Eq, b2)) = BinOp::detect(op2) {
                                     if a1 == a2 && b1 == b2 {
-                                        break (a1, BinOp::Le, b1);
+                                        found!(a1, Le, b1);
                                     }
                                 }
                             }
-                            break (op.clone(), BinOp::Or, op2.clone());
-                        },
-                        #[allow(clippy::never_loop)]
-                        "and" => loop {
+                            found!(op, Or, op2);
+                        }
+                        "and" => {
                             if let Some((a1, BinOp::Imply, b1)) = BinOp::detect(op) {
                                 if let Some((b2, BinOp::Imply, a2)) = BinOp::detect(op2) {
                                     if a1 == a2 && b1 == b2 {
-                                        break (a1, BinOp::Iff, b1);
+                                        found!(a1, Iff, b1);
                                     }
                                 }
                             }
-                            break (op.clone(), BinOp::And, op2.clone());
-                        },
-                        _ => (original_func.clone(), BinOp::App, op2.clone()),
+                            found!(op, And, op2);
+                        }
+                        _ => found!(original_func, App, op2),
                     },
-                    _ => (original_func.clone(), BinOp::App, op2.clone()),
+                    _ => found!(original_func, App, op2),
                 },
-                _ => (original_func.clone(), BinOp::App, op2.clone()),
+                _ => found!(original_func, App, op2),
             },
             Term::Forall(Abstraction {
                 body,
@@ -223,9 +237,10 @@ impl BinOp {
                 hint_name: _,
             }) => {
                 let x = remove_unused_var(body.clone(), 0)?;
-                (var_ty.clone(), BinOp::Imply, x)
+                found!(var_ty, Imply, x);
             }
-            _ => return None,
-        })
+            _ => (),
+        }
+        None
     }
 }

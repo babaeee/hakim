@@ -246,8 +246,8 @@ pub fn term_to_ast(
         if let Some((op, t)) = UniOp::detect(term) {
             return Some(UniOp(op, Box::new(term_to_ast(&t, names, c))));
         }
-        if let Some((l, op, r)) = BinOp::detect(term) {
-            if !c.disabled_binops.contains(&op) && op != BinOp::App {
+        if let Some((l, op, r)) = BinOp::detect_custom(term, &c.disabled_binops) {
+            if op != BinOp::App {
                 return Some(BinOp(
                     Box::new(term_to_ast(&l, names, c)),
                     op,

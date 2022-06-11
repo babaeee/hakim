@@ -7,10 +7,15 @@ mod tokenizer;
 mod uniop;
 mod wild;
 
+use std::collections::HashSet;
 use std::ops::Sub;
+
+use crate::library::prelude::z;
+use crate::term_ref;
 
 pub use self::ast::{ast_to_term, AstTerm};
 pub use self::binop::BinOp;
+use self::binop::ALL_BINOPS;
 #[cfg(test)]
 pub use self::pretty_print::structural_print;
 pub use self::pretty_print::{term_pretty_print, term_to_ast, PrettyPrintConfig};
@@ -57,6 +62,29 @@ impl Sub<u8> for PrecLevel {
     fn sub(self, rhs: u8) -> Self::Output {
         Self(self.0 - rhs)
     }
+}
+
+pub fn notation_list() -> Vec<String> {
+    ALL_BINOPS
+        .iter()
+        .map(|x| {
+            let term = x.run_on_term(
+                &mut InferGenerator::default(),
+                term_ref!(axiom "A", z()),
+                term_ref!(axiom "B", z()),
+            );
+            format!(
+                "A {x} B = {}",
+                term_pretty_print::<String, _>(
+                    &term,
+                    |_| true,
+                    &PrettyPrintConfig {
+                        disabled_binops: HashSet::from([*x]),
+                    }
+                )
+            )
+        })
+        .collect()
 }
 
 #[cfg(test)]

@@ -10,6 +10,7 @@ use hakim_engine::{
     all_library_data,
     engine::Engine,
     interactive::{tactic::Error, Session, Suggestion},
+    notation_list,
 };
 use wasm_bindgen::prelude::*;
 
@@ -357,6 +358,10 @@ impl Instance {
             Ok(r) => r,
             Err(e) => format!("{:?}", e),
         }
+    }
+
+    pub fn notation_list(&self) -> JsValue {
+        serde_wasm_bindgen::to_value(&notation_list()).unwrap()
     }
 
     pub fn search(&self, query: &str) -> String {
