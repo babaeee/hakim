@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { allLibraryData, fromMiddleOfLib } from "../../hakim";
 import { g } from "../../i18n";
 import { openProofSession } from "../root/Root";
@@ -27,6 +27,7 @@ export const LibraryViewer = () => {
             <Title title={g`library`} />
             <h1 className={css.title}>{g`library`}</h1>
             <p className={css.text} dir="rtl">{g`library_intro`}</p>
+            <p><Link to="notation">{g`notations`}</Link></p>
             <ul className={css.text}>
                 {data.map((x) => (
                     <Collapsable key={x.name} name={x.name}>

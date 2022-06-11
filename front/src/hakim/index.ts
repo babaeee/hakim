@@ -129,6 +129,10 @@ export const sendTactic = (tactic: string) => {
     return checkErrorAndUpdate(() => instance.run_tactic(tactic));
 };
 
+export const notationList = (): string[] => {
+    return instance.notation_list();
+};
+
 export const getNatural = (): string => {
     return fromRust(instance.natural() || '$invalid_state');
 };

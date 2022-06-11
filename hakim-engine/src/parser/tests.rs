@@ -1,7 +1,40 @@
-use crate::engine::{
-    tests::{build_engine, with_params, EngineLevel},
-    Engine,
+use crate::{
+    engine::{
+        tests::{build_engine, with_params, EngineLevel},
+        Engine,
+    },
+    notation_list,
 };
+
+use std::{sync::mpsc, thread, time::Duration};
+
+fn panic_after<T, F>(d: Duration, f: F) -> T
+where
+    T: Send + 'static,
+    F: FnOnce() -> T,
+    F: Send + 'static,
+{
+    let (done_tx, done_rx) = mpsc::channel();
+    let handle = thread::spawn(move || {
+        let val = f();
+        done_tx.send(()).expect("Unable to send completion signal");
+        val
+    });
+
+    match done_rx.recv_timeout(d) {
+        Ok(_) => handle.join().expect("Thread panicked"),
+        Err(_) => panic!("Thread took too long"),
+    }
+}
+
+#[test]
+fn notation_list_works() {
+    panic_after(Duration::from_millis(1000), || {
+        let r = notation_list();
+        assert!(r.len() < 100);
+        assert!(r.len() > 10);
+    });
+}
 
 fn parse_pretty(exp: &str) {
     parse_not_pretty(exp, exp);
@@ -111,6 +144,16 @@ fn eq() {
         parse_pretty("eq ℤ 2 3");
     });
     parse_pretty("∃ x0: ℤ, x0 = x0 + x0");
+}
+
+#[test]
+fn iff_loop() {
+    with_params("disabled_binops=[↔]", || {
+        parse_not_pretty("True ↔ False", "~ True ∧ (False → True)");
+    });
+    with_params("disabled_binops=[→]", || {
+        parse_not_pretty("False → True", "∀ x: False, True");
+    });
 }
 
 #[test]
@@ -231,4 +274,10 @@ fn char_and_string() {
 #[test]
 fn list() {
     parse_pretty("nil ℤ ++ nil ℤ");
+}
+
+#[test]
+fn notation_curry() {
+    parse_not_pretty("pow 2", "λ x: ℤ, 2 ^ x");
+    parse_not_pretty("len1 ℤ", "λ x: ℤ, |x|");
 }

@@ -9,6 +9,7 @@ import { BrowserRouter, NavigateFunction, Route, Routes } from "react-router-dom
 import css from "./Root.module.css";
 import { addToWinList } from "../adventure/winList";
 import { useState } from "react";
+import { NotationHelper } from "../notation/NotationHelper";
 
 export type State = {
     proofState: ProofState,
@@ -118,7 +119,10 @@ export const Root = () => {
                         <Route path="adventure/*" element={<Adventure />} />
                         <Route path="sandbox" element={<Sandbox />} />
                         <Route path="proof" element={<Proof />} />
-                        <Route path="library" element={<LibraryViewer />} />
+                        <Route path="library">
+                            <Route index element={<LibraryViewer />} />
+                            <Route path="notation" element={<NotationHelper />} />
+                        </Route>
                         <Route path="*" element={<div>404 not found</div>} />
                     </Route>
                 </Routes>

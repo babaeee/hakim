@@ -1,10 +1,11 @@
-use std::{cmp::min, collections::HashSet, fmt::Display};
+use std::{cmp::min, collections::HashSet, fmt::Display, rc::Rc};
 
 use num_bigint::BigInt;
 
 use crate::{
     app_ref,
     brain::increase_foreign_vars,
+    library::prelude,
     parser::{
         ast::{AstAbs, AstSet},
         tokenizer::AbsSign,
@@ -173,6 +174,42 @@ fn detect_char(term: &Term) -> Option<char> {
     None
 }
 
+#[cfg(test)]
+pub fn structural_print(term: &Term) -> String {
+    fn g(w: &mut impl std::fmt::Write, c: char, abs: &Abstraction) -> Result<(), std::fmt::Error> {
+        write!(
+            w,
+            "({c} {}: ",
+            abs.hint_name.as_ref().unwrap_or(&"*".to_string())
+        )?;
+        f(w, &abs.var_ty)?;
+        write!(w, ", ")?;
+        f(w, &abs.body)?;
+        write!(w, ")")
+    }
+    fn f(w: &mut impl std::fmt::Write, term: &Term) -> Result<(), std::fmt::Error> {
+        match term {
+            Term::Axiom { unique_name, .. } => write!(w, "{unique_name}"),
+            Term::Universe { index } => write!(w, "Universe{index}"),
+            Term::Forall(abs) => g(w, '∀', abs),
+            Term::Fun(abs) => g(w, 'λ', abs),
+            Term::Var { index } => write!(w, "@{index}"),
+            Term::Number { value } => write!(w, "{value}"),
+            Term::App { func, op } => {
+                write!(w, "(")?;
+                f(w, func)?;
+                write!(w, " ")?;
+                f(w, op)?;
+                write!(w, ")")
+            }
+            Term::Wild { index, .. } => write!(w, "?{index}"),
+        }
+    }
+    let mut s = "".to_string();
+    f(&mut s, term).unwrap();
+    s
+}
+
 pub fn term_to_ast(
     term: &Term,
     names: &mut (Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
@@ -180,6 +217,46 @@ pub fn term_to_ast(
 ) -> AstTerm {
     use super::{binop::BinOp, uniop::UniOp};
     use AstTerm::*;
+    fn detect_special(
+        term: &Term,
+        names: &mut (Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
+        c: &PrettyPrintConfig,
+    ) -> Option<AstTerm> {
+        if let Some((_, exp)) = detect_len(term) {
+            return Some(Len(Box::new(term_to_ast(&exp, names, c))));
+        }
+        if let Some(c) = detect_char(term) {
+            return Some(Char(c));
+        }
+        if let Some((ty, fun)) = detect_exists(term) {
+            return Some(compress_abs(
+                AbsSign::Exists,
+                for_abs(&extract_fun_from_term(fun, ty), names, c),
+            ));
+        }
+        if let Some((ty, fun)) = detect_set_fn(term) {
+            let x = for_abs(&extract_fun_from_term(fun, ty), names, c);
+            return Some(Set(AstSet::Abs(x)));
+        }
+        if let Some(exp) = detect_set_items(term) {
+            return Some(Set(AstSet::Items(
+                exp.map(|x| term_to_ast(&x, names, c)).collect(),
+            )));
+        }
+        if let Some((op, t)) = UniOp::detect(term) {
+            return Some(UniOp(op, Box::new(term_to_ast(&t, names, c))));
+        }
+        if let Some((l, op, r)) = BinOp::detect_custom(term, &c.disabled_binops) {
+            if op != BinOp::App {
+                return Some(BinOp(
+                    Box::new(term_to_ast(&l, names, c)),
+                    op,
+                    Box::new(term_to_ast(&r, names, c)),
+                ));
+            }
+        }
+        None
+    }
     fn for_abs(
         abs: &Abstraction,
         names: &mut (Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
@@ -215,38 +292,17 @@ pub fn term_to_ast(
             _ => Abs(sign, body),
         }
     }
-    if let Some((_, exp)) = detect_len(term) {
-        return Len(Box::new(term_to_ast(&exp, names, c)));
+    if let Some(value) = detect_special(term, names, c) {
+        return value;
     }
-    if let Some(c) = detect_char(term) {
-        return Char(c);
-    }
-    if let Some((ty, fun)) = detect_exists(term) {
-        return compress_abs(
-            AbsSign::Exists,
-            for_abs(&extract_fun_from_term(fun, ty), names, c),
-        );
-    }
-    if let Some((ty, fun)) = detect_set_fn(term) {
-        let x = for_abs(&extract_fun_from_term(fun, ty), names, c);
-        return Set(AstSet::Abs(x));
-    }
-    if let Some(exp) = detect_set_items(term) {
-        return Set(AstSet::Items(
-            exp.map(|x| term_to_ast(&x, names, c)).collect(),
-        ));
-    }
-    if let Some((op, t)) = UniOp::detect(term) {
-        return UniOp(op, Box::new(term_to_ast(&t, names, c)));
-    }
-    if let Some((l, op, r)) = BinOp::detect(term) {
-        if !c.disabled_binops.contains(&op) {
-            return BinOp(
-                Box::new(term_to_ast(&l, names, c)),
-                op,
-                Box::new(term_to_ast(&r, names, c)),
-            );
-        }
+    let uncurried = app_ref!(
+        increase_foreign_vars(Rc::new(term.clone()), 0),
+        term_ref!(v 0)
+    );
+    if detect_special(&uncurried, names, c).is_some() {
+        let ty = prelude::z(); // FIXME: this is super wrong!!
+        let term = term_ref!(fun ty, uncurried);
+        return term_to_ast(&term, names, c);
     }
     match term {
         Term::Axiom { unique_name, ty } => {
