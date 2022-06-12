@@ -20,3 +20,9 @@ Proof.
     rewrite H1.
     lia.
 Qed.
+
+Axiom valid_paren: list char -> Universe.
+Axiom valid_paren_unfold: ∀ l, valid_paren l -> l = "" ∨ ∃ x y, l = "(" ++ x ++ ")" ++ y.
+Axiom valid_paren_fold: ∀ l, (∃ x y, l = "(" ++ x ++ ")" ++ y) -> valid_paren l.
+Axiom valid_paren_empty: valid_paren "".
+Todo valid_paren_single: valid_paren "()".

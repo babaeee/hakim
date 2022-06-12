@@ -16,8 +16,9 @@ impl Display for AbsSign {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token {
+pub enum TokenValue {
     Char(char),
+    Str(String),
     Ident(String),
     Abs(AbsSign),
     Sign(String),
@@ -25,34 +26,73 @@ pub enum Token {
     Wild(Option<String>),
 }
 
-use std::fmt::{Display, Write};
+#[derive(Clone, PartialEq)]
+pub struct Token {
+    pub value: TokenValue,
+    pub span: (usize, usize),
+    pub original_text: Rc<str>,
+}
+
+impl std::fmt::Debug for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Token")
+            .field("value", &self.value)
+            .field("span", &self.span)
+            .field("original_text", &self.original_text)
+            .finish()
+    }
+}
+
+use std::{
+    fmt::{Display, Write},
+    rc::Rc,
+};
 
 use num_bigint::BigInt;
-use Token::*;
+use TokenValue::*;
+
+pub struct Cursor<'a> {
+    s: &'a str,
+    pos: usize,
+}
+
+impl<'a> From<&'a str> for Cursor<'a> {
+    fn from(s: &'a str) -> Self {
+        Self { s, pos: 0 }
+    }
+}
 
 trait Eater {
+    fn is_end(&self) -> bool;
     fn pick_char(&self) -> Option<char>;
     fn eat_char(&mut self) -> Result<char, String>;
     fn eat_prefix(&mut self, prefix: &str) -> bool;
 }
 
-impl Eater for &str {
+impl Eater for Cursor<'_> {
+    fn is_end(&self) -> bool {
+        self.s.is_empty()
+    }
+
     fn pick_char(&self) -> Option<char> {
-        self.chars().next()
+        self.s.chars().next()
     }
 
     fn eat_char(&mut self) -> Result<char, String> {
         let c = self
+            .s
             .chars()
             .next()
             .ok_or_else(|| "unexpected end of file".to_string())?;
-        *self = &self[c.len_utf8()..];
+        self.s = &self.s[c.len_utf8()..];
+        self.pos += 1;
         Ok(c)
     }
 
     fn eat_prefix(&mut self, prefix: &str) -> bool {
-        if let Some(k) = self.strip_prefix(prefix) {
-            *self = k;
+        if let Some(k) = self.s.strip_prefix(prefix) {
+            self.s = k;
+            self.pos += prefix.chars().count();
             return true;
         }
         false
@@ -82,34 +122,46 @@ pub fn is_valid_ident(s: &str) -> bool {
     chars.all(is_valid_ident_char)
 }
 
-pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
+pub fn tokenize(mut text: Cursor<'_>) -> Result<Vec<Token>, String> {
     let mut result = vec![];
+    let original_text: Rc<str> = text.s.into();
+    let mut prev = 0;
+    macro_rules! push {
+        ($x:expr) => {
+            result.push(Token {
+                value: $x,
+                span: (prev, text.pos),
+                original_text: original_text.clone(),
+            });
+            prev = text.pos;
+        };
+    }
     loop {
-        if text.is_empty() {
+        if text.is_end() {
             return Ok(result);
         }
         if text.eat_prefix("∀") {
-            result.push(Abs(AbsSign::Forall));
+            push!(Abs(AbsSign::Forall));
             continue;
         }
         if text.eat_prefix("∃") {
-            result.push(Abs(AbsSign::Exists));
+            push!(Abs(AbsSign::Exists));
             continue;
         }
         if text.eat_prefix("λ") {
-            result.push(Abs(AbsSign::Fun));
+            push!(Abs(AbsSign::Fun));
             continue;
         }
         if text.eat_prefix("<->") {
-            result.push(Sign("↔".to_string()));
+            push!(Sign("↔".to_string()));
             continue;
         }
         if text.eat_prefix("->") {
-            result.push(Sign("→".to_string()));
+            push!(Sign("→".to_string()));
             continue;
         }
         if text.eat_prefix("++") {
-            result.push(Sign("++".to_string()));
+            push!(Sign("++".to_string()));
             continue;
         }
         let c = text.eat_char()?;
@@ -121,7 +173,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             while text.pick_char().map(is_valid_ident_char) == Some(true) {
                 ident.push(text.eat_char()?);
             }
-            result.push(match ident.as_str() {
+            push!(match ident.as_str() {
                 "forall" => Abs(AbsSign::Forall),
                 "exists" => Abs(AbsSign::Exists),
                 "fn" => Abs(AbsSign::Fun),
@@ -136,7 +188,19 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
             if end != '\'' {
                 return Err("invalid char end".to_string());
             }
-            result.push(Char(c));
+            push!(Char(c));
+            continue;
+        }
+        if c == '"' {
+            let mut s = String::new();
+            loop {
+                let end = text.eat_char()?;
+                if end == '"' {
+                    break;
+                }
+                s.push(end);
+            }
+            push!(Str(s));
             continue;
         }
         if c == '?' {
@@ -146,7 +210,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
                     c.to_string()
                 }
                 _ => {
-                    result.push(Wild(None));
+                    push!(Wild(None));
                     continue;
                 }
             };
@@ -157,7 +221,7 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
                 text.eat_char()?;
                 name.push(d);
             }
-            result.push(Wild(Some(name)));
+            push!(Wild(Some(name)));
             continue;
         }
         if let Some(d) = c.to_digit(10) {
@@ -166,10 +230,10 @@ pub fn tokenize(mut text: &str) -> Result<Vec<Token>, String> {
                 text.eat_char()?;
                 num = num * 10 + d;
             }
-            result.push(Number(num));
+            push!(Number(num));
             continue;
         }
-        result.push(Sign(c.to_string()));
+        push!(Sign(c.to_string()));
         //return Err("Failed to tokenize".to_string());
     }
 }

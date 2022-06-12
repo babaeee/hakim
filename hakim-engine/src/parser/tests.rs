@@ -259,7 +259,7 @@ fn len() {
 }
 
 #[test]
-fn char_and_string() {
+fn chars() {
     parse_pretty("'a'");
     parse_pretty("{'a', 'b', 'c'}");
     parse_pretty("'('");
@@ -271,6 +271,14 @@ fn char_and_string() {
     parse_error("'gav'");
     parse_error("''");
 }
+
+#[test]
+fn strings() {
+    parse_pretty(r#""salam""#);
+    parse_pretty(r#"|""| = 0"#);
+    parse_pretty(r#""salam" ++ "7""#);
+}
+
 #[test]
 fn list() {
     parse_pretty("nil ℤ ++ nil ℤ");

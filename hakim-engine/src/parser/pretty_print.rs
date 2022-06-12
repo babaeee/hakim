@@ -28,6 +28,39 @@ fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     None
 }
 
+fn detect_list_items(mut t: &Term) -> Option<(Vec<TermRef>, TermRef)> {
+    let mut r = vec![];
+    let ty = loop {
+        match t {
+            Term::App { func, op: op2 } => match func.as_ref() {
+                Term::Axiom { unique_name, .. } => {
+                    if unique_name == "nil" {
+                        break op2.clone();
+                    }
+                    return None;
+                }
+                Term::App { func, op: op1 } => match func.as_ref() {
+                    Term::App { func, op: _ } => match func.as_ref() {
+                        Term::Axiom { unique_name, .. } => {
+                            if unique_name == "cons" {
+                                t = op2;
+                                r.push(op1.clone());
+                                continue;
+                            }
+                            return None;
+                        }
+                        _ => return None,
+                    },
+                    _ => return None,
+                },
+                _ => return None,
+            },
+            _ => return None,
+        }
+    };
+    Some((r, ty))
+}
+
 fn detect_set_items(mut t: &Term) -> Option<impl Iterator<Item = TermRef>> {
     let mut r = vec![];
     loop {
@@ -243,6 +276,14 @@ pub fn term_to_ast(
                 exp.map(|x| term_to_ast(&x, names, c)).collect(),
             )));
         }
+        if let Some((l, ty)) = detect_list_items(term) {
+            if ty == prelude::char_ty() {
+                let as_str = l.iter().map(|x| detect_char(x)).collect::<Option<String>>();
+                if let Some(as_str) = as_str {
+                    return Some(Str(as_str));
+                }
+            }
+        }
         if let Some((op, t)) = UniOp::detect(term) {
             return Some(UniOp(op, Box::new(term_to_ast(&t, names, c))));
         }
@@ -453,6 +494,11 @@ pub fn pretty_print_ast(
         AstTerm::Char(x) => {
             r.push_highlight(HighlightTag::String);
             write!(r, "'{x}'")?;
+            r.pop_highlight();
+        }
+        AstTerm::Str(x) => {
+            r.push_highlight(HighlightTag::String);
+            write!(r, r#""{x}""#)?;
             r.pop_highlight();
         }
         AstTerm::Number(x) => {

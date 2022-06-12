@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::{
-    tokenizer::{AbsSign, Token},
+    tokenizer::{AbsSign, Token, TokenValue},
     uniop::UniOp,
     wild::InferGenerator,
     Error::*,
@@ -11,7 +11,7 @@ use super::{
 use crate::{
     app_ref,
     brain::{increase_foreign_vars, Abstraction, Term, TermRef},
-    library::prelude::{chr, ex, len1, set_empty, set_from_func, set_singleton, union},
+    library::prelude::{self, chr, ex, len1, set_empty, set_from_func, set_singleton, union},
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
@@ -39,6 +39,7 @@ pub enum AstTerm {
     UniOp(UniOp, Box<AstTerm>),
     Number(BigInt),
     Char(char),
+    Str(String),
     Wild(Option<String>),
     Len(Box<AstTerm>),
     Set(AstSet),
@@ -57,7 +58,7 @@ trait TokenEater {
 
     fn eat_ident(&mut self) -> Result<String> {
         let t = self.peek_token()?;
-        if let Token::Ident(s) = t {
+        if let TokenValue::Ident(s) = t.value {
             self.eat_token()?;
             Ok(s)
         } else {
@@ -67,7 +68,7 @@ trait TokenEater {
 
     fn eat_ident_vec(&mut self) -> Result<Vec<String>> {
         let mut v = vec![];
-        while let Token::Ident(s) = self.peek_token()? {
+        while let TokenValue::Ident(s) = self.peek_token()?.value {
             self.eat_token()?;
             v.push(s);
         }
@@ -76,12 +77,18 @@ trait TokenEater {
 
     fn eat_sign(&mut self, sign: &str) -> Result<()> {
         let t = self.peek_token()?;
-        if let Token::Sign(s) = t {
+        if let TokenValue::Sign(s) = t.value {
             if s == sign {
                 self.eat_token()?;
                 Ok(())
             } else {
-                Err(ExpectedSignButGot(sign.to_string(), Token::Sign(s)))
+                Err(ExpectedSignButGot(
+                    sign.to_string(),
+                    Token {
+                        value: TokenValue::Sign(s),
+                        ..t
+                    },
+                ))
             }
         } else {
             Err(ExpectedSignButGot(sign.to_string(), t.clone()))
@@ -90,7 +97,7 @@ trait TokenEater {
 
     fn eat_set(&mut self) -> Result<AstTerm> {
         // we already eated Sign("{")
-        if self.look_ahead(1) == Ok(Token::Sign(":".to_string())) {
+        if self.look_ahead(1).map(|x| x.value) == Ok(TokenValue::Sign(":".to_string())) {
             let name = vec![self.eat_ident()?];
             self.eat_sign(":")?;
             let ty = Some(Box::new(self.eat_ast_with_disallowed_sign(|x| x == "|")?));
@@ -103,7 +110,7 @@ trait TokenEater {
                 body,
                 tag: None,
             })))
-        } else if self.look_ahead(1) == Ok(Token::Sign("|".to_string())) {
+        } else if self.look_ahead(1).map(|x| x.value) == Ok(TokenValue::Sign("|".to_string())) {
             let name = vec![self.eat_ident()?];
             self.eat_sign("|")?;
             let body = Box::new(self.eat_ast()?);
@@ -117,12 +124,12 @@ trait TokenEater {
         } else {
             let mut r = vec![];
             loop {
-                if self.peek_token()? == Token::Sign("}".to_string()) {
+                if self.peek_token()?.value == TokenValue::Sign("}".to_string()) {
                     self.eat_token()?;
                     break Ok(Set(AstSet::Items(r)));
                 }
                 r.push(self.eat_ast()?);
-                if self.peek_token()? == Token::Sign("}".to_string()) {
+                if self.peek_token()?.value == TokenValue::Sign("}".to_string()) {
                     self.eat_token()?;
                     break Ok(Set(AstSet::Items(r)));
                 }
@@ -132,8 +139,9 @@ trait TokenEater {
     }
 
     fn eat_ast_without_app(&mut self) -> Result<AstTerm> {
-        match self.eat_token()? {
-            Token::Ident(s) => {
+        let t = self.eat_token()?;
+        match t.value {
+            TokenValue::Ident(s) => {
                 if let Some(index) = s.strip_prefix("Universe") {
                     if index.is_empty() {
                         Ok(Universe(0))
@@ -148,13 +156,13 @@ trait TokenEater {
                     Ok(Ident(s, None))
                 }
             }
-            Token::Wild(i) => {
+            TokenValue::Wild(i) => {
                 let t = Wild(i);
                 Ok(t)
             }
-            Token::Abs(sign) => {
+            TokenValue::Abs(sign) => {
                 let name = self.eat_ident_vec()?;
-                let ty = if self.peek_token()? == Token::Sign(",".to_string()) {
+                let ty = if self.peek_token()?.value == TokenValue::Sign(",".to_string()) {
                     None
                 } else {
                     self.eat_sign(":")?;
@@ -172,7 +180,7 @@ trait TokenEater {
                     },
                 ))
             }
-            Token::Sign(s) => match s.as_str() {
+            TokenValue::Sign(s) => match s.as_str() {
                 "(" => {
                     let r = self.eat_ast()?;
                     self.eat_sign(")")?;
@@ -184,10 +192,14 @@ trait TokenEater {
                     self.eat_sign("|")?;
                     Ok(Len(Box::new(r)))
                 }
-                _ => Err(ExpectedExprButGot(Token::Sign(s))),
+                _ => Err(ExpectedExprButGot(Token {
+                    value: TokenValue::Sign(s),
+                    ..t
+                })),
             },
-            Token::Number(x) => Ok(Number(x)),
-            Token::Char(c) => Ok(Char(c)),
+            TokenValue::Number(x) => Ok(Number(x)),
+            TokenValue::Char(c) => Ok(Char(c)),
+            TokenValue::Str(c) => Ok(Str(c)),
         }
     }
 
@@ -235,7 +247,7 @@ trait TokenEater {
             let cur = if let Some(c) = cur_opt {
                 c
             } else {
-                if let Ok(Token::Sign(s)) = self.peek_token() {
+                if let Ok(TokenValue::Sign(s)) = self.peek_token().map(|x| x.value) {
                     if let Some(op) = UniOp::from_str(&s) {
                         self.eat_token()?;
                         stack.push(Uni(op));
@@ -253,7 +265,7 @@ trait TokenEater {
                 }
                 Err(err) => return Err(err),
             };
-            if let Token::Sign(s) = t {
+            if let TokenValue::Sign(s) = t.value {
                 if disallow_sign(&s) {
                     cur_opt = Some(cur);
                     break;
@@ -397,14 +409,12 @@ pub fn ast_to_term(
             }
         }
         Number(num) => Ok(term_ref!(n num)),
-        Char(c) => {
-            if !c.is_ascii_graphic() {
-                return Err(BadChar(c));
-            }
-            let num = BigInt::from(u32::from(c));
-            let nt = term_ref!(n num);
-            Ok(app_ref!(chr(), nt))
+        Str(s) => {
+            let v = s.chars().map(char_to_term).collect::<Result<Vec<_>>>()?;
+            let r = list_to_term(v, prelude::char_ty());
+            Ok(r)
         }
+        Char(c) => char_to_term(c),
         Len(a) => {
             let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
             let vn = infer_cnt.generate();
@@ -436,4 +446,21 @@ pub fn ast_to_term(
             Ok(op.run_on_term(infer_cnt, ta, tb))
         }
     }
+}
+
+fn list_to_term(it: Vec<TermRef>, ty: TermRef) -> TermRef {
+    let mut result = app_ref!(prelude::nil(), ty);
+    for x in it.into_iter().rev() {
+        result = app_ref!(prelude::cons(), ty, x, result);
+    }
+    result
+}
+
+fn char_to_term(c: char) -> Result<TermRef> {
+    if !c.is_ascii_graphic() {
+        return Err(BadChar(c));
+    }
+    let num = BigInt::from(u32::from(c));
+    let nt = term_ref!(n num);
+    Ok(app_ref!(chr(), nt))
 }

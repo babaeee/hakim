@@ -65,7 +65,11 @@ pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
             AstTerm::Set(AstSet::Abs(t)) => g(t),
             AstTerm::Set(AstSet::Items(t)) => t.iter_mut().for_each(f),
             AstTerm::Len(x) => f(x),
-            AstTerm::Char(_) | AstTerm::Number(_) | AstTerm::Wild(_) | AstTerm::Universe(_) => (),
+            AstTerm::Char(_)
+            | AstTerm::Str(_)
+            | AstTerm::Number(_)
+            | AstTerm::Wild(_)
+            | AstTerm::Universe(_) => (),
         }
     }
     f(&mut ast);
