@@ -468,3 +468,22 @@ pub fn get_forall_depth(term: &Term) -> usize {
         _ => 0,
     }
 }
+
+pub fn detect_len(t: &Term) -> Option<(TermRef, TermRef)> {
+    match t {
+        Term::App { func, op: op2 } => match func.as_ref() {
+            Term::App { func, op: op1 } => match func.as_ref() {
+                Term::Axiom { ty: _, unique_name } => {
+                    if unique_name == "len1" {
+                        Some((op1.clone(), op2.clone()))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            _ => None,
+        },
+        _ => None,
+    }
+}

@@ -4,7 +4,7 @@ use num_bigint::BigInt;
 
 use crate::{
     app_ref,
-    brain::increase_foreign_vars,
+    brain::{detect_len, increase_foreign_vars},
     library::prelude,
     parser::{
         ast::{AstAbs, AstSet},
@@ -109,25 +109,6 @@ fn detect_set_fn(t: &Term) -> Option<(TermRef, TermRef)> {
             Term::App { func, op: op1 } => match func.as_ref() {
                 Term::Axiom { ty: _, unique_name } => {
                     if unique_name == "set_from_func" {
-                        Some((op1.clone(), op2.clone()))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            _ => None,
-        },
-        _ => None,
-    }
-}
-
-fn detect_len(t: &Term) -> Option<(TermRef, TermRef)> {
-    match t {
-        Term::App { func, op: op2 } => match func.as_ref() {
-            Term::App { func, op: op1 } => match func.as_ref() {
-                Term::Axiom { ty: _, unique_name } => {
-                    if unique_name == "len1" {
                         Some((op1.clone(), op2.clone()))
                     } else {
                         None

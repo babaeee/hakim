@@ -6,7 +6,7 @@ use crate::{
         arith::{LinearPoly, Poly},
         logic::{LogicArena, LogicBuilder, LogicValue},
     },
-    brain::{Term, TermRef},
+    brain::{detect_len, Term, TermRef},
     interactive::Frame,
     parser::BinOp,
     term_ref,
@@ -69,18 +69,32 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
     LogicValue::unknown()
 }
 
-fn inject_div_mod(polies: Vec<Poly>) -> Vec<Poly> {
+fn inject_conditions(polies: Vec<Poly>) -> Vec<Poly> {
+    let m1 = -1;
+    let m1 = term_ref!(n m1);
     let div_mods = polies
         .iter()
         .flat_map(|x| x.variables().iter().flat_map(|x| x.1.iter()))
         .flat_map(|x| {
+            if let Some((ty, _)) = detect_len(x) {
+                return match ty.as_ref() {
+                    Term::App { func, op: _ } => match func.as_ref() {
+                        Term::Axiom { unique_name, .. } => match unique_name.as_str() {
+                            "list" => vec![Poly::from_subtract(x.clone(), m1.clone())],
+                            _ => vec![],
+                        },
+                        _ => vec![],
+                    },
+                    _ => vec![],
+                }
+                .into_iter();
+            }
             if let Some((_, BinOp::ModOf, b)) = BinOp::detect(x) {
                 if let Term::Number { value: bval } = b.as_ref() {
                     if bval.sign() == Sign::Plus {
-                        let m1 = -1;
                         return vec![
                             Poly::from_subtract(b, x.clone()),
-                            Poly::from_subtract(x.clone(), term_ref!(n m1)),
+                            Poly::from_subtract(x.clone(), m1.clone()),
                         ]
                         .into_iter();
                     }
@@ -145,7 +159,7 @@ fn check_contradiction_lp(var_cnt: usize, linear_polies: &[LinearPoly]) -> bool 
 }
 
 fn check_contradiction(polies: &[Poly]) -> bool {
-    let polies = &inject_div_mod(polies.to_vec());
+    let polies = &inject_conditions(polies.to_vec());
     let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
     check_contradiction_lp(var_cnt, &linear_polies)
 }
@@ -332,5 +346,12 @@ mod tests {
             success("∀ x: ℤ, x + x = 2 * x");
         });
         success("∀ x: ℤ, 2 * x = 4 -> x = 2");
+    }
+
+    #[test]
+    fn lists() {
+        success(r#" ∀ l, |l| < |l ++ "x"| "#);
+        fail(r#" ∀ A: U, ∀ a b: list A, |a| < |a ++ b| "#);
+        success(r#" ∀ A: U, ∀ a b: list A, |a| ≤ |a ++ b| "#);
     }
 }
