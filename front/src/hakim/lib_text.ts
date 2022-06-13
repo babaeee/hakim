@@ -8,7 +8,7 @@ import NumberTheory from "../../../library/NumberTheory.v";
 import ProductOperator from "../../../library/ProductOperator.v";
 import Set from "../../../library/Set.v";
 import Sigma from "../../../library/Sigma.v";
-//import List from "../../../library/List.v";
+import List from "../../../library/List.v";
 
 export const loadLibText = () => {
     return {
@@ -22,6 +22,6 @@ export const loadLibText = () => {
         '/ProductOperator': ProductOperator,
         '/Set': Set,
         '/Sigma': Sigma,
-        //'/List': List,
+        '/List': List,
     };
 };

@@ -27,7 +27,7 @@ use self::suggest::{
 };
 
 pub use self::suggest::{SuggClass, SuggRule, Suggestion};
-use self::tactic::{add_from_lib, assumption, auto_set, chain, remove_hyp};
+use self::tactic::{add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hyp {
@@ -374,6 +374,7 @@ impl Frame {
             "add_from_lib" => add_from_lib(frame, parts),
             "lia" => lia(frame),
             "auto_set" => auto_set(frame),
+            "auto_list" => auto_list(frame),
             "assumption" => assumption(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }

@@ -183,7 +183,6 @@ fn try_argument_count_for_goal(
     for _ in 0..d_forall {
         term = app_ref!(term, infers.add_var());
     }
-    dbg!(&term);
     let twa_ty = type_of_and_infer(term.clone(), &mut infers)?;
     subtype_and_infer(twa_ty.clone(), goal, &mut infers)?;
     if !infers.unresolved_obligations.is_empty() {

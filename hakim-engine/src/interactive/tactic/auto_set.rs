@@ -32,8 +32,6 @@ enum EnsembleStatement {
     IsNotMember(TermRef, TermRef),
     IsSubset(TermRef, TermRef),
     IsNotSubset(TermRef, TermRef),
-    True,
-    False,
 }
 
 use std::collections::HashMap;
@@ -234,8 +232,6 @@ enum InternedStatement {
     IsNotMember(usize, usize),
     IsSubset(usize, usize),
     IsNotSubset(usize, usize),
-    False,
-    True,
 }
 
 impl InternedStatement {
@@ -264,8 +260,6 @@ impl InternedStatement {
                     let b = interner.get(b);
                     Self::IsNotSubset(a, b)
                 }
-                EnsembleStatement::False => Self::False,
-                EnsembleStatement::True => Self::True,
             })
             .collect();
         (interner.id_counter, r)
@@ -300,8 +294,6 @@ fn check_contradiction(a: &[EnsembleStatement]) -> bool {
                 m.insert((new_var, *a), true);
                 m.insert((new_var, *b), false);
             }
-            True => (),
-            False => return true,
         }
     }
     let (mut scc, edges) = strong_components(&edges);
@@ -376,8 +368,6 @@ fn negator(x: EnsembleStatement) -> EnsembleStatement {
         IsNotMember(a, b) => IsMember(a, b),
         IsSubset(a, b) => IsNotSubset(a, b),
         IsNotSubset(a, b) => IsSubset(a, b),
-        True => False,
-        False => True,
     }
 }
 

@@ -18,6 +18,9 @@ pub(crate) use hyps::{add_from_lib, add_hyp, remove_hyp};
 mod auto_set;
 pub(crate) use auto_set::auto_set;
 
+mod auto_list;
+pub(crate) use auto_list::auto_list;
+
 mod chain;
 pub(crate) use chain::{chain, destruct};
 

@@ -32,6 +32,8 @@ lazy_static! {
             if let Some(name) = name.strip_suffix(".v") {
                 let text = std::fs::read_to_string(f).unwrap();
                 r.insert(format!("/{name}"), text);
+            } else {
+                panic!("bad library name {name}. Libraries should end with `.v`");
             }
         }
         r

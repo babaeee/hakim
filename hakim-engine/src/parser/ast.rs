@@ -456,8 +456,12 @@ fn list_to_term(it: Vec<TermRef>, ty: TermRef) -> TermRef {
     result
 }
 
+pub fn good_char(c: char) -> bool {
+    c.is_ascii_graphic() || c == ' '
+}
+
 fn char_to_term(c: char) -> Result<TermRef> {
-    if !c.is_ascii_graphic() {
+    if !good_char(c) {
         return Err(BadChar(c));
     }
     let num = BigInt::from(u32::from(c));

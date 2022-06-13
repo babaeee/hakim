@@ -175,7 +175,7 @@ impl Instance {
         }
         let s = s.pop_frame();
         let mut r = None;
-        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "lia"];
+        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia"];
         for tac in AUTO_TAC {
             if s.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
                 r = Some(tac.to_string());
