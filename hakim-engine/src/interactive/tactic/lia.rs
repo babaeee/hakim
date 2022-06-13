@@ -351,6 +351,8 @@ mod tests {
     #[test]
     fn lists() {
         success(r#" ∀ l, |l| < |l ++ "x"| "#);
+        success(r#" ∀ l, cnt char 'x' l + 1 = cnt char 'x' (l ++ "x") "#);
+        success(r#" ∀ l, cnt char 'y' l = cnt char 'y' (l ++ "x") "#);
         fail(r#" ∀ A: U, ∀ a b: list A, |a| < |a ++ b| "#);
         success(r#" ∀ A: U, ∀ a b: list A, |a| ≤ |a ++ b| "#);
     }

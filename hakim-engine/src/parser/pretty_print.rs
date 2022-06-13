@@ -1,10 +1,8 @@
 use std::{cmp::min, collections::HashSet, fmt::Display, rc::Rc};
 
-use num_bigint::BigInt;
-
 use crate::{
     app_ref,
-    brain::{detect_len, increase_foreign_vars},
+    brain::{detect_char, detect_len, increase_foreign_vars},
     library::prelude,
     parser::{
         ast::{AstAbs, AstSet},
@@ -13,9 +11,7 @@ use crate::{
     term_ref, Abstraction, Term, TermRef,
 };
 
-use super::{
-    ast::good_char, semantic_highlight::HighlightTag, span_counter::AstStacker, AstTerm, PrecLevel,
-};
+use super::{semantic_highlight::HighlightTag, span_counter::AstStacker, AstTerm, PrecLevel};
 
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
@@ -171,23 +167,6 @@ fn extract_fun_from_term(term: TermRef, ty: TermRef) -> Abstraction {
             var_ty: ty,
         }
     }
-}
-
-fn detect_char(term: &Term) -> Option<char> {
-    if let Term::App { func, op } = term {
-        if let Term::Axiom { unique_name, .. } = func.as_ref() {
-            if unique_name == "chr" {
-                if let Term::Number { value } = op.as_ref() {
-                    let v = value % BigInt::from(256i32);
-                    let c = char::from(u8::try_from(v).unwrap());
-                    if good_char(c) {
-                        return Some(c);
-                    }
-                }
-            }
-        }
-    }
-    None
 }
 
 #[cfg(test)]

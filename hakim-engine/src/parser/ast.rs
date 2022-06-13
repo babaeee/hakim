@@ -10,7 +10,7 @@ use super::{
 
 use crate::{
     app_ref,
-    brain::{increase_foreign_vars, Abstraction, Term, TermRef},
+    brain::{good_char, increase_foreign_vars, Abstraction, Term, TermRef},
     library::prelude::{self, chr, ex, len1, set_empty, set_from_func, set_singleton, union},
     parser::binop::{Assoc, BinOp},
     term_ref,
@@ -454,10 +454,6 @@ fn list_to_term(it: Vec<TermRef>, ty: TermRef) -> TermRef {
         result = app_ref!(prelude::cons(), ty, x, result);
     }
     result
-}
-
-pub fn good_char(c: char) -> bool {
-    c.is_ascii_graphic() || c == ' '
 }
 
 fn char_to_term(c: char) -> Result<TermRef> {

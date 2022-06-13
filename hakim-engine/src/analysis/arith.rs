@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::brain::{self, type_of};
-use crate::library::prelude::{len1, mult, plus, pow, sigma, z};
+use crate::brain::{self, definitely_inequal, type_of};
+use crate::library::prelude::{cnt, len1, mult, plus, pow, sigma, z};
 use crate::{app_ref, brain::Term, term_ref, TermRef};
 use num_bigint::{BigInt, Sign};
 use typed_arena::Arena;
@@ -143,6 +143,43 @@ fn pow_to_arith(op1: TermRef, op2: TermRef, arena: ArithArena<'_>) -> ArithTree<
     atom_normalizer(app_ref!(pow(), op1, op2))
 }
 
+fn cnt_to_arith(ty: TermRef, arg: TermRef, l: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
+    if let Term::App { func, op: op2 } = l.as_ref() {
+        match func.as_ref() {
+            Term::Axiom { unique_name, .. } => {
+                if unique_name == "nil" {
+                    return arena.alloc(Const(0i32.into()));
+                }
+            }
+            Term::App { func, op: op1 } => {
+                if let Term::App { func, op: _ } = func.as_ref() {
+                    if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                        match unique_name.as_str() {
+                            "cons" => {
+                                let r = cnt_to_arith(ty.clone(), arg.clone(), op2.clone(), arena);
+                                if arg == *op1 {
+                                    return arena.alloc(Plus(arena.alloc(Const(1i32.into())), r));
+                                }
+                                if definitely_inequal(&arg, op1) {
+                                    return r;
+                                }
+                            }
+                            "plus_list" => {
+                                let a = cnt_to_arith(ty.clone(), arg.clone(), op2.clone(), arena);
+                                let b = cnt_to_arith(ty, arg, op1.clone(), arena);
+                                return arena.alloc(Plus(a, b));
+                            }
+                            _ => (),
+                        }
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+    arena.alloc(atom_normalizer(app_ref!(cnt(), ty, l, arg)))
+}
+
 fn len1_to_arith(ty: TermRef, arg: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
     if let Term::App { func, op: op2 } = arg.as_ref() {
         match func.as_ref() {
@@ -236,6 +273,9 @@ fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
                     Term::Axiom { unique_name, .. } => match unique_name.as_str() {
                         "sigma" => {
                             return sigma_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
+                        }
+                        "cnt" => {
+                            return cnt_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
                         }
                         _ => atom_normalizer(t),
                     },

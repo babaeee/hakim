@@ -469,6 +469,27 @@ pub fn get_forall_depth(term: &Term) -> usize {
     }
 }
 
+pub fn good_char(c: char) -> bool {
+    c.is_ascii_graphic() || c == ' '
+}
+
+pub fn detect_char(term: &Term) -> Option<char> {
+    if let Term::App { func, op } = term {
+        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+            if unique_name == "chr" {
+                if let Term::Number { value } = op.as_ref() {
+                    let v = value % BigInt::from(256i32);
+                    let c = char::from(u8::try_from(v).unwrap());
+                    if good_char(c) {
+                        return Some(c);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 pub fn detect_len(t: &Term) -> Option<(TermRef, TermRef)> {
     match t {
         Term::App { func, op: op2 } => match func.as_ref() {
@@ -486,4 +507,13 @@ pub fn detect_len(t: &Term) -> Option<(TermRef, TermRef)> {
         },
         _ => None,
     }
+}
+
+pub fn definitely_inequal(t1: &Term, t2: &Term) -> bool {
+    if let Some(c1) = detect_char(t1) {
+        if let Some(c2) = detect_char(t2) {
+            return c1 != c2;
+        }
+    }
+    false
 }

@@ -98,6 +98,9 @@ pub fn cons() -> TermRef {
     term_ref!(axiom "cons", forall u(), forall v0(), forall app_ref!(list(), v1()), 
             app_ref!(list(), v2()))
 }
+pub fn cnt() -> TermRef {
+    term_ref!(axiom "cnt", forall u(), forall v0(), forall app_ref!(list(), v1()), z())
+}
 pub fn divide() -> TermRef {
     term_ref!(axiom "divide", forall z(), forall z(), u())
 }
@@ -140,6 +143,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("plus_list".to_string(), plus_list());
     name_dict.insert("nil".to_string(), nil());
     name_dict.insert("cons".to_string(), cons());
+    name_dict.insert("cnt".to_string(), cnt());
     name_dict.insert("union".to_string(), union());
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());
