@@ -289,3 +289,8 @@ fn notation_curry() {
     parse_not_pretty("pow 2", "λ x: ℤ, 2 ^ x");
     parse_not_pretty("len1 ℤ", "λ x: ℤ, |x|");
 }
+
+#[test]
+fn hidden_args() {
+    parse_pretty(r#"cnt 'a' "salam""#);
+}

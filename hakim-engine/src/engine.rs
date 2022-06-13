@@ -11,7 +11,7 @@ use crate::{
     library::{all_names, load_library_by_name, prelude},
     parser::{
         self, ast_to_term, fix_wild_scope, is_valid_ident, parse, pos_of_span, term_pretty_print,
-        term_to_ast, BinOp, HtmlRenderer, PrettyPrintConfig,
+        term_to_ast, BinOp, HtmlRenderer, ParserConfig, PrettyPrintConfig,
     },
     search::search,
     term_ref,
@@ -20,6 +20,7 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
+    hidden_args: im::HashMap<String, usize>,
     libs: im::HashMap<String, ()>,
     pub params: im::HashMap<String, String>,
     pub hyp_suggs: im::Vector<SuggRule>,
@@ -64,6 +65,10 @@ impl Default for Engine {
 impl Engine {
     pub fn new(params: &str) -> Self {
         let name_dict = prelude::init_dict();
+        let hidden_args = im::HashMap::<String, usize>::from(HashMap::from([
+            ("finite".to_string(), 1),
+            ("cnt".to_string(), 1),
+        ]));
         let libs = im::HashMap::<String, ()>::default();
         let hyp_suggs = im::Vector::default();
         let goal_suggs = im::Vector::default();
@@ -74,6 +79,7 @@ impl Engine {
             .collect();
         Self {
             name_dict,
+            hidden_args,
             libs,
             params,
             hyp_suggs,
@@ -175,6 +181,9 @@ impl Engine {
             &mut name_stack,
             &mut HashMap::default(),
             &mut infer_cnt,
+            &ParserConfig {
+                names_with_hidden_args: self.hidden_args.clone(),
+            },
         )?;
         let n = infer_cnt.0;
         let term = fix_wild_scope(term, n);

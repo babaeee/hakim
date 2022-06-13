@@ -3,8 +3,8 @@ Import /List.
 Import /Arith.
 Import /NumberTheory.
 
-Axiom rule_of_sum: ∀ T: Universe, ∀ A B: set T, finite T A -> finite T B -> A ∩ B = {} -> |A| + |B| = |A ∪ B|.
-Theorem rule_of_minus: ∀ T: Universe, ∀ A B: set T, finite T A -> B ⊆ A -> |A ∖ B| = |A| - |B|.
+Axiom rule_of_sum: ∀ T: Universe, ∀ A B: set T, finite A -> finite B -> A ∩ B = {} -> |A| + |B| = |A ∪ B|.
+Theorem rule_of_minus: ∀ T: Universe, ∀ A B: set T, finite A -> B ⊆ A -> |A ∖ B| = |A| - |B|.
 Proof.
     intros.
     add_hyp (|A| = |A ∖ B| + |B|).
@@ -110,7 +110,7 @@ Proof.
     apply valid_paren_wrap.
     apply valid_paren_empty.
 Qed.
-Theorem valid_paren_cnt_left: ∀ a, valid_paren a -> ∀ k, 2 * k = |a| -> cnt char '(' a = k.
+Theorem valid_paren_cnt_left: ∀ a, valid_paren a -> ∀ k, 2 * k = |a| -> cnt '(' a = k.
 Proof.
     apply list_induction_len.
     intros.

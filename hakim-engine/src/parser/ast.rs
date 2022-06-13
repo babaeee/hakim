@@ -5,7 +5,7 @@ use super::{
     uniop::UniOp,
     wild::InferGenerator,
     Error::*,
-    HighlightTag, Result,
+    HighlightTag, ParserConfig, Result,
 };
 
 use crate::{
@@ -337,18 +337,19 @@ pub fn ast_to_term(
     name_stack: &mut Vec<String>,
     infer_dict: &mut HashMap<String, usize>,
     infer_cnt: &mut InferGenerator,
+    config: &ParserConfig,
 ) -> Result<TermRef> {
     match ast {
         Universe(x) => Ok(term_ref!(universe x)),
         Set(AstSet::Abs(AstAbs { name, ty, body, .. })) => {
             let var_ty = match ty {
-                Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?,
+                Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt, config)?,
                 None => term_ref!(_ infer_cnt.generate()),
             };
             assert_eq!(name.len(), 1);
             let name = name.into_iter().next().unwrap();
             name_stack.push(name);
-            let body = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt)?;
+            let body = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt, config)?;
             let name = name_stack.pop().unwrap();
             let abs = Abstraction {
                 var_ty: var_ty.clone(),
@@ -365,19 +366,19 @@ pub fn ast_to_term(
             }
             let mut items_iter = items.into_iter();
             let exp = items_iter.next().unwrap();
-            let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt)?;
+            let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt, config)?;
             let mut bag = app_ref!(set_singleton(), w, term);
 
             //push remain element in form {a1} ∪ {a2} ...
             for exp in items_iter {
-                let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt)?;
+                let term = ast_to_term(exp, globals, name_stack, infer_dict, infer_cnt, config)?;
                 bag = app_ref!(union(), w, bag, app_ref!(set_singleton(), w, term));
             }
             Ok(bag)
         }
         Abs(sign, AstAbs { name, ty, body, .. }) => {
             let mut ty_term = match ty {
-                Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt)?,
+                Some(ty) => ast_to_term(*ty, globals, name_stack, infer_dict, infer_cnt, config)?,
                 None => term_ref!(_ infer_cnt.generate()),
             };
             let mut tys = vec![];
@@ -386,7 +387,7 @@ pub fn ast_to_term(
                 ty_term = increase_foreign_vars(ty_term, 0);
                 name_stack.push(n);
             }
-            let mut r = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt)?;
+            let mut r = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt, config)?;
             for var_ty in tys.into_iter().rev() {
                 let name = name_stack.pop().unwrap();
                 let abs = Abstraction {
@@ -403,7 +404,14 @@ pub fn ast_to_term(
                 return Ok(term_ref!(v i));
             }
             if let Some(t) = globals.get(&s) {
-                Ok(t.clone())
+                let tvars = config.names_with_hidden_args.get(&s).copied().unwrap_or(0);
+                let mut r = t.clone();
+                for _ in 0..tvars {
+                    let vn = infer_cnt.generate();
+                    let v = term_ref!(_ vn);
+                    r = app_ref!(r, v);
+                }
+                Ok(r)
             } else {
                 Err(UndefinedName(s))
             }
@@ -416,7 +424,7 @@ pub fn ast_to_term(
         }
         Char(c) => char_to_term(c),
         Len(a) => {
-            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
+            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt, config)?;
             let vn = infer_cnt.generate();
             let v = term_ref!(_ vn);
             Ok(app_ref!(len1(), v, ta))
@@ -437,12 +445,12 @@ pub fn ast_to_term(
             Ok(term_ref!(_ i))
         }
         UniOp(op, a) => {
-            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
+            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt, config)?;
             Ok(op.run_on_term(infer_cnt, ta))
         }
         BinOp(a, op, b) => {
-            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt)?;
-            let tb = ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt)?;
+            let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt, config)?;
+            let tb = ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt, config)?;
             Ok(op.run_on_term(infer_cnt, ta, tb))
         }
     }

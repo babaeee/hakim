@@ -44,6 +44,10 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+pub struct ParserConfig {
+    pub names_with_hidden_args: im::HashMap<String, usize>,
+}
+
 pub fn parse(text: &str) -> Result<AstTerm> {
     let tokens = tokenize(text.into()).map_err(Error::TokenizerError)?;
     tokens_to_ast(&tokens)
