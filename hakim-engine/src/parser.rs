@@ -84,6 +84,7 @@ pub fn notation_list() -> Vec<String> {
                     |_| true,
                     &PrettyPrintConfig {
                         disabled_binops: HashSet::from([*x]),
+                        names_with_hidden_args: im::HashMap::default(),
                     }
                 )
             )

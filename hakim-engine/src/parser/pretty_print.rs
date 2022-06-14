@@ -324,11 +324,18 @@ pub fn term_to_ast(
             Ident(var_name, Some(tag))
         }
         Term::Number { value } => Number(value.clone()),
-        Term::App { func, op } => BinOp(
-            Box::new(term_to_ast(func, names, c)),
-            BinOp::App,
-            Box::new(term_to_ast(op, names, c)),
-        ),
+        Term::App { func, op } => {
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                if let Some(1) = c.names_with_hidden_args.get(unique_name) {
+                    return term_to_ast(func, names, c);
+                }
+            }
+            BinOp(
+                Box::new(term_to_ast(func, names, c)),
+                BinOp::App,
+                Box::new(term_to_ast(op, names, c)),
+            )
+        }
         Term::Wild { index, .. } => Wild(Some(format!("{index}"))),
     }
 }
@@ -362,6 +369,7 @@ const PMX: (PrecLevel, PrecLevel) = (PrecLevel::MAX, PrecLevel::MAX);
 #[derive(Default)]
 pub struct PrettyPrintConfig {
     pub disabled_binops: HashSet<super::BinOp>,
+    pub names_with_hidden_args: im::HashMap<String, usize>,
 }
 
 pub fn pretty_print_ast(

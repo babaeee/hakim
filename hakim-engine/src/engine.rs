@@ -137,6 +137,12 @@ impl Engine {
         self.add_axiom_with_term(name, parsed)
     }
 
+    pub fn calc_type_and_infer(&self, text: &str) -> Result<TermRef> {
+        let (term, ig) = self.parse_text_with_wild(text).unwrap();
+        let ty = type_of_and_infer(term, &mut InferResults::new(ig)).unwrap();
+        Ok(ty)
+    }
+
     pub fn calc_type(&self, text: &str) -> Result<TermRef> {
         let exp = self.parse_text(text)?;
         let ty = type_of(exp)?;
@@ -224,6 +230,7 @@ impl Engine {
                 .split(',')
                 .filter_map(BinOp::from_str)
                 .collect(),
+            names_with_hidden_args: self.hidden_args.clone(),
         }
     }
 

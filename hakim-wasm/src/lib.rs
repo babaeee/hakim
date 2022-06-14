@@ -374,8 +374,8 @@ impl Instance {
             Ok(r) => r
                 .into_iter()
                 .map(|x| {
-                    let ty = eng.calc_type(&x).unwrap();
-                    format!("{}: {:?}\n", x, ty)
+                    let ty = eng.calc_type_and_infer(&x).unwrap();
+                    format!("{}: {}\n", x, eng.pretty_print(&ty))
                 })
                 .collect(),
             Err(e) => format!("{:?}", e),

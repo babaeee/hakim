@@ -71,7 +71,10 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
 mod tests {
     use std::panic::catch_unwind;
 
-    use crate::engine::Engine;
+    use crate::{
+        brain::infer::{type_of_and_infer, InferResults},
+        engine::Engine,
+    };
 
     fn build_engine() -> Engine {
         let mut eng = Engine::default();
@@ -86,7 +89,7 @@ mod tests {
         let r = eng.search(query).unwrap();
         for x in r {
             let r = catch_unwind(|| {
-                let ty = eng.calc_type(&x).unwrap();
+                let ty = eng.calc_type_and_infer(&x).unwrap();
                 format!("{}: {:?}\n", x, ty);
             });
             r.unwrap_or_else(|_| panic!("broken search item showing in {x}"));
