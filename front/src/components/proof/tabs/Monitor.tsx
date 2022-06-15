@@ -219,7 +219,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
 
 const NextGoal = ({ ty, i }: { ty: string, i: number }) => {
     return (
-        <div className={css.hyp} onDoubleClick={() => sendTactic(`Switch ${i + 1}`)}>
+        <div className={css.nextGoal} onDoubleClick={() => sendTactic(`Switch ${i + 1}`)}>
             <span dangerouslySetInnerHTML={{ __html: ty }} />
         </div>
     )
@@ -251,7 +251,7 @@ export const Monitor = () => {
             ))}
             <hr /><Goal ty={goalsR[0]} />
             {goalsR.slice(1).map((goal: any, i: number) => (
-                <><hr /><NextGoal ty={goal} i={i} /></>
+                <><hr style={{ filter: "opacity(0.2)" }} /><NextGoal ty={goal} i={i} /></>
             ))}
         </div>
     )

@@ -1,9 +1,18 @@
+.helpContainer {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    background-color: var(--gray-0);
+    margin-top: 1rem;
+    border-radius: var(--rounded-2);
+    padding: 5px;
+}
+
 .helpItem {
-    display: inline;
-    background-color: purple;
+    display: block;
+    background-color: var(--gray-1);
     color: white;
     border-radius: .4rem;
-    margin: 0 .3rem;
-    padding: .2rem;
+    margin: .5rem .3rem;
+    padding: .2rem .5rem;
     white-space: nowrap;
 }

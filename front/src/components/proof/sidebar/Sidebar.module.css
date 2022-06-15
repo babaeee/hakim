@@ -12,15 +12,24 @@
     max-height: 25vh;
     overflow: auto;
 }
+
 .lemma {
     display: inline;
-    background-color: yellow;
-    color: black;
+    background-color: var(--gray-1);
+    color: white;
     border-radius: .4rem;
-    margin: 0 .3rem;
-    padding: .2rem;
+    margin: .3rem;
+    padding: .2rem .5rem;
+    cursor: pointer;
+}
+
+.lemma:hover {
+    background-color: var(--gray-2);
 }
 
 .lemmaBox {
     line-height: 2rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 100%;
 }

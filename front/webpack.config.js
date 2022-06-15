@@ -44,6 +44,10 @@ const config = {
                     },
                 },
             },
+            {
+              test: /\.(gif|svg|jpg|png|eot|ttf|woff|woff2)$/,
+              loader: "file-loader",
+            },
         ],
     },
     resolve: {
