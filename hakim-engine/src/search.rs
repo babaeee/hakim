@@ -71,10 +71,7 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
 mod tests {
     use std::panic::catch_unwind;
 
-    use crate::{
-        brain::infer::{type_of_and_infer, InferResults},
-        engine::Engine,
-    };
+    use crate::engine::Engine;
 
     fn build_engine() -> Engine {
         let mut eng = Engine::default();
