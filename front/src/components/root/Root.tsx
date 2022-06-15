@@ -107,7 +107,11 @@ export const Root = () => {
         setheight(document.documentElement.clientHeight);
     };
     if (height > width) {
-        return <div>{g`this_page_is_not_optimized_for_mobile`}</div>
+        return (
+            <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.mobile}>
+                {g`this_page_is_not_optimized_for_mobile`}
+            </div>
+        )
     }
     return (
         <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>

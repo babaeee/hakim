@@ -2,19 +2,27 @@
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-  padding: 2rem;
   justify-content: space-around;
+  padding-bottom: 50px;
+  position: relative;
 }
 
 .toolButton {
   width: 5rem;
   height: 5rem;
-  font-size: medium;
   border: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--rounded-2);
   border-color: black;
-  background-color: brown;
+  background-color: var(--gray-1);
   color: white;
+  cursor: pointer;
+  padding: 10px;
+  position: relative;
+  margin: 2rem;
+}
+
+.toolButton:hover {
+    background-color: var(--gray-2);
 }
 
 @keyframes col {
@@ -33,11 +41,37 @@
 
 .autoProof {
   display: inline-block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-30%, -30%);
   width: 2rem;
   height: 2rem;
   font-size: 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: 2rem;
   background-color: greenyellow;
   animation: col 0.5s infinite alternate-reverse;
   color: #f0f;
+}
+
+.footer {
+    border-top: var(--border);
+    height: 50px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    direction: ltr;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    font-size: smaller;
+}
+
+.footer > * {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+    padding: 0 4px;
 }
