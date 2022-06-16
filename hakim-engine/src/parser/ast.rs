@@ -287,7 +287,7 @@ trait TokenEater {
                     cur_opt = None;
                     continue;
                 }
-                if s == "(" || s == "{" {
+                if s == "(" || s == "{" || s == "[" {
                     push_to_stack(&mut stack, BinOp::App, cur);
                     cur_opt = None;
                     continue;
