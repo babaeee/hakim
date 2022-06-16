@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::{
     engine::{Engine, Result},
-    interactive::{SuggClass, SuggRule},
+    interactive::{suggest::Applicablity, SuggClass, SuggRule},
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -16,7 +16,7 @@ pub(crate) enum Sentence {
     Suggestion {
         target: SuggTarget,
         tactic: String,
-        is_default: bool,
+        applicablity: Applicablity,
         class: SuggClass,
     },
     Import {
@@ -50,11 +50,14 @@ impl Sentence {
             } else {
                 panic!("invalid type for suggestion");
             };
-            let is_default = if let Some(x) = r.strip_prefix("default ") {
+            let applicablity = if let Some(x) = r.strip_prefix("default ") {
                 r = x;
-                true
+                Applicablity::Default
+            } else if let Some(x) = r.strip_prefix("auto ") {
+                r = x;
+                Applicablity::Auto
             } else {
-                false
+                Applicablity::Normal
             };
             let tactic = match r.split_once(';') {
                 Some((t, rest)) => {
@@ -71,13 +74,14 @@ impl Sentence {
                     "Rewrite" => SuggClass::Rewrite,
                     "intros" => SuggClass::Intros,
                     "Instantiate" => SuggClass::Instantiate,
+                    "Trivial" => SuggClass::Trivial,
                     _ => panic!("unknown sugg class {r}"),
                 },
             };
             return Sentence::Suggestion {
                 target,
                 tactic,
-                is_default,
+                applicablity,
                 class,
             };
         }
@@ -127,13 +131,13 @@ impl Sentence {
             Sentence::Suggestion {
                 target,
                 tactic,
-                is_default,
+                applicablity,
                 class,
             } => {
                 let sugg = SuggRule {
                     class,
                     tactic: vec![tactic],
-                    is_default,
+                    applicablity,
                 };
                 match target {
                     SuggTarget::Hyp => engine.add_hyp_sugg(sugg),

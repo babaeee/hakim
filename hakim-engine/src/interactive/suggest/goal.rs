@@ -1,6 +1,7 @@
 use crate::brain::Term;
 use crate::interactive::Frame;
 
+use super::Applicablity;
 use super::SuggClass::*;
 use super::Suggestion;
 
@@ -18,7 +19,7 @@ pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {
                 class: IntrosWithName,
                 tactic: vec!["intros $0".to_string()],
                 questions: vec!["$enter_a_name:".to_string()],
-                is_default: false,
+                applicablity: Applicablity::Normal,
             });
         }
         Term::App { func, op: _ } => {
@@ -42,7 +43,7 @@ pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {
 pub fn suggest_on_goal_dblclk(goal: &Term, frame: &Frame) -> Option<Suggestion> {
     let suggs = suggest_on_goal(goal, frame);
     for sugg in suggs {
-        if sugg.is_default {
+        if sugg.is_default() {
             return Some(sugg);
         }
     }

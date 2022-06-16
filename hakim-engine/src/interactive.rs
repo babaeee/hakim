@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::brain::{contains_wild, predict_axiom, TermRef};
 
 use crate::engine::{Engine, Error};
+use crate::interactive::suggest::Applicablity;
 use crate::library::engine_from_middle_of_lib;
 use crate::parser::is_whity_char;
 
@@ -14,7 +15,7 @@ mod history_auto;
 mod monitor;
 mod natural;
 mod proof_tree;
-mod suggest;
+pub mod suggest;
 pub mod tactic;
 
 use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite};
@@ -223,6 +224,13 @@ impl Session {
     pub fn pos_of_span_goal(&self, span: (usize, usize)) -> Option<usize> {
         self.last_snapshot().last_frame().pos_of_span_goal(span)
     }
+
+    pub fn try_auto(&self) -> Option<String> {
+        if self.is_finished() {
+            return None;
+        }
+        self.last_snapshot().last_frame().try_auto()
+    }
 }
 
 impl From<Frame> for Snapshot {
@@ -387,5 +395,30 @@ impl Frame {
 
     pub fn pos_of_span_goal(&self, span: (usize, usize)) -> Option<usize> {
         self.engine.pos_of_span(&self.goal, span)
+    }
+
+    pub fn try_auto(&self) -> Option<String> {
+        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia"];
+        for tac in AUTO_TAC {
+            if self.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
+                return Some(tac.to_string());
+            }
+        }
+        let suggs = suggest_on_goal(&self.goal, self)
+            .into_iter()
+            .filter(|x| x.applicablity == Applicablity::Auto);
+        for sugg in suggs {
+            assert!(sugg.questions.is_empty());
+            if let Ok([x]) = <[String; 1]>::try_from(sugg.tactic) {
+                if let Ok(nf) = self.run_tactic(&x) {
+                    if nf.is_empty() {
+                        return Some(x);
+                    }
+                }
+            } else {
+                panic!("unsupported auto sugg");
+            }
+        }
+        None
     }
 }

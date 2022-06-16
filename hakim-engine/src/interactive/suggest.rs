@@ -17,6 +17,7 @@ pub enum SuggClass {
     Rewrite,
     Contradiction,
     Instantiate,
+    Trivial,
     Pattern(String, String),
 }
 
@@ -37,6 +38,7 @@ impl Display for SuggClass {
             Rewrite => write!(f, "$rewrite"),
             Contradiction => write!(f, "$contradiction"),
             Instantiate => write!(f, "$instantiate"),
+            Trivial => write!(f, "$trivial"),
             Pattern(a, b) => write!(f, "{a} ⇒ {b}"),
         }
     }
@@ -47,11 +49,20 @@ use SuggClass::*;
 
 use super::Frame;
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum Applicablity {
+    Normal,
+    /// star it so it will go on dbl click
+    Default,
+    /// use in automatic proof in addition to dbl clicks
+    Auto,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SuggRule {
     pub class: SuggClass,
     pub tactic: Vec<String>,
-    pub is_default: bool,
+    pub applicablity: Applicablity,
 }
 
 impl From<SuggRule> for Suggestion {
@@ -60,7 +71,7 @@ impl From<SuggRule> for Suggestion {
             class: sugg.class,
             tactic: sugg.tactic.iter().map(|x| x.to_string()).collect(),
             questions: vec![],
-            is_default: sugg.is_default,
+            applicablity: sugg.applicablity,
         }
     }
 }
@@ -88,7 +99,7 @@ pub struct Suggestion {
     pub class: SuggClass,
     pub tactic: Vec<String>,
     pub questions: Vec<String>,
-    pub is_default: bool,
+    pub applicablity: Applicablity,
 }
 
 impl Suggestion {
@@ -97,7 +108,7 @@ impl Suggestion {
             class,
             tactic: vec![t.to_string()],
             questions: vec![],
-            is_default: true,
+            applicablity: Applicablity::Default,
         }
     }
 
@@ -106,7 +117,14 @@ impl Suggestion {
             class,
             tactic: vec![t.to_string()],
             questions: vec![q.to_string()],
-            is_default: true,
+            applicablity: Applicablity::Default,
         }
+    }
+
+    pub fn is_default(&self) -> bool {
+        matches!(
+            self.applicablity,
+            Applicablity::Default | Applicablity::Auto
+        )
     }
 }

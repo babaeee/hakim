@@ -23,6 +23,15 @@ Proof.
     lia.
 Qed.
 
+Todo count_of_binary_lists: ∀ T: U, ∀ a b: T, ∀ n, 0 ≤ n -> |{ l: list T | cnt a l + cnt b l = |l| ∧ |l| = n }| = 2 ^ n.
+
+Axiom cm: ℤ -> ℤ -> ℤ.
+Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
+Axiom cmeq: ∀ r, 0 ≤ r -> cm r r = 1.
+Axiom cmdefr: ∀ a b, 0 < a -> 0 < b -> b < a -> cm a b = cm (a - 1) b + cm (a - 1) (b - 1).
+
+Todo count_of_paths: ∀ r, 0 ≤ r -> ∀ u, 0 ≤ u -> |{ l: list char | cnt 'r' l = r ∧ cnt 'u' l = u ∧ |l| = r + u }| = cm (r+u) u.
+
 Axiom valid_paren: list char -> Universe.
 Axiom valid_paren_unfold: ∀ l, valid_paren l -> l = "" ∨ ∃ x y, valid_paren x ∧ valid_paren y ∧ l = "(" ++ x ++ ")" ++ y.
 Suggest hyp default apply valid_paren_unfold in $n; Destruct.

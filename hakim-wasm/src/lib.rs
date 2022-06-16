@@ -169,20 +169,8 @@ impl Instance {
     }
 
     pub fn try_auto(&self) -> Option<String> {
-        let mut s = (&self.session).as_ref()?.last_snapshot().clone();
-        if s.is_finished() {
-            return None;
-        }
-        let s = s.pop_frame();
-        let mut r = None;
-        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia"];
-        for tac in AUTO_TAC {
-            if s.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
-                r = Some(tac.to_string());
-                break;
-            }
-        }
-        r
+        let s = (&self.session).as_ref()?.clone();
+        s.try_auto()
     }
 
     pub fn try_tactic(&self, tactic: &str) -> bool {
@@ -276,7 +264,7 @@ impl Instance {
         Some(
             sugg.into_iter()
                 .map(|x| {
-                    if x.is_default {
+                    if x.is_default() {
                         format!("(★{})", x.class)
                     } else {
                         format!("({})", x.class)
@@ -292,7 +280,7 @@ impl Instance {
         Some(
             sugg.into_iter()
                 .map(|x| {
-                    if x.is_default {
+                    if x.is_default() {
                         format!("(★{})", x.class)
                     } else {
                         format!("({})", x.class)

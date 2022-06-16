@@ -3,7 +3,7 @@ use crate::{
     interactive::Frame,
 };
 
-use super::{SuggClass::*, Suggestion};
+use super::{Applicablity, SuggClass::*, Suggestion};
 
 pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
     let mut r = vec![];
@@ -30,7 +30,7 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
                         format!("remove_hyp {name}"),
                     ],
                     questions: vec![],
-                    is_default: true,
+                    applicablity: Applicablity::Default,
                 });
             } else {
                 let new_name = frame.engine.generate_name(&format!("{name}_ex"));
@@ -62,7 +62,7 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
 pub fn suggest_on_hyp_dblclk(frame: &Frame, name: &str) -> Option<Suggestion> {
     let suggs = suggest_on_hyp(frame, name);
     for sugg in suggs {
-        if sugg.is_default {
+        if sugg.is_default() {
             return Some(sugg);
         }
     }

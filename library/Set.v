@@ -60,3 +60,6 @@ Axiom finite_add : ∀ A: U, ∀ x: set A, finite x -> ∀ a: A, (a ∈ x -> Fal
 Axiom finite_included : ∀ A: U, ∀ x y: set A, finite y -> x ⊆ y -> finite x.
 
 Axiom set_induction : ∀ A: U, ∀ P: set A -> U, P {} -> (∀ x: set A, finite x -> P x -> ∀ a: A, (a ∈ x -> False) -> P (x ∪ {a})) -> ∀ e: set A, finite e -> P e.
+Axiom empty_len: ∀ A: U, |set_empty A| = 0.
+Axiom singleton_len: ∀ A: U, ∀ x: A, |{x}| = 1.
+Suggest goal auto apply singleton_len; Trivial.

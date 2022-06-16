@@ -303,3 +303,11 @@ fn auto_set_test() {
     "#,
     );
 }
+
+#[test]
+fn auto_sugg() {
+    let mut s = run_interactive("|{2}| = 1", "", EngineLevel::Full);
+    let tac = s.try_auto().expect("try auto return something");
+    s.run_tactic(&tac).unwrap();
+    assert!(s.is_finished());
+}
