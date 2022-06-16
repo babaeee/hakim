@@ -20,8 +20,15 @@ Theorem union_unfold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∪ y -> a ∈
 Proof. intros. auto_set. Qed.
 Theorem union_fold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∨ a ∈ y -> a ∈ x ∪ y.
 Proof. intros. auto_set. Qed.
+Suggest hyp default apply union_unfold in $n; a ∈ x ∪ y => a ∈ x ∨ a ∈ y.
 Suggest goal default apply union_fold; a ∈ x ∪ y => a ∈ x ∨ a ∈ y.
 
+Theorem intersection_unfold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∩ y -> a ∈ x ∧ a ∈ y.
+Proof. intros. auto_set. Qed.
+Theorem intersection_fold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∧ a ∈ y -> a ∈ x ∩ y.
+Proof. intros. auto_set. Qed.
+Suggest hyp default apply intersection_unfold in $n; a ∈ x ∩ y => a ∈ x ∧ a ∈ y.
+Suggest goal default apply intersection_fold; a ∈ x ∩ y => a ∈ x ∧ a ∈ y.
 Theorem intersection_intro: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∩ y ↔ a ∈ x ∧ a ∈ y.
 Proof. intros. auto_set. Qed.
 Theorem setminus_intro: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∖ y ↔ a ∈ x ∧ (a ∈ y -> False).

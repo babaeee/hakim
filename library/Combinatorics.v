@@ -23,12 +23,16 @@ Proof.
     lia.
 Qed.
 
-Todo count_of_binary_lists: ∀ T: U, ∀ a b: T, ∀ n, 0 ≤ n -> |{ l: list T | cnt a l + cnt b l = |l| ∧ |l| = n }| = 2 ^ n.
+Todo projection_finite: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> finite { y: B | ∃ x: A, y = f x ∧ x ∈ S }.
+Todo bijection_append: ∀ T: U, ∀ t: list T, ∀ S: set (list T), |{ l: list T | ∃ k: list T, l = t ++ k ∧ k ∈ S }| = |S|. 
+
+Todo count_of_binary_lists: ∀ T: U, ∀ a b: T, ~ a = b -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ {a, b} ∧ |l| = n }| = 2 ^ n.
 
 Axiom cm: ℤ -> ℤ -> ℤ.
 Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
 Axiom cmeq: ∀ r, 0 ≤ r -> cm r r = 1.
 Axiom cmdefr: ∀ a b, 0 < a -> 0 < b -> b < a -> cm a b = cm (a - 1) b + cm (a - 1) (b - 1).
+
 
 Todo count_of_paths: ∀ r, 0 ≤ r -> ∀ u, 0 ≤ u -> |{ l: list char | cnt 'r' l = r ∧ cnt 'u' l = u ∧ |l| = r + u }| = cm (r+u) u.
 

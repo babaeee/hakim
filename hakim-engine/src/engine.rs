@@ -67,6 +67,7 @@ impl Engine {
         let name_dict = prelude::init_dict();
         let hidden_args = im::HashMap::<String, usize>::from(HashMap::from([
             ("finite".to_string(), 1),
+            ("member_set".to_string(), 1),
             ("repeat".to_string(), 1),
             ("cnt".to_string(), 1),
         ]));
