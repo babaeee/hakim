@@ -245,6 +245,7 @@ pub fn term_to_ast(
                     return Some(Str(as_str));
                 }
             }
+            return Some(List(l.iter().map(|x| term_to_ast(x, names, c)).collect()));
         }
         if let Some((op, t)) = UniOp::detect(term) {
             return Some(UniOp(op, Box::new(term_to_ast(&t, names, c))));
@@ -394,6 +395,22 @@ pub fn pretty_print_ast(
         }
         Ok(())
     }
+
+    fn comma_vec(
+        v: &[AstTerm],
+        r: &mut impl AstStacker,
+        c: &PrettyPrintConfig,
+    ) -> Result<(), std::fmt::Error> {
+        let mut it = v.iter();
+        if let Some(x) = it.next() {
+            pretty_print_ast(x, PMX, r, c)?;
+            for x in it {
+                write!(r, ", ")?;
+                pretty_print_ast(x, PMX, r, c)?;
+            }
+        }
+        Ok(())
+    }
     use super::binop::BinOp::App;
     r.push_ast(ast);
     match ast {
@@ -499,15 +516,13 @@ pub fn pretty_print_ast(
         }
         AstTerm::Set(AstSet::Items(v)) => {
             write!(r, "{{")?;
-            let mut it = v.iter();
-            if let Some(x) = it.next() {
-                pretty_print_ast(x, PMX, r, c)?;
-                for x in it {
-                    write!(r, ", ")?;
-                    pretty_print_ast(x, PMX, r, c)?;
-                }
-            }
+            comma_vec(v, r, c)?;
             write!(r, "}}")?;
+        }
+        AstTerm::List(v) => {
+            write!(r, "[")?;
+            comma_vec(v, r, c)?;
+            write!(r, "]")?;
         }
     }
     r.pop_ast();

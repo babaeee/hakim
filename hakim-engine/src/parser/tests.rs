@@ -281,7 +281,7 @@ fn strings() {
 
 #[test]
 fn list() {
-    parse_pretty("nil ℤ ++ nil ℤ");
+    parse_pretty("[] ++ [2, 3, 5]");
 }
 
 #[test]

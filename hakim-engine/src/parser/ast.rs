@@ -40,6 +40,7 @@ pub enum AstTerm {
     Number(BigInt),
     Char(char),
     Str(String),
+    List(Vec<AstTerm>),
     Wild(Option<String>),
     Len(Box<AstTerm>),
     Set(AstSet),
@@ -95,6 +96,22 @@ trait TokenEater {
         }
     }
 
+    fn eat_comma_vec(&mut self, terminator: &TokenValue) -> Result<Vec<AstTerm>> {
+        let mut r = vec![];
+        loop {
+            if self.peek_token()?.value == *terminator {
+                self.eat_token()?;
+                return Ok(r);
+            }
+            r.push(self.eat_ast()?);
+            if self.peek_token()?.value == *terminator {
+                self.eat_token()?;
+                break Ok(r);
+            }
+            self.eat_sign(",")?;
+        }
+    }
+
     fn eat_set(&mut self) -> Result<AstTerm> {
         // we already eated Sign("{")
         if self.look_ahead(1).map(|x| x.value) == Ok(TokenValue::Sign(":".to_string())) {
@@ -122,19 +139,9 @@ trait TokenEater {
                 tag: None,
             })))
         } else {
-            let mut r = vec![];
-            loop {
-                if self.peek_token()?.value == TokenValue::Sign("}".to_string()) {
-                    self.eat_token()?;
-                    break Ok(Set(AstSet::Items(r)));
-                }
-                r.push(self.eat_ast()?);
-                if self.peek_token()?.value == TokenValue::Sign("}".to_string()) {
-                    self.eat_token()?;
-                    break Ok(Set(AstSet::Items(r)));
-                }
-                self.eat_sign(",")?;
-            }
+            Ok(Set(AstSet::Items(
+                self.eat_comma_vec(&TokenValue::Sign("}".to_string()))?,
+            )))
         }
     }
 
@@ -185,6 +192,10 @@ trait TokenEater {
                     let r = self.eat_ast()?;
                     self.eat_sign(")")?;
                     Ok(r)
+                }
+                "[" => {
+                    let r = self.eat_comma_vec(&TokenValue::Sign("]".to_string()))?;
+                    Ok(List(r))
                 }
                 "{" => self.eat_set(),
                 "|" => {
@@ -420,6 +431,15 @@ pub fn ast_to_term(
         Str(s) => {
             let v = s.chars().map(char_to_term).collect::<Result<Vec<_>>>()?;
             let r = list_to_term(v, prelude::char_ty());
+            Ok(r)
+        }
+        List(v) => {
+            let v = v
+                .into_iter()
+                .map(|x| ast_to_term(x, globals, name_stack, infer_dict, infer_cnt, config))
+                .collect::<Result<Vec<_>>>()?;
+            let ty = term_ref!(_ infer_cnt.generate());
+            let r = list_to_term(v, ty);
             Ok(r)
         }
         Char(c) => char_to_term(c),
