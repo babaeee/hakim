@@ -367,7 +367,7 @@ mod tests {
             "∀ a n: ℤ, 0 ≤ n → 0 < a → 0 < a ^ n",
             r#"
             intros a
-            apply z_simple_induction"#,
+            apply z_induction_simple"#,
             EngineLevel::Full,
         );
     }
@@ -422,7 +422,7 @@ mod tests {
         instance_recovery(
             "∃ f: ℤ → ℤ, f 0 = 1 ∧ ∀ n: ℤ, 0 ≤ n → f (n + 1) = n * f n",
             r#""#,
-            "apply z_simple_recursion",
+            "apply z_recursion_simple",
             6,
             "λ n pf, n * pf",
         );

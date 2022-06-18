@@ -53,7 +53,7 @@ Todo le_divide_negative: ∀ a b c: ℤ, c < 0 -> c * a ≤ c * b -> b ≤ a.
 Theorem le_multiply_positive: ∀ a b c: ℤ, 0 ≤ c -> a ≤ b -> c * a ≤ c * b.
 Proof.
     intros a b.
-    apply z_simple_induction.
+    apply z_induction_simple.
     intros.
     lia.
     lia.
@@ -85,7 +85,7 @@ Suggest goal apply pow_unfold_r;  a ^ (n + 1) = a ^ n * a => 0 ≤ n.
 Theorem pow_pos: ∀ a n: ℤ, 0 ≤ n -> 0 < a -> 0 < a ^ n.
 Proof.
     intros a.
-    apply z_simple_induction.
+    apply z_induction_simple.
     intros.
     add_hyp (0 < a).
     Switch 1.

@@ -302,3 +302,9 @@ fn sigma() {
     parse_pretty("Σ x in [0, 5) x * x");
     parse_pretty("Σ i in [0, 5) 12");
 }
+
+#[test]
+fn in_in_name() {
+    parse_pretty("λ include: ℤ → ℤ, include 5");
+    parse_pretty("included_fold");
+}

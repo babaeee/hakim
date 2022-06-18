@@ -12,7 +12,7 @@ Todo sigma_factor: ∀ a b c: ℤ, ∀ f: ℤ -> ℤ, c * sigma a b f = sigma a 
 Theorem sigma_f_equal: ∀ a b: ℤ, a ≤ b -> ∀ f g: ℤ -> ℤ, (∀ i, a ≤ i -> i < b -> f i = g i) -> sigma a b f = sigma a b g.
 Proof.
     intros a.
-    apply z_simple_induction.
+    apply z_induction_simple.
     Switch 1.
     intros.
     lia.
