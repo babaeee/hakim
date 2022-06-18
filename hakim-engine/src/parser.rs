@@ -40,6 +40,7 @@ pub enum Error {
     InvalidUniverseIndex(String),
     RemainTokens(Vec<Token>),
     TokenizerError(String),
+    BadSigma,
 }
 
 type Result<T> = std::result::Result<T, Error>;

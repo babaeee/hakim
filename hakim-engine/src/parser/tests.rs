@@ -295,3 +295,10 @@ fn notation_curry() {
 fn hidden_args() {
     parse_pretty(r#"cnt 'a' "salam""#);
 }
+
+#[test]
+fn sigma() {
+    parse_not_pretty("λ f: ℤ → ℤ, sigma 0 5 f", "λ f: ℤ → ℤ, Σ x in [0, 5) f x");
+    parse_pretty("Σ x in [0, 5) x * x");
+    parse_pretty("Σ i in [0, 5) 12");
+}

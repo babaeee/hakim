@@ -13,4 +13,5 @@ export const convertTable: [string, string][] = [
     ['>=', '≥'],
     ['U', '∪'],
     ['!U', '∩'],
+    ['sigma', 'Σ'],
 ];

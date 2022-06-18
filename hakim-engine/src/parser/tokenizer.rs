@@ -164,6 +164,10 @@ pub fn tokenize(mut text: Cursor<'_>) -> Result<Vec<Token>, String> {
             push!(Sign("++".to_string()));
             continue;
         }
+        if text.eat_prefix("Σ") {
+            push!(Sign("Σ".to_string()));
+            continue;
+        }
         let c = text.eat_char()?;
         if is_whity_char(c) {
             continue;
@@ -177,7 +181,7 @@ pub fn tokenize(mut text: Cursor<'_>) -> Result<Vec<Token>, String> {
                 "forall" => Abs(AbsSign::Forall),
                 "exists" => Abs(AbsSign::Exists),
                 "fn" => Abs(AbsSign::Fun),
-                "mod" => Sign(ident),
+                "in" | "mod" => Sign(ident),
                 _ => Ident(ident),
             });
             continue;

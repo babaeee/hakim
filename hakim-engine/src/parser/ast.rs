@@ -11,7 +11,9 @@ use super::{
 use crate::{
     app_ref,
     brain::{good_char, increase_foreign_vars, Abstraction, Term, TermRef},
-    library::prelude::{self, chr, ex, len1, set_empty, set_from_func, set_singleton, union},
+    library::prelude::{
+        self, chr, ex, len1, set_empty, set_from_func, set_singleton, sigma, union,
+    },
     parser::binop::{Assoc, BinOp},
     term_ref,
 };
@@ -31,6 +33,14 @@ pub enum AstSet {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct AstSigma {
+    pub l: Box<AstTerm>,
+    pub r: Box<AstTerm>,
+    pub var: String,
+    pub body: Box<AstTerm>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum AstTerm {
     Universe(usize),
     Abs(AbsSign, AstAbs),
@@ -44,6 +54,7 @@ pub enum AstTerm {
     Wild(Option<String>),
     Len(Box<AstTerm>),
     Set(AstSet),
+    Sigma(AstSigma),
 }
 
 use num_bigint::BigInt;
@@ -202,6 +213,17 @@ trait TokenEater {
                     let r = self.eat_ast_with_disallowed_sign(|x| x == "|")?;
                     self.eat_sign("|")?;
                     Ok(Len(Box::new(r)))
+                }
+                "Σ" => {
+                    let var = self.eat_ident()?;
+                    self.eat_sign("in")?;
+                    self.eat_sign("[")?;
+                    let [l, r] =
+                        <[_; 2]>::try_from(self.eat_comma_vec(&TokenValue::Sign(")".to_string()))?)
+                            .map_err(|_| BadSigma)?
+                            .map(Box::new);
+                    let body = Box::new(self.eat_ast()?);
+                    Ok(Sigma(AstSigma { l, r, var, body }))
                 }
                 _ => Err(ExpectedExprButGot(Token {
                     value: TokenValue::Sign(s),
@@ -386,6 +408,27 @@ pub fn ast_to_term(
                 bag = app_ref!(union(), w, bag, app_ref!(set_singleton(), w, term));
             }
             Ok(bag)
+        }
+        Sigma(AstSigma { l, r, var, body }) => {
+            let l = ast_to_term(*l, globals, name_stack, infer_dict, infer_cnt, config)?;
+            let r = ast_to_term(*r, globals, name_stack, infer_dict, infer_cnt, config)?;
+            let f = ast_to_term(
+                AstTerm::Abs(
+                    AbsSign::Fun,
+                    AstAbs {
+                        name: vec![var],
+                        tag: None,
+                        ty: Some(Box::new(Ident("ℤ".to_string(), None))),
+                        body,
+                    },
+                ),
+                globals,
+                name_stack,
+                infer_dict,
+                infer_cnt,
+                config,
+            )?;
+            Ok(app_ref!(sigma(), l, r, f))
         }
         Abs(sign, AstAbs { name, ty, body, .. }) => {
             let mut ty_term = match ty {

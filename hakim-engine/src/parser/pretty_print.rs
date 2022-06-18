@@ -5,7 +5,7 @@ use crate::{
     brain::{detect_char, detect_len, increase_foreign_vars},
     library::prelude,
     parser::{
-        ast::{AstAbs, AstSet},
+        ast::{AstAbs, AstSet, AstSigma},
         tokenizer::AbsSign,
     },
     term_ref, Abstraction, Term, TermRef,
@@ -19,6 +19,21 @@ fn detect_set_singleton(t: &Term) -> Option<TermRef> {
             if let Term::Axiom { unique_name, .. } = func.as_ref() {
                 if unique_name == "set_singleton" {
                     return Some(op2.clone());
+                }
+            }
+        }
+    }
+    None
+}
+
+fn detect_sigma(t: &Term) -> Option<(TermRef, TermRef, TermRef)> {
+    if let Term::App { func, op: op2 } = t {
+        if let Term::App { func, op: op1 } = func.as_ref() {
+            if let Term::App { func, op } = func.as_ref() {
+                if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                    if unique_name == "sigma" {
+                        return Some((op.clone(), op1.clone(), op2.clone()));
+                    }
                 }
             }
         }
@@ -250,6 +265,15 @@ pub fn term_to_ast(
         if let Some((op, t)) = UniOp::detect(term) {
             return Some(UniOp(op, Box::new(term_to_ast(&t, names, c))));
         }
+        if let Some((l, r, f)) = detect_sigma(term) {
+            let x = for_abs(&extract_fun_from_term(f, prelude::z()), names, c);
+            return Some(Sigma(AstSigma {
+                l: Box::new(term_to_ast(&l, names, c)),
+                r: Box::new(term_to_ast(&r, names, c)),
+                var: x.name.into_iter().next().unwrap(),
+                body: x.body,
+            }));
+        }
         if let Some((l, op, r)) = BinOp::detect_custom(term, &c.disabled_binops) {
             if op != BinOp::App {
                 return Some(BinOp(
@@ -422,6 +446,24 @@ pub fn pretty_print_ast(
                 write!(r, "|")?;
                 pretty_print_ast(x, PMX, r, c)?;
                 write!(r, "|")
+            })?;
+        }
+        AstTerm::Sigma(AstSigma {
+            l: left,
+            r: right,
+            var,
+            body,
+        }) => {
+            let should_paren = level.1 < PrecLevel::MAX || level.0 == App.level_right();
+            with_paren(should_paren, r, |r| {
+                write!(r, "Σ ")?;
+                HighlightTag::Ident.print(r, |r| write!(r, "{var}"))?;
+                write!(r, " in [")?;
+                pretty_print_ast(left, PMX, r, c)?;
+                write!(r, ", ")?;
+                pretty_print_ast(right, PMX, r, c)?;
+                write!(r, ") ")?;
+                pretty_print_ast(body, PMX, r, c)
             })?;
         }
         AstTerm::Abs(

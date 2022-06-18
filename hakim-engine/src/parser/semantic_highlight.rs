@@ -42,6 +42,8 @@ use super::{
 
 #[cfg(test)]
 pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
+    use crate::parser::ast::AstSigma;
+
     fn e(a: &mut Option<HighlightTag>) {
         if a.is_none() {
             *a = Some(HighlightTag::Ident)
@@ -60,6 +62,11 @@ pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
             AstTerm::BinOp(x, _, y) => {
                 f(x);
                 f(y);
+            }
+            AstTerm::Sigma(AstSigma { l, r, var: _, body }) => {
+                f(l);
+                f(r);
+                f(body);
             }
             AstTerm::UniOp(_, x) => f(x),
             AstTerm::Set(AstSet::Abs(t)) => g(t),
