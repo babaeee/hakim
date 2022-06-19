@@ -156,17 +156,6 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     const { toggleMenu, ...menuProps } = useMenuState();
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
     const [suggs, setSuggs] = useState([] as Sugg[]);
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            console.log(event.code);
-            if (event.ctrlKey && event.code === 'KeyZ') {
-                sendTactic('Undo');
-            }
-        }
-
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    });
     const [{ isOver, canDrop }, drop] = useDrop(
         () => ({
             accept: 'Hyp',
@@ -233,6 +222,17 @@ export const Monitor = () => {
             setS(newS);
         })
     }, []);
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            console.log(event.code);
+            if (event.ctrlKey && event.code === 'KeyZ') {
+                sendTactic('Undo');
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    });
     if (!s) {
         return <div className={css.monitor}>Loading...</div>;
     }
