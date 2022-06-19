@@ -11,15 +11,25 @@ Todo zero_le_mult_neg: ∀ a b: ℤ, a ≤ 0 -> b ≤ 0 -> 0 ≤ a * b.
 Suggest goal apply zero_le_mult_pos; 0 ≤ a * b => 0 ≤ a ∧ 0 ≤ b.
 Suggest goal apply zero_le_mult_neg; 0 ≤ a * b => a ≤ 0 ∧ b ≤ 0.
 
+Theorem not_lt: ∀ a b: ℤ, ~ a < b -> b ≤ a.
+Proof. intros. lia. Qed.
+Theorem not_le: ∀ a b: ℤ, ~ a ≤ b -> b < a.
+Proof. intros. lia. Qed.
+Suggest hyp default apply not_lt in $n; ~ a < b => b ≤ a.
+Suggest hyp default apply not_le in $n; ~ a ≤ b => b < a.
 
 Theorem lt_plus_r: ∀ a b c: ℤ, a < b -> a + c < b + c.
 Proof. intros. lia. Qed.
 Theorem lt_plus_l: ∀ a b c: ℤ, a < b -> c + a < c + b.
 Proof. intros. lia. Qed.
+Theorem plus_lt_r: ∀ a b c: ℤ, a + c < b + c -> a < b.
+Proof. intros. lia. Qed.
+Theorem plus_lt_l: ∀ a b c: ℤ, c + a < c + b -> a < b.
+Proof. intros. lia. Qed.
 Theorem lt_trans: ∀ n m p : ℤ, n < m -> m < p -> n < p.
 Proof. intros. lia. Qed.
-Todo lt_divide_positive: ∀ a b c: ℤ, 0 < c -> c * a < c * b -> a < b.
-Todo lt_divide_negative: ∀ a b c: ℤ, c < 0 -> c * a < c * b -> b < a.
+Todo multiply_lt_positive: ∀ a b c: ℤ, 0 < c -> c * a < c * b -> a < b.
+Todo multiply_lt_negative: ∀ a b c: ℤ, c < 0 -> c * a < c * b -> b < a.
 Todo lt_multiply_positive: ∀ a b c: ℤ, 0 < c -> a < b -> c * a < c * b.
 Theorem lt_multiply_negative: ∀ a b c: ℤ, c < 0 -> a < b -> c * b < c * a.
 Proof.

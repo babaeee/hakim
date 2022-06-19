@@ -137,7 +137,7 @@ fn apply_for_hyp(mut frame: Frame, exp: &str, name: &str) -> Result<Vec<Frame>> 
         Some(x) => x,
         None => return Err(CanNotSolve("apply")),
     };
-    frame.add_hyp_with_name(name, ty)?;
+    frame.add_hyp_with_name(name, normalize(ty))?;
     let mut fs = vec![frame];
     for i in 0..infers.n {
         let mut frame = orig_frame.clone();

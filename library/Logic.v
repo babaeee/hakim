@@ -49,3 +49,24 @@ Theorem p_or_not_p: ∀ A: U, A ∨ (A → False).
 Proof. intros. assumption. Qed.
 Theorem NNPP: ∀ A: U, ((A -> False) -> False) -> A.
 Proof. intros. assumption. Qed.
+
+Theorem not_exists_imply_forall: ∀ A: U, ∀ P: A -> U, (~ ∃ x: A, P x) -> ∀ x: A, ~ P x.
+Proof.
+    intros.
+    apply H.
+    apply (ex_intro ? ? (x)).
+    assumption.
+Qed.
+Suggest hyp default apply not_exists_imply_forall in $n; ~ ∃ x: A, P x => ∀ x: A, ~ P x.
+Theorem not_forall_imply_exists: ∀ A: U, ∀ P: A -> U, (~ ∀ x: A, P x) -> ∃ x: A, ~ P x.
+Proof.
+    intros.
+    apply NNPP.
+    intros.
+    apply not_exists_imply_forall in H0.
+    apply H.
+    intros.
+    apply NNPP.
+    apply H0.
+Qed.
+Suggest hyp default apply not_forall_imply_exists in $n; ~ ∀ x: A, P x => ∃ x: A, ~ P x.
