@@ -154,7 +154,7 @@ fn build_eq_term(t1: TermRef, t2: TermRef) -> Result<TermRef> {
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::run_interactive_to_end;
+    use crate::interactive::tests::{run_interactive, run_interactive_to_end, EngineLevel};
 
     #[test]
     fn replace_hyp() {
@@ -192,6 +192,18 @@ mod tests {
             lia
             chain (apply and_intro) (intros x) (apply x)
             "#,
+        );
+    }
+
+    #[test]
+    fn replace_sigma() {
+        run_interactive(
+            "∀ n: ℤ, 0 ≤ n → (Σ i in [0, n) |i|) = (Σ i in [0, n) i)",
+            r#"
+        intros n n_le_0
+        replace #1 (Σ i in [0, n) |i|) with (5)
+        "#,
+            EngineLevel::Empty,
         );
     }
 }

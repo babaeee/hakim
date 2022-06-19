@@ -9,6 +9,7 @@ import classNames from "classnames";
 import { ProofContext } from "../Proof";
 import { normalPrompt } from "../../../dialog";
 import "./highlight.css";
+import { isDebug } from "../../../dev_mode";
 
 type HypProps = {
     name: string,
@@ -17,6 +18,7 @@ type HypProps = {
 
 type Sugg = {
     label: string,
+    debugInfo?: string | undefined,
     action: () => void,
     disabled?: boolean,
 };
@@ -77,6 +79,7 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
         },
     }, {
         label: g`replace`,
+        debugInfo: replaceTactic({ start, end, text, userInp: '2' }),
         action: async () => {
             const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`, text);
             const tac = replaceTactic({ start, end, text, userInp });
@@ -86,6 +89,19 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     }]);
     setAnchorPoint({ x: e.clientX, y: e.clientY });
     toggleMenu(true);
+};
+
+const MyControlledMenu = ({ menuProps, anchorPoint, suggs, toggleMenu }: any) => {
+    return (
+        <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
+            onClose={() => toggleMenu(false)}>
+            {suggs.length === 0 && <MenuItem disabled>{g`no_suggestion`}</MenuItem>}
+            {suggs.map((x: Sugg) => <MenuItem key={x.label} disabled={x.disabled} onClick={x.action}>
+                {x.label}
+                {isDebug() && <><br />{x.debugInfo}</>}
+            </MenuItem>)}
+        </ControlledMenu>
+    );
 };
 
 const Hyp = ({ name, ty }: HypProps): JSX.Element => {
@@ -141,11 +157,12 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                 onDoubleClick={() => runSuggDblHyp(name)}>
                 <span ref={drag} className={css.dragHandler}>&#x25CE;</span>{' '}
                 {name}: <span dangerouslySetInnerHTML={{ __html: ty }} />
-                <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
-                    onClose={() => toggleMenu(false)}>
-                    {suggs.length === 0 && <MenuItem disabled>{g`no_suggestion`}</MenuItem>}
-                    {suggs.map((x, i) => <MenuItem key={x.label} disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
-                </ControlledMenu>
+                <MyControlledMenu
+                    toggleMenu={toggleMenu}
+                    menuProps={menuProps}
+                    anchorPoint={anchorPoint}
+                    suggs={suggs}
+                />
             </div>
         </div>
     );
@@ -197,11 +214,12 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
                 toggleMenu(true);
             }}>
             <span dangerouslySetInnerHTML={{ __html: ty }} />
-            <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
-                onClose={() => toggleMenu(false)}>
-                {suggs.length === 0 && <MenuItem disabled>{g`no_suggestion`}</MenuItem>}
-                {suggs.map((x) => <MenuItem key={x.label} disabled={x.disabled} onClick={x.action}>{x.label}</MenuItem>)}
-            </ControlledMenu>
+            <MyControlledMenu
+                toggleMenu={toggleMenu}
+                menuProps={menuProps}
+                anchorPoint={anchorPoint}
+                suggs={suggs}
+            />
         </div>
     );
 };

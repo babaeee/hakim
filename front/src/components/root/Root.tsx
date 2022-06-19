@@ -10,6 +10,8 @@ import css from "./Root.module.css";
 import { addToWinList } from "../adventure/winList";
 import { useState } from "react";
 import { NotationHelper } from "../notation/NotationHelper";
+import { Setting } from "../setting/Setting";
+import { DevStateComponent } from "../../dev_mode/DevStateComponent";
 
 export type State = {
     proofState: ProofState,
@@ -115,6 +117,7 @@ export const Root = () => {
     }
     return (
         <div dir={isRTL() ? 'rtl' : 'ltr'} className={css.main}>
+            <DevStateComponent />
             <BrowserRouter>
                 <Routes>
                     <Route path="/">
@@ -123,6 +126,7 @@ export const Root = () => {
                         <Route path="adventure/*" element={<Adventure />} />
                         <Route path="sandbox" element={<Sandbox />} />
                         <Route path="proof" element={<Proof />} />
+                        <Route path="setting" element={<Setting />} />
                         <Route path="library">
                             <Route index element={<LibraryViewer />} />
                             <Route path="notation" element={<NotationHelper />} />

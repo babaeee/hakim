@@ -65,10 +65,10 @@ fn smart_split(text: &str) -> Vec<String> {
     let mut s = "".to_string();
     let mut d = 0;
     for c in text.chars() {
-        if c == '(' {
+        if c == '(' || c == '[' {
             d += 1;
         }
-        if c == ')' {
+        if c == ')' || c == ']' {
             d -= 1;
         }
         if d != 0 {
