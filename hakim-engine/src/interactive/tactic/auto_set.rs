@@ -20,7 +20,7 @@ enum EnsembleTree<'a> {
     Eq(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
     Included(&'a EnsembleTree<'a>, &'a EnsembleTree<'a>),
     Inset(TermRef, &'a EnsembleTree<'a>),
-    Outset(TermRef, &'a EnsembleTree<'a>),
+    Finite(&'a EnsembleTree<'a>),
 }
 use EnsembleTree::*;
 
@@ -32,6 +32,8 @@ enum EnsembleStatement {
     IsNotMember(TermRef, TermRef),
     IsSubset(TermRef, TermRef),
     IsNotSubset(TermRef, TermRef),
+    IsFinite(TermRef),
+    IsNotFinite(TermRef),
 }
 
 use std::collections::HashMap;
@@ -43,7 +45,7 @@ impl Identifier {
     pub fn new() -> Identifier {
         Identifier {
             map: HashMap::new(),
-            id_counter: 1,
+            id_counter: 12,
         }
     }
     pub fn get(&mut self, v: &TermRef) -> usize {
@@ -55,6 +57,12 @@ impl Identifier {
                 self.id_counter - 1
             }
         }
+    }
+
+    /// we model infiniteness as a member, if it is member of a set, then the set is infinite. otherwise
+    /// it is finite. This function returns the code of that imaginary member.
+    fn get_infiniteness_model(&self) -> usize {
+        8
     }
 }
 
@@ -101,24 +109,18 @@ fn from_set_type<'a>(
 fn from_prop_type<'a>(
     t: TermRef,
     arena: EnsembleArena<'a>,
-    elements_id: &mut Identifier,
     sets_id: &mut Identifier,
 ) -> Option<(&'a EnsembleTree<'a>, TermRef)> {
-    if let Term::Forall(a) = t.as_ref() {
-        if let Term::Axiom { unique_name, .. } = a.body.as_ref() {
-            if unique_name == "False" {
-                if let Some((Inset(x, set_a), ty)) =
-                    from_prop_type(a.var_ty.clone(), arena, elements_id, sets_id)
-                {
-                    return Some((arena.alloc(Outset(x.clone(), set_a)), ty));
-                }
-            }
-            //the Included -> false or eq -> false type prop is one work
-        }
-    }
-
     if let Term::App { func, op: op2 } = t.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                if unique_name == "finite" {
+                    return Some((
+                        arena.alloc(Finite(from_set_type(op2, arena, sets_id))),
+                        term_ref!(app_ref!(set(), op1)),
+                    ));
+                }
+            }
             if let Term::App { func, op: ty } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "inset" {
@@ -151,12 +153,7 @@ fn convert(
     logic_arena: LogicArena<'_, EnsembleStatement>,
 ) -> LogicValue<'_, EnsembleStatement> {
     let my_arena = Arena::new();
-    let exp = if let Some(x) = from_prop_type(
-        term,
-        &my_arena,
-        &mut Identifier::new(),
-        &mut Identifier::new(),
-    ) {
+    let exp = if let Some(x) = from_prop_type(term, &my_arena, &mut Identifier::new()) {
         x.0
     } else {
         return LogicValue::unknown();
@@ -221,7 +218,23 @@ fn convert(
             }
             Inset(x, Set(a)) => LogicValue::from(EnsembleStatement::IsMember(x.clone(), a.clone())),
             Inset(..) => unreachable!(),
-            Outset(_, _) => todo!(),
+            Finite(Singleton(_)) | Finite(Empty) => LogicValue::True,
+            Finite(Union(a, b)) => {
+                let l = f(&Finite(a), arena);
+                let r = f(&Finite(b), arena);
+                l.and(r, arena)
+            }
+            Finite(Intersection(a, b)) => {
+                let l = f(&Finite(a), arena);
+                let r = f(&Finite(b), arena);
+                l.or(r, arena)
+            }
+            Finite(Setminus(a, _)) => {
+                let l = f(&Finite(a), arena);
+                l
+            }
+            Finite(Set(a)) => LogicValue::from(EnsembleStatement::IsFinite(a.clone())),
+            Finite(_) => unreachable!(),
         }
     }
     f(exp, logic_arena)
@@ -259,6 +272,16 @@ impl InternedStatement {
                     let a = interner.get(a);
                     let b = interner.get(b);
                     Self::IsNotSubset(a, b)
+                }
+                EnsembleStatement::IsFinite(a) => {
+                    let a = interner.get(a);
+                    let f = interner.get_infiniteness_model();
+                    Self::IsNotMember(f, a)
+                }
+                EnsembleStatement::IsNotFinite(a) => {
+                    let a = interner.get(a);
+                    let f = interner.get_infiniteness_model();
+                    Self::IsMember(f, a)
                 }
             })
             .collect();
@@ -368,6 +391,8 @@ fn negator(x: EnsembleStatement) -> EnsembleStatement {
         IsNotMember(a, b) => IsMember(a, b),
         IsSubset(a, b) => IsNotSubset(a, b),
         IsNotSubset(a, b) => IsSubset(a, b),
+        IsFinite(a) => IsNotFinite(a),
+        IsNotFinite(a) => IsFinite(a),
     }
 }
 
@@ -535,5 +560,19 @@ mod tests {
             "∀ A: U, ∀ P Q R S: set A, ∀ a: A, (a ∈ R -> a ∈ S) ->\
         a ∈ R -> ((a ∈ S -> False) ∨ a ∈ Q) -> a ∈ Q ",
         );
+    }
+
+    #[test]
+    fn finite() {
+        success("finite {2}");
+        success("finite {2, 3, 5}");
+        fail("∀ A: U, ∀ S: set A, finite S");
+        fail("∀ S: set ℤ, finite (S ∪ {2, 3})");
+        success("∀ S: set ℤ, finite (S ∩ {2, 3})");
+        fail("∀ S: set ℤ, finite (S ∖ {2, 3})");
+        success("∀ S: set ℤ, finite ({2} ∖ {2, 3})");
+        success("∀ S: set ℤ, finite ({2, 3} ∖ S)");
+        fail("∀ A B: set ℤ, finite A -> A ⊆ B -> finite B");
+        success("∀ A B: set ℤ, finite A -> B ⊆ A -> finite B");
     }
 }
