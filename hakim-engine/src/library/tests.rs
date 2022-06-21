@@ -41,11 +41,14 @@ fn check_library_proofs() {
                     match session.run_tactic(tactic) {
                         Ok(_) => (),
                         Err(e) => panic!(
-                            "In library {}\nIn theorem {}: {}\nProof failed with error: {:?}",
-                            lib_name, name, ty, e
+                            "In library {lib_name}\nIn theorem {name}: {ty}\nIn tactic: {tactic}\nProof failed with error: {e:?}",
                         ),
                     }
                 }
+                assert!(
+                    session.is_finished(),
+                    "Incomplete proof for {name} in library {lib_name}"
+                );
             }
             st.add_to_engine(&mut eng).unwrap();
         }

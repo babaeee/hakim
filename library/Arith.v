@@ -88,6 +88,7 @@ Proof.
     replace (a ^ n * a) with (a * a ^ n).
     lia.
     apply pow_unfold_l.
+    assumption.
 Qed.
 Suggest goal apply pow_unfold_l;  a ^ (n + 1) = a * a ^ n => 0 ≤ n.
 Suggest goal apply pow_unfold_r;  a ^ (n + 1) = a ^ n * a => 0 ≤ n.
