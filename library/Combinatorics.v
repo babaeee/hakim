@@ -3,13 +3,12 @@ Import /List.
 Import /Arith.
 Import /NumberTheory.
 
-Axiom rule_of_sum: ∀ T: Universe, ∀ A B: set T, finite A -> finite B -> A ∩ B = {} -> |A| + |B| = |A ∪ B|.
+Axiom rule_of_sum: ∀ T: Universe, ∀ A B: set T, finite A -> finite B -> A ∩ B = {} -> |A ∪ B| = |A| + |B|.
 Theorem rule_of_minus: ∀ T: Universe, ∀ A B: set T, finite A -> B ⊆ A -> |A ∖ B| = |A| - |B|.
 Proof.
     intros.
     add_hyp (|A| = |A ∖ B| + |B|).
-    apply eq_sym.
-    replace #2 (A) with ((A∖B)∪B).
+    replace #1 (A) with ((A∖B)∪B).
     auto_set.
     apply rule_of_sum.
     auto_set.
@@ -23,10 +22,170 @@ Proof.
     lia.
 Qed.
 
-Todo projection_finite: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> finite { y: B | ∃ x: A, y = f x ∧ x ∈ S }.
+Theorem projection_finite: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> finite { y: B | ∃ x: A, y = f x ∧ x ∈ S }.
+Proof.
+    intros A B f.
+    apply set_induction.
+    intros.
+    replace #1 ({ y: B | ∃ x0: A, y = f x0 ∧ x0 ∈ x ∪ {a} }) with ({ y: B | ∃ x0: A, y = f x0 ∧ x0 ∈ x } ∪ {f a}).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    Switch 2.
+    auto_set.
+    Switch 2.
+    replace #1 ({ y: B | ∃ x: A, y = f x ∧ x ∈ {} }) with (set_empty B).
+    apply set_equality.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H.
+    destruct H with (ex_ind ? ?) to (H_value H_proof).
+    auto_set.
+    auto_set.
+    apply union_unfold in H2.
+    apply set_from_func_fold.
+    destruct H2 with (or_ind ? ?).
+    apply (ex_intro ? ? (a)).
+    auto_set.
+    apply set_from_func_unfold in H2.
+    destruct H2 with (ex_ind ? ?) to (b b_property).
+    apply (ex_intro ? ? (b)).
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H2.
+    destruct H2 with (ex_ind ? ?) to (b b_property).
+    destruct b_property with (and_ind ? ?) to (b_property_l b_property_r).
+    apply union_fold.
+    apply union_unfold in b_property_r.
+    destruct b_property_r with (or_ind ? ?).
+    apply or_intror.
+    apply singleton_unfold in b_property_r.
+    apply singleton_fold.
+    rewrite b_property_r.
+    auto_set.
+    apply or_introl.
+    apply set_from_func_fold.
+    apply (ex_intro ? ? (b)).
+    assumption.
+Qed.
+Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> |{ y: B | ∃ x: A, y = f x ∧ x ∈ S }| = |S|.
+Proof.
+    intros A B f.
+    apply set_induction.
+    intros.
+    replace #1 (|x ∪ {a}|) with (|x|+ |{a}|).
+    apply rule_of_sum.
+    auto_set.
+    auto_set.
+    assumption.
+    replace #1 ({ y: B | ∃ x0: A, y = f x0 ∧ x0 ∈ x ∪ {a} }) with ({ y: B | ∃ x0: A, y = f x0 ∧ x0 ∈ x } ∪ { f a }).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply union_unfold in H3.
+    apply set_from_func_fold.
+    destruct H3 with (or_ind ? ?).
+    apply singleton_unfold in H3.
+    apply (ex_intro ? ? (a)).
+    auto_set.
+    apply set_from_func_unfold in H3.
+    destruct H3 with (ex_ind ? ?) to (H3_value H3_proof).
+    apply (ex_intro ? ? (H3_value)).
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H3.
+    apply union_fold.
+    destruct H3 with (ex_ind ? ?) to (w w_property).
+    destruct w_property with (and_ind ? ?) to (w_property_l w_property_r).
+    apply union_unfold in w_property_r.
+    destruct w_property_r with (or_ind ? ?).
+    apply singleton_unfold in w_property_r.
+    apply or_intror.
+    apply singleton_fold.
+    rewrite w_property_l.
+    rewrite w_property_r.
+    auto_list.
+    apply or_introl.
+    apply set_from_func_fold.
+    apply (ex_intro ? ? (w)).
+    assumption.
+    replace #1 (|{ y: B | ∃ x0: A, y = f x0 ∧ x0 ∈ x } ∪ {f a}|) with (|{ y: B | ∃ x0: A, y = f x0 ∧ x0 ∈ x }| + |{f a}|).
+    apply rule_of_sum.
+    apply set_equality.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply intersection_unfold in H3.
+    destruct H3 with (and_ind ? ?) to (H3_l H3_r).
+    apply singleton_unfold in H3_r.
+    apply set_from_func_unfold in H3_l.
+    destruct H3_l with (ex_ind ? ?) to (b b_property).
+    destruct b_property with (and_ind ? ?) to (b_property_l b_property_r).
+    add_hyp (f a = f b).
+    auto_set.
+    apply H2 in H3.
+    auto_set.
+    auto_set.
+    auto_set.
+    auto_set.
+    apply projection_finite.
+    assumption.
+    replace #1 (|{ y: B | ∃ x0: A, y = f x0 ∧ x0 ∈ x }|) with (|x|).
+    apply H0.
+    intros.
+    apply H2.
+    assumption.
+    auto_set.
+    auto_set.
+    replace #1 (|{f a}|) with (1).
+    apply singleton_len.
+    replace #1 (|{a}|) with (1).
+    apply singleton_len.
+    auto_list.
+    intros.
+    replace #1 ({ y: B | ∃ x: A, y = f x ∧ x ∈ {} }) with (set_empty B).
+    apply set_equality.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H0.
+    destruct H0 with (ex_ind ? ?) to (H0_value H0_proof).
+    auto_set.
+    add_from_lib empty_len.
+    add_hyp empty_len_ex := (empty_len (A)).
+    add_hyp empty_len_ex0 := (empty_len (B)).
+    auto_set.
+Qed.
+
 Todo bijection_append: ∀ T: U, ∀ t: list T, ∀ S: set (list T), |{ l: list T | ∃ k: list T, l = t ++ k ∧ k ∈ S }| = |S|. 
 
-Todo count_of_binary_lists: ∀ T: U, ∀ a b: T, ~ a = b -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ {a, b} ∧ |l| = n }| = 2 ^ n.
+Todo count_of_lists: ∀ T: U, ∀ S: set T, finite S -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n }| = |S| ^ n.
+Theorem count_of_binary_lists: ∀ T: U, ∀ a b: T, ~ a = b -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ {a, b} ∧ |l| = n }| = 2 ^ n.
+Proof.
+    intros.
+    replace #1 (2) with (|{a,b}|).
+    Switch 1.
+    apply count_of_lists.
+    assumption.
+    Switch 1.
+    apply eq_sym.
+    replace #1 (2) with (|{a}|+|{b}|).
+    Switch 1.
+    apply rule_of_sum.
+    auto_set.
+    Switch 2.
+    replace #1 (|{a}|) with (1).
+    apply singleton_len.
+    replace #1 (|{b}|) with (1).
+    apply singleton_len.
+    lia.
+    auto_set.
+    auto_set.
+    auto_set.
+Qed.
 
 Axiom cm: ℤ -> ℤ -> ℤ.
 Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
