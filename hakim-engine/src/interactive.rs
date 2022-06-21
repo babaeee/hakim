@@ -58,6 +58,8 @@ pub struct HistoryRecord {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Session {
     history: im::Vector<HistoryRecord>,
+    /// frames that will used for redo
+    undone: im::Vector<HistoryRecord>,
 }
 
 fn smart_split(text: &str) -> Vec<String> {
@@ -99,6 +101,7 @@ impl Session {
         };
         Ok(Session {
             history: vector![hr],
+            undone: vector![],
         })
     }
 
@@ -119,20 +122,23 @@ impl Session {
         if line.trim() == "Undo" {
             return self.undo();
         }
+        if line.trim() == "Redo" {
+            return self.redo();
+        }
         if let Some(x) = line.strip_prefix("Switch ") {
             let t: usize = x.parse().map_err(|_| tactic::Error::BadArg {
                 arg: x.to_string(),
                 tactic_name: "Switch".to_string(),
             })?;
             let snapshot = self.last_snapshot().switch_frame(t)?;
-            self.history.push_back(HistoryRecord {
+            self.add_history_record(HistoryRecord {
                 tactic: line.to_string(),
                 snapshot,
             });
             return Ok(());
         }
         let snapshot = self.last_snapshot().run_tactic(line)?;
-        self.history.push_back(HistoryRecord {
+        self.add_history_record(HistoryRecord {
             tactic: line.to_string(),
             snapshot,
         });
@@ -183,8 +189,20 @@ impl Session {
         if self.history.len() <= 1 {
             return Err(tactic::Error::CanNotUndo);
         }
-        self.history.pop_back();
+        let record = self.history.pop_back().unwrap();
+        self.undone.push_front(record);
         Ok(())
+    }
+
+    pub fn redo(&mut self) -> Result<(), tactic::Error> {
+        let x = self.undone.pop_front().ok_or(tactic::Error::CanNotRedo)?;
+        self.history.push_back(x);
+        Ok(())
+    }
+
+    fn add_history_record(&mut self, r: HistoryRecord) {
+        self.history.push_back(r);
+        self.undone = vector![]; // clear redo tasks
     }
 
     pub fn get_history(&self) -> Vec<String> {

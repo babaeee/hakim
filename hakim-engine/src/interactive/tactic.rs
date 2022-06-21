@@ -39,6 +39,7 @@ pub enum Error {
     BrainError(brain::Error),
     CanNotSolve(&'static str),
     CanNotUndo,
+    CanNotRedo,
     EmptyTactic,
     InvalidGoalNumber { i: usize, n: usize },
     HypIsFromLib(String),

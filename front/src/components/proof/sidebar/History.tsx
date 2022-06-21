@@ -17,6 +17,7 @@ export const History = ({ onNatural }: { onNatural: (x: string) => void }) => {
                 {s.map((x, i) => <li key={i}>{x}</li>)}
             </ul>
             <button onClick={() => sendTactic('Undo')}>{g`undo`}</button>
+            <button onClick={() => sendTactic('Redo')}>{g`redo`}</button>
             <CopyButton label={g`export`} text={() => `${localStorage.getItem('last_goal')}.\n${s.join('.\n')}.\n`} />
             <button onClick={() => onNatural(getNatural())}>{g`in_natural`}</button>
             <button onClick={() => window.history.back()}>{g`exit`}</button>

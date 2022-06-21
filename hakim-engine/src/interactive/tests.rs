@@ -90,6 +90,35 @@ fn check_undo() {
 }
 
 #[test]
+fn check_undo_redo() {
+    run_interactive_to_end(
+        F_EQUAL,
+        r#"
+    intros t1
+    intros t2
+    intros f
+    intros a
+    intros b
+    intros bad_name
+    Undo
+    Undo
+    intros c
+    Undo
+    intros b
+    intros eq_proof
+    rewrite eq_proof
+    Undo
+    Undo
+    Redo
+    Undo
+    Redo
+    rewrite eq_proof
+    apply (eq_refl t2 (f b))
+    "#,
+    );
+}
+
+#[test]
 fn dont_start_with_wild() {
     let eng = build_engine(EngineLevel::Full);
     assert!(matches!(
