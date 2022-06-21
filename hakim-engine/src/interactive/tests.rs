@@ -90,6 +90,27 @@ fn check_undo() {
 }
 
 #[test]
+fn check_undo_all() {
+    run_interactive_to_end(
+        F_EQUAL,
+        r#"
+    intros t1
+    intros t2
+    intros f
+    intros a
+    intros b
+    intros bad_name
+    UndoAll
+    Redo
+    Redo
+    intros f a b eq_proof
+    rewrite eq_proof
+    apply (eq_refl t2 (f b))
+    "#,
+    );
+}
+
+#[test]
 fn check_undo_redo() {
     run_interactive_to_end(
         F_EQUAL,

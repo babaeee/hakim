@@ -3,7 +3,10 @@ use im::HashMap;
 use crate::engine::{Engine, Error, Result};
 
 pub use self::text::all_names;
-use self::{ast::File, text::load_text};
+use self::{
+    ast::{File, Sentence},
+    text::load_text,
+};
 
 pub mod prelude;
 mod text;
@@ -24,6 +27,16 @@ pub fn load_library_by_name(engine: &mut Engine, name: &str) -> Result<()> {
 
 fn text_of_name(name: &str) -> Result<&str> {
     load_text(name).ok_or_else(|| Error::UnknownLibrary(name.to_string()))
+}
+
+pub(crate) fn proof_of_theorem(lib: &str, name: &str) -> Option<Vec<String>> {
+    let lib = File::parse(text_of_name(lib).ok()?);
+    let x = lib.0.into_iter().find(|x| x.name() == Some(name))?;
+    if let Sentence::Theorem { proof, .. } = x {
+        Some(proof)
+    } else {
+        None
+    }
 }
 
 pub(crate) fn engine_from_middle_of_lib(lib: &str, name: &str) -> Option<(Engine, String)> {

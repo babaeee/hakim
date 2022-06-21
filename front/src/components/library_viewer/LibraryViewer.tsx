@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { allLibraryData, fromMiddleOfLib } from "../../hakim";
+import { allLibraryData, fromMiddleOfLib, LibraryItemKind } from "../../hakim";
 import { g } from "../../i18n";
 import { openProofSession } from "../root/Root";
 import { Title } from "../util/Title";
@@ -17,8 +17,8 @@ const Collapsable: React.FC<{ name: string, children: any }> = ({ name, children
 export const LibraryViewer = () => {
     const data = allLibraryData();
     const navigator = useNavigate();
-    const onFinish = async (lib: string, name: string) => {
-        if (await fromMiddleOfLib(lib, name)) {
+    const onFinish = async (lib: string, name: string, kind: LibraryItemKind) => {
+        if (await fromMiddleOfLib(lib, name, kind)) {
             openProofSession(navigator, {});
         }
     };
@@ -32,7 +32,7 @@ export const LibraryViewer = () => {
                 {data.map((x) => (
                     <Collapsable key={x.name} name={x.name}>
                         {x.rules.filter((x) => x.kind !== 'Suggestion').map((y) => (
-                            <li key={y.name} onClick={() => onFinish(x.name, y.name)}>
+                            <li key={y.name} onClick={() => onFinish(x.name, y.name, y.kind)}>
                                 <span className={css[y.kind]}>{y.kind}</span> {y.name}{y.ty && `: ${y.ty}`}
                             </li>
                         ))}

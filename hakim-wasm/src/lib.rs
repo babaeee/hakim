@@ -134,8 +134,13 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn start_session_from_lib(&mut self, lib: &str, name: &str) -> Option<String> {
-        self.session = match Session::from_middle_of_lib(lib, name) {
+    pub fn start_session_from_lib(
+        &mut self,
+        lib: &str,
+        name: &str,
+        review: bool,
+    ) -> Option<String> {
+        self.session = match Session::from_middle_of_lib(lib, name, review) {
             Some(s) => Some(s),
             None => return Some("invalid".to_string()),
         };

@@ -243,8 +243,12 @@ export const Monitor = () => {
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             console.log(event.code);
-            if (event.ctrlKey && event.code === 'KeyZ') {
+            if (event.ctrlKey && event.shiftKey && event.code === 'KeyZ') {
+                sendTactic('UndoAll');
+            } else if (event.ctrlKey && event.code === 'KeyZ') {
                 sendTactic('Undo');
+            } else if (event.ctrlKey && event.code === 'KeyY') {
+                sendTactic('Redo');
             }
         }
 

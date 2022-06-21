@@ -5,7 +5,7 @@ use crate::brain::{contains_wild, predict_axiom, TermRef};
 
 use crate::engine::{Engine, Error};
 use crate::interactive::suggest::Applicablity;
-use crate::library::engine_from_middle_of_lib;
+use crate::library::{engine_from_middle_of_lib, proof_of_theorem};
 use crate::parser::is_whity_char;
 
 #[cfg(test)]
@@ -105,9 +105,17 @@ impl Session {
         })
     }
 
-    pub fn from_middle_of_lib(lib: &str, name: &str) -> Option<Self> {
+    pub fn from_middle_of_lib(lib: &str, name: &str, review: bool) -> Option<Self> {
         let (engine, goal) = engine_from_middle_of_lib(lib, name)?;
-        Self::new(engine, &goal).ok()
+        let mut r = Self::new(engine, &goal).ok()?;
+        if review {
+            let proof = proof_of_theorem(lib, name)?;
+            for tac in proof {
+                r.run_tactic(&tac).ok()?;
+            }
+            r.run_tactic("UndoAll").ok()?;
+        }
+        Some(r)
     }
 
     pub fn initial_engine(&self) -> Engine {
@@ -119,6 +127,10 @@ impl Session {
     }
 
     pub fn run_tactic(&mut self, line: &str) -> Result<(), tactic::Error> {
+        if line.trim() == "UndoAll" {
+            while self.undo().is_ok() {}
+            return Ok(());
+        }
         if line.trim() == "Undo" {
             return self.undo();
         }

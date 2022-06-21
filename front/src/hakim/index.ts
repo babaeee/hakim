@@ -265,17 +265,19 @@ export const tryAuto = (): TryAutoResult => {
     return { available: false };
 };
 
+export type LibraryItemKind = 'Import' | 'Axiom' | 'Suggestion' | 'Theorem';
+
 type LibraryData = {
     name: string,
     rules: {
-        kind: 'Import' | 'Axiom' | 'Suggestion' | 'Theorem',
+        kind: LibraryItemKind,
         name: string,
         ty?: string,
     }[],
 };
 
-export const fromMiddleOfLib = (lib: string, name: string) => {
-    return checkErrorAndUpdate(() => Promise.resolve(instance.start_session_from_lib(lib, name)));
+export const fromMiddleOfLib = (lib: string, name: string, kind: LibraryItemKind) => {
+    return checkErrorAndUpdate(() => Promise.resolve(instance.start_session_from_lib(lib, name, kind === 'Theorem')));
 };
 
 export const allLibraryData = (): LibraryData[] => {
