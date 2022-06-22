@@ -306,8 +306,11 @@ mod tests {
         success("∀ n: ℤ, n ^ 2 = n * n");
         fail("∀ n: ℤ, 2 * 2 ^ n = 2 ^ (n+1)"); // wrong for n = -1
         fail("∀ n: ℤ, 0 ^ n = 0"); // wrong for n = 0
+        success("∀ n: ℤ, 1 ^ n = 1"); // correct, even for n <= 0
         success("0 ^ 0 = 1");
         success("0 ^ 1 = 0");
+        success("1 ^ 0 = 1");
+        success("1 ^ (- 2) = 1");
         success("∀ n: ℤ, n ^ 1 = n");
         success("∀ n: ℤ, n ^ 0 = 1");
     }

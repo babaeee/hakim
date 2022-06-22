@@ -126,6 +126,11 @@ fn tree_to_d2(tree: &ArithTree<'_>) -> Poly {
 }
 
 fn pow_to_arith(op1: TermRef, op2: TermRef, arena: ArithArena<'_>) -> ArithTree<'_> {
+    if let Term::Number { value } = op1.as_ref() {
+        if *value == BigInt::from(1i32) {
+            return Const(1i32.into());
+        }
+    }
     if let Term::Number { value } = op2.as_ref() {
         if value.sign() == Sign::Minus {
             return Const(0i32.into());
