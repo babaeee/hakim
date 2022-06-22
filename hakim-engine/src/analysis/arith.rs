@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::brain::{self, definitely_inequal, type_of};
+use crate::brain::{self, definitely_inequal, increase_foreign_vars, remove_unused_var, type_of};
 use crate::library::prelude::{cnt, len1, mult, plus, pow, sigma, z};
 use crate::{app_ref, brain::Term, term_ref, TermRef};
 use num_bigint::{BigInt, Sign};
@@ -218,6 +218,43 @@ fn len1_to_arith(ty: TermRef, arg: TermRef, arena: ArithArena<'_>) -> &ArithTree
 }
 
 fn sigma_to_arith(l: TermRef, r: TermRef, f: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
+    fn atom(r: TermRef, f: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
+        arena.alloc(Atom(app_ref!(sigma(), term_ref!(n 0), r, f)))
+    }
+    fn phase2(r: TermRef, f: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
+        if let Term::Fun(abs) = f.as_ref() {
+            let body = Poly::from(abs.body.clone());
+            let ra = term_ref_to_arith(r.clone(), arena);
+            let mut result = arena.alloc(Mult(arena.alloc(Const(body.constant().clone())), ra));
+            for (x, v) in body.variables() {
+                let mut rstmp = arena.alloc(Const(x.clone()));
+                let mut deps: Option<TermRef> = None;
+                for x in v {
+                    if let Some(x) = remove_unused_var(x.clone(), 0) {
+                        rstmp = arena.alloc(Mult(rstmp, term_ref_to_arith(x.clone(), arena)));
+                    } else {
+                        deps = Some(match deps {
+                            Some(y) => app_ref!(mult(), x, y),
+                            None => x.clone(),
+                        });
+                    }
+                }
+                if let Some(deps) = deps {
+                    rstmp = arena.alloc(Mult(
+                        rstmp,
+                        atom(r.clone(), term_ref!(fun z(), deps), arena),
+                    ));
+                }
+                result = arena.alloc(Plus(result, rstmp));
+            }
+            result
+        } else {
+            let f = increase_foreign_vars(f, 0);
+            let f = app_ref!(f, term_ref!(v 0));
+            let f = term_ref!(fun z(), f);
+            phase2(r, f, arena)
+        }
+    }
     if l != term_ref!(n 0) {
         return arena.alloc(minus(
             sigma_to_arith(term_ref!(n 0), r, f.clone(), arena),
@@ -228,18 +265,13 @@ fn sigma_to_arith(l: TermRef, r: TermRef, f: TermRef, arena: ArithArena<'_>) -> 
     let rp = Poly::from(r);
     let rpc = rp.constant();
     if *rpc > 5i32.into() || *rpc < (-5i32).into() {
-        return arena.alloc(Atom(app_ref!(sigma(), l, rp.into_term(), f)));
+        return phase2(rp.into_term(), f, arena);
     }
     let rpc: i32 = rpc.try_into().unwrap();
     let mut t = if rp.variables().is_empty() {
         arena.alloc(Const(0.into()))
     } else {
-        arena.alloc(Atom(app_ref!(
-            sigma(),
-            l,
-            rp.with_constant(0).into_term(),
-            f
-        )))
+        phase2(rp.with_constant(0).into_term(), f.clone(), arena)
     };
     for i in 0..rpc {
         let f_i = brain::normalize(app_ref!(f, rp.with_constant(i).into_term()));

@@ -48,20 +48,35 @@ impl Display for Monitor {
 }
 
 impl Snapshot {
-    pub fn monitor(&self) -> Monitor {
+    pub fn monitor(&self, html: bool) -> Monitor {
         if self.is_finished() {
             return Monitor::Finished;
         }
         let goals = self
             .frames
             .iter()
-            .map(|x| x.engine.pretty_print_to_html(&x.goal))
+            .map(|x| {
+                if html {
+                    x.engine.pretty_print_to_html(&x.goal)
+                } else {
+                    x.engine.pretty_print(&x.goal)
+                }
+            })
             .collect();
         let frame = self.frames.last().unwrap();
         let hyps = frame
             .hyps
             .iter()
-            .map(|x| (x.name.clone(), frame.engine.pretty_print_to_html(&x.ty)))
+            .map(|x| {
+                (
+                    x.name.clone(),
+                    if html {
+                        frame.engine.pretty_print_to_html(&x.ty)
+                    } else {
+                        frame.engine.pretty_print(&x.ty)
+                    },
+                )
+            })
             .collect();
         Monitor::Running { goals, hyps }
     }
@@ -78,7 +93,7 @@ mod tests {
             "intros",
             EngineLevel::Full,
         );
-        assert_eq!(x.monitor().hyp_names(), vec!["A", "P", "H", "H0"]);
+        assert_eq!(x.monitor(false).hyp_names(), vec!["A", "P", "H", "H0"]);
     }
 
     #[test]
@@ -94,7 +109,7 @@ mod tests {
             EngineLevel::Full,
         );
         assert_eq!(
-            x.monitor().hyp_names(),
+            x.monitor(false).hyp_names(),
             vec!["A", "P", "H", "H0_value", "H0_proof"]
         );
     }

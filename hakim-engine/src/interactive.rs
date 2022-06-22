@@ -179,8 +179,8 @@ impl Session {
         self.last_snapshot().monitor_string()
     }
 
-    pub fn monitor(&self) -> Monitor {
-        self.last_snapshot().monitor()
+    pub fn monitor(&self, html: bool) -> Monitor {
+        self.last_snapshot().monitor(html)
     }
 
     pub fn natural(&self) -> String {
@@ -289,7 +289,7 @@ impl Snapshot {
         if self.is_finished() {
             return "No more subgoals.".to_string();
         }
-        self.monitor().to_string()
+        self.monitor(false).to_string()
     }
 
     pub fn run_tactic(&self, line: &str) -> Result<Self, tactic::Error> {

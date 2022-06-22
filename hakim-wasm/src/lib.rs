@@ -155,7 +155,7 @@ impl Instance {
 
     #[wasm_bindgen]
     pub fn monitor(&self) -> JsValue {
-        let monitor = self.session.as_ref().map(|s| s.monitor());
+        let monitor = self.session.as_ref().map(|s| s.monitor(true));
         serde_wasm_bindgen::to_value(&monitor).unwrap()
     }
 

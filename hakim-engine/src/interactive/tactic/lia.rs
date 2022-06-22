@@ -159,6 +159,7 @@ fn check_contradiction_lp(var_cnt: usize, linear_polies: &[LinearPoly]) -> bool 
 }
 
 fn check_contradiction(polies: &[Poly]) -> bool {
+    dbg!(&polies);
     let polies = &inject_conditions(polies.to_vec());
     let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
     check_contradiction_lp(var_cnt, &linear_polies)
@@ -286,6 +287,19 @@ mod tests {
         success("sigma (-2) (4) (λ i: ℤ, i * i) = 19");
         success("sigma 2 4 (λ i: ℤ, i * i) = 13");
         success("2 * sigma 0 (0 + 1) (λ i: ℤ, i) = 0 * (0 + 1)");
+    }
+
+    #[test]
+    fn sigma_factor() {
+        success("∀ n, (Σ i in [0, n) 1) = n");
+        run_interactive_to_end(
+            "∀ n: ℤ, 0 ≤ n → (Σ i in [0, n) 2 * i + 1) = n * n",
+            r#"
+        intros
+        replace #1 ((Σ i in [0, n) 2 * i + 1)) with ((Σ i in [0, n) 2 * i )+n)
+        lia
+        "#,
+        )
     }
 
     #[test]
