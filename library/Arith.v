@@ -2,11 +2,41 @@ Import /Logic.
 Import /Eq.
 Import /Induction.
 
-Todo zero_lt_mult_pos: ∀ a b: ℤ, 0 < a -> 0 < b -> 0 < a * b.
-Todo zero_lt_mult_neg: ∀ a b: ℤ, a < 0 -> b < 0 -> 0 < a * b.
+Theorem zero_lt_mult_pos: ∀ a b: ℤ, 0 < a -> 0 < b -> 0 < a * b.
+Proof.
+    intros.
+    add_hyp (1 ≤ b).
+    lia.
+    remove_hyp H0.
+    revert H1.
+    revert b.
+    apply z_induction_simple.
+    intros.
+    lia.
+    lia.
+Qed.
+
+Theorem zero_lt_mult_neg: ∀ a b: ℤ, a < 0 -> b < 0 -> 0 < a * b.
+Proof.
+    intros.
+    replace #1 (a * b) with ((-a) * (-b)).
+    lia.
+    apply zero_lt_mult_pos.
+    lia.
+    lia.
+Qed.
 Suggest goal apply zero_lt_mult_pos; 0 < a * b => 0 < a ∧ 0 < b.
 Suggest goal apply zero_lt_mult_neg; 0 < a * b => a < 0 ∧ b < 0.
-Todo zero_le_mult_pos: ∀ a b: ℤ, 0 ≤ a -> 0 ≤ b -> 0 ≤ a * b.
+Theorem zero_le_mult_pos: ∀ a b: ℤ, 0 ≤ a -> 0 ≤ b -> 0 ≤ a * b.
+Proof.
+    intros.
+    revert H0.
+    revert b.
+    apply z_induction_simple.
+    intros.
+    lia.
+    lia.
+Qed.
 Todo zero_le_mult_neg: ∀ a b: ℤ, a ≤ 0 -> b ≤ 0 -> 0 ≤ a * b.
 Suggest goal apply zero_le_mult_pos; 0 ≤ a * b => 0 ≤ a ∧ 0 ≤ b.
 Suggest goal apply zero_le_mult_neg; 0 ≤ a * b => a ≤ 0 ∧ b ≤ 0.

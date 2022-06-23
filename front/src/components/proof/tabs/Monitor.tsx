@@ -14,6 +14,8 @@ import { isDebug } from "../../../dev_mode";
 type HypProps = {
     name: string,
     ty: string,
+    mode: Mode,
+    setMode: (x: Mode) => any,
 };
 
 type Sugg = {
@@ -104,7 +106,7 @@ const MyControlledMenu = ({ menuProps, anchorPoint, suggs, toggleMenu }: any) =>
     );
 };
 
-const Hyp = ({ name, ty }: HypProps): JSX.Element => {
+const Hyp = ({ name, ty, mode, setMode }: HypProps): JSX.Element => {
     const { toggleMenu, ...menuProps } = useMenuState();
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
     const [suggs, setSuggs] = useState([] as Sugg[]);
@@ -149,6 +151,14 @@ const Hyp = ({ name, ty }: HypProps): JSX.Element => {
                     },
                 })}
                 onMouseDown={(e) => {
+                    if (mode === 'delete') {
+                        sendTactic(`remove_hyp ${name}`);
+                        setMode('normal');
+                    }
+                    if (mode === 'revert') {
+                        sendTactic(`revert ${name}`);
+                        setMode('normal');
+                    }
                     // prevent text select in double clicks
                     if (e.detail === 2) {
                         e.preventDefault();
@@ -232,9 +242,12 @@ const NextGoal = ({ ty, i }: { ty: string, i: number }) => {
     )
 };
 
+type Mode = "normal" | "delete" | "revert";
+
 export const Monitor = () => {
     const { onFinish } = useContext(ProofContext);
     const [s, setS] = useState(undefined as State | undefined);
+    const [mode, setMode] = useState('normal' as Mode);
     useEffect(() => {
         return subscribe((newS) => {
             setS(newS);
@@ -249,6 +262,12 @@ export const Monitor = () => {
                 sendTactic('Undo');
             } else if (event.ctrlKey && event.code === 'KeyY') {
                 sendTactic('Redo');
+            } else if (event.code === 'KeyR') {
+                setMode('revert');
+            } else if (event.code === 'Delete') {
+                setMode('delete');
+            } else if (event.code === 'Escape') {
+                setMode('normal');
             }
         }
 
@@ -269,12 +288,14 @@ export const Monitor = () => {
     return (
         <div className={css.monitor} dir="ltr">
             {hyps.map(([name, ty]: any) => (
-                <Hyp name={name} ty={ty} />
+                <Hyp mode={mode} setMode={setMode} name={name} ty={ty} />
             ))}
             <hr /><Goal ty={goalsR[0]} />
             {goalsR.slice(1).map((goal: any, i: number) => (
                 <><hr style={{ filter: "opacity(0.2)" }} /><NextGoal ty={goal} i={i} /></>
             ))}
+            {mode === 'delete' && <>{g`select_a_hyp_to_delete`}</>}
+            {mode === 'revert' && <>{g`select_a_hyp_to_revert`}</>}
         </div>
-    )
+    );
 };

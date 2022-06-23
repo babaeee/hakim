@@ -217,6 +217,33 @@ pub fn predict_wild(t: &Term, predict: &impl Fn(usize, usize) -> bool) -> bool {
     .is_some()
 }
 
+pub fn fill_axiom(t: TermRef, converter: impl Fn(&str, TermRef, usize) -> TermRef) -> TermRef {
+    fn for_abs(
+        abs: &Abstraction,
+        f: &impl Fn(&str, TermRef, usize) -> TermRef,
+        depth: usize,
+    ) -> Abstraction {
+        let abs = abs.clone();
+        Abstraction {
+            var_ty: fa_rec(abs.var_ty, f, depth),
+            hint_name: abs.hint_name,
+            body: fa_rec(abs.body, f, depth + 1),
+        }
+    }
+    fn fa_rec(t: TermRef, f: &impl Fn(&str, TermRef, usize) -> TermRef, depth: usize) -> TermRef {
+        match t.as_ref() {
+            Term::Axiom { ty, unique_name } => f(unique_name, ty.clone(), depth),
+            Term::Wild { .. } | Term::Number { .. } | Term::Var { .. } | Term::Universe { .. } => t,
+            Term::Forall(abs) => TermRef::new(Term::Forall(for_abs(abs, f, depth))),
+            Term::Fun(abs) => TermRef::new(Term::Fun(for_abs(abs, f, depth))),
+            Term::App { func, op } => {
+                app_ref!(fa_rec(func.clone(), f, depth), fa_rec(op.clone(), f, depth))
+            }
+        }
+    }
+    fa_rec(t, &converter, 0)
+}
+
 /// if expression contains some axiom, it will computes predict(i1) || predict(i2) || ... || predict(in)
 /// when ik is unique_name of axioms. In case of no axiom, it will return false
 pub fn map_reduce_axiom<T>(

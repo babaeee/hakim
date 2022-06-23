@@ -13,7 +13,7 @@ mod apply;
 pub(crate) use apply::apply;
 
 mod hyps;
-pub(crate) use hyps::{add_from_lib, add_hyp, remove_hyp};
+pub(crate) use hyps::{add_from_lib, add_hyp, remove_hyp, revert_hyp as revert};
 
 mod auto_set;
 pub(crate) use auto_set::auto_set;

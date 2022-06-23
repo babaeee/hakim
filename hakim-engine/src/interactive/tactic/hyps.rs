@@ -1,7 +1,8 @@
 use super::{get_one_arg, next_arg, next_arg_constant, Error, Result};
 use crate::{
-    brain::{type_of, Term},
+    brain::{fill_axiom, type_of, Abstraction, Term, TermRef},
     interactive::Frame,
+    term_ref,
 };
 
 pub fn add_from_lib<'a>(
@@ -43,6 +44,30 @@ pub fn add_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Res
 
 pub fn remove_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let exp = get_one_arg(args, "remove_hyp")?;
+    frame.remove_hyp_with_name(exp)?;
+    Ok(vec![frame])
+}
+
+pub fn revert_hyp<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
+    let exp = get_one_arg(args, "revert")?;
+    let ty = frame
+        .get_hyp_by_name(exp)
+        .ok_or_else(|| Error::UnknownHyp(exp.to_string()))?
+        .ty
+        .clone();
+    let goal = frame.goal;
+    let goal = fill_axiom(goal, |name, ty, depth| {
+        if name == exp {
+            term_ref!(v depth)
+        } else {
+            term_ref!(axiom name, ty)
+        }
+    });
+    frame.goal = TermRef::new(Term::Forall(Abstraction {
+        body: goal,
+        var_ty: ty,
+        hint_name: Some(exp.to_string()),
+    }));
     frame.remove_hyp_with_name(exp)?;
     Ok(vec![frame])
 }
@@ -137,5 +162,33 @@ mod tests {
     add_from_lib NNPP
     "#,
     "remove_hyp NNPP");
+    }
+
+    #[test]
+    fn revert() {
+        run_interactive(
+            "∀ a b: ℤ, 0 ≤ a → 0 ≤ b → 0 ≤ a * b",
+            r#"
+            intros a b a_ge_0 b_ge_0
+            revert b_ge_0
+            revert b
+            apply z_induction_simple
+        "#,
+            EngineLevel::Full,
+        );
+    }
+
+    #[test]
+    fn revert_preserve_name() {
+        run_interactive_to_end(
+            "2 = 3 -> 3 = 2",
+            r#"
+            intros eq_2_3
+            revert eq_2_3
+            intros
+            apply eq_sym
+            apply eq_2_3
+        "#,
+        );
     }
 }
