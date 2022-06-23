@@ -1,4 +1,5 @@
 Import /Logic.
+Import /Induction.
 
 Axiom set_from_func_unfold: ∀ A: U, ∀ f: A -> U, ∀ a: A, a ∈ (set_from_func A f) -> f a.
 Axiom set_from_func_fold: ∀ A: U, ∀ f: A -> U, ∀ a: A, f a -> a ∈ (set_from_func A f).
@@ -60,13 +61,105 @@ Qed.
 Theorem minus_of_subset: ∀ A: U, ∀ x y: set A, x ⊆ y -> x ∪ y ∖ x = y.
 Proof. intros. auto_set. Qed.
 
-Axiom finite: ∀ A: U, (set A) -> U.
-Axiom empty_finite : ∀ A: U, finite (set_empty A).
-Axiom finite_add : ∀ A: U, ∀ x: set A, finite x -> ∀ a: A, (a ∈ x -> False) -> finite (x ∪ {a}).
+Theorem non_empty_has_member: ∀ A: U, ∀ S: set A, ~ S = {} -> ∃ x: A, x ∈ S.
+Proof.
+    intros.
+    apply NNPP.
+    intros.
+    apply not_exists_imply_forall in H0.
+    apply H.
+    apply set_equality.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply H0 in H1.
+    assumption.
+Qed.
+Suggest hyp apply non_empty_has_member in $n; ~ S = {} => ∃ x, x ∈ S.
 
-Axiom finite_included : ∀ A: U, ∀ x y: set A, finite y -> x ⊆ y -> finite x.
+Theorem empty_finite : ∀ A: U, finite (set_empty A).
+Proof. intros. auto_set. Qed.
+Theorem finite_add : ∀ A: U, ∀ x: set A, finite x -> ∀ a: A, (a ∈ x -> False) -> finite (x ∪ {a}).
+Proof. intros. auto_set. Qed.
 
-Axiom set_induction : ∀ A: U, ∀ P: set A -> U, P {} -> (∀ x: set A, finite x -> P x -> ∀ a: A, (a ∈ x -> False) -> P (x ∪ {a})) -> ∀ e: set A, finite e -> P e.
+Theorem finite_included : ∀ A: U, ∀ x y: set A, finite y -> x ⊆ y -> finite x.
+Proof. intros. auto_set. Qed.
+
 Axiom empty_len: ∀ A: U, |set_empty A| = 0.
+Axiom empty_len_unique: ∀ A: U, ∀ S: set A, |S| = 0 -> S = {}.
+Axiom finite_add_len: ∀ A: U, ∀ S: set A, finite S -> ∀ a: A, ~ a ∈ S -> |S ∪ {a}| = |S| + 1.
+Axiom finite_len_ge_0: ∀ A: U, ∀ S: set A, finite S -> 0 ≤ |S|.
+
+Theorem set_induction : ∀ A: U, ∀ P: set A -> U, P {} -> (∀ x: set A, finite x -> P x -> ∀ a: A, (a ∈ x -> False) -> P (x ∪ {a})) -> ∀ e: set A, finite e -> P e.
+Proof.
+    intros.
+    add_hyp (∃ k, k = |e|).
+    apply (ex_intro ? ? (|e|)).
+    auto_list.
+    destruct H2 with (ex_ind ? ?) to (k k_property).
+    add_hyp (0 ≤ k).
+    rewrite k_property.
+    apply finite_len_ge_0.
+    assumption.
+    revert k_property.
+    revert H1.
+    revert e.
+    revert H2.
+    revert k.
+    apply z_induction_simple.
+    intros.
+    Switch 1.
+    intros.
+    add_hyp (e={}).
+    apply empty_len_unique.
+    auto_set.
+    rewrite H2.
+    apply H.
+    add_hyp (~ e = {}).
+    intros.
+    add_hyp (|e|=0).
+    rewrite H3.
+    apply empty_len.
+    lia.
+    apply non_empty_has_member in H3.
+    destruct H3 with (ex_ind ? ?) to (x x_property).
+    add_hyp H2_ex := (H2 (e ∖ {x})).
+    add_hyp (⁨finite (e ∖ {x})⁩).
+    remove_hyp H2_ex.
+    Switch 1.
+    add_hyp H2_ex_o := (H2_ex H3).
+    remove_hyp H3.
+    remove_hyp H2_ex.
+    Switch 1.
+    auto_set.
+    add_hyp (⁨n = |e ∖ {x}|⁩).
+    remove_hyp H2_ex_o.
+    Switch 1.
+    add_hyp H2_ex_o_o := (H2_ex_o H3).
+    remove_hyp H3.
+    remove_hyp H2_ex_o.
+    apply H0 in H2_ex_o_o.
+    auto_set.
+    add_hyp H2_ex_o_o_ex := (H2_ex_o_o (x)).
+    add_hyp (⁨~ x ∈ e ∖ {x}⁩).
+    remove_hyp H2_ex_o_o_ex.
+    Switch 1.
+    add_hyp H2_ex_o_o_ex_o := (H2_ex_o_o_ex H3).
+    remove_hyp H3.
+    remove_hyp H2_ex_o_o_ex.
+    replace #1 ((e ∖ {x} ∪ {x})) with (e) in H2_ex_o_o_ex_o.
+    auto_set.
+    assumption.
+    auto_set.
+    add_from_lib finite_add_len.
+    add_hyp (~ x ∈ (e ∖ {x})).
+    auto_set.
+    apply finite_add_len in H3.
+    auto_set.
+    replace #1 (e ∖ {x} ∪ {x}) with (e) in H3.
+    auto_set.
+    lia.
+Qed.
+
 Axiom singleton_len: ∀ A: U, ∀ x: A, |{x}| = 1.
 Suggest goal auto apply singleton_len; Trivial.

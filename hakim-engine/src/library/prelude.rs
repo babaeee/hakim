@@ -62,6 +62,9 @@ pub fn set_empty() -> TermRef {
 pub fn set_singleton() -> TermRef {
     term_ref!(axiom "set_singleton", forall u(), forall v0(), app_ref!(set(), v1()))
 }
+pub fn finite() -> TermRef {
+    term_ref!(axiom "finite", forall u(), forall app_ref!(set(), v0()), u())
+}
 pub fn inset() -> TermRef {
     term_ref!(axiom "inset", forall u(), forall v0(), forall app_ref!(set(), v1()), u())
 }
@@ -147,6 +150,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("union".to_string(), union());
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());
+    name_dict.insert("finite".to_string(), finite());
     name_dict.insert("included".to_string(), included());
     name_dict.insert("sigma".to_string(), sigma());
     name_dict.insert("len1".to_string(), len1());
