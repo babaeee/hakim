@@ -61,7 +61,7 @@ pub enum Applicablity {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SuggRule {
     pub class: SuggClass,
-    pub tactic: Vec<String>,
+    pub tactic: String,
     pub applicablity: Applicablity,
 }
 
@@ -69,7 +69,7 @@ impl From<SuggRule> for Suggestion {
     fn from(sugg: SuggRule) -> Self {
         Self {
             class: sugg.class,
-            tactic: sugg.tactic.iter().map(|x| x.to_string()).collect(),
+            tactic: sugg.tactic,
             questions: vec![],
             applicablity: sugg.applicablity,
         }
@@ -78,18 +78,14 @@ impl From<SuggRule> for Suggestion {
 
 impl SuggRule {
     fn try_on_goal(&self, frame: Frame) -> Option<Suggestion> {
-        frame.run_tactic(&self.tactic[0]).ok()?;
+        frame.run_tactic(&self.tactic).ok()?;
         Some(self.clone().into())
     }
 
     fn try_on_hyp(&self, name: &str, frame: Frame) -> Option<Suggestion> {
-        frame.run_tactic(&self.tactic[0].replace("$n", name)).ok()?;
+        frame.run_tactic(&self.tactic.replace("$n", name)).ok()?;
         let mut r: Suggestion = self.clone().into();
-        r.tactic = r
-            .tactic
-            .into_iter()
-            .map(|x| x.replace("$n", name))
-            .collect();
+        r.tactic = r.tactic.replace("$n", name);
         Some(r)
     }
 }
@@ -97,7 +93,7 @@ impl SuggRule {
 #[derive(Debug)]
 pub struct Suggestion {
     pub class: SuggClass,
-    pub tactic: Vec<String>,
+    pub tactic: String,
     pub questions: Vec<String>,
     pub applicablity: Applicablity,
 }
@@ -106,7 +102,7 @@ impl Suggestion {
     fn new_default(class: SuggClass, t: &str) -> Self {
         Self {
             class,
-            tactic: vec![t.to_string()],
+            tactic: t.to_string(),
             questions: vec![],
             applicablity: Applicablity::Default,
         }
@@ -115,7 +111,7 @@ impl Suggestion {
     fn newq1default(class: SuggClass, t: &str, q: &str) -> Self {
         Self {
             class,
-            tactic: vec![t.to_string()],
+            tactic: t.to_string(),
             questions: vec![q.to_string()],
             applicablity: Applicablity::Default,
         }

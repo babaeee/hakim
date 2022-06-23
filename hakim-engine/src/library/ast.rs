@@ -136,7 +136,7 @@ impl Sentence {
             } => {
                 let sugg = SuggRule {
                     class,
-                    tactic: vec![tactic],
+                    tactic,
                     applicablity,
                 };
                 match target {

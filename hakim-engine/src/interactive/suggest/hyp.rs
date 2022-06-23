@@ -7,7 +7,7 @@ use super::{Applicablity, SuggClass::*, Suggestion};
 
 pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
     let mut r = vec![];
-    for rule in dbg!(&frame.engine.hyp_suggs) {
+    for rule in &frame.engine.hyp_suggs {
         if let Some(x) = rule.try_on_hyp(name, frame.clone()) {
             r.push(x);
         }
@@ -21,14 +21,14 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
                 let ty_str = frame.engine.pretty_print(var_ty);
                 r.push(Suggestion {
                     class: Instantiate,
-                    tactic: vec![
-                        format!("add_hyp ({ty_str})"),
-                        format!("remove_hyp {name}"),
-                        format!("Switch 1"),
-                        format!("add_hyp {new_name} := ({name} {next_h})"),
-                        format!("remove_hyp {next_h}"),
-                        format!("remove_hyp {name}"),
-                    ],
+                    tactic: seq_builder([
+                        &format!("add_hyp ({ty_str})"),
+                        &format!("remove_hyp {name}"),
+                        "Switch 1",
+                        &format!("add_hyp {new_name} := ({name} {next_h})"),
+                        &format!("remove_hyp {next_h}"),
+                        &format!("remove_hyp {name}"),
+                    ]),
                     questions: vec![],
                     applicablity: Applicablity::Default,
                 });
@@ -55,6 +55,16 @@ pub fn suggest_on_hyp(frame: &Frame, name: &str) -> Vec<Suggestion> {
             }
         }
         _ => (),
+    }
+    r
+}
+
+fn seq_builder<'a>(l: impl IntoIterator<Item = &'a str>) -> String {
+    let mut r = "Seq ".to_string();
+    for x in l {
+        r += "(";
+        r += x;
+        r += ") ";
     }
     r
 }

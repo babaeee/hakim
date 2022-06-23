@@ -17,7 +17,7 @@ pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {
             r.push(Suggestion::new_default(Intros, "intros"));
             r.push(Suggestion {
                 class: IntrosWithName,
-                tactic: vec!["intros $0".to_string()],
+                tactic: "intros $0".to_string(),
                 questions: vec!["$enter_a_name:".to_string()],
                 applicablity: Applicablity::Normal,
             });

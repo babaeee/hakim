@@ -137,18 +137,6 @@ impl Session {
         if line.trim() == "Redo" {
             return self.redo();
         }
-        if let Some(x) = line.strip_prefix("Switch ") {
-            let t: usize = x.parse().map_err(|_| tactic::Error::BadArg {
-                arg: x.to_string(),
-                tactic_name: "Switch".to_string(),
-            })?;
-            let snapshot = self.last_snapshot().switch_frame(t)?;
-            self.add_history_record(HistoryRecord {
-                tactic: line.to_string(),
-                snapshot,
-            });
-            return Ok(());
-        }
         let snapshot = self.last_snapshot().run_tactic(line)?;
         self.add_history_record(HistoryRecord {
             tactic: line.to_string(),
@@ -163,15 +151,11 @@ impl Session {
         ans: Vec<String>,
     ) -> Result<(), tactic::Error> {
         assert_eq!(sugg.questions.len(), ans.len());
-        let tactics = sugg.tactic.into_iter().map(|mut x| {
-            for (i, a) in ans.iter().enumerate() {
-                x = x.replace(&format!("${}", i), a);
-            }
-            x
-        });
-        for t in tactics {
-            self.run_tactic(&t)?;
+        let mut tactic = sugg.tactic;
+        for (i, a) in ans.iter().enumerate() {
+            tactic = tactic.replace(&format!("${}", i), a);
         }
+        self.run_tactic(&tactic)?;
         Ok(())
     }
 
@@ -293,7 +277,29 @@ impl Snapshot {
     }
 
     pub fn run_tactic(&self, line: &str) -> Result<Self, tactic::Error> {
+        if let Some(x) = line.strip_prefix("Switch ") {
+            let t: usize = x.parse().map_err(|_| tactic::Error::BadArg {
+                arg: x.to_string(),
+                tactic_name: "Switch".to_string(),
+            })?;
+            return self.switch_frame(t);
+        }
         let mut snapshot = self.clone();
+        if let Some(x) = line.strip_prefix("Seq ") {
+            let tacs = smart_split(x);
+            for tac in tacs {
+                if let Some(tac) = tac.strip_prefix('(') {
+                    if let Some(tac) = tac.strip_suffix(')') {
+                        snapshot = snapshot.run_tactic(tac)?;
+                    } else {
+                        unreachable!("smart split is broken");
+                    }
+                } else {
+                    snapshot = snapshot.run_tactic(&tac)?;
+                }
+            }
+            return Ok(snapshot);
+        }
         let frame = snapshot.pop_frame();
         let new_frames = frame.run_tactic(line)?;
         snapshot.frames.extend(new_frames);
@@ -440,14 +446,10 @@ impl Frame {
             .filter(|x| x.applicablity == Applicablity::Auto);
         for sugg in suggs {
             assert!(sugg.questions.is_empty());
-            if let Ok([x]) = <[String; 1]>::try_from(sugg.tactic) {
-                if let Ok(nf) = self.run_tactic(&x) {
-                    if nf.is_empty() {
-                        return Some(x);
-                    }
+            if let Ok(nf) = self.run_tactic(&sugg.tactic) {
+                if nf.is_empty() {
+                    return Some(sugg.tactic);
                 }
-            } else {
-                panic!("unsupported auto sugg");
             }
         }
         None

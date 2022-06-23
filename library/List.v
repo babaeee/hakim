@@ -1,5 +1,28 @@
+Import /Induction.
+
 Todo list_len_concat_lt: ∀ A: U, ∀ x y: list A, ~ x = nil A -> |y| < |x++y|.
-Todo list_induction_len: ∀ A: U, ∀ P: list A -> U, (∀ b: list A, (∀ a: list A, |a| < |b| -> P a) -> P b) -> ∀ a: list A, P a.
+Theorem list_induction_len: ∀ A: U, ∀ P: list A -> U, (∀ b: list A, (∀ a: list A, |a| < |b| -> P a) -> P b) -> ∀ a: list A, P a.
+Proof.
+    intros.
+    add_hyp (∃ k, k = |a|).
+    apply (ex_intro ? ? (|a|)).
+    auto_list.
+    destruct H0 with (ex_ind ? ?) to (k k_property).
+    add_hyp (0 ≤ k).
+    lia.
+    revert k_property.
+    revert a.
+    revert H0.
+    revert k.
+    apply z_induction_strong.
+    intros.
+    apply H.
+    intros.
+    apply (⁨H1 (|a0|) ?2 ?4 ?6 ?8⁩).
+    auto_list.
+    lia.
+    lia.
+Qed.
 
 Todo nil_unique: ∀ A: U, ∀ l: list A, |l| = 0 -> l = [].
 
