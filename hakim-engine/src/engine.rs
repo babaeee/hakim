@@ -11,7 +11,8 @@ use crate::{
     library::{all_names, load_library_by_name, prelude},
     parser::{
         self, ast_to_term, fix_wild_scope, is_valid_ident, parse, pos_of_span, term_pretty_print,
-        term_to_ast, BinOp, HtmlRenderer, ParserConfig, PrettyPrintConfig,
+        term_pretty_print_to_string, term_to_ast, BinOp, HtmlRenderer, ParserConfig,
+        PrettyPrintConfig,
     },
     search::search,
     term_ref,
@@ -237,7 +238,7 @@ impl Engine {
     }
 
     pub fn pretty_print(&self, term: &Term) -> String {
-        term_pretty_print(
+        term_pretty_print_to_string(
             term,
             |x| !self.name_dict.contains_key(x),
             &self.pretty_print_config(),

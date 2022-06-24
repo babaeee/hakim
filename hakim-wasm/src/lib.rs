@@ -357,21 +357,24 @@ impl Instance {
         serde_wasm_bindgen::to_value(&notation_list()).unwrap()
     }
 
-    pub fn search(&self, query: &str) -> String {
+    pub fn search(&self, query: &str) -> JsValue {
         let eng = if let Some(s) = &self.session {
             s.initial_engine()
         } else {
-            return "No session".to_string();
+            return JsValue::from_str("No session");
         };
         match eng.search(query) {
-            Ok(r) => r
-                .into_iter()
-                .map(|x| {
-                    let ty = eng.calc_type_and_infer(&x).unwrap();
-                    format!("{}: {}\n", x, eng.pretty_print(&ty))
-                })
-                .collect(),
-            Err(e) => format!("{:?}", e),
+            Ok(r) => {
+                let x = r
+                    .into_iter()
+                    .map(|x| {
+                        let ty = eng.calc_type_and_infer(&x).unwrap();
+                        (x, eng.pretty_print(&ty))
+                    })
+                    .collect::<Vec<_>>();
+                serde_wasm_bindgen::to_value(&x).unwrap()
+            }
+            Err(e) => JsValue::from_str(&format!("{:?}", e)),
         }
     }
 }

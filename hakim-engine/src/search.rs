@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn dont_stack_overflow() {
-        check_search("?x -> ?x -> ?x -> ?x", "");
+        check_search("?x -> ?x -> ?x -> ?x", "if_f");
     }
 
     #[test]

@@ -13,6 +13,9 @@ use crate::{
 
 use super::{semantic_highlight::HighlightTag, span_counter::AstStacker, AstTerm, PrecLevel};
 
+mod max_width;
+pub use max_width::term_pretty_print_to_string;
+
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
         if let Term::App { func, op: _ } = func.as_ref() {
@@ -486,8 +489,12 @@ pub fn pretty_print_ast(
                     write!(r, ": ")?;
                     pretty_print_ast(ty, level, r, c)?;
                 }
-                write!(r, ", ")?;
-                pretty_print_ast(body, PMX, r, c)
+                write!(r, ",")?;
+                r.push_indent();
+                r.line_break();
+                pretty_print_ast(body, PMX, r, c)?;
+                r.pop_indent(2);
+                Ok(())
             })?;
         }
         AstTerm::Ident(name, tag) => tag
@@ -503,9 +510,19 @@ pub fn pretty_print_ast(
                 pretty_print_ast(a, (level.0, op.level_left()), r, c)?;
                 match op {
                     App => write!(r, " ")?,
-                    _ => write!(r, " {op} ")?,
+                    _ => {
+                        r.push_indent();
+                        r.line_break();
+                        write!(r, "{op} ")?;
+                        r.push_indent();
+                    }
                 }
-                pretty_print_ast(b, (op.level_right(), level.1), r, c)
+                pretty_print_ast(b, (op.level_right(), level.1), r, c)?;
+                if *op != App {
+                    r.pop_indent(2);
+                    r.pop_indent(2);
+                }
+                Ok(())
             })?;
         }
         AstTerm::UniOp(op, t) => {

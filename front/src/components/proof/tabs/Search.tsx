@@ -25,7 +25,9 @@ export const Search = () => {
             {!help && <div className={css.searchResult}>
                 {searchResult
                     .filter((x) => lemmaBox.find((y) => y.name === x.name) === undefined)
-                    .map((x) => <div key={x.name} onClick={() => appendLemma(x)}>{x.name}: {x.ty}</div>)
+                    .map((x) => <div key={x.name} onClick={() => appendLemma(x)}>
+                        <span className={css.itemName}>{x.name}:</span> <pre className={css.itemTy}>{x.ty}</pre>
+                    </div>)
                 }
             </div>}
         </div>

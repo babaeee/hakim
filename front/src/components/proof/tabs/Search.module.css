@@ -2,3 +2,12 @@
     height: 50vh;
     overflow: auto;
 }
+
+.itemName {
+    vertical-align: top;
+}
+
+.itemTy {
+    display: inline-block;
+    margin: 0;
+}

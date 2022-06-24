@@ -81,10 +81,15 @@ impl Write for Finder {
 pub trait AstStacker: Write {
     fn push_ast(&mut self, _: &AstTerm) {}
     fn pop_ast(&mut self) {}
+    fn push_indent(&mut self) {}
+    fn pop_indent(&mut self, _: usize) {}
     fn push_highlight(&mut self, _: HighlightTag) {}
     fn pop_highlight(&mut self) {}
     fn paren_open(&mut self) {}
     fn paren_close(&mut self) {}
+    fn line_break(&mut self) {
+        self.write_str(" ").unwrap()
+    }
 }
 
 impl AstStacker for Finder {

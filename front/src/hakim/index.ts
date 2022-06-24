@@ -151,11 +151,11 @@ export type SearchResult = {
 };
 
 export const searchPattern = (expr: string): SearchResult[] => {
-    return instance.search(expr).split('\n').filter((x) => x.trim() !== '').map((x) => {
-        let y = x.split(': ');
+    const r = instance.search(expr);
+    return r.map(([a, b]: [string, string]) => {
         return {
-            name: y[0],
-            ty: y.slice(1).join(': '),
+            name: a,
+            ty: b,
         };
     });
 };

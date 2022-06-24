@@ -308,3 +308,22 @@ fn in_in_name() {
     parse_pretty("λ include: ℤ → ℤ, include 5");
     parse_pretty("included_fold");
 }
+
+#[test]
+fn max_width() {
+    parse_pretty(
+        r#"∀ a b n: ℤ,
+  (Σ i in [0 + 1, n + 1) cm n (i - 1) * a ^ i * b ^ (n - i + 1)) + a ^ (n + 1)
+    + ((Σ i0 in [1, n + 1) cm n i0 * a ^ i0 * b ^ (n - i0 + 1))
+        + b ^ (n - 0 + 1))
+    = (Σ i in [1, n + 1) cm n (i - 1) * a ^ i * b ^ (n - i + 1))
+        + ((Σ i0 in [1, n + 1) cm n i0 * a ^ i0 * b ^ (n - i0 + 1))
+            + a ^ (n + 1)
+            + b ^ (n - 0 + 1))"#,
+    );
+    parse_pretty(
+        r#"∀ k: ℤ,
+  ∀ P: ℤ → Universe,
+    (∀ n: ℤ, k ≤ n → (∀ m: ℤ, k ≤ m → m < n → P m) → P n) → ∀ n: ℤ, k ≤ n → P n"#,
+    );
+}
