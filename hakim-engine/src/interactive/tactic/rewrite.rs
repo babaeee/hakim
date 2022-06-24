@@ -206,4 +206,17 @@ mod tests {
             EngineLevel::Empty,
         );
     }
+
+    #[test]
+    #[ignore]
+    fn replace_panic() {
+        run_interactive(
+            r#"∀ n: ℤ,
+        0 ≤ n
+          → 2 * (Σ i in [0, n + 1) i) = n * (n + 1)
+              → 2 * (Σ i in [0, n + 1 + 1) i) = (n + 1) * (n + 1 + 1)"#,
+            r#"replace #2 (0) with (2)"#,
+            EngineLevel::Empty,
+        );
+    }
 }

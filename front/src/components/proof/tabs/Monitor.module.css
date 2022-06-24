@@ -11,20 +11,21 @@
 }
 
 .hyp * {
-    transition: initial;
+  transition: initial;
+  vertical-align: top;
 }
 
 .nextGoal {
-    color: #D4D4D4;
-    touch-action: none;
-    display: block !important;
-    padding: .2rem;
-    margin: .1rem;
-    background-color: #1e1e1e;
-    border-radius: 10px;
-    border: 1.5px dashed #1e1e1e;
-    transition: border-color .3s;
-    filter: opacity(0.5);
+  color: #D4D4D4;
+  touch-action: none;
+  display: block !important;
+  padding: .2rem;
+  margin: .1rem;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  border: 1.5px dashed #1e1e1e;
+  transition: border-color .3s;
+  filter: opacity(0.5);
 }
 
 .dragHandler {
@@ -41,4 +42,9 @@
 
 .hyp.drop.over {
   border-color: yellowgreen;
+}
+
+.ty {
+  white-space: pre;
+  display: inline-block;
 }

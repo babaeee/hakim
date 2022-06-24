@@ -29,7 +29,7 @@ impl HighlightTag {
     ) -> Result<(), std::fmt::Error> {
         r.push_highlight(*self);
         f(r)?;
-        r.pop_highlight();
+        r.pop_highlight(*self);
         Ok(())
     }
 }
@@ -88,11 +88,23 @@ pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
 pub struct HtmlRenderer {
     value: String,
     pos: usize,
+    ignored: bool,
 }
 
 impl Write for HtmlRenderer {
     fn write_str(&mut self, s: &str) -> std::fmt::Result {
-        self.pos += s.chars().count();
+        for c in s.chars() {
+            if c == '\n' {
+                self.pos += 1;
+                self.ignored = true;
+                continue;
+            }
+            if c == ' ' && self.ignored {
+                continue;
+            }
+            self.ignored = false;
+            self.pos += 1;
+        }
         self.value.write_str(s)
     }
 }
@@ -103,7 +115,7 @@ impl AstStacker for HtmlRenderer {
         self.value += &format!(r#"<span class="highlight{highlight:?}" data-pos="{pos}">"#);
     }
 
-    fn pop_highlight(&mut self) {
+    fn pop_highlight(&mut self, _: HighlightTag) {
         self.value += "</span>";
     }
 }

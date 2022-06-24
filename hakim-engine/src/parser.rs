@@ -19,7 +19,8 @@ use self::binop::ALL_BINOPS;
 #[cfg(test)]
 pub use self::pretty_print::structural_print;
 pub use self::pretty_print::{
-    term_pretty_print, term_pretty_print_to_string, term_to_ast, PrettyPrintConfig,
+    term_pretty_print, term_pretty_print_to_html, term_pretty_print_to_string, term_to_ast,
+    PrettyPrintConfig,
 };
 pub use self::semantic_highlight::{HighlightTag, HtmlRenderer};
 pub use self::span_counter::pos_of_span;

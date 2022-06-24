@@ -10,8 +10,8 @@ use crate::{
     interactive::SuggRule,
     library::{all_names, load_library_by_name, prelude},
     parser::{
-        self, ast_to_term, fix_wild_scope, is_valid_ident, parse, pos_of_span, term_pretty_print,
-        term_pretty_print_to_string, term_to_ast, BinOp, HtmlRenderer, ParserConfig,
+        self, ast_to_term, fix_wild_scope, is_valid_ident, parse, pos_of_span,
+        term_pretty_print_to_html, term_pretty_print_to_string, term_to_ast, BinOp, ParserConfig,
         PrettyPrintConfig,
     },
     search::search,
@@ -246,12 +246,11 @@ impl Engine {
     }
 
     pub fn pretty_print_to_html(&self, term: &Term) -> String {
-        let r: HtmlRenderer = term_pretty_print(
+        term_pretty_print_to_html(
             term,
             |x| !self.name_dict.contains_key(x),
             &self.pretty_print_config(),
-        );
-        r.value()
+        )
     }
 
     pub fn pos_of_span(&self, term: &Term, span: (usize, usize)) -> Option<usize> {

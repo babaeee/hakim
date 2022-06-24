@@ -35,9 +35,6 @@ impl Write for Counter {
 }
 
 impl AstStacker for Counter {
-    fn push_highlight(&mut self, _: HighlightTag) {}
-    fn pop_highlight(&mut self) {}
-
     fn push_ast(&mut self, ast: &AstTerm) {
         let is_our = self.ast == *ast;
         if is_our {
@@ -84,7 +81,7 @@ pub trait AstStacker: Write {
     fn push_indent(&mut self) {}
     fn pop_indent(&mut self, _: usize) {}
     fn push_highlight(&mut self, _: HighlightTag) {}
-    fn pop_highlight(&mut self) {}
+    fn pop_highlight(&mut self, _: HighlightTag) {}
     fn paren_open(&mut self) {}
     fn paren_close(&mut self) {}
     fn line_break(&mut self) {
@@ -93,9 +90,6 @@ pub trait AstStacker: Write {
 }
 
 impl AstStacker for Finder {
-    fn push_highlight(&mut self, _: HighlightTag) {}
-    fn pop_highlight(&mut self) {}
-
     fn push_ast(&mut self, ast: &AstTerm) {
         match self {
             Finder::Found(_) => (),

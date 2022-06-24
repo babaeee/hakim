@@ -14,7 +14,7 @@ use crate::{
 use super::{semantic_highlight::HighlightTag, span_counter::AstStacker, AstTerm, PrecLevel};
 
 mod max_width;
-pub use max_width::term_pretty_print_to_string;
+pub use max_width::{term_pretty_print_to_html, term_pretty_print_to_string};
 
 fn detect_set_singleton(t: &Term) -> Option<TermRef> {
     if let Term::App { func, op: op2 } = t {
@@ -368,23 +368,9 @@ pub fn term_to_ast(
     }
 }
 
-impl AstStacker for std::fmt::Formatter<'_> {
-    fn push_highlight(&mut self, _: HighlightTag) {}
-    fn pop_highlight(&mut self) {}
-    fn push_ast(&mut self, _: &AstTerm) {}
-    fn pop_ast(&mut self) {}
-    fn paren_open(&mut self) {}
-    fn paren_close(&mut self) {}
-}
+impl AstStacker for std::fmt::Formatter<'_> {}
 
-impl AstStacker for String {
-    fn push_highlight(&mut self, _: HighlightTag) {}
-    fn pop_highlight(&mut self) {}
-    fn push_ast(&mut self, _: &AstTerm) {}
-    fn pop_ast(&mut self) {}
-    fn paren_open(&mut self) {}
-    fn paren_close(&mut self) {}
-}
+impl AstStacker for String {}
 
 impl Display for AstTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -538,19 +524,13 @@ pub fn pretty_print_ast(
             })?;
         }
         AstTerm::Char(x) => {
-            r.push_highlight(HighlightTag::String);
-            write!(r, "'{x}'")?;
-            r.pop_highlight();
+            HighlightTag::String.print(r, |r| write!(r, "'{x}'"))?;
         }
         AstTerm::Str(x) => {
-            r.push_highlight(HighlightTag::String);
-            write!(r, r#""{x}""#)?;
-            r.pop_highlight();
+            HighlightTag::String.print(r, |r| write!(r, r#""{x}""#))?;
         }
         AstTerm::Number(x) => {
-            r.push_highlight(HighlightTag::Literal);
-            write!(r, "{x}")?;
-            r.pop_highlight();
+            HighlightTag::Literal.print(r, |r| write!(r, "{x}"))?;
         }
         AstTerm::Wild(Some(x)) => write!(r, "?{x}")?,
         AstTerm::Wild(None) => write!(r, "?")?,

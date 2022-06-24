@@ -63,7 +63,7 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     let end = range.endOffset + offsetOfNode(range.endContainer);
     while (ty[start] === ' ') start += 1;
     while (ty[end - 1] === ' ') end -= 1;
-    const text = ty.slice(start, end).trim().replaceAll('\u2068', '').replaceAll('\u2069', '');
+    const text = sel.toString().trim().replaceAll('\u2068', '').replaceAll('\u2069', '');
     for (let i = 0; i < ty.length; i += 1) {
         if (ty[i] === '\u2068' || ty[i] === '\u2069') {
             if (i <= start) start -= 1;
@@ -166,7 +166,7 @@ const Hyp = ({ name, ty, mode, setMode }: HypProps): JSX.Element => {
                 }}
                 onDoubleClick={() => runSuggDblHyp(name)}>
                 <span ref={drag} className={css.dragHandler}>&#x25CE;</span>{' '}
-                {name}: <span dangerouslySetInnerHTML={{ __html: ty }} />
+                {name}: <span className={css.ty} dangerouslySetInnerHTML={{ __html: ty }} />
                 <MyControlledMenu
                     toggleMenu={toggleMenu}
                     menuProps={menuProps}
@@ -223,7 +223,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
                 setAnchorPoint({ x: e.clientX, y: e.clientY });
                 toggleMenu(true);
             }}>
-            <span dangerouslySetInnerHTML={{ __html: ty }} />
+            <span className={css.ty} dangerouslySetInnerHTML={{ __html: ty }} />
             <MyControlledMenu
                 toggleMenu={toggleMenu}
                 menuProps={menuProps}
@@ -237,7 +237,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
 const NextGoal = ({ ty, i }: { ty: string, i: number }) => {
     return (
         <div className={css.nextGoal} onDoubleClick={() => sendTactic(`Switch ${i + 1}`)}>
-            <span dangerouslySetInnerHTML={{ __html: ty }} />
+            <span className={css.ty} dangerouslySetInnerHTML={{ __html: ty }} />
         </div>
     )
 };
