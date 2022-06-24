@@ -70,3 +70,22 @@ Proof.
     apply H0.
 Qed.
 Suggest hyp default apply not_forall_imply_exists in $n; ~ ∀ x: A, P x => ∃ x: A, ~ P x.
+
+Axiom if_f: ∀ A: U, U -> A -> A -> A.
+Axiom if_true: ∀ A P: U, ∀ x y: A, P -> if_f A P x y = x.
+Axiom if_false: ∀ A P: U, ∀ x y: A, ~ P -> if_f A P x y = y.
+Suggest goal auto apply if_true; (if P then x else y) = x => P.
+Suggest goal auto apply if_false; (if P then x else y) = y  => ~ P.
+Theorem if_possible_values: ∀ A P: U, ∀ x y: A, if_f A P x y = x ∨ if_f A P x y = y.
+Proof.
+    intros.
+    add_hyp (P ∨ ~P).
+    assumption.
+    destruct H with (or_ind ? ?).
+    apply or_intror.
+    apply if_false.
+    assumption.
+    apply or_introl.
+    apply if_true.
+    assumption.
+Qed.
