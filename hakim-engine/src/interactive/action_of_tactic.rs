@@ -23,7 +23,7 @@ use GraphicalAction::*;
 use MouseTarget::*;
 
 pub fn action_of_tactic(session: &Session, tactic: &str) -> Option<GraphicalAction> {
-    let frame = session.last_snapshot().last_frame();
+    let frame = session.last_snapshot().last_frame()?;
     let parts = smart_split(tactic);
     let mut parts_iter = parts.iter().map(|x| x.as_str());
     let name = parts_iter.next()?;

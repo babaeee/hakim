@@ -49,6 +49,8 @@ Theorem p_or_not_p: ∀ A: U, A ∨ (A → False).
 Proof. intros. assumption. Qed.
 Theorem NNPP: ∀ A: U, ((A -> False) -> False) -> A.
 Proof. intros. assumption. Qed.
+Theorem contpos: ∀ P Q: U, (~ P -> ~ Q) -> Q -> P.
+Proof. intros. assumption. Qed.
 
 Theorem not_exists_imply_forall: ∀ A: U, ∀ P: A -> U, (~ ∃ x: A, P x) -> ∀ x: A, ~ P x.
 Proof.

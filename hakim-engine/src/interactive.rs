@@ -237,19 +237,19 @@ impl Session {
 
     pub fn pos_of_span_hyp(&self, hyp_name: &str, span: (usize, usize)) -> Option<usize> {
         self.last_snapshot()
-            .last_frame()
+            .last_frame()?
             .pos_of_span_hyp(hyp_name, span)
     }
 
     pub fn pos_of_span_goal(&self, span: (usize, usize)) -> Option<usize> {
-        self.last_snapshot().last_frame().pos_of_span_goal(span)
+        self.last_snapshot().last_frame()?.pos_of_span_goal(span)
     }
 
     pub fn try_auto(&self) -> Option<String> {
         if self.is_finished() {
             return None;
         }
-        self.last_snapshot().last_frame().try_auto()
+        self.last_snapshot().last_frame()?.try_auto()
     }
 
     pub fn action_of_tactic(&self, tactic: &str) -> Option<GraphicalAction> {
@@ -316,8 +316,8 @@ impl Snapshot {
         Ok(snapshot)
     }
 
-    pub fn last_frame(&self) -> &Frame {
-        self.frames.last().unwrap()
+    pub fn last_frame(&self) -> Option<&Frame> {
+        self.frames.last()
     }
 
     pub fn pop_frame(&mut self) -> Frame {
