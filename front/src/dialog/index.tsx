@@ -8,8 +8,8 @@ export const normalPrompt = (msg: string, defaultValue: string = ""): Promise<st
     document.body.appendChild(div);
     return new Promise((res) => {
         ReactDOM.render(<NormalPrompt msg={msg} defaultValue={defaultValue} onDone={(result) => {
-            document.body.removeChild(div);
             res(result);
+            //setTimeout(() => document.body.removeChild(div), 100);
         }} />, div);
     });
 };

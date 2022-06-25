@@ -10,6 +10,7 @@ import { ProofContext } from "../Proof";
 import { normalPrompt } from "../../../dialog";
 import "./highlight.css";
 import { isDebug } from "../../../dev_mode";
+import { subscribeKeyboard } from "../../../keyboard";
 
 type HypProps = {
     name: string,
@@ -276,9 +277,7 @@ export const Monitor = () => {
                 setMode('normal');
             }
         }
-
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        return subscribeKeyboard(1, handleKeyDown);
     });
     if (!s) {
         return <div className={css.monitor}>Loading...</div>;
