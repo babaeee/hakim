@@ -11,6 +11,7 @@ use crate::parser::is_whity_char;
 #[cfg(test)]
 mod tests;
 
+mod action_of_tactic;
 mod history_auto;
 mod monitor;
 mod natural;
@@ -20,6 +21,7 @@ pub mod tactic;
 
 use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite};
 
+use self::action_of_tactic::GraphicalAction;
 use self::history_auto::history_lookup_auto;
 use self::monitor::Monitor;
 use self::natural::NaturalProof;
@@ -27,6 +29,7 @@ use self::suggest::{
     suggest_on_goal, suggest_on_goal_dblclk, suggest_on_hyp, suggest_on_hyp_dblclk,
 };
 
+pub use self::action_of_tactic::action_of_tactic;
 pub use self::suggest::{SuggClass, SuggRule, Suggestion};
 use self::tactic::{add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp, revert};
 
@@ -201,8 +204,11 @@ impl Session {
         self.undone = vector![]; // clear redo tasks
     }
 
-    pub fn get_history(&self) -> Vec<String> {
-        self.history.iter().map(|x| x.tactic.clone()).collect()
+    pub fn get_history(&self) -> (Vec<String>, Vec<String>) {
+        (
+            self.history.iter().map(|x| x.tactic.clone()).collect(),
+            self.undone.iter().map(|x| x.tactic.clone()).collect(),
+        )
     }
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
@@ -244,6 +250,10 @@ impl Session {
             return None;
         }
         self.last_snapshot().last_frame().try_auto()
+    }
+
+    pub fn action_of_tactic(&self, tactic: &str) -> Option<GraphicalAction> {
+        action_of_tactic(self, tactic)
     }
 }
 

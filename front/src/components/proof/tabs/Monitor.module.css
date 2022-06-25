@@ -48,3 +48,11 @@
   white-space: pre;
   display: inline-block;
 }
+
+.dblClickHere {
+  color: magenta;
+  position: relative;
+  top: -.8rem;
+  left: 2.5rem;
+  opacity: .8;
+}

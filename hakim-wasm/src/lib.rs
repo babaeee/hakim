@@ -357,6 +357,16 @@ impl Instance {
         serde_wasm_bindgen::to_value(&notation_list()).unwrap()
     }
 
+    pub fn action_of_tactic(&self, tactic: &str) -> JsValue {
+        let s = if let Some(s) = &self.session {
+            s
+        } else {
+            return JsValue::from_str("No session");
+        };
+        let r = s.action_of_tactic(tactic);
+        serde_wasm_bindgen::to_value(&r).unwrap()
+    }
+
     pub fn search(&self, query: &str) -> JsValue {
         let eng = if let Some(s) = &self.session {
             s.initial_engine()

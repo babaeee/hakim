@@ -20,10 +20,21 @@ type Lemma = {
   ty: string,
 };
 
+type MouseTarget = { kind: "goal" } | { kind: "hyp" | "lem", name: string }
+
+type ActionHint = {
+  kind: "dblClick",
+  target: MouseTarget,
+} | {
+  kind: "newAssert",
+}
+
 type ProofContextType = {
   onFinish: (won: boolean) => void,
   lemmaBox: Lemma[],
   appendLemma: (lemma: Lemma) => void,
+  actionHint: ActionHint | undefined,
+  setActionHint: (actionHint: ActionHint | undefined) => any,
 };
 
 const HeadText: React.FC<{ text: string | undefined }> = ({ text }) => {
@@ -37,7 +48,7 @@ const HeadText: React.FC<{ text: string | undefined }> = ({ text }) => {
   }
   return <><div className={css.text}><p dangerouslySetInnerHTML={{
     __html: markdown.render(text),
-}} /> <button onClick={() => setHide(!hide)}>{g`hide_it`}</button></div></>;
+  }} /> <button onClick={() => setHide(!hide)}>{g`hide_it`}</button></div></>;
 }
 
 export const ProofContext = createContext({} as ProofContextType);
@@ -49,6 +60,7 @@ export const Proof = () => {
   })) as Lemma[]);
   const navigator = useNavigate();
   const [natural, setNatural] = useState(undefined as string | undefined);
+  const [actionHint, setActionHint] = useState(undefined as any);
   if (natural) {
     return <div className={css.inlBody}>
       <pre>
@@ -64,8 +76,11 @@ export const Proof = () => {
       cancelProof(navigator);
     }
   };
+
   const ctx: ProofContextType = {
     lemmaBox,
+    actionHint,
+    setActionHint,
     appendLemma: (lemma) => {
       if (lemmaBox.find((x) => x.name === lemma.name)) {
         return;

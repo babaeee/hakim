@@ -53,7 +53,8 @@ export const toBackup = () => {
 };
 
 export type State = {
-    history: string[],
+    undoHistory: string[],
+    redoHistory: string[],
 } & ({ isFinished: true } | {
     isFinished: false
     monitor: {
@@ -67,7 +68,7 @@ type EventListener = (s: State) => void;
 let listeners: EventListener[] = [];
 
 const isState = (x: State): x is State => {
-    if (!(x.history instanceof Array)) {
+    if (!(x.undoHistory instanceof Array) || !(x.redoHistory instanceof Array)) {
         console.log('state does not have history\nState: ' + JSON.stringify(x));
         return false;
     }
@@ -81,13 +82,13 @@ const isState = (x: State): x is State => {
 
 const calcState = (): State => {
     const f = (): State => {
-        const history = instance.get_history();
+        const [undoHistory, redoHistory] = instance.get_history() || [[], []];
         console.log(instance.monitor());
         const monitor = instance.monitor();
         if (monitor === 'Finished') {
-            return { history, isFinished: true };
+            return { undoHistory, redoHistory, isFinished: true };
         }
-        return { history, monitor: monitor.Running, isFinished: false };
+        return { undoHistory, redoHistory, monitor: monitor.Running, isFinished: false };
     };
     const r = f();
     if (!isState(r)) {
@@ -123,6 +124,10 @@ const checkErrorAndUpdate = async (error: () => Promise<string | undefined>) => 
     }
     return false;
 };
+
+export const getActionHint = (tactic: string) => {
+    return instance.action_of_tactic(tactic);
+}
 
 export const sendTactic = (tactic: string) => {
     console.log(`tactic: `, tactic);

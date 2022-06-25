@@ -93,6 +93,10 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     toggleMenu(true);
 };
 
+const DblClickHere = () => {
+    return <div className={css.dblClickHere}>🖰{g`double_click_here`}</div>;
+};
+
 const MyControlledMenu = ({ menuProps, anchorPoint, suggs, toggleMenu }: any) => {
     return (
         <ControlledMenu {...menuProps} anchorPoint={anchorPoint}
@@ -183,6 +187,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
     const { toggleMenu, ...menuProps } = useMenuState();
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
     const [suggs, setSuggs] = useState([] as Sugg[]);
+    const { actionHint } = useContext(ProofContext);
     const [{ isOver, canDrop }, drop] = useDrop(
         () => ({
             accept: 'Hyp',
@@ -224,6 +229,7 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
                 toggleMenu(true);
             }}>
             <span className={css.ty} dangerouslySetInnerHTML={{ __html: ty }} />
+            {actionHint?.kind === 'dblClick' && actionHint.target.kind === 'goal' && <DblClickHere />}
             <MyControlledMenu
                 toggleMenu={toggleMenu}
                 menuProps={menuProps}
@@ -245,7 +251,7 @@ const NextGoal = ({ ty, i }: { ty: string, i: number }) => {
 type Mode = "normal" | "delete" | "revert";
 
 export const Monitor = () => {
-    const { onFinish } = useContext(ProofContext);
+    const { onFinish, actionHint } = useContext(ProofContext);
     const [s, setS] = useState(undefined as State | undefined);
     const [mode, setMode] = useState('normal' as Mode);
     useEffect(() => {
@@ -296,6 +302,7 @@ export const Monitor = () => {
             ))}
             {mode === 'delete' && <>{g`select_a_hyp_to_delete`}</>}
             {mode === 'revert' && <>{g`select_a_hyp_to_revert`}</>}
+            {isDebug() && <div>action hint: {JSON.stringify(actionHint)}</div>}
         </div>
     );
 };
