@@ -23,10 +23,10 @@ export const History = ({ onNatural }: { onNatural: (x: string) => void }) => {
     }, [mouseOnRedo, setActionHint]);
     return (
         <div className={css.base}>
-            <ul dir="ltr" className={css.scroll}>
+            <ol dir="ltr" className={css.scroll}>
                 {undos.map((x, i) => i === undos.length - 1 ? <li key={i} ref={myRef} className={css.current}>{x}</li> : <li key={i}>{x}</li>)}
                 {redos.map((x, i) => <li key={i}>{x}</li>)}
-            </ul>
+            </ol>
             <button onClick={() => sendTactic('Undo')}>{g`undo`}</button>
             <button
                 onMouseEnter={() => {
