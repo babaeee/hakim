@@ -7,6 +7,7 @@ import { AfterProofAction, openProofSession } from "../root/Root";
 import { isWinNode } from "./winList";
 import { Title } from "../util/Title";
 import { useEffect } from "react";
+import { isAdmin } from "../../dev_mode";
 
 export type Node = {
     id: string,
@@ -143,7 +144,7 @@ export const Adventure = () => {
             levelIs404 = true;
             break;
         }
-        if (isLocked(x, d)) {
+        if (isLocked(x, d) && !isAdmin()) {
             levelIsLocked = true;
             break;
         }

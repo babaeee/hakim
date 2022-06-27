@@ -41,3 +41,7 @@ export const isDebug = (): boolean => {
     return getDevState() === 'debug';
 };
 
+export const isAdmin = (): boolean => {
+    return getDevState() === 'admin' || isDebug();
+};
+

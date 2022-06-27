@@ -5,6 +5,7 @@
     background:
         linear-gradient(to top right, #0000 50%, yellow 50.1%) top right/40px 40px no-repeat,
         transparent;
+    color: red;
     right: 0;
     top: 0;
     position: fixed;
