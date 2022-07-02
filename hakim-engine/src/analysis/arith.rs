@@ -29,6 +29,27 @@ impl Debug for Poly {
     }
 }
 
+/// merge two vector with DSU optimization: put smaller in larger to archive O(nlg(n)) amortized
+fn unordered_concat<T>(mut v1: Vec<T>, mut v2: Vec<T>) -> Vec<T> {
+    if v1.len() < v2.len() {
+        v2.append(&mut v1);
+        v2
+    } else {
+        v1.append(&mut v2);
+        v1
+    }
+}
+
+impl std::ops::Add for Poly {
+    type Output = Poly;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let c = self.0 + rhs.0;
+        let v = unordered_concat(self.1, rhs.1);
+        Poly(c, v)
+    }
+}
+
 type ArithArena<'a> = &'a Arena<ArithTree<'a>>;
 
 #[derive(Debug, Default)]
@@ -99,11 +120,7 @@ fn tree_to_d2(tree: &ArithTree<'_>) -> Poly {
     match tree {
         Atom(t) => Poly(0.into(), vec![(1.into(), vec![t.clone()])]),
         Const(i) => Poly(i.clone(), vec![]),
-        Plus(t1, t2) => {
-            let Poly(c1, r1) = tree_to_d2(*t1);
-            let Poly(c2, r2) = tree_to_d2(*t2);
-            Poly(c1 + c2, [r1, r2].concat())
-        }
+        Plus(t1, t2) => tree_to_d2(*t1) + tree_to_d2(*t2),
         Mult(t1, t2) => {
             fn to_mul(x: &ArithTree<'_>) -> (BigInt, Vec<TermRef>) {
                 let Poly(c1, mut r1) = tree_to_d2(x);
@@ -120,7 +137,7 @@ fn tree_to_d2(tree: &ArithTree<'_>) -> Poly {
             if r1.is_empty() && r2.is_empty() {
                 return Poly(c1 * c2, vec![]);
             }
-            Poly(0.into(), vec![(c1 * c2, [r1, r2].concat())])
+            Poly(0.into(), vec![(c1 * c2, unordered_concat(r1, r2))])
         }
     }
 }

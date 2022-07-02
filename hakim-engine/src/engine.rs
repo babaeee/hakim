@@ -284,20 +284,27 @@ impl Engine {
 #[cfg(test)]
 pub mod tests {
 
-    use std::cell::Cell;
+    use std::{cell::Cell, collections::HashMap};
 
     use crate::parser::structural_print;
 
     use super::Engine;
 
-    #[derive(PartialEq, Eq)]
+    #[derive(PartialEq, Eq, Hash, Clone, Copy)]
     pub enum EngineLevel {
         Empty,
         Full,
     }
 
+    #[derive(PartialEq, Eq, Hash)]
+    struct EngineKey {
+        level: EngineLevel,
+        params: String,
+    }
+
     thread_local! {
         static ENGINE_PARAMS: Cell<String>  = Cell::new(String::new());
+        static ENGINE_CACHE: Cell<HashMap<EngineKey, Engine>>  = Cell::new(HashMap::new());
     }
 
     // this function is only for single threaded testing!!!!
@@ -310,15 +317,30 @@ pub mod tests {
     }
 
     pub fn build_engine(level: EngineLevel) -> Engine {
-        let mut eng = Engine::new(&ENGINE_PARAMS.with(|x| {
+        let params = ENGINE_PARAMS.with(|x| {
             let s = x.take();
             x.set(s.clone());
             s
-        }));
-        if level == EngineLevel::Empty {
+        });
+        let key = EngineKey { level, params };
+        let from_cache = ENGINE_CACHE.with(|c| {
+            let cv = c.take();
+            let r = cv.get(&key).cloned();
+            c.set(cv);
+            r
+        });
+        if let Some(eng) = from_cache {
             return eng;
         }
-        eng.load_library("/").unwrap();
+        let mut eng = Engine::new(&key.params);
+        if level == EngineLevel::Full {
+            eng.load_library("/").unwrap();
+        }
+        ENGINE_CACHE.with(|c| {
+            let mut cv = c.take();
+            cv.insert(key, eng.clone());
+            c.set(cv);
+        });
         eng
     }
 
