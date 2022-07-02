@@ -196,14 +196,41 @@ Axiom cm2: ∀ r, 2 * cm r 2 = r * (r - 1).
 
 Theorem sigma_0_n: ∀ n, (Σ i in [0, n) i) = cm n 2.
 Proof.
+    add_hyp (∀ n0: ℤ, 0 ≤ n0 → (Σ i in [0, n0) i) = cm n0 2).
+    apply z_induction_simple.
     intros.
-    add_from_lib binomial_coefficients.
-    add_hyp binomial_coefficients_ex := (binomial_coefficients (n)).
-    Seq (add_hyp (⁨0 ≤ n⁩)) (remove_hyp binomial_coefficients_ex) (Switch 1) (add_hyp binomial_coefficients_ex_o := (binomial_coefficients_ex H0)) (remove_hyp H0) (remove_hyp binomial_coefficients_ex) .
-    add_hyp binomial_coefficients_ex_o_ex := (binomial_coefficients_ex_o (1)).
-    add_hyp binomial_coefficients_ex_o_ex_ex := (binomial_coefficients_ex_o_ex (1)).
+    add_from_lib cm2.
+    add_hyp cm2_ex := (cm2 (n)).
+    add_hyp cm2_ex0 := (cm2 (n+1)).
     lia.
+    add_from_lib cm2.
+    add_hyp cm2_ex := (cm2 (0)).
+    lia.
+    intros.
+    add_hyp (n < 0 ∨ n ≥ 0).
+    lia.
+    destruct H0 with (or_ind ? ?).
+    apply H.
     assumption.
+    add_hyp (∀ x, 0 ≤ x -> (Σ i in [0, - x) i) = cm (- x) 2).
+    apply z_induction_simple.
+    intros.
+    add_from_lib cm2.
+    add_hyp cm2_ex := (cm2 (-n0)).
+    add_hyp cm2_ex0 := (cm2 (-(n0+1))).
+    lia.
+    add_from_lib cm2.
+    add_hyp cm2_ex := (cm2 (-0)).
+    lia.
+    add_hyp (∃ k, k = - n).
+    apply (ex_intro ? ? (-n)).
+    auto_list.
+    destruct H2 with (ex_ind ? ?) to (k k_property).
+    add_hyp (n = -k).
+    lia.
+    rewrite H2.
+    apply H1.
+    lia.
 Qed.
 
 Theorem binomial_coefficients: ∀ n, 0 ≤ n -> ∀ a b, (a+b) ^ n = (Σ i in [0, n + 1) cm n i * a ^ i * b ^ (n - i)).
@@ -390,19 +417,9 @@ Proof.
     intros.
     add_from_lib binomial_coefficients.
     add_hyp binomial_coefficients_ex := (binomial_coefficients (n)).
-    add_hyp (⁨0 ≤ n⁩).
-    remove_hyp binomial_coefficients_ex.
-    Switch 1.
-    add_hyp binomial_coefficients_ex_o := (binomial_coefficients_ex H0).
-    remove_hyp H0.
-    remove_hyp binomial_coefficients_ex.
+    Seq (add_hyp (0 ≤ n)) (remove_hyp binomial_coefficients_ex) (Switch 1) (add_hyp binomial_coefficients_ex_o := (binomial_coefficients_ex H0)) (remove_hyp H0) (remove_hyp binomial_coefficients_ex).
     add_hyp binomial_coefficients_ex_o_ex := (binomial_coefficients_ex_o (1)).
     add_hyp binomial_coefficients_ex_o_ex_ex := (binomial_coefficients_ex_o_ex (1)).
-    replace #1 (Σ i in [0, n + 1) cm n i * 1 ^ i * 1 ^ (n - i)) with (Σ i in [0, n + 1) cm n i) in binomial_coefficients_ex_o_ex_ex.
-    apply sigma_f_equal.
-    intros.
-    lia.
-    lia.
     lia.
     assumption.
 Qed.
