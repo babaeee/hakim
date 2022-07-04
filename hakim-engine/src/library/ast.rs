@@ -30,6 +30,10 @@ pub(crate) enum Sentence {
         name: String,
         ty: String,
     },
+    Definition {
+        name: String,
+        body: String,
+    },
     Theorem {
         name: String,
         ty: String,
@@ -84,6 +88,14 @@ impl Sentence {
                 applicablity,
                 class,
             };
+        }
+        if let Some(r) = s.strip_prefix("Definition ") {
+            if let Some((name, body)) = r.split_once(":=") {
+                return Sentence::Definition {
+                    name: name.trim().to_string(),
+                    body: body.to_string(),
+                };
+            }
         }
         if let Some(r) = s.strip_prefix("Todo ") {
             if let Some((name, body)) = r.split_once(':') {
@@ -148,6 +160,7 @@ impl Sentence {
             Sentence::Todo { name, ty }
             | Sentence::Axiom { name, ty }
             | Sentence::Theorem { name, ty, .. } => engine.add_axiom(&name, &ty)?,
+            Sentence::Definition { name, body } => engine.add_definition(&name, &body)?,
         }
         Ok(())
     }
@@ -166,7 +179,9 @@ impl Sentence {
 
     pub(crate) fn ty(&self) -> Option<&str> {
         match self {
-            Sentence::Suggestion { .. } | Sentence::Import { .. } => None,
+            Sentence::Suggestion { .. } | Sentence::Import { .. } | Sentence::Definition { .. } => {
+                None
+            }
             Sentence::Todo { ty, .. }
             | Sentence::Axiom { ty, .. }
             | Sentence::Theorem { ty, .. } => Some(ty),

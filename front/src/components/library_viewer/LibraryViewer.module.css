@@ -10,19 +10,44 @@
     color: white;
 }
 
-.text, .text * {
+.text,
+.text * {
     color: white;
     padding: 0.3rem;
 }
 
-.Import, .Axiom, .Theorem, .Todo {
+.Import,
+.Axiom,
+.Theorem,
+.Definition,
+.Todo {
     display: inline;
     border-radius: .4rem;
     margin: 0 .3rem;
     padding: .2rem;
 }
 
-.Axiom   { background-color: #ffff00; color: black; }
-.Todo    { background-color: #ff0000; color: white; }
-.Import  { background-color: #0000ff; color: white; }
-.Theorem { background-color: #9acd32; color: black; }
+.Axiom {
+    background-color: #ffff00;
+    color: black;
+}
+
+.Todo {
+    background-color: #ff0000;
+    color: white;
+}
+
+.Import {
+    background-color: #0000ff;
+    color: white;
+}
+
+.Theorem {
+    background-color: #9acd32;
+    color: black;
+}
+
+.Definition {
+    background-color: #a103b5;
+    color: white;
+}

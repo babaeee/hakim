@@ -111,12 +111,16 @@ Proof.
     assumption.
 Qed.
 
-Axiom prime: ℤ -> U.
-Axiom prime_unfold: ∀ x: ℤ, prime x -> 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x).
-Axiom prime_fold: ∀ x: ℤ, 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x) -> prime x.
+Definition prime := λ x: ℤ, 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x).
+Theorem prime_unfold: ∀ x: ℤ, prime x -> 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x).
+Proof. unfold prime. intros. assumption. Qed.
+Theorem prime_fold: ∀ x: ℤ, 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x) -> prime x.
+Proof. unfold prime. intros. assumption. Qed.
 Todo contpos_prime_fold: ∀ x: ℤ, ~ prime x -> 1 < x -> ∃ y: ℤ, 1 < y ∧ y < x ∧ y | x. 
-Todo prime_ge_2: ∀ x: ℤ, prime x -> 2 ≤ x.
-Todo prime_is_positive: ∀ x: ℤ, prime x -> 0 < x.
+Theorem prime_ge_2: ∀ x: ℤ, prime x -> 2 ≤ x.
+Proof. unfold prime. intros. lia. Qed.
+Theorem prime_is_positive: ∀ x: ℤ, prime x -> 0 < x.
+Proof. unfold prime. intros. lia. Qed.
 Theorem prime_divisor_for_positive: ∀ x: ℤ, 1 < x -> ∃ p: ℤ, prime p ∧ p | x.
 Proof.
     intros.

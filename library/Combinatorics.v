@@ -161,7 +161,7 @@ Proof.
     auto_set.
 Qed.
 
-Todo bijection_append: ∀ T: U, ∀ t: list T, ∀ S: set (list T), |{ l: list T | ∃ k: list T, l = t ++ k ∧ k ∈ S }| = |S|. 
+Todo bijection_append: ∀ T: U, ∀ t: list T, ∀ S: set (list T), finite S -> |{ l: list T | ∃ k: list T, l = t ++ k ∧ k ∈ S }| = |S|. 
 
 Todo count_of_lists: ∀ T: U, ∀ S: set T, finite S -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n }| = |S| ^ n.
 Theorem count_of_binary_lists: ∀ T: U, ∀ a b: T, ~ a = b -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ {a, b} ∧ |l| = n }| = 2 ^ n.

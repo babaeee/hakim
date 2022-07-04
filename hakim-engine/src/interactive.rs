@@ -31,7 +31,9 @@ use self::suggest::{
 
 pub use self::action_of_tactic::action_of_tactic;
 pub use self::suggest::{SuggClass, SuggRule, Suggestion};
-use self::tactic::{add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp, revert};
+use self::tactic::{
+    add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp, revert, unfold,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hyp {
@@ -420,6 +422,7 @@ impl Frame {
             "intros" => intros(frame, parts),
             "rewrite" => rewrite(frame, parts),
             "replace" => replace(frame, parts),
+            "unfold" => unfold(frame, parts),
             "apply" => apply(frame, parts),
             "add_hyp" => add_hyp(frame, parts),
             "remove_hyp" => remove_hyp(frame, parts),

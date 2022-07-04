@@ -21,6 +21,7 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Engine {
     name_dict: im::HashMap<String, TermRef>,
+    definitions: im::HashMap<String, TermRef>,
     hidden_args: im::HashMap<String, usize>,
     libs: im::HashMap<String, ()>,
     pub params: im::HashMap<String, String>,
@@ -33,6 +34,7 @@ pub enum Error {
     DuplicateName(String),
     InvalidIdentName(String),
     UnknownLibrary(String),
+    UnknownDefinition(String),
     InvalidSentence(String),
     ParserError(parser::Error),
     BrainError(brain::Error),
@@ -66,6 +68,7 @@ impl Default for Engine {
 impl Engine {
     pub fn new(params: &str) -> Self {
         let name_dict = prelude::init_dict();
+        let definitions = im::HashMap::default();
         let hidden_args = im::HashMap::<String, usize>::from(HashMap::from([
             ("finite".to_string(), 1),
             ("member_set".to_string(), 1),
@@ -82,6 +85,7 @@ impl Engine {
             .collect();
         Self {
             name_dict,
+            definitions,
             hidden_args,
             libs,
             params,
@@ -133,6 +137,20 @@ impl Engine {
         }
         let axiom = term_ref!(axiom name, term);
         self.add_name(name, axiom)
+    }
+
+    pub(crate) fn add_definition(&mut self, name: &str, body: &str) -> Result<()> {
+        let body = self.parse_text(body)?;
+        self.definitions.insert(name.to_string(), body.clone());
+        let ty = type_of(body)?;
+        self.add_axiom_with_term(name, ty)
+    }
+
+    pub(crate) fn body_of_definition(&self, def: &str) -> Result<TermRef> {
+        match self.definitions.get(def) {
+            Some(x) => Ok(x.clone()),
+            None => Err(UnknownDefinition(def.to_string())),
+        }
     }
 
     pub fn add_axiom(&mut self, name: &str, ty: &str) -> Result<()> {

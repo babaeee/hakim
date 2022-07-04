@@ -3,6 +3,9 @@ use crate::brain::{self, TermRef};
 mod rewrite;
 pub(crate) use rewrite::{replace, rewrite};
 
+mod unfold;
+pub(crate) use unfold::unfold;
+
 mod lia;
 pub(crate) use lia::lia;
 
