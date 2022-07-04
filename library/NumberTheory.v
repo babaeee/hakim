@@ -116,7 +116,34 @@ Theorem prime_unfold: ∀ x: ℤ, prime x -> 1 < x ∧ (∀ y: ℤ, 0 < y -> y |
 Proof. unfold prime. intros. assumption. Qed.
 Theorem prime_fold: ∀ x: ℤ, 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x) -> prime x.
 Proof. unfold prime. intros. assumption. Qed.
-Todo contpos_prime_fold: ∀ x: ℤ, ~ prime x -> 1 < x -> ∃ y: ℤ, 1 < y ∧ y < x ∧ y | x. 
+Theorem contpos_prime_fold: ∀ x: ℤ, ~ prime x -> 1 < x -> ∃ y: ℤ, 1 < y ∧ y < x ∧ y | x. 
+Proof.
+    intros.
+    add_from_lib prime_fold.
+    add_hyp prime_fold_ex := (prime_fold (x)).
+    add_hyp (~~(1 < x ∧ (∀ y: ℤ, 0 < y → y | x → y = 1 ∨ y = x)) → ~~prime x).
+    assumption.
+    apply contpos in H1.
+    apply H1 in H.
+    apply NNPP.
+    intros.
+    apply H.
+    apply and_intro.
+    apply not_exists_imply_forall in H2.
+    intros.
+    add_hyp H2_ex := (H2 (y)).
+    apply NNPP.
+    intros.
+    apply H2_ex.
+    apply and_intro.
+    apply and_intro.
+    assumption.
+    apply divide_le in H4.
+    assumption.
+    assumption.
+    lia.
+    assumption.
+Qed.
 Theorem prime_ge_2: ∀ x: ℤ, prime x -> 2 ≤ x.
 Proof. unfold prime. intros. lia. Qed.
 Theorem prime_is_positive: ∀ x: ℤ, prime x -> 0 < x.
