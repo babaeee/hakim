@@ -84,11 +84,21 @@ pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
     ast
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct HtmlRenderer {
     value: String,
     pos: usize,
     ignored: bool,
+}
+
+impl Default for HtmlRenderer {
+    fn default() -> Self {
+        Self {
+            value: Default::default(),
+            pos: 0,
+            ignored: true,
+        }
+    }
 }
 
 impl Write for HtmlRenderer {
@@ -97,15 +107,22 @@ impl Write for HtmlRenderer {
             if c == '\n' {
                 self.pos += 1;
                 self.ignored = true;
+                self.value.push(c);
                 continue;
             }
-            if c == ' ' && self.ignored {
-                continue;
+            if self.ignored {
+                if c == ' ' {
+                    self.value.push(c);
+                    continue;
+                }
+                self.ignored = false;
             }
-            self.ignored = false;
+            self.value += &format!(r#"<span data-pos="{}">"#, self.pos);
             self.pos += 1;
+            self.value.push(c);
+            self.value += "</span>";
         }
-        self.value.write_str(s)
+        Ok(())
     }
 }
 

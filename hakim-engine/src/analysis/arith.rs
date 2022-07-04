@@ -206,7 +206,7 @@ fn len1_to_arith(ty: TermRef, arg: TermRef, arena: ArithArena<'_>) -> &ArithTree
     if let Term::App { func, op: op2 } = arg.as_ref() {
         match func.as_ref() {
             Term::Axiom { unique_name, .. } => {
-                if unique_name == "nil" {
+                if unique_name == "nil" || unique_name == "set_empty" {
                     return arena.alloc(Const(0i32.into()));
                 }
             }

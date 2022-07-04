@@ -86,6 +86,7 @@ Theorem finite_included : ∀ A: U, ∀ x y: set A, finite y -> x ⊆ y -> finit
 Proof. intros. auto_set. Qed.
 
 Axiom empty_len: ∀ A: U, |set_empty A| = 0.
+Suggest goal auto apply empty_len; Trivial.
 Axiom empty_len_unique: ∀ A: U, ∀ S: set A, |S| = 0 -> S = {}.
 Axiom finite_add_len: ∀ A: U, ∀ S: set A, finite S -> ∀ a: A, ~ a ∈ S -> |S ∪ {a}| = |S| + 1.
 Axiom finite_len_ge_0: ∀ A: U, ∀ S: set A, finite S -> 0 ≤ |S|.

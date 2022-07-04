@@ -71,6 +71,71 @@ Proof.
     apply (ex_intro ? ? (b)).
     assumption.
 Qed.
+Theorem projection_finite2: ∀ A B C: U, ∀ f: A -> B -> C,
+    ∀ SA: set A, ∀ SB: set B, finite SA -> finite SB
+        -> finite { y: C | ∃ a: A, ∃ b: B, y = f a b ∧ a ∈ SA ∧ b ∈ SB }.
+Proof.
+    intros A B C f.
+    intros SA SB H.
+    revert SB.
+    apply set_induction.
+    intros.
+    replace #1 ({ y: C | ∃ a0: A, ∃ b: B, y = f a0 b ∧ a0 ∈ SA ∧ b ∈ x ∪ {a} }) with ({ y: C | ∃ a0: A, ∃ b: B, y = f a0 b ∧ a0 ∈ SA ∧ b ∈ x } ∪ { y: C | ∃ a0: A, y = f a0 a ∧ a0 ∈ SA }).
+    Switch 1.
+    add_hyp (finite ( { y: C | ∃ a0: A, y = f a0 a ∧ a0 ∈ SA })).
+    apply projection_finite.
+    assumption.
+    auto_set.
+    Switch 1.
+    replace #1 ({ y: C | ∃ a: A, ∃ b: B, y = f a b ∧ a ∈ SA ∧ b ∈ {} }) with (set_empty C).
+    apply set_equality.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H0.
+    destruct H0 with (ex_ind ? ?) to (H0_value H0_proof).
+    destruct H0_proof with (ex_ind ? ?) to (H0_proof_value H0_proof_proof).
+    auto_set.
+    auto_set.
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply set_from_func_fold.
+    apply union_unfold in H3.
+    destruct H3 with (or_ind ? ?).
+    apply set_from_func_unfold in H3.
+    destruct H3 with (ex_ind ? ?) to (xa xa_property).
+    apply (ex_intro ? ? (xa)).
+    apply (ex_intro ? ? (a)).
+    auto_set.
+    apply set_from_func_unfold in H3.
+    destruct H3 with (ex_ind ? ?) to (xa xa_property).
+    destruct xa_property with (ex_ind ? ?) to (xb xb_property).
+    apply (ex_intro ? ? (xa)).
+    apply (ex_intro ? ? (xb)).
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H3.
+    apply union_fold.
+    destruct H3 with (ex_ind ? ?) to (xa xa_property).
+    destruct xa_property with (ex_ind ? ?) to (xb xb_property).
+    destruct xb_property with (and_ind ? ?) to (xb_property_l xb_property_r).
+    destruct xb_property_r with (and_ind ? ?) to (xb_property_r_l xb_property_r_r).
+    apply union_unfold in xb_property_r_r.
+    destruct xb_property_r_r with (or_ind ? ?).
+    apply singleton_unfold in xb_property_r_r.
+    apply or_intror.
+    apply set_from_func_fold.
+    rewrite xb_property_r_r.
+    apply (ex_intro ? ? (xa)).
+    assumption.
+    apply or_introl.
+    apply set_from_func_fold.
+    apply (ex_intro ? ? (xa)).
+    apply (ex_intro ? ? (xb)).
+    assumption.
+Qed.
 Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> |{ y: B | ∃ x: A, y = f x ∧ x ∈ S }| = |S|.
 Proof.
     intros A B f.
@@ -159,6 +224,119 @@ Proof.
     add_hyp empty_len_ex := (empty_len (A)).
     add_hyp empty_len_ex0 := (empty_len (B)).
     auto_set.
+Qed.
+
+Theorem rule_of_bijection_product: ∀ A B C: U, ∀ f: A -> B -> C,
+    ∀ SA: set A, ∀ SB: set B, finite SA -> finite SB
+        -> (∀ xa ya: A, ∀ xb yb: B, xa ∈ SA -> ya ∈ SA -> xb ∈ SB -> yb ∈ SB -> f xa xb = f ya yb -> xa = ya ∧ xb = yb)
+        -> |{ y: C | ∃ a: A, ∃ b: B, y = f a b ∧ a ∈ SA ∧ b ∈ SB }| = |SA| * |SB|.
+Proof.
+    intros A B C f SA SB H.
+    revert SB.
+    apply set_induction.
+    intros.
+    replace #1 ({ y: C | ∃ a0: A, ∃ b: B, y = f a0 b ∧ a0 ∈ SA ∧ b ∈ x ∪ {a} }) with ({ y: C | ∃ a0: A, ∃ b: B, y = f a0 b ∧ a0 ∈ SA ∧ b ∈ x } ∪ { y: C | ∃ a0: A, y = f a0 a ∧ a0 ∈ SA }).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply set_from_func_fold.
+    apply union_unfold in H4.
+    destruct H4 with (or_ind ? ?).
+    apply set_from_func_unfold in H4.
+    destruct H4 with (ex_ind ? ?) to (H4_value H4_proof).
+    apply (ex_intro ? ? (H4_value)).
+    apply (ex_intro ? ? (a)).
+    auto_set.
+    apply set_from_func_unfold in H4.
+    destruct H4 with (ex_ind ? ?) to (xa xa_property).
+    destruct xa_property with (ex_ind ? ?) to (xb xb_property).
+    apply (ex_intro ? ? (xa)).
+    apply (ex_intro ? ? (xb)).
+    auto_set.
+    apply included_fold.
+    intros.
+    apply union_fold.
+    apply set_from_func_unfold in H4.
+    destruct H4 with (ex_ind ? ?) to (xa xa_property).
+    destruct xa_property with (ex_ind ? ?) to (xb xb_property).
+    destruct xb_property with (and_ind ? ?) to (xb_property_l xb_property_r).
+    destruct xb_property_r with (and_ind ? ?) to (xb_property_r_l xb_property_r_r).
+    apply union_unfold in xb_property_r_r.
+    destruct xb_property_r_r with (or_ind ? ?).
+    apply singleton_unfold in xb_property_r_r.
+    apply or_intror.
+    apply set_from_func_fold.
+    apply (ex_intro ? ? (xa)).
+    rewrite xb_property_r_r.
+    assumption.
+    apply or_introl.
+    apply set_from_func_fold.
+    apply (ex_intro ? ? (xa)).
+    apply (ex_intro ? ? (xb)).
+    assumption.
+    replace #1 (|{ y: C | ∃ a0: A, ∃ b: B, y = f a0 b ∧ a0 ∈ SA ∧ b ∈ x } ∪ { y: C | ∃ a0: A, y = f a0 a ∧ a0 ∈ SA }|) with (|{ y: C | ∃ a0: A, ∃ b: B, y = f a0 b ∧ a0 ∈ SA ∧ b ∈ x }| + |{ y: C | ∃ a0: A, y = f a0 a ∧ a0 ∈ SA }|).
+    apply rule_of_sum.
+    apply set_equality.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply intersection_unfold in H4.
+    destruct H4 with (and_ind ? ?) to (H4_l H4_r).
+    apply set_from_func_unfold in H4_l.
+    apply set_from_func_unfold in H4_r.
+    destruct H4_l with (ex_ind ? ?) to (xa1 xa1_property).
+    destruct H4_r with (ex_ind ? ?) to (xa2 xa2_property).
+    destruct xa1_property with (ex_ind ? ?) to (xb xb_property).
+    destruct xa2_property with (and_ind ? ?) to (xa2_property_l xa2_property_r).
+    destruct xb_property with (and_ind ? ?) to (xb_property_l xb_property_r).
+    replace #1 (a0) with (f xa2 a) in xb_property_l.
+    assumption.
+    apply H3 in xb_property_l.
+    auto_set.
+    auto_set.
+    assumption.
+    assumption.
+    auto_set.
+    apply projection_finite.
+    assumption.
+    apply (⁨projection_finite2 ?0 ?2 ?4 f ?8 ?10 ?12 ?14⁩).
+    assumption.
+    assumption.
+    replace #1 (|x ∪ {a}|) with (|x| + 1).
+    apply finite_add_len.
+    assumption.
+    assumption.
+    replace #1 (|{ y: C | ∃ a0: A, y = f a0 a ∧ a0 ∈ SA }|) with (|SA|).
+    apply rule_of_bijection.
+    intros.
+    apply H3 in H6.
+    auto_set.
+    auto_set.
+    assumption.
+    assumption.
+    assumption.
+    assumption.
+    replace #1 (|{ y: C | ∃ a0: A, ∃ b: B, y = f a0 b ∧ a0 ∈ SA ∧ b ∈ x }|) with (|SA|*|x|).
+    apply H1.
+    intros.
+    apply H3.
+    assumption.
+    auto_set.
+    auto_set.
+    assumption.
+    assumption.
+    lia.
+    intros.
+    replace #1 ({ y: C | ∃ a: A, ∃ b: B, y = f a b ∧ a ∈ SA ∧ b ∈ {} }) with (set_empty C).
+    apply set_equality.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H1.
+    destruct H1 with (ex_ind ? ?) to (H1_value H1_proof).
+    destruct H1_proof with (ex_ind ? ?) to (H1_proof_value H1_proof_proof).
+    auto_set.
+    lia.
 Qed.
 
 Todo bijection_append: ∀ T: U, ∀ t: list T, ∀ S: set (list T), finite S -> |{ l: list T | ∃ k: list T, l = t ++ k ∧ k ∈ S }| = |S|. 

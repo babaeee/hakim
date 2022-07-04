@@ -377,5 +377,11 @@ mod tests {
         success(r#" ∀ l, cnt 'y' l = cnt 'y' (l ++ "x") "#);
         fail(r#" ∀ A: U, ∀ a b: list A, |a| < |a ++ b| "#);
         success(r#" ∀ A: U, ∀ a b: list A, |a| ≤ |a ++ b| "#);
+        success(r#"|[1, 2, 3]| = 3"#);
+    }
+
+    #[test]
+    fn sets() {
+        success(r#"|set_empty ℤ| = 0"#);
     }
 }

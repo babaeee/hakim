@@ -43,20 +43,25 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     if (sel.toString() === '') return;
     console.log(sel.anchorNode);
     console.log(e.target);
-    if (sel.anchorNode !== e.target?.parentElement
-        && sel.anchorNode?.parentElement !== e.target?.parentElement
-        && sel.anchorNode?.parentElement?.parentElement !== e.target
-        && sel.anchorNode?.parentElement?.parentElement?.parentElement !== e.target
-        && sel.anchorNode?.parentElement?.parentElement !== e.target?.parentElement) return;
+    // if (sel.anchorNode !== e.target?.parentElement
+    //     && sel.anchorNode?.parentElement !== e.target?.parentElement
+    //     && sel.anchorNode?.parentElement?.parentElement !== e.target
+    //     && sel.anchorNode?.parentElement?.parentElement?.parentElement !== e.target
+    //     && sel.anchorNode?.parentElement?.parentElement !== e.target?.parentElement
+    //     && sel.anchorNode?.parentElement?.parentElement !== e.target?.parentElement?.parentElement) return;
     const range = sel.getRangeAt(0);
     console.log(range);
     console.log(range.toString());
+    const dbg = (t: any, x: any) => {
+        console.log(`dbg ${t}: ${x}`);
+        return x;
+    }
     const offsetOfNode = (node: Node): number => {
         if (node.parentElement?.dataset.pos) {
-            return Number(node.parentElement?.dataset.pos);
+            return dbg(1, Number(node.parentElement?.dataset.pos));
         }
         if (node.previousSibling && node.previousSibling instanceof HTMLElement) {
-            return Number(node.previousSibling?.dataset.pos) + node.previousSibling.innerText.length;
+            return dbg(2, Number(node.previousSibling?.dataset.pos) + node.previousSibling.innerText.length);
         }
         return 0;
     }
@@ -64,15 +69,18 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
     let end = range.endOffset + offsetOfNode(range.endContainer);
     while (ty[start] === ' ') start += 1;
     while (ty[end - 1] === ' ') end -= 1;
-    const text = sel.toString().trim().replaceAll('\u2068', '').replaceAll('\u2069', '');
+    const text = sel.toString().trim().replaceAll('\u2068', '').replaceAll('\u2069', '').replaceAll(/\s+/g, ' ');
     for (let i = 0; i < ty.length; i += 1) {
         if (ty[i] === '\u2068' || ty[i] === '\u2069') {
             if (i <= start) start -= 1;
             if (i <= end) end -= 1;
         }
     }
+    end = start + text.length;
+    const dummyReplace = replaceTactic({ start, end, text, userInp: '2' });
     setSuggs([{
         label: text,
+        debugInfo: `(${start}, ${end})`,
         disabled: true,
         action: () => { },
     }, {
@@ -82,7 +90,8 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
         },
     }, {
         label: g`replace`,
-        debugInfo: replaceTactic({ start, end, text, userInp: '2' }),
+        disabled: dummyReplace === undefined,
+        debugInfo: dummyReplace,
         action: async () => {
             const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`, text);
             const tac = replaceTactic({ start, end, text, userInp });

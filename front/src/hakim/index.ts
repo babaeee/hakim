@@ -188,16 +188,10 @@ export const runSuggDblHyp = (hyp: string) => {
 
 export const spanPosOfHyp = (hyp: string, l: number, r: number): number | undefined => {
     const x = instance.pos_of_span_hyp(hyp, l, r);
-    if (!x) {
-        alert(g`selected_part_is_not_full_subexpression`);
-    }
     return x;
 };
 export const spanPosOfGoal = (l: number, r: number): number | undefined => {
     const x = instance.pos_of_span_goal(l, r);
-    if (!x) {
-        alert(g`selected_part_is_not_full_subexpression`);
-    }
     return x;
 };
 
