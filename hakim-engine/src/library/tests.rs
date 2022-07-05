@@ -1,6 +1,6 @@
 use std::panic::catch_unwind;
 
-use crate::engine::Engine;
+use crate::{engine::Engine, library::ast::Signature};
 
 use super::{
     ast::{File, Sentence},
@@ -35,7 +35,8 @@ fn check_library_proofs() {
         let mut eng = Engine::default();
         let lib = File::parse(text_of_name(lib_name).unwrap());
         for st in lib.0 {
-            if let Sentence::Theorem { name, proof, ty } = &st {
+            if let Sentence::Theorem { sig, proof } = &st {
+                let Signature { ty, name, .. } = sig;
                 let mut session = eng.interactive_session(ty).unwrap();
                 for tactic in proof {
                     match session.run_tactic(tactic) {

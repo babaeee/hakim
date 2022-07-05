@@ -1,6 +1,6 @@
 import { Instance } from "../../../hakim-wasm/pkg/hakim_wasm";
 import { normalPrompt } from "../dialog";
-import { fromRust, g } from "../i18n";
+import { fromRust } from "../i18n";
 import { loadLibText } from "./lib_text";
 
 declare let window: Window & {

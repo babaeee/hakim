@@ -26,13 +26,13 @@ Qed.
 
 Todo nil_unique: ∀ A: U, ∀ l: list A, |l| = 0 -> l = [].
 
-Axiom repeat: ∀ A: U, ℤ -> A -> list A.
+Axiom #1 repeat: ∀ A: U, ℤ -> A -> list A.
 Todo repeat_unique: ∀ A: U, ∀ x: A, ∀ l: list A, cnt x l = |l| -> l = repeat (|l|) x.
 Todo repeat_len: ∀ A: U, ∀ x: A, ∀ t: ℤ, 0 ≤ t -> |repeat t x| = t.
 Todo repeat_cnt: ∀ A: U, ∀ x: A, ∀ t: ℤ, 0 ≤ t -> cnt x (repeat t x) = t.
 Todo repeat_cnt_others: ∀ A: U, ∀ x y: A, ∀ t: ℤ, 0 ≤ t -> ~ x = y -> cnt y (repeat t x) = 0.
 
-Axiom member_set: ∀ A: U, list A -> set A.
+Axiom #1 member_set: ∀ A: U, list A -> set A.
 Todo member_set_subset: ∀ A: U, ∀ l: list A, ∀ m: set A, member_set l ⊆ m -> l = [] ∨ ∃ h: A, ∃ t: list A, h ∈ m ∧ l = [h] ++ t ∧ member_set t ⊆ m.
 Todo member_set_empty: ∀ A: U, member_set (nil A) = {}.
 Todo member_set_singleton: ∀ A: U, ∀ x: A, member_set ([x]) = {x}.

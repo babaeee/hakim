@@ -9,6 +9,9 @@ import ProductOperator from "../../../library/ProductOperator.v";
 import Set from "../../../library/Set.v";
 import Sigma from "../../../library/Sigma.v";
 import List from "../../../library/List.v";
+import Graph from "../../../library/Graph.v";
+import Game from "../../../library/Game.v";
+import Tuples from "../../../library/Tuples.v";
 
 export const loadLibText = () => {
     return {
@@ -23,5 +26,8 @@ export const loadLibText = () => {
         '/Set': Set,
         '/Sigma': Sigma,
         '/List': List,
+        '/Graph': Graph,
+        '/Game': Game,
+        '/Tuples': Tuples,
     };
 };

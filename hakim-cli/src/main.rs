@@ -1,12 +1,7 @@
 use hakim_engine::engine::Engine;
 
 fn main() {
-    let mut eng = Engine::default();
-    eng.add_axiom(
-        "eq_switch",
-        "forall t: U, forall x1: t, forall x2: t, forall p: eq t x1 x2, eq t x2 x1",
-    )
-    .unwrap();
+    let eng = Engine::default();
     let mut session = eng.interactive_session("forall a b: U, forall f: forall x: a, b, forall x y: a, forall p: eq a x y, eq b (f x) (f y)").unwrap();
     let mut rl = rustyline::Editor::<()>::new();
     loop {

@@ -71,8 +71,6 @@ impl Engine {
         let definitions = im::HashMap::default();
         let hidden_args = im::HashMap::<String, usize>::from(HashMap::from([
             ("finite".to_string(), 1),
-            ("member_set".to_string(), 1),
-            ("repeat".to_string(), 1),
             ("cnt".to_string(), 1),
         ]));
         let libs = im::HashMap::<String, ()>::default();
@@ -153,9 +151,11 @@ impl Engine {
         }
     }
 
-    pub fn add_axiom(&mut self, name: &str, ty: &str) -> Result<()> {
+    pub fn add_axiom(&mut self, name: &str, ty: &str, hidden_args: usize) -> Result<()> {
         let parsed = self.parse_text(ty)?;
-        self.add_axiom_with_term(name, parsed)
+        self.add_axiom_with_term(name, parsed)?;
+        self.hidden_args.insert(name.to_string(), hidden_args);
+        Ok(())
     }
 
     pub fn calc_type_and_infer(&self, text: &str) -> Result<TermRef> {

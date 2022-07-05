@@ -12,6 +12,13 @@ pub enum SuggTarget {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub(crate) struct Signature {
+    pub(crate) name: String,
+    pub(crate) ty: String,
+    pub(crate) hidden_args: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub(crate) enum Sentence {
     Suggestion {
         target: SuggTarget,
@@ -22,23 +29,34 @@ pub(crate) enum Sentence {
     Import {
         name: String,
     },
-    Axiom {
-        name: String,
-        ty: String,
-    },
-    Todo {
-        name: String,
-        ty: String,
-    },
+    Axiom(Signature),
+    Todo(Signature),
     Definition {
         name: String,
         body: String,
     },
     Theorem {
-        name: String,
-        ty: String,
+        #[serde(flatten)]
+        sig: Signature,
         proof: Vec<String>,
     },
+}
+
+fn eat_signature(mut r: &str) -> Signature {
+    let hidden_args = if let Some(x) = r.strip_prefix("#1 ") {
+        r = x;
+        1
+    } else {
+        0
+    };
+    if let Some((name, body)) = r.split_once(':') {
+        return Signature {
+            name: name.trim().to_string(),
+            ty: body.to_string(),
+            hidden_args,
+        };
+    }
+    panic!("invalid signature {:?}", r);
 }
 
 impl Sentence {
@@ -98,20 +116,10 @@ impl Sentence {
             }
         }
         if let Some(r) = s.strip_prefix("Todo ") {
-            if let Some((name, body)) = r.split_once(':') {
-                return Sentence::Todo {
-                    name: name.trim().to_string(),
-                    ty: body.to_string(),
-                };
-            }
+            return Sentence::Todo(eat_signature(r));
         }
         if let Some(r) = s.strip_prefix("Axiom ") {
-            if let Some((name, body)) = r.split_once(':') {
-                return Sentence::Axiom {
-                    name: name.trim().to_string(),
-                    ty: body.to_string(),
-                };
-            }
+            return Sentence::Axiom(eat_signature(r));
         }
         if let Some(r) = s.strip_prefix("Import ") {
             return Sentence::Import {
@@ -119,21 +127,18 @@ impl Sentence {
             };
         }
         if let Some(r) = s.strip_prefix("Theorem ") {
-            if let Some((name, body)) = r.split_once(':') {
-                let mut proof = vec![];
-                assert_eq!("Proof", it.next().unwrap());
-                for x in it {
-                    if x == "Qed" {
-                        break;
-                    }
-                    proof.push(x.to_string());
+            let mut proof = vec![];
+            assert_eq!("Proof", it.next().unwrap());
+            for x in it {
+                if x == "Qed" {
+                    break;
                 }
-                return Sentence::Theorem {
-                    name: name.trim().to_string(),
-                    ty: body.to_string(),
-                    proof,
-                };
+                proof.push(x.to_string());
             }
+            return Sentence::Theorem {
+                sig: eat_signature(r),
+                proof,
+            };
         }
         panic!("invalid sentence {:?}", s);
     }
@@ -157,23 +162,21 @@ impl Sentence {
                 }
             }
             Sentence::Import { name } => engine.load_library(&name)?,
-            Sentence::Todo { name, ty }
-            | Sentence::Axiom { name, ty }
-            | Sentence::Theorem { name, ty, .. } => engine.add_axiom(&name, &ty)?,
+            Sentence::Todo(sig) | Sentence::Axiom(sig) | Sentence::Theorem { sig, .. } => {
+                engine.add_axiom(&sig.name, &sig.ty, sig.hidden_args)?
+            }
             Sentence::Definition { name, body } => engine.add_definition(&name, &body)?,
         }
         Ok(())
     }
 
     pub(crate) fn name(&self) -> Option<&str> {
-        if let Sentence::Import { name }
-        | Sentence::Todo { name, .. }
-        | Sentence::Axiom { name, .. }
-        | Sentence::Theorem { name, .. } = self
-        {
-            Some(name)
-        } else {
-            None
+        match self {
+            Sentence::Import { name } => Some(name),
+            Sentence::Todo(sig) | Sentence::Axiom(sig) | Sentence::Theorem { sig, .. } => {
+                Some(&sig.name)
+            }
+            _ => None,
         }
     }
 
@@ -182,9 +185,9 @@ impl Sentence {
             Sentence::Suggestion { .. } | Sentence::Import { .. } | Sentence::Definition { .. } => {
                 None
             }
-            Sentence::Todo { ty, .. }
-            | Sentence::Axiom { ty, .. }
-            | Sentence::Theorem { ty, .. } => Some(ty),
+            Sentence::Todo(sig) | Sentence::Axiom(sig) | Sentence::Theorem { sig, .. } => {
+                Some(&sig.ty)
+            }
         }
     }
 }
