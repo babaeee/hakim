@@ -96,7 +96,18 @@ Proof.
 Qed.
 Todo divide_factor: ∀ a b c: ℤ, a | b -> a | b * c.
 Todo divide_plus: ∀ a b c: ℤ, a | b -> a | c -> a | b + c.
-Todo divide_minus: ∀ a b c: ℤ, a | b -> a | b + c -> a | c.
+Theorem divide_minus: ∀ a b c: ℤ, a | b -> a | b + c -> a | c.
+Proof.
+    intros.
+    apply divide_unfold in H.
+    apply divide_unfold in H0.
+    destruct H with (ex_ind ? ?) to (H_value H_proof).
+    destruct H0 with (ex_ind ? ?) to (H0_value H0_proof).
+    apply divide_fold.
+    apply (ex_intro ? ? (H0_value - H_value)).
+    lia.
+Qed.
+
 Theorem divide_linear_combination: ∀ a b c: ℤ, a | b -> a | c -> (∀ k l: ℤ, a | k * b + l * c).
 Proof.
     intros.
