@@ -48,7 +48,8 @@ fn check_library_proofs() {
                 }
                 assert!(
                     session.is_finished(),
-                    "Incomplete proof for {name} in library {lib_name}"
+                    "Incomplete proof for {name} in library {lib_name}\nMonitor: {}",
+                    session.monitor_string()
                 );
             }
             st.add_to_engine(&mut eng).unwrap();

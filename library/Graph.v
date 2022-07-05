@@ -1,4 +1,5 @@
 Import /Set.
+Import /Tuples.
 
 Axiom dGraph: U -> U.
 Axiom #1 dvertex_set: ∀ A: U, dGraph A -> set A.
