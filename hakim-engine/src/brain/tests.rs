@@ -148,3 +148,10 @@ fn eq_explicit() {
         "Universe1",
     );
 }
+
+#[test]
+fn tuples() {
+    check_type("(1, 2, 3)", "ℤ ∧ ℤ ∧ ℤ");
+    check_type("((1, 2), 3)", "(ℤ ∧ ℤ) ∧ ℤ");
+    check_type("([1, 2], 3)", "list ℤ ∧ ℤ");
+}

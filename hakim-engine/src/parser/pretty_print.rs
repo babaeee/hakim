@@ -44,6 +44,33 @@ fn detect_sigma(t: &Term) -> Option<(TermRef, TermRef, TermRef)> {
     None
 }
 
+fn detect_tuple_items(mut t: TermRef) -> Option<Vec<TermRef>> {
+    let mut r = vec![];
+    loop {
+        if let Term::App { func, op: op2 } = t.as_ref() {
+            if let Term::App { func, op: op1 } = func.as_ref() {
+                if let Term::App { func, op: _ } = func.as_ref() {
+                    if let Term::App { func, op: _ } = func.as_ref() {
+                        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                            if unique_name == "pair" {
+                                r.push(op1.clone());
+                                t = op2.clone();
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        break;
+    }
+    if r.is_empty() {
+        return None;
+    }
+    r.push(t);
+    Some(r)
+}
+
 fn detect_list_items(mut t: &Term) -> Option<(Vec<TermRef>, TermRef)> {
     let mut r = vec![];
     let ty = loop {
@@ -255,6 +282,11 @@ pub fn term_to_ast(
             return Some(Set(AstSet::Items(
                 exp.map(|x| term_to_ast(&x, names, c)).collect(),
             )));
+        }
+        if let Some(x) = detect_tuple_items(Rc::new(term.clone())) {
+            return Some(Tuple(
+                x.into_iter().map(|x| term_to_ast(&x, names, c)).collect(),
+            ));
         }
         if let Some((l, ty)) = detect_list_items(term) {
             if ty == prelude::char_ty() {
@@ -562,6 +594,11 @@ pub fn pretty_print_ast(
             write!(r, "[")?;
             comma_vec(v, r, c)?;
             write!(r, "]")?;
+        }
+        AstTerm::Tuple(v) => {
+            write!(r, "(")?;
+            comma_vec(v, r, c)?;
+            write!(r, ")")?;
         }
     }
     r.pop_ast();

@@ -310,6 +310,12 @@ fn in_in_name() {
 }
 
 #[test]
+fn tuples() {
+    parse_error("()");
+    parse_pretty("(1, 2, 3)");
+}
+
+#[test]
 fn max_width() {
     parse_pretty(
         r#"∀ a b n: ℤ,

@@ -21,6 +21,9 @@ fn v1() -> TermRef {
 fn v2() -> TermRef {
     term_ref!(v 2)
 }
+fn v3() -> TermRef {
+    term_ref!(v 3)
+}
 pub fn eq() -> TermRef {
     term_ref!(axiom "eq" , forall u(), forall v0(), forall v1(), u())
 }
@@ -47,6 +50,9 @@ pub fn or() -> TermRef {
 }
 pub fn and() -> TermRef {
     term_ref!(axiom "and", forall u(), forall u(), u())
+}
+pub fn pair() -> TermRef {
+    term_ref!(axiom "pair", forall u(), forall u(), forall v1(), forall v1(), app_ref!(and(), v3(), v2()))
 }
 pub fn set() -> TermRef {
     term_ref!(axiom "set", forall u(), u())
@@ -137,6 +143,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("or".to_string(), or());
     name_dict.insert("lt".to_string(), lt());
     name_dict.insert("and".to_string(), and());
+    name_dict.insert("pair".to_string(), pair());
     name_dict.insert("set".to_string(), set());
     name_dict.insert("set_from_func".to_string(), set_from_func());
     name_dict.insert("set_empty".to_string(), set_empty());

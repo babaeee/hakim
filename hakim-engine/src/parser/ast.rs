@@ -12,7 +12,7 @@ use crate::{
     app_ref,
     brain::{good_char, increase_foreign_vars, Abstraction, Term, TermRef},
     library::prelude::{
-        self, chr, ex, len1, set_empty, set_from_func, set_singleton, sigma, union,
+        self, chr, ex, len1, pair, set_empty, set_from_func, set_singleton, sigma, union,
     },
     parser::binop::{Assoc, BinOp},
     term_ref,
@@ -51,6 +51,7 @@ pub enum AstTerm {
     Char(char),
     Str(String),
     List(Vec<AstTerm>),
+    Tuple(Vec<AstTerm>),
     Wild(Option<String>),
     Len(Box<AstTerm>),
     Set(AstSet),
@@ -200,9 +201,12 @@ trait TokenEater {
             }
             TokenValue::Sign(s) => match s.as_str() {
                 "(" => {
-                    let r = self.eat_ast()?;
-                    self.eat_sign(")")?;
-                    Ok(r)
+                    let r = self.eat_comma_vec(&TokenValue::Sign(")".to_string()))?;
+                    match r.len() {
+                        0 => Err(InvalidUnitTuple),
+                        1 => Ok(r.into_iter().next().unwrap()),
+                        _ => Ok(Tuple(r)),
+                    }
                 }
                 "[" => {
                     let r = self.eat_comma_vec(&TokenValue::Sign("]".to_string()))?;
@@ -483,6 +487,28 @@ pub fn ast_to_term(
                 .collect::<Result<Vec<_>>>()?;
             let ty = term_ref!(_ infer_cnt.generate());
             let r = list_to_term(v, ty);
+            Ok(r)
+        }
+        Tuple(v) => {
+            let v = v
+                .into_iter()
+                .map(|x| ast_to_term(x, globals, name_stack, infer_dict, infer_cnt, config))
+                .collect::<Result<Vec<_>>>()?;
+            let mut make_pair = |a: TermRef, b: TermRef| -> TermRef {
+                let ta = term_ref!(_ infer_cnt.generate());
+                let tb = term_ref!(_ infer_cnt.generate());
+                app_ref!(app_ref!(pair(), ta), tb, a, b)
+            };
+            let r = {
+                let mut v = v.into_iter().rev();
+                let a = v.next().unwrap();
+                let b = v.next().unwrap();
+                let mut result = make_pair(b, a);
+                for x in v.into_iter().rev() {
+                    result = make_pair(x, result);
+                }
+                result
+            };
             Ok(r)
         }
         Char(c) => char_to_term(c),

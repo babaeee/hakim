@@ -44,6 +44,7 @@ pub enum Error {
     RemainTokens(Vec<Token>),
     TokenizerError(String),
     BadSigma,
+    InvalidUnitTuple,
 }
 
 type Result<T> = std::result::Result<T, Error>;
