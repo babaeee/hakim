@@ -22,7 +22,7 @@
 }
 
 .toolButton:hover {
-    background-color: var(--gray-2);
+  background-color: var(--gray-2);
 }
 
 @keyframes col {
@@ -55,23 +55,42 @@
 }
 
 .footer {
-    border-top: var(--border);
-    height: 50px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    direction: ltr;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    font-size: smaller;
+  border-top: var(--border);
+  height: 50px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  direction: ltr;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  font-size: smaller;
 }
 
-.footer > * {
-    width: 20px;
-    height: 20px;
-    color: var(--primary);
-    padding: 0 4px;
+.footer>* {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+  padding: 0 4px;
+}
+
+.tooltip {
+  background: #eee;
+  color: #222;
+  font-weight: bold;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 90%;
+  pointer-events: none;
+  transition: none;
+}
+
+.arrow {
+  position: absolute;
+  background: #eee;
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
 }
