@@ -85,6 +85,7 @@
   font-size: 90%;
   pointer-events: none;
   transition: none;
+  width: 50vw;
 }
 
 .arrow {

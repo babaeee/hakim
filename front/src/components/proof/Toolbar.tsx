@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { normalPrompt } from "../../dialog";
 import { sendTactic, subscribe, tryAuto, TryAutoResult } from "../../hakim";
 import { g } from "../../i18n";
 import css from "./toolbar.module.css";
 import logo from "../../logo.png"
-import { arrow, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
+import { flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 
 export const ToolButton = ({ label, onClick }: { label: string, onClick: any }) => {
     return (
@@ -22,13 +22,12 @@ const newAssert = async () => {
 let isWorking = false;
 
 const AutoProofButton = () => {
-    const arrowRef = useRef(null);
-    const { x, y, reference, floating, strategy, middlewareData: { arrow: { x: arrowX, y: arrowY } = {} }, } = useFloating({
+    const { x, y, reference, floating, strategy } = useFloating({
         middleware: [
             offset(6),
             flip(),
             shift({ padding: 5 }),
-            arrow({ element: arrowRef })],
+        ],
         placement: 'left',
     });
     const [hover, setHover] = useState(false);
@@ -86,12 +85,6 @@ const AutoProofButton = () => {
                 className={css.tooltip}
             >
                 {g`auto_proof_turbo_tooltip`}
-                {/*<div
-                    style={{
-                        top: arrowY ?? 0,
-                        left: arrowX ?? 0,
-                    }}
-                className={css.arrow} ref={arrowRef} />*/}
             </div>}
         </>
     );
