@@ -4,7 +4,48 @@ Import /Arith.
 Import /NumberTheory.
 Import /Sigma.
 
-Axiom rule_of_sum: ∀ T: Universe, ∀ A B: set T, finite A -> finite B -> A ∩ B = {} -> |A ∪ B| = |A| + |B|.
+Theorem rule_of_sum: ∀ T: Universe, ∀ A B: set T, finite A -> finite B -> A ∩ B = {} -> |A ∪ B| = |A| + |B|.
+Proof.
+intros.
+apply (⁨set_induction T (λ D: (set T), A ∩ D = {} → |A ∪ D| = |A| + |D|) ?2 ?4 ?6 ?8⁩).
+assumption.
+assumption.
+intros.
+replace #1 (A ∪ (x ∪ {a})) with (A ∪ x ∪ {a}).
+auto_set.
+apply eq_sym.
+replace #1 (|A ∪ x ∪ {a}|) with (|A ∪ x| + 1).
+apply finite_add_len.
+intros.
+add_hyp (a ∈ A ).
+auto_set.
+apply eq_set_empty in H5.
+add_hyp H5_ex := (H5 (a)).
+auto_set.
+auto_set.
+replace #1 (|x ∪ {a}|) with (|x| + 1).
+apply finite_add_len.
+assumption.
+assumption.
+replace #1 (|A ∪ x|) with (|A ∪ x|).
+auto_list.
+replace #1 (|A ∪ x|) with (|A| + |x|).
+apply H3.
+apply NNPP.
+intros.
+apply non_empty_has_member in H6.
+destruct H6 with (ex_ind ? ?) to (H6_value H6_proof).
+apply set_equality_unfold in H5.
+destruct H5 with (and_ind ? ?) to (H5_l H5_r).
+apply included_unfold in H5_l.
+add_hyp H5_l_ex := (H5_l (H6_value)).
+auto_set.
+lia.
+intros.
+replace #1 (A ∪ {}) with (A ).
+auto_set.
+lia.
+Qed.
 Theorem rule_of_minus: ∀ T: Universe, ∀ A B: set T, finite A -> B ⊆ A -> |A ∖ B| = |A| - |B|.
 Proof.
     intros.

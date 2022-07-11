@@ -10,6 +10,8 @@ Suggest goal default apply set_from_func_fold; a ∈ {b | f b} => f a.
 Theorem empty_intro: ∀ A: U, ∀ a: A, a ∈ {} -> False.
 Proof. intros. auto_set. Qed.
 Suggest hyp default chain (apply empty_intro in $n) (apply (False_ind $n ?)); Contradiction.
+Todo eq_set_empty: ∀ A: U, ∀ S: set A, S = {} -> ∀ a: A, ~ a ∈ S.
+Suggest hyp default apply eq_set_empty; A = {} => ∀ a, ~ a ∈ A.
 
 Theorem singleton_unfold: ∀ A: U, ∀ a b: A, b ∈ {a} -> a = b.
 Proof. intros. auto_set. Qed.
@@ -58,6 +60,9 @@ Proof.
     add_hyp H_ex := (H (a)).
     assumption.
 Qed.
+
+Axiom set_equality_unfold: ∀ A: U, ∀ x y: set A, x = y -> x ⊆ y ∧ y ⊆ x.
+Suggest hyp default apply set_equality_unfold in $n; A = B => A ⊆ B ∧ B ⊆ A.
 
 Theorem minus_of_subset: ∀ A: U, ∀ x y: set A, x ⊆ y -> x ∪ y ∖ x = y.
 Proof. intros. auto_set. Qed.
