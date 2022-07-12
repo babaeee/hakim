@@ -126,7 +126,7 @@ pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<
     let find = next_arg(&mut args, "replace")?;
     next_arg_constant(&mut args, "replace", "with")?;
     let replace = next_arg(&mut args, "replace")?;
-    let eq = format!("{} = {}", find, replace);
+    let eq = format!("({}) = ({})", find, replace);
     let eq = frame.engine.parse_text(&eq)?;
     let mut proof_eq = frame.clone();
     proof_eq.goal = eq.clone();
