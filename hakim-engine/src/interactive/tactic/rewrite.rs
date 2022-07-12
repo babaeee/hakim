@@ -1,11 +1,9 @@
 use crate::{
-    app_ref,
     brain::{
         infer::{type_of_and_infer, InferResults},
-        type_of, Term, TermRef,
+        Term, TermRef,
     },
     interactive::Frame,
-    library::prelude::eq,
     parser::{fix_wild_scope, BinOp, InferGenerator},
     Abstraction,
 };
@@ -126,31 +124,45 @@ pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<
         }
     }
     let find = next_arg(&mut args, "replace")?;
-    let find = frame.engine.parse_text(find)?;
     next_arg_constant(&mut args, "replace", "with")?;
     let replace = next_arg(&mut args, "replace")?;
-    let replace = frame.engine.parse_text(replace)?;
+    let eq = format!("({}) = ({})", find, replace);
+    let eq = frame.engine.parse_text(&eq)?;
     let mut proof_eq = frame.clone();
-    proof_eq.goal = build_eq_term(find.clone(), replace.clone())?;
+    proof_eq.goal = eq.clone();
     let mut after_replace = frame;
-    if args.peek().is_some() {
-        next_arg_constant(&mut args, "replace", "in")?;
-        let hyp_name = next_arg(&mut args, "replace")?;
-        let hyp = after_replace.remove_hyp_with_name(hyp_name)?.ty;
-        after_replace.add_hyp_with_name(hyp_name, replace_term(hyp, find, replace, &mut which))?;
-        deny_arg(args, "replace")?;
-    } else {
-        after_replace.goal = replace_term(after_replace.goal, find, replace, &mut which);
-    }
-    Ok(vec![after_replace, proof_eq])
-}
 
+    if let Term::App { func, op: replace } = eq.as_ref() {
+        if let Term::App { func: _, op: find } = func.as_ref() {
+            if args.peek().is_some() {
+                next_arg_constant(&mut args, "replace", "in")?;
+                let hyp_name = next_arg(&mut args, "replace")?;
+                let hyp = after_replace.remove_hyp_with_name(hyp_name)?.ty;
+                after_replace.add_hyp_with_name(
+                    hyp_name,
+                    replace_term(hyp, find.clone(), replace.clone(), &mut which),
+                )?;
+                deny_arg(args, "replace")?;
+            } else {
+                after_replace.goal = replace_term(
+                    after_replace.goal,
+                    find.clone(),
+                    replace.clone(),
+                    &mut which,
+                );
+            }
+            return Ok(vec![after_replace, proof_eq]);
+        }
+    }
+    unreachable!();
+}
+/*
 fn build_eq_term(t1: TermRef, t2: TermRef) -> Result<TermRef> {
     let ty = type_of(t1.clone())?;
     let r = app_ref!(eq(), ty, t1, t2);
     type_of(r.clone())?;
     Ok(r)
-}
+}*/
 
 #[cfg(test)]
 mod tests {
@@ -216,6 +228,23 @@ mod tests {
           → 2 * (Σ i in [0, n + 1) i) = n * (n + 1)
               → 2 * (Σ i in [0, n + 1 + 1) i) = (n + 1) * (n + 1 + 1)"#,
             r#"replace #2 (0) with (2)"#,
+            EngineLevel::Empty,
+        );
+    }
+    #[test]
+    fn detect_infers_of_replace_obj() {
+        run_interactive(
+            r#"∀ A: U, 
+            ∀ x y: set A, 
+                x = {} ->
+                    y = x -> 
+                        y = {}"#,
+            r#"
+            intros
+            replace #1 (x) with ({}) in H0
+            assumption
+            assumption
+            "#,
             EngineLevel::Empty,
         );
     }
