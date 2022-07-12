@@ -62,7 +62,6 @@ Proof.
 Qed.
 
 Axiom set_equality_unfold: ∀ A: U, ∀ x y: set A, x = y -> x ⊆ y ∧ y ⊆ x.
-Suggest hyp default apply set_equality_unfold in $n; A = B => A ⊆ B ∧ B ⊆ A.
 
 Theorem minus_of_subset: ∀ A: U, ∀ x y: set A, x ⊆ y -> x ∪ y ∖ x = y.
 Proof. intros. auto_set. Qed.
