@@ -82,7 +82,52 @@ fn convert(term: TermRef, _: LogicArena<'_, ListStatement>) -> LogicValue<'_, Li
     LogicValue::Exp(LogicTree::Unknown)
 }
 
-fn check_contradiction(_: &[ListStatement]) -> bool {
+fn get_term_from_listpart(list_part: &ListPart) -> &TermRef {
+    match list_part {
+        ListPart::Atom(x) => x,
+        ListPart::Element(x) => x,
+    }
+}
+
+fn check_contradiction(statements: &[ListStatement]) -> bool {
+    let mut equality_statements = Vec::new();
+
+    for statement in statements {
+        if let ListStatement::IsEq(x, y) = statement {
+            if x.0.len() != y.0.len() {
+                return true;
+            }
+
+            for i in 0..x.0.len() {
+                equality_statements.push((
+                    get_term_from_listpart(&x.0[i]),
+                    get_term_from_listpart(&y.0[i]),
+                ));
+
+                equality_statements.push((
+                    get_term_from_listpart(&y.0[i]),
+                    get_term_from_listpart(&x.0[i]),
+                ));
+            }
+        }
+    }
+
+    for statement in statements {
+        if let ListStatement::IsNeq(x, y) = statement {
+            let mut is_eq: bool = true;
+            for i in 0..x.0.len() {
+                is_eq &= equality_statements.contains(&(
+                    get_term_from_listpart(&x.0[i]),
+                    get_term_from_listpart(&y.0[i]),
+                ));
+            }
+
+            if is_eq {
+                return true;
+            }
+        }
+    }
+
     false
 }
 
@@ -126,5 +171,11 @@ mod tests {
     #[test]
     fn string_concat() {
         success(r#""hello" ++ " " ++ "world" = "hello world""#);
+    }
+
+    #[test]
+    fn list_equality_implies_member_equality() {
+        success(r#"∀ a b c : ℤ , [1, 2, 3] = [a, b, c] -> a = 1"#);
+        fail(r#"∀ a b c : ℤ , [1, 2, 3] = [a, b, c] -> a = 2"#);
     }
 }

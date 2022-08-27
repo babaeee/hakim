@@ -248,4 +248,17 @@ mod tests {
             EngineLevel::Empty,
         );
     }
+
+    #[test]
+    #[ignore]
+    fn replace_bug1() {
+        run_interactive(
+            r#"-1 * multi { x: ℤ | prime x } + 1 * (multi { x: ℤ | prime x } + 1) = 1"#,
+            r#"
+                replace #1 (- 1 * multi { x: ℤ | prime x } + 1 * (multi { x: ℤ | prime x } + 1)) with (1)
+                apply eq_refl
+            "#,
+            EngineLevel::Full,
+        );
+    }
 }
