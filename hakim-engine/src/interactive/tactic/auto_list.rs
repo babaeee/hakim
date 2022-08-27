@@ -82,48 +82,44 @@ fn convert(term: TermRef, _: LogicArena<'_, ListStatement>) -> LogicValue<'_, Li
     LogicValue::Exp(LogicTree::Unknown)
 }
 
-fn get_term_from_listpart(list_part: &ListPart) -> &TermRef {
-    match list_part {
-        ListPart::Atom(x) => x,
-        ListPart::Element(x) => x,
-    }
-}
-
 fn check_contradiction(statements: &[ListStatement]) -> bool {
     let mut equality_statements = Vec::new();
 
     for statement in statements {
         if let ListStatement::IsEq(x, y) = statement {
-            if x.0.len() != y.0.len() {
-                return true;
-            }
-
-            for i in 0..x.0.len() {
-                equality_statements.push((
-                    get_term_from_listpart(&x.0[i]),
-                    get_term_from_listpart(&y.0[i]),
-                ));
-
-                equality_statements.push((
-                    get_term_from_listpart(&y.0[i]),
-                    get_term_from_listpart(&x.0[i]),
-                ));
+            if x.0.len() == y.0.len() {
+                for i in 0..x.0.len() {
+                    if let ListPart::Element(x_term) = &x.0[i] {
+                        if let ListPart::Element(y_term) = &y.0[i] {
+                            equality_statements.push((x_term, y_term));
+                            equality_statements.push((y_term, x_term));
+                        }
+                    }
+                }
             }
         }
     }
 
     for statement in statements {
         if let ListStatement::IsNeq(x, y) = statement {
-            let mut is_eq: bool = true;
-            for i in 0..x.0.len() {
-                is_eq &= equality_statements.contains(&(
-                    get_term_from_listpart(&x.0[i]),
-                    get_term_from_listpart(&y.0[i]),
-                ));
-            }
+            if x.0.len() == y.0.len() {
+                let mut is_eq: bool = true;
 
-            if is_eq {
-                return true;
+                for i in 0..x.0.len() {
+                    if let ListPart::Atom(x_term) = &x.0[i] {
+                        if let ListPart::Atom(y_term) = &y.0[i] {
+                            is_eq &= equality_statements.contains(&(x_term, y_term));
+                        } else {
+                            is_eq = false;
+                        }
+                    } else {
+                        is_eq = false;
+                    }
+                }
+
+                if is_eq {
+                    return true;
+                }
             }
         }
     }
