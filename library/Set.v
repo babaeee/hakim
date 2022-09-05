@@ -35,8 +35,14 @@ Suggest hyp default apply intersection_unfold in $n; a ∈ x ∩ y => a ∈ x �
 Suggest goal default apply intersection_fold; a ∈ x ∩ y => a ∈ x ∧ a ∈ y.
 Theorem intersection_intro: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∩ y ↔ a ∈ x ∧ a ∈ y.
 Proof. intros. auto_set. Qed.
-Theorem setminus_intro: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∖ y ↔ a ∈ x ∧ (a ∈ y -> False).
+
+Theorem setminus_unfold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∖ y -> a ∈ x ∧ (a ∈ y -> False).
 Proof. intros. auto_set. Qed.
+Theorem setminus_fold: ∀ A: U, ∀ x y: set A, ∀ a: A, a ∈ x ∧ (a ∈ y -> False) -> a ∈ x ∖ y.
+Proof. intros. auto_set. Qed.
+Suggest hyp default apply setminus_unfold in $n; a ∈ x ∖ y => a ∈ x ∧ ~ a ∈ y.
+Suggest goal default apply setminus_fold; a ∈ x ∖ y => a ∈ x ∧ ~ a ∈ y.
+
 Theorem included_unfold: ∀ A: U, ∀ x y: set A, x ⊆ y -> (∀ a: A, a ∈ x -> a ∈ y).
 Proof. intros. auto_set. Qed.
 Axiom included_fold: ∀ A: U, ∀ x y: set A, (∀ a: A, a ∈ x -> a ∈ y) -> x ⊆ y.
@@ -62,7 +68,6 @@ Proof.
 Qed.
 
 Axiom set_equality_unfold: ∀ A: U, ∀ x y: set A, x = y -> x ⊆ y ∧ y ⊆ x.
-Suggest hyp default apply set_equality_unfold in $n; A = B => A ⊆ B ∧ B ⊆ A.
 
 Theorem minus_of_subset: ∀ A: U, ∀ x y: set A, x ⊆ y -> x ∪ y ∖ x = y.
 Proof. intros. auto_set. Qed.

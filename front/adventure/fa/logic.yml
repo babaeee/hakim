@@ -155,3 +155,27 @@
     - demorgan1
     - double_negation
     - negate_exists
+- id: ghatel
+  name: قاتل
+  text: |
+    از پنج مظنون به قتل اعتراف گرفته ایم. هر بی گناه حتما دو قاتل را نام برده است ولی قاتل اسم حداقل یک بی گناه
+    را گفته است. با توجه به اعترافات مفروض، ثابت کنید مظنون `c` حتما قاتل است.
+  type: level
+  x: 2
+  y: 7
+  dependencies:
+    - double_negation
+  engineParams: "disabled_tactics=none"
+  suggestedLemmas:
+    - NNPP
+  goal: "∀ Maznon: U, ∀ a b c d e: Maznon, ∀ eteraf: Maznon -> Maznon ∧ Maznon, ∀ ghatel: Maznon -> U,
+        (∀ x y z: Maznon, ~ ghatel x -> eteraf x = (y, z) -> ghatel y ∧ ghatel z)
+        -> (∀ x y z: Maznon, ghatel x -> eteraf x = (y, z) -> ~ (ghatel y ∧ ghatel z))
+        -> eteraf a = (b, c)
+        -> eteraf b = (a, c)
+        -> eteraf c = (b, e)
+        -> eteraf d = (c, e)
+        -> eteraf e = (b, d)
+        -> ghatel c"
+  initTactics:
+    - intros Maznon a b c d e eteraf ghatel rule_bigonah rule_ghatel fact1 fact2 fact3 fact4 fact5

@@ -10,6 +10,45 @@ import css from "./Sandbox.module.css";
 
 //∀ A: U, ∀ a: A, In A (empty A) a -> False
 const exampleGoals = [
+    'Goal (∀ donya_zibast: U, ∀ aye: donya_zibast, donya_zibast).\
+Proof.\
+intros.',
+    'Goal (False).\
+Proof.\
+add_from_lib True_proof.',
+    'Goal (∀ harchizi: U, False -> harchizi).\
+Proof.\
+intros.',
+    'Goal (∀ ali_shad_ast: U, ∀ mohamad_shad_ast: U, ∀ khabar1: ali_shad_ast, ∀ khabar2: mohamad_shad_ast, ali_shad_ast ∧ mohamad_shad_ast).\
+Proof.\
+intros.',
+    'Goal (∀ ali_shad_ast: U, ∀ mohamad_shad_ast: U, ∀ khabar1: ali_shad_ast,  ali_shad_ast ∨ mohamad_shad_ast).\
+Proof.\
+intros.',
+    'Goal (∀ x y: Universe, x -> (x -> y) -> y).\
+Proof.\
+intros barf_ziad_mibarad madares_tatil_mishavad esbati_baraye_barfe_ziad esbati_baraye_agar_barf_ziad_biad_madrese_tatile.',
+    'Goal (∀ gob:U,∀ khabar_bad_gob: gob -> False, ∀ khabar1: gob , False).\
+Proof.\
+intros hava_tarik_ast.\
+intros khabar1.\
+intros khabar2.',
+    'Goal (∀ A B: U, ~ A ∨ B -> (A -> B)).\
+Proof.\
+intros barf_ziad_mibarad madares_tatil_mishavad .\
+intros H.',
+    'Goal (∀ A B : U, ~ (A ∨ B) -> ~A ∧ ~ B).\
+Proof.\
+intros ali_shad_ast mohamad_shad_ast.\
+intros H.',
+    'Goal (∀ x: ℤ, x = 2 -> x ^ 2 = 4).\
+Proof.',
+    'Goal ((∀ T: set ℤ, (∀ x:ℤ, ~ x ∈ T) -> T = {}) -> ∀ A: set ℤ , A ∩ {} = {}).\
+Proof.\
+intros farz.',
+    'Goal (∀ A B: set ℤ, (A ∖ B) ∪ (A ∩ B) = A).\
+Proof.\cd \
+intros.',
     'finite { x: ℤ | prime x} -> False',
     '∀ A: U, ∀ a: A, a ∈ {} -> False',
     '∀ T: U, ∀ a: T, ∀ S: set T, a ∈ S -> { a } ∪ (S ∖ { a }) = S',

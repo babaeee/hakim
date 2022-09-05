@@ -126,14 +126,10 @@ pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<
     let find = next_arg(&mut args, "replace")?;
     next_arg_constant(&mut args, "replace", "with")?;
     let replace = next_arg(&mut args, "replace")?;
-    let eq = format!("{} = {}", find, replace);
-    let (eq, infer_cnt) = frame.engine.parse_text_with_wild(&eq)?;
-    let mut infers_of_eq = InferResults::new(infer_cnt);
-    let ty = type_of_and_infer(eq.clone(), &mut infers_of_eq)?;
-    type_of_and_infer(ty, &mut infers_of_eq)?;
-    let eq = infers_of_eq.fill(eq);
+    let eq = format!("({}) = ({})", find, replace);
+    let eq = frame.engine.parse_text(&eq)?;
     let mut proof_eq = frame.clone();
-    proof_eq.goal = eq.clone(); // build_eq_term(find.clone(), replace.clone())?;
+    proof_eq.goal = eq.clone();
     let mut after_replace = frame;
 
     if let Term::App { func, op: replace } = eq.as_ref() {
