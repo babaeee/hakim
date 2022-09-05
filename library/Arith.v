@@ -37,7 +37,20 @@ Proof.
     lia.
     lia.
 Qed.
-Todo zero_le_mult_neg: ∀ a b: ℤ, a ≤ 0 -> b ≤ 0 -> 0 ≤ a * b.
+Theorem zero_le_mult_neg: ∀ a b: ℤ, a ≤ 0 -> b ≤ 0 -> 0 ≤ a * b.
+Proof.
+    intros.
+    destruct H0 with (or_ind ? ?).
+    rewrite H0.
+    lia.
+    destruct H with (or_ind ? ?).
+    rewrite H.
+    lia.
+    apply or_introl.
+    apply zero_lt_mult_neg.
+    assumption.
+    assumption.
+Qed.
 Suggest goal apply zero_le_mult_pos; 0 ≤ a * b => 0 ≤ a ∧ 0 ≤ b.
 Suggest goal apply zero_le_mult_neg; 0 ≤ a * b => a ≤ 0 ∧ b ≤ 0.
 
@@ -58,9 +71,47 @@ Theorem plus_lt_l: ∀ a b c: ℤ, c + a < c + b -> a < b.
 Proof. intros. lia. Qed.
 Theorem lt_trans: ∀ n m p : ℤ, n < m -> m < p -> n < p.
 Proof. intros. lia. Qed.
-Todo multiply_lt_positive: ∀ a b c: ℤ, 0 < c -> c * a < c * b -> a < b.
-Todo multiply_lt_negative: ∀ a b c: ℤ, c < 0 -> c * a < c * b -> b < a.
-Todo lt_multiply_positive: ∀ a b c: ℤ, 0 < c -> a < b -> c * a < c * b.
+Theorem multiply_lt_positive: ∀ a b c: ℤ, 0 < c -> c * a < c * b -> a < b.
+Proof.
+intros.
+add_hyp (1 ≤ c).
+lia.
+revert H0.
+revert H.
+revert H1.
+revert c.
+apply z_induction_simple.
+intros.
+lia.
+lia.
+Qed.
+Theorem multiply_lt_negative: ∀ a b c: ℤ, c < 0 -> c * a < c * b -> b < a.
+Proof.
+    intros.
+    add_hyp (∃ d: ℤ, d = -c).
+    apply (ex_intro ? ? (-c)).
+    auto_list.
+    destruct H1 with (ex_ind ? ?) to (d d_property).
+    add_hyp (d * a > d * b).
+    rewrite d_property.
+    lia.
+    apply (⁨multiply_lt_positive ?0 ?2 d ?6 ?8⁩).
+    assumption.
+    lia.
+Qed.
+Theorem lt_multiply_positive: ∀ a b c: ℤ, 0 < c -> a < b -> c * a < c * b.
+Proof.
+    intros.
+    add_hyp (1 ≤ c).
+    lia.
+    revert H.
+    revert H1.
+    revert c.
+    apply z_induction_simple.
+    intros.
+    lia.
+    lia.
+Qed.
 Theorem lt_multiply_negative: ∀ a b c: ℤ, c < 0 -> a < b -> c * b < c * a.
 Proof.
     intros.
