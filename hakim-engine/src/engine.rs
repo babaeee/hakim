@@ -257,7 +257,7 @@ impl Engine {
                 .params
                 .get("disabled_binops")
                 .and_then(|x| x.strip_prefix('[')?.strip_suffix(']'))
-                .unwrap_or(&String::new())
+                .unwrap_or_default()
                 .split(',')
                 .filter_map(BinOp::from_str)
                 .collect(),
