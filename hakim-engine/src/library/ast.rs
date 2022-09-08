@@ -110,7 +110,7 @@ impl Sentence {
         }
         if let Some(r) = s.strip_prefix("Definition ") {
             if let Some((name, body)) = r.split_once(":=") {
-                if let Some((name, hidden_args)) = name.split_once("#") {
+                if let Some((name, hidden_args)) = name.split_once('#') {
                     return Sentence::Definition {
                         name: name.trim().to_string(),
                         body: body.to_string(),
