@@ -12,6 +12,7 @@ import List from "../../../library/List.v";
 import Graph from "../../../library/Graph.v";
 import Game from "../../../library/Game.v";
 import Tuples from "../../../library/Tuples.v";
+import EnumerativeCombinatorics from "../../../library/EnumerativeCombinatorics.v";
 
 export const loadLibText = () => {
     return {
@@ -29,5 +30,6 @@ export const loadLibText = () => {
         '/Graph': Graph,
         '/Game': Game,
         '/Tuples': Tuples,
+        '/EnumerativeCombinatorics': EnumerativeCombinatorics,
     };
 };
