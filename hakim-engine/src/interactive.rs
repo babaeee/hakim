@@ -347,7 +347,7 @@ impl Snapshot {
 
 impl Frame {
     pub fn add_hyp_with_name(&mut self, name: &str, ty: TermRef) -> tactic::Result<()> {
-        self.engine.add_axiom_with_term(name, ty.clone())?;
+        self.engine.add_axiom_with_term(name, ty.clone(), 0)?;
         let hyp = Hyp {
             name: name.to_string(),
             ty,

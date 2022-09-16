@@ -34,6 +34,7 @@ pub(crate) enum Sentence {
     Definition {
         name: String,
         body: String,
+        hidden_args: usize,
     },
     Theorem {
         #[serde(flatten)]
@@ -109,10 +110,19 @@ impl Sentence {
         }
         if let Some(r) = s.strip_prefix("Definition ") {
             if let Some((name, body)) = r.split_once(":=") {
-                return Sentence::Definition {
-                    name: name.trim().to_string(),
-                    body: body.to_string(),
-                };
+                if let Some((name, hidden_args)) = name.split_once('#') {
+                    return Sentence::Definition {
+                        name: name.trim().to_string(),
+                        body: body.to_string(),
+                        hidden_args: hidden_args.trim().parse().unwrap(),
+                    };
+                } else {
+                    return Sentence::Definition {
+                        name: name.trim().to_string(),
+                        body: body.to_string(),
+                        hidden_args: 0,
+                    };
+                }
             }
         }
         if let Some(r) = s.strip_prefix("Todo ") {
@@ -165,7 +175,11 @@ impl Sentence {
             Sentence::Todo(sig) | Sentence::Axiom(sig) | Sentence::Theorem { sig, .. } => {
                 engine.add_axiom(&sig.name, &sig.ty, sig.hidden_args)?
             }
-            Sentence::Definition { name, body } => engine.add_definition(&name, &body)?,
+            Sentence::Definition {
+                name,
+                body,
+                hidden_args,
+            } => engine.add_definition(&name, &body, hidden_args)?,
         }
         Ok(())
     }

@@ -116,32 +116,43 @@ impl Engine {
         self.name_dict.remove(name).unwrap();
     }
 
-    fn add_name(&mut self, name: &str, term: TermRef) -> Result<()> {
+    fn add_name(&mut self, name: &str, term: TermRef, hidden_args: usize) -> Result<()> {
         if !is_valid_ident(name) {
             return Err(InvalidIdentName(name.to_string()));
         }
         if self.name_dict.contains_key(name) {
             return Err(DuplicateName(name.to_string()));
         }
+        self.hidden_args.insert(name.to_string(), hidden_args);
         self.name_dict.insert(name.to_string(), term);
         Ok(())
     }
 
-    pub fn add_axiom_with_term(&mut self, name: &str, term: TermRef) -> Result<()> {
+    pub fn add_axiom_with_term(
+        &mut self,
+        name: &str,
+        term: TermRef,
+        hidden_args: usize,
+    ) -> Result<()> {
         let term = normalize(term);
         let ty = type_of(term.clone())?;
         if !matches!(ty.as_ref(), Term::Universe { index: _ }) {
             return Err(InvalidTypeForAxiom(name.to_string()));
         }
         let axiom = term_ref!(axiom name, term);
-        self.add_name(name, axiom)
+        self.add_name(name, axiom, hidden_args)
     }
 
-    pub(crate) fn add_definition(&mut self, name: &str, body: &str) -> Result<()> {
+    pub(crate) fn add_definition(
+        &mut self,
+        name: &str,
+        body: &str,
+        hidden_args: usize,
+    ) -> Result<()> {
         let body = self.parse_text(body)?;
         self.definitions.insert(name.to_string(), body.clone());
         let ty = type_of(body)?;
-        self.add_axiom_with_term(name, ty)
+        self.add_axiom_with_term(name, ty, hidden_args)
     }
 
     pub(crate) fn body_of_definition(&self, def: &str) -> Result<TermRef> {
@@ -153,8 +164,7 @@ impl Engine {
 
     pub fn add_axiom(&mut self, name: &str, ty: &str, hidden_args: usize) -> Result<()> {
         let parsed = self.parse_text(ty)?;
-        self.add_axiom_with_term(name, parsed)?;
-        self.hidden_args.insert(name.to_string(), hidden_args);
+        self.add_axiom_with_term(name, parsed, hidden_args)?;
         Ok(())
     }
 
@@ -247,7 +257,7 @@ impl Engine {
                 .params
                 .get("disabled_binops")
                 .and_then(|x| x.strip_prefix('[')?.strip_suffix(']'))
-                .unwrap_or(&String::new())
+                .unwrap_or_default()
                 .split(',')
                 .filter_map(BinOp::from_str)
                 .collect(),
