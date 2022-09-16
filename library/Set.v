@@ -176,4 +176,5 @@ Qed.
 Axiom singleton_len: ∀ A: U, ∀ x: A, |{x}| = 1.
 Suggest goal auto apply singleton_len; Trivial.
 
+Axiom len_eq_eq: ∀ T: U, ∀ A B: set T, A = B -> |A| = |B|.
 Axiom len_gt_0_not_empty_set: ∀ T: Universe, ∀ S: set T, ∀ s: ℤ, |S| = s → 0 < s → finite S → ∃ t: T, t ∈ S.
