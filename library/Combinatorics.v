@@ -46,6 +46,7 @@ replace #1 (A ∪ {}) with (A ).
 auto_set.
 lia.
 Qed.
+Axiom rule_of_sum2: ∀ T: Universe, ∀ A B: set T, finite A -> B ⊆ A -> |A| = |A ∖ B| + |B|.
 Theorem rule_of_minus: ∀ T: Universe, ∀ A B: set T, finite A -> B ⊆ A -> |A ∖ B| = |A| - |B|.
 Proof.
     intros.

@@ -121,7 +121,8 @@ Proof.
     lia.
     lia.
 Qed.
-
+Axiom eq_cansel_plus_r: ∀ a b c: ℤ, a = b -> a + c = b + c.
+Axiom eq_cansel_plus_l: ∀ a b c: ℤ, a = b -> c + a = c + b.
 Theorem eq_plus_r: ∀ a b c: ℤ, a + c = b + c -> a = b.
 Proof. intros. lia. Qed.
 Theorem eq_plus_l: ∀ a b c: ℤ, c + a = c + b -> a = b.
