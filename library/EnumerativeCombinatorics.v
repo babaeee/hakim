@@ -10,16 +10,16 @@ Proof. unfold injective. intros. assumption. Qed.
 Suggest hyp default apply injective_unfold in $n; Destruct.
 Suggest goal default apply injective_fold; Destruct.
 
-Definition projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
-Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection A B S f -> ∃ x: A, x ∈ S ∧ y = f x.
-Axiom projection_in_intro_r: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, (∃ x: A, x ∈ S ∧ y = f x) -> y ∈ projection A B S f.
+Definition #1 projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
+Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection B S f -> ∃ x: A, x ∈ S ∧ y = f x.
+Axiom projection_in_intro_r: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, (∃ x: A, x ∈ S ∧ y = f x) -> y ∈ projection B S f.
 Suggest hyp default apply projection_in_intro_l in $n; Destruct.
 Suggest goal default apply projection_in_intro_r; Destruct.
 
-Axiom projection_empty: ∀ A B: U, ∀ f: A -> B, projection A B {} f = {}.
-Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, projection A B S f = {} -> S = {}.
-Axiom rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective A B f S -> |S| = |projection A B S f|.
-Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection A B S f).
+Axiom projection_empty: ∀ A B: U, ∀ f: A -> B, projection B {} f = {}.
+Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, projection B S f = {} -> S = {}.
+Axiom rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective A B f S -> |S| = |projection B S f|.
+Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection B S f).
 
 Import /set.
 Import /Arith.
@@ -27,7 +27,7 @@ Import /Logic.
 Import /Eq.
 Import /Combinatorics.
 
-Todo asl_zarb2: ∀ X: U, ∀ C: set X, ∀ n m: ℤ, n > 0 -> m > 0 -> ∀ Y: U, ∀ f: X -> Y, |projection X Y C f| = n -> (∀ y: Y, y ∈ (projection X Y C f) -> |{ x: X | x ∈ C ∧ f x = y }| = m) -> ∀ c: ℤ, c = n * m -> |C| = c.
+Todo asl_zarb2: ∀ X: U, ∀ C: set X, ∀ n m: ℤ, n > 0 -> m > 0 -> ∀ Y: U, ∀ f: X -> Y, |projection Y C f| = n -> (∀ y: Y, y ∈ (projection Y C f) -> |{ x: X | x ∈ C ∧ f x = y }| = m) -> ∀ c: ℤ, c = n * m -> |C| = c.
 
 Axiom cm: ℤ -> ℤ -> ℤ.
 Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
