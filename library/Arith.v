@@ -2,6 +2,7 @@ Import /Logic.
 Import /Eq.
 Import /Induction.
 
+Todo lt_le: ∀ k a: ℤ, k < a -> k + 1 ≤ a.
 Theorem zero_lt_mult_pos: ∀ a b: ℤ, 0 < a -> 0 < b -> 0 < a * b.
 Proof.
     intros.
