@@ -1,8 +1,17 @@
 Import /Induction.
 
-Axiom #1 head: ∀ A: U, list A -> A.
-Axiom cons_nil_case: ∀ A: U, ∀ x: list A, x = nil A ∨ ∃ y: list A, ∃ a: A,  x = cons A a y.
+Axiom #1 head: ∀ A: U, A -> list A -> A.
+Axiom cons_nil_case: ∀ A: U, ∀ x: list A, x = nil A ∨ ∃ y: list A, ∃ a: A, x = cons A a y.
 
+Axiom head_nil: ∀ A: U, ∀ default: A, head default [] = default.
+Axiom head_cons: ∀ A: U, ∀ default: A, ∀ x: list A, ∀ a: A, head default (cons A a x) = a.
+
+Axiom #1 tail: ∀ A: U, list A -> list A.
+
+Axiom tail_nil: ∀ A: U, tail (nil A) = nil A.
+Axiom tail_cons: ∀ A: U, ∀ x: list A, ∀ a: A, tail (cons A a x) = x.
+
+Axiom cons_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, x = cons A (head default x) (tail x).
 Todo list_len_concat_lt: ∀ A: U, ∀ x y: list A, ~ x = nil A -> |y| < |x++y|.
 Theorem list_induction_len: ∀ A: U, ∀ P: list A -> U, (∀ b: list A, (∀ a: list A, |a| < |b| -> P a) -> P b) -> ∀ a: list A, P a.
 Proof.

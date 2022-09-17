@@ -12,6 +12,8 @@ Proof. intros. auto_set. Qed.
 Suggest hyp default chain (apply empty_intro in $n) (apply (False_ind $n ?)); Contradiction.
 Todo eq_set_empty: ∀ A: U, ∀ S: set A, S = {} -> ∀ a: A, ~ a ∈ S.
 Suggest hyp default apply eq_set_empty; A = {} => ∀ a, ~ a ∈ A.
+Todo empty_set_eq: ∀ A: U, ∀ S: set A, (∀ x: A, ~ x ∈ S) -> S = {}.
+Suggest goal default apply empty_set_eq; Trivial.
 
 Theorem singleton_unfold: ∀ A: U, ∀ a b: A, b ∈ {a} -> a = b.
 Proof. intros. auto_set. Qed.
@@ -101,6 +103,9 @@ Proof. intros. lia. Qed.
 Axiom empty_len_unique: ∀ A: U, ∀ S: set A, |S| = 0 -> S = {}.
 Axiom finite_add_len: ∀ A: U, ∀ S: set A, finite S -> ∀ a: A, ~ a ∈ S -> |S ∪ {a}| = |S| + 1.
 Axiom finite_len_ge_0: ∀ A: U, ∀ S: set A, finite S -> 0 ≤ |S|.
+Axiom infinite_len_const: ∀ A: U, ∀ S: set A, ~ finite S -> |S| = -1.
+
+Todo len_ge_0_finite: ∀ A: U, ∀ S: set A, 0 ≤ |S| -> finite S.
 
 Theorem set_induction : ∀ A: U, ∀ P: set A -> U, P {} -> (∀ x: set A, finite x -> P x -> ∀ a: A, (a ∈ x -> False) -> P (x ∪ {a})) -> ∀ e: set A, finite e -> P e.
 Proof.
@@ -177,4 +182,5 @@ Axiom singleton_len: ∀ A: U, ∀ x: A, |{x}| = 1.
 Suggest goal auto apply singleton_len; Trivial.
 
 Axiom len_eq_eq: ∀ T: U, ∀ A B: set T, A = B -> |A| = |B|.
-Axiom len_gt_0_not_empty_set: ∀ T: Universe, ∀ S: set T, ∀ s: ℤ, |S| = s → 0 < s → finite S → ∃ t: T, t ∈ S.
+Axiom set_from_func_eq: ∀ A: U, ∀ f: A -> U, ∀ g: A -> U, (∀ x: A, f x ↔ g x) -> set_from_func A f = set_from_func A g.
+Todo len_gt_0_not_empty_set: ∀ T: Universe, ∀ S: set T, ∀ s: ℤ, |S| = s → 0 < s → ∃ t: T, t ∈ S.
