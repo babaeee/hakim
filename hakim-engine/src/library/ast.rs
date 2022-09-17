@@ -44,12 +44,7 @@ pub(crate) enum Sentence {
 }
 
 fn eat_signature(mut r: &str) -> Signature {
-    let hidden_args = if let Some(x) = r.strip_prefix("#1 ") {
-        r = x;
-        1
-    } else {
-        0
-    };
+    let hidden_args = eat_hidden_args(&mut r);
     if let Some((name, body)) = r.split_once(':') {
         return Signature {
             name: name.trim().to_string(),
@@ -58,6 +53,19 @@ fn eat_signature(mut r: &str) -> Signature {
         };
     }
     panic!("invalid signature {:?}", r);
+}
+
+fn eat_hidden_args(r: &mut &str) -> usize {
+    let hidden_args = if let Some(x) = r.strip_prefix("#1 ") {
+        *r = x;
+        1
+    } else if let Some(x) = r.strip_prefix("#2 ") {
+        *r = x;
+        2
+    } else {
+        0
+    };
+    hidden_args
 }
 
 impl Sentence {
@@ -109,20 +117,13 @@ impl Sentence {
             };
         }
         if let Some(r) = s.strip_prefix("Definition ") {
-            if let Some((name, body)) = r.split_once(":=") {
-                if let Some((name, hidden_args)) = name.split_once('#') {
-                    return Sentence::Definition {
-                        name: name.trim().to_string(),
-                        body: body.to_string(),
-                        hidden_args: hidden_args.trim().parse().unwrap(),
-                    };
-                } else {
-                    return Sentence::Definition {
-                        name: name.trim().to_string(),
-                        body: body.to_string(),
-                        hidden_args: 0,
-                    };
-                }
+            if let Some((mut name, body)) = r.split_once(":=") {
+                let hidden_args = eat_hidden_args(&mut name);
+                return Sentence::Definition {
+                    name: name.trim().to_string(),
+                    body: body.to_string(),
+                    hidden_args,
+                };
             }
         }
         if let Some(r) = s.strip_prefix("Todo ") {
