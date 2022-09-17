@@ -91,3 +91,4 @@ Proof.
     apply if_true.
     assumption.
 Qed.
+Axiom empty_or_Inhabits: ∀ T: U, (∀ x: T, False) ∨ ∃ x: T, True.
