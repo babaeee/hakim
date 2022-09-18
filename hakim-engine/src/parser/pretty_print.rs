@@ -207,7 +207,7 @@ fn extract_fun_from_term(term: TermRef, ty: TermRef) -> Abstraction {
         abs.clone()
     } else {
         Abstraction {
-            body: app_ref!(increase_foreign_vars(term, 0), term_ref!(v 0)),
+            body: app_ref!(increase_foreign_vars(term), term_ref!(v 0)),
             hint_name: None,
             var_ty: ty,
         }
@@ -358,10 +358,7 @@ pub fn term_to_ast(
     if let Some(value) = detect_special(term, names, c) {
         return value;
     }
-    let uncurried = app_ref!(
-        increase_foreign_vars(Rc::new(term.clone()), 0),
-        term_ref!(v 0)
-    );
+    let uncurried = app_ref!(increase_foreign_vars(Rc::new(term.clone())), term_ref!(v 0));
     if detect_special(&uncurried, names, c).is_some() {
         let ty = prelude::z(); // FIXME: this is super wrong!!
         let term = term_ref!(fun ty, uncurried);

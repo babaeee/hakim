@@ -87,7 +87,7 @@ impl InferResults {
     fn get_with_scope(&self, i: usize, scope: usize) -> TermRef {
         let mut r = self.get(i);
         for _ in 0..scope {
-            r = increase_foreign_vars(r, 0);
+            r = increase_foreign_vars(r);
         }
         r
     }
@@ -139,7 +139,7 @@ impl InferResults {
     fn type_of_with_scope(&self, i: usize, scope: usize) -> TermRef {
         let mut r = self.type_of(i);
         for _ in 0..scope {
-            r = increase_foreign_vars(r, 0);
+            r = increase_foreign_vars(r);
         }
         r
     }
@@ -223,7 +223,7 @@ fn match_and_infer_without_normalize(
                 };
                 // we try λ x: f x instead of f
                 main(
-                    app_ref!(increase_foreign_vars(f, 0), term_ref!(v 0)),
+                    app_ref!(increase_foreign_vars(f), term_ref!(v 0)),
                     a.body.clone(),
                     infers,
                 )
@@ -390,7 +390,7 @@ pub fn type_of_inner(
                 let new_var_stack = var_ty_stack
                     .iter()
                     .chain(once(var_ty))
-                    .map(|x| increase_foreign_vars(x.clone(), 0))
+                    .map(|x| increase_foreign_vars(x.clone()))
                     .collect::<Vec<_>>();
                 let body_ty = get_universe_and_infer(
                     type_of_inner(body.clone(), &new_var_stack, infers)?.as_ref(),
@@ -410,7 +410,7 @@ pub fn type_of_inner(
                 let new_var_stack = var_ty_stack
                     .iter()
                     .chain(once(var_ty))
-                    .map(|x| increase_foreign_vars(x.clone(), 0))
+                    .map(|x| increase_foreign_vars(x.clone()))
                     .collect::<Vec<_>>();
                 let body_ty = type_of_inner(body.clone(), &new_var_stack, infers)?;
                 term_ref!(forall var_ty, body_ty)

@@ -58,37 +58,37 @@ impl Debug for Term {
 #[macro_export]
 macro_rules! term_ref {
     {$input:expr} => (($input).clone());
-    {$($i:tt)*} => (crate::TermRef::new(crate::term!($( $i)*)));
+    {$($i:tt)*} => ($crate::TermRef::new($crate::term!($( $i)*)));
 }
 
 #[macro_export]
 macro_rules! term {
-    {forall $ty:expr , $($i:tt)*} => (crate::Term::Forall(crate::Abstraction { var_ty: term_ref!($ty), hint_name: None, body: (term_ref!($( $i)*)) }));
-    {fun $ty:expr , $($i:tt)*} => (crate::Term::Fun(crate::Abstraction { var_ty: term_ref!($ty), hint_name: None, body: (term_ref!($( $i)*)) }));
-    {axiom $name:expr , $($i:tt)*} => (crate::Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
-    {universe $input:expr} => (crate::Term::Universe { index: ($input) });
-    {v $input:expr} => (crate::Term::Var { index: ($input) });
-    {n $input:expr} => (crate::Term::Number { value: ($input).into() });
-    {_ $input:expr} => (crate::Term::Wild { index: ($input), scope: 0 });
+    {forall $ty:expr , $($i:tt)*} => ($crate::Term::Forall($crate::Abstraction { var_ty: term_ref!($ty), hint_name: None, body: (term_ref!($( $i)*)) }));
+    {fun $ty:expr , $($i:tt)*} => ($crate::Term::Fun($crate::Abstraction { var_ty: term_ref!($ty), hint_name: None, body: (term_ref!($( $i)*)) }));
+    {axiom $name:expr , $($i:tt)*} => ($crate::Term::Axiom { ty: term_ref!($( $i)*), unique_name: ($name).to_string() });
+    {universe $input:expr} => ($crate::Term::Universe { index: ($input) });
+    {v $input:expr} => ($crate::Term::Var { index: ($input) });
+    {n $input:expr} => ($crate::Term::Number { value: ($input).into() });
+    {_ $input:expr} => ($crate::Term::Wild { index: ($input), scope: 0 });
     {$input:expr} => ($input);
 }
 
 #[macro_export]
 macro_rules! app_ref {
-    {$($i:tt)*} => (crate::TermRef::new(crate::app!($( $i)*)));
+    {$($i:tt)*} => ($crate::TermRef::new($crate::app!($( $i)*)));
 }
 
 #[macro_export]
 macro_rules! app {
     ( $x:expr , $y:expr ) => {
-        crate::Term::App {
+        $crate::Term::App {
             func: ($x).clone(),
             op: ($y).clone(),
         }
     };
     ( $x:expr , $y:expr, $z:expr ) => {
-        crate::Term::App {
-            func: crate::TermRef::new(crate::Term::App {
+        $crate::Term::App {
+            func: $crate::TermRef::new($crate::Term::App {
                 func: ($x).clone(),
                 op: ($y).clone(),
             }),
@@ -96,9 +96,9 @@ macro_rules! app {
         }
     };
     ( $x:expr , $y:expr, $z:expr, $w:expr ) => {
-        crate::Term::App {
-            func: crate::TermRef::new(crate::Term::App {
-                func: TermRef::new(crate::Term::App {
+        $crate::Term::App {
+            func: $crate::TermRef::new($crate::Term::App {
+                func: TermRef::new($crate::Term::App {
                     func: ($x).clone(),
                     op: ($y).clone(),
                 }),
@@ -416,7 +416,7 @@ pub fn normalize(t: TermRef) -> TermRef {
 pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
     fn for_abs(abs: Abstraction, to_put: TermRef, i: usize) -> Abstraction {
         let var_ty = inner(abs.var_ty, to_put.clone(), i);
-        let to_put = increase_foreign_vars(to_put, 0);
+        let to_put = increase_foreign_vars(to_put);
         let body = inner(abs.body, to_put, i + 1);
         Abstraction {
             var_ty,
@@ -449,7 +449,15 @@ pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
     inner(exp, to_put, 0)
 }
 
-pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
+pub fn increase_foreign_vars(term: TermRef) -> TermRef {
+    increase_foreign_vars_inner(term, 0, false)
+}
+
+pub fn increase_foreign_vars_inner(
+    term: TermRef,
+    depth: usize,
+    increase_wild_scope: bool,
+) -> TermRef {
     fn for_abs(
         Abstraction {
             var_ty,
@@ -457,9 +465,10 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
             hint_name,
         }: &Abstraction,
         depth: usize,
+        increase_wild_scope: bool,
     ) -> Abstraction {
-        let var_ty = increase_foreign_vars(var_ty.clone(), depth);
-        let body = increase_foreign_vars(body.clone(), depth + 1);
+        let var_ty = increase_foreign_vars_inner(var_ty.clone(), depth, increase_wild_scope);
+        let body = increase_foreign_vars_inner(body.clone(), depth + 1, increase_wild_scope);
         let hint_name = hint_name.clone();
         Abstraction {
             var_ty,
@@ -469,16 +478,22 @@ pub fn increase_foreign_vars(term: TermRef, depth: usize) -> TermRef {
     }
     match term.as_ref() {
         Term::Var { index } if *index >= depth => TermRef::new(Term::Var { index: index + 1 }),
+        Term::Wild { index, scope } if increase_wild_scope && *scope >= depth => {
+            TermRef::new(Term::Wild {
+                scope: scope + 1,
+                index: *index,
+            })
+        }
         Term::Axiom { .. }
         | Term::Universe { .. }
         | Term::Number { .. }
         | Term::Var { .. }
         | Term::Wild { .. } => term,
-        Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a, depth))),
-        Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a, depth))),
+        Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a, depth, increase_wild_scope))),
+        Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a, depth, increase_wild_scope))),
         Term::App { func, op } => {
-            let func = increase_foreign_vars(func.clone(), depth);
-            let op = increase_foreign_vars(op.clone(), depth);
+            let func = increase_foreign_vars_inner(func.clone(), depth, increase_wild_scope);
+            let op = increase_foreign_vars_inner(op.clone(), depth, increase_wild_scope);
             TermRef::new(Term::App { func, op })
         }
     }

@@ -127,10 +127,10 @@ impl BinOp {
             Gt => app_ref!(lt(), r, l),
             Iff => app_ref!(
                 and(),
-                term_ref!(forall l, increase_foreign_vars(r.clone(), 0)),
-                term_ref!(forall r, increase_foreign_vars(l, 0))
+                term_ref!(forall l, increase_foreign_vars(r.clone())),
+                term_ref!(forall r, increase_foreign_vars(l))
             ),
-            Imply => term_ref!(forall l, increase_foreign_vars(r, 0)),
+            Imply => term_ref!(forall l, increase_foreign_vars(r)),
             Included => {
                 let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
