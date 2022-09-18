@@ -155,3 +155,13 @@ fn tuples() {
     check_type("((1, 2), 3)", "(ℤ ∧ ℤ) ∧ ℤ");
     check_type("([1, 2], 3)", "list ℤ ∧ ℤ");
 }
+
+#[test]
+#[ignore]
+fn projection_infer() {
+    check_type(
+        r#"∀ projection: ∀ A B: U, set A -> (A -> B) -> set B,
+        ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, inset B y (projection A ? S f)"#,
+        "U",
+    );
+}
