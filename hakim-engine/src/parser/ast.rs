@@ -442,7 +442,7 @@ pub fn ast_to_term(
             let mut tys = vec![];
             for n in name {
                 tys.push(ty_term.clone());
-                ty_term = increase_foreign_vars(ty_term, 0);
+                ty_term = increase_foreign_vars(ty_term);
                 name_stack.push(n);
             }
             let mut r = ast_to_term(*body, globals, name_stack, infer_dict, infer_cnt, config)?;

@@ -266,7 +266,7 @@ fn sigma_to_arith(l: TermRef, r: TermRef, f: TermRef, arena: ArithArena<'_>) -> 
             }
             result
         } else {
-            let f = increase_foreign_vars(f, 0);
+            let f = increase_foreign_vars(f);
             let f = app_ref!(f, term_ref!(v 0));
             let f = term_ref!(fun z(), f);
             phase2(r, f, arena)
