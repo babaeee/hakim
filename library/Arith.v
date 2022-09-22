@@ -195,6 +195,9 @@ Proof.
     assumption.
     lia.
 Qed.
+Todo pow_not_neg: ∀ a n: ℤ, 0 ≤ n -> 0 ≤ a -> 0 ≤ a ^ n.
+Todo pow_0: ∀ n: ℤ, 0 < n -> 0 ^ n = 0.
+Todo pow_a_1: ∀ a: ℤ, 0 ≤ a -> a ^ 1 = 1.
 
 Todo pow_lt_l: ∀ a b c: ℤ, 0 < a -> a < b -> 0 < c -> a ^ c < b ^ c.
 Todo pow_lt_r: ∀ a b c: ℤ, 0 < a -> a < b -> 1 < c -> c ^ a < c ^ b.

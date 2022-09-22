@@ -232,6 +232,14 @@ mod tests {
         );
     }
     #[test]
+    fn panic_rewrite_member_set() {
+        run_interactive(
+            "member_set [] = {1, 2, 3}",
+            "replace (member_set []) with ({})",
+            EngineLevel::Full,
+        );
+    }
+    #[test]
     fn detect_infers_of_replace_obj() {
         run_interactive(
             r#"∀ A: U, 
