@@ -34,9 +34,8 @@ auto_set.
 lia.
 intros.
 add_hyp (∃ x: T, x ∈ A).
-apply (⁨len_gt_0_not_empty_set ?0 ?2 (n + 1) ?6 ?8⁩).
+apply len_gt_0_not_empty_set.
 lia.
-assumption.
 destruct H5 with (ex_ind ? ?) to (x x_property).
 replace #1 (A ∪ B) with (((A ∖ {x}) ∪ B) ∪ {x}).
 auto_set.
@@ -99,6 +98,8 @@ Suggest goal default apply projection_in_intro_r; Destruct.
 
 Axiom projection_empty: ∀ A B: U, ∀ f: A -> B, projection B {} f = {}.
 Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, projection B S f = {} -> S = {}.
+Todo projection_singleton: ∀ A B: U, ∀ f: A -> B, ∀ a: A, projection B {a} f = {f a}.
+Todo projection_union: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, projection B (x ∪ y) f = projection B x f ∪ projection B y f.
 
 Theorem rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective A B f S -> ∀ n: ℤ, n ≥ 0 -> |projection B S f| = n -> |S| = n.
 Proof.
@@ -118,9 +119,8 @@ rewrite H1.
 lia.
 intros.
 add_hyp (∃ y: B, y ∈ projection B S f).
-apply (⁨len_gt_0_not_empty_set ?0 ?2 (n + 1) ?6 ?8⁩).
+apply len_gt_0_not_empty_set.
 lia.
-assumption.
 destruct H2 with (ex_ind ? ?) to (y y_property).
 apply projection_in_intro_l in y_property.
 destruct y_property with (ex_ind ? ?) to (x x_property).
@@ -191,6 +191,44 @@ assumption.
 Qed.
 
 Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection B S f).
+
+Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective A B f S -> |projection B S f| = |S|.
+Proof.
+intros A B f.
+apply set_induction.
+Switch 1.
+intros.
+replace #1 (projection B {} f) with ({}).
+apply projection_empty.
+lia.
+intros.
+replace #1 (projection B (x ∪ {a}) f) with (projection B (x) f ∪ projection B {a} f).
+apply projection_union.
+replace #1 (|x ∪ {a}|) with (|x| + 1).
+apply finite_add_len.
+assumption.
+assumption.
+replace #1 (projection B {a} f) with ({f a}).
+apply projection_singleton.
+replace #1 (|projection B x f ∪ {f a}|) with (|projection B x f| + 1).
+apply finite_add_len.
+intros.
+apply projection_in_intro_l in H3.
+destruct H3 with (ex_ind ? ?) to (xp xp_property).
+destruct xp_property with (and_ind ? ?) to (xp_property_l xp_property_r).
+apply injective_unfold in H2.
+apply H2 in xp_property_r.
+auto_set.
+auto_set.
+auto_set.
+apply projection_finiteR.
+assumption.
+Seq (add_hyp (⁨injective A B f x⁩)) (remove_hyp H0) (Switch 1) (add_hyp H0_o := (H0 H3)) (remove_hyp H3) (remove_hyp H0) .
+lia.
+apply (⁨injective_included ?0 ?2 ?4 ?6 (x ∪ {a}) ?10 ?12⁩).
+assumption.
+auto_set.
+Qed.
 
 Import /Arith.
 Import /Logic.
@@ -622,19 +660,12 @@ Proof.
     rewrite H0.
     lia.
 Qed.
-Theorem count_of_listsR: ∀ T: U, ∀ S: set T, ∀ m, 0 < m -> |S| = m -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n }| = |S| ^ n.
+Theorem count_of_lists: ∀ T: U, ∀ S: set T, ∀ m, 0 < m -> |S| = m -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n }| = |S| ^ n.
 Proof.
 intros.
-add_hyp (∃ t: T, True).
-add_from_lib len_gt_0_not_empty_set.
-add_hyp len_gt_0_not_empty_set_ex := (len_gt_0_not_empty_set (T)).
-apply len_gt_0_not_empty_set_ex in H0.
-Seq (add_hyp (⁨0 < m⁩)) (remove_hyp H0) (Switch 1) (add_hyp H0_o := (H0 H2)) (remove_hyp H2) (remove_hyp H0).
-Switch 1.
-assumption.
-destruct H0_o with (ex_ind ? ?) to (d d_property).
-apply (ex_intro ? ? (d)).
-assumption.
+add_hyp (∃ x: T, x ∈ S).
+apply len_gt_0_not_empty_set.
+lia.
 destruct H2 with (ex_ind ? ?) to (d d_property).
 remove_hyp d_property.
 revert H0.
@@ -817,28 +848,26 @@ lia.
 assumption.
 Qed.
 
-Todo count_of_lists: ∀ T: U, ∀ S: set T, finite S -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n }| = |S| ^ n.
-
 Theorem count_of_binary_lists: ∀ T: U, ∀ a b: T, ~ a = b -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ {a, b} ∧ |l| = n }| = 2 ^ n.
 Proof.
     intros.
-    replace #1 (2) with (|{a,b}|).
-    Switch 1.
-    apply count_of_lists.
-    assumption.
-    Switch 1.
+    replace #1 (2) with (|{a, b}|).
     apply eq_sym.
-    replace #1 (2) with (|{a}|+|{b}|).
-    Switch 1.
-    apply rule_of_sum.
+    replace #1 (2) with (1 + 1).
+    lia.
+    apply add_len.
+    intros.
     auto_set.
-    Switch 2.
-    replace #1 (|{a}|) with (1).
-    apply singleton_len.
-    replace #1 (|{b}|) with (1).
     apply singleton_len.
     lia.
+    apply (⁨count_of_lists ?0 ?2 2 ?6 ?8 ?10 ?12⁩).
+    assumption.
+    replace #1 (2) with (1 + 1).
+    lia.
+    apply add_len.
+    intros.
     auto_set.
-    auto_set.
-    auto_set.
+    apply singleton_len.
+    lia.
+    lia.
 Qed.
