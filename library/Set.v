@@ -101,6 +101,7 @@ Proof. intros. auto_set. Qed.
 Theorem empty_len: ∀ A: U, |set_empty A| = 0.
 Proof. intros. lia. Qed.
 Axiom empty_len_unique: ∀ A: U, ∀ S: set A, |S| = 0 -> S = {}.
+Suggest hyp apply empty_len_unique in $n; |S| = 0 => S = {}.
 Axiom finite_add_len: ∀ A: U, ∀ S: set A, finite S -> ∀ a: A, ~ a ∈ S -> |S ∪ {a}| = |S| + 1.
 Axiom finite_len_ge_0: ∀ A: U, ∀ S: set A, finite S -> 0 ≤ |S|.
 Axiom infinite_len_const: ∀ A: U, ∀ S: set A, ~ finite S -> |S| = -1.
@@ -183,4 +184,4 @@ Suggest goal auto apply singleton_len; Trivial.
 
 Axiom len_eq_eq: ∀ T: U, ∀ A B: set T, A = B -> |A| = |B|.
 Axiom set_from_func_eq: ∀ A: U, ∀ f: A -> U, ∀ g: A -> U, (∀ x: A, f x ↔ g x) -> set_from_func A f = set_from_func A g.
-Todo len_gt_0_not_empty_set: ∀ T: Universe, ∀ S: set T, ∀ s: ℤ, |S| = s → 0 < s → ∃ t: T, t ∈ S.
+Todo len_gt_0_not_empty_set: ∀ T: U, ∀ S: set T, |S| > 0 → ∃ t: T, t ∈ S.

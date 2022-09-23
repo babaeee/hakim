@@ -178,7 +178,7 @@ Proof.
     apply (ex_intro ? ? (xb)).
     assumption.
 Qed.
-Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> |{ y: B | ∃ x: A, y = f x ∧ x ∈ S }| = |S|.
+Theorem rule_of_bijectionT: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> |{ y: B | ∃ x: A, y = f x ∧ x ∈ S }| = |S|.
 Proof.
     intros A B f.
     apply set_induction.
@@ -349,7 +349,7 @@ Proof.
     assumption.
     assumption.
     replace #1 (|{ y: C | ∃ a0: A, y = f a0 a ∧ a0 ∈ SA }|) with (|SA|).
-    apply rule_of_bijection.
+    apply rule_of_bijectionT.
     intros.
     apply H3 in H6.
     auto_set.
