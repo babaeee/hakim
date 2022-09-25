@@ -165,3 +165,7 @@ fn projection_infer() {
         "U",
     );
 }
+#[test]
+fn unique_elements_error() {
+    check_type("∀ A: Universe, list A → Universe", "Universe1");
+}

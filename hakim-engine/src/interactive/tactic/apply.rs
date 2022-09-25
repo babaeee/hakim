@@ -427,4 +427,14 @@ mod tests {
             "λ n pf, n * pf",
         );
     }
+    #[test]
+    fn not_compelete_input() {
+        instance_recovery(
+            "(∀ f: (list ℤ → ℤ), |projection ℤ { l: list ℤ | True } f| = 2 → (∀ y: ℤ, y ∈ projection ℤ { l: list ℤ | True } f → |{ x: list ℤ | x ∈ { l: list ℤ | True } ∧ f x = y }| = 3) → ∀ c: ℤ, c = 2 * 3 → |{ l: list ℤ | True }| = c) → |{ l: list ℤ | True }| = 2 * 3",
+            r#"intros"#,
+            "apply H",
+            0,
+            "head 0",
+        );
+    }
 }

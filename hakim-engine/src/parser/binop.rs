@@ -59,6 +59,7 @@ binop! {
     Iff, 95, No, "↔";
     Imply, 99, Right, "→";
     Included, 70, No, "⊆";
+    Inlist, 70, No, "in";
     Intersection, 40, Left, "∩";
     Inset, 70, No, "∈";
     Le, 70, No, "≤";
@@ -136,6 +137,11 @@ impl BinOp {
                 let w = term_ref!(_ i);
                 app_ref!(included(), w, l, r)
             }
+            Inlist => {
+                let i = infer_cnt.generate();
+                let w = term_ref!(_ i);
+                app_ref!(inlist(), w, l, r)
+            }
             Intersection => {
                 let i = infer_cnt.generate();
                 let w = term_ref!(_ i);
@@ -193,8 +199,9 @@ impl BinOp {
                     Term::App { func, op: _ } => match func.as_ref() {
                         Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                             "eq" => found!(op, Eq, op2),
-                            "inset" => found!(op, Inset, op2),
                             "included" => found!(op, Included, op2),
+                            "inlist" => found!(op, Inlist, op2),
+                            "inset" => found!(op, Inset, op2),
                             "intersection" => found!(op, Intersection, op2),
                             "union" => found!(op, Union, op2),
                             "setminus" => found!(op, Setminus, op2),
