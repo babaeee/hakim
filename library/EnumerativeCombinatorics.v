@@ -871,3 +871,8 @@ Proof.
     lia.
     lia.
 Qed.
+Axiom factorial: ℤ -> ℤ.
+Axiom factorial_0: factorial 0 = 1.
+Axiom factorial_n: ∀ n: ℤ, n > 0 -> factorial n = n * factorial (n - 1).
+
+Todo count_of_permution: ∀ T: U, ∀ S: set T, ∀ n: ℤ, 0 ≤ n -> |S| = n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n ∧ (unique_elements l) }| = factorial n.
