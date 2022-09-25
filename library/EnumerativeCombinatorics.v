@@ -874,5 +874,254 @@ Qed.
 Axiom factorial: ℤ -> ℤ.
 Axiom factorial_0: factorial 0 = 1.
 Axiom factorial_n: ∀ n: ℤ, n > 0 -> factorial n = n * factorial (n - 1).
+Todo factorial_gt_0: ∀ n: ℤ, 0 ≤ n -> 0 < factorial n. 
 
-Todo count_of_permution: ∀ T: U, ∀ S: set T, ∀ n: ℤ, 0 ≤ n -> |S| = n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n ∧ (unique_elements l) }| = factorial n.
+Theorem count_of_permution: ∀ T: U, ∀ S: set T, ∀ n: ℤ, 0 ≤ n -> |S| = n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n ∧ (unique_elements l) }| = factorial n.
+Proof.
+intros.
+revert H0.
+revert S.
+revert H.
+revert n.
+apply z_induction_simple.
+Switch 1.
+intros.
+apply empty_len_unique in H0.
+rewrite H0.
+replace #1 ({ l: list T | member_set l ⊆ {} ∧ |l| = 0 ∧ unique_elements l }) with ({[]}).
+apply set_equality.
+apply included_fold.
+intros.
+apply singleton_unfold in H.
+apply eq_sym in H.
+rewrite H.
+apply set_from_func_fold.
+apply and_intro.
+apply and_intro.
+apply unique_elements_nil.
+lia.
+apply member_set_nil_included.
+apply included_fold.
+intros.
+apply set_from_func_unfold in H.
+destruct H with (and_ind ? ?) to (H_l H_r).
+destruct H_r with (and_ind ? ?) to (H_r_l H_r_r).
+apply nil_unique in H_r_l.
+auto_set.
+replace #1 (factorial 0) with (1).
+apply factorial_0.
+apply singleton_len.
+intros.
+add_hyp (∃ d: T, d ∈ S).
+apply len_gt_0_not_empty_set.
+lia.
+destruct H1 with (ex_ind ? ?) to (d d_property).
+remove_hyp d_property.
+add_from_lib asl_zarb2.
+add_hyp asl_zarb2_ex := (asl_zarb2 (list T)).
+add_hyp asl_zarb2_ex_ex := (asl_zarb2_ex ({ l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l })).
+add_hyp asl_zarb2_ex_ex_ex := (asl_zarb2_ex_ex (n + 1)).
+add_hyp asl_zarb2_ex_ex_ex_ex := (asl_zarb2_ex_ex_ex (factorial n)).
+remove_hyp asl_zarb2_ex.
+remove_hyp asl_zarb2_ex_ex_ex.
+Seq (add_hyp (⁨0 < n + 1⁩)) (remove_hyp asl_zarb2_ex_ex_ex_ex) (Switch 1) (add_hyp asl_zarb2_ex_ex_ex_ex_o := (asl_zarb2_ex_ex_ex_ex H1)) (remove_hyp H1) (remove_hyp asl_zarb2_ex_ex_ex_ex).
+Seq (add_hyp (⁨0 < factorial n⁩)) (remove_hyp asl_zarb2_ex_ex_ex_ex_o) (Switch 1) (add_hyp asl_zarb2_ex_ex_ex_ex_o_o := (asl_zarb2_ex_ex_ex_ex_o H1)) (remove_hyp H1) (remove_hyp asl_zarb2_ex_ex_ex_ex_o).
+add_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex := (asl_zarb2_ex_ex_ex_ex_o_o (T)).
+remove_hyp asl_zarb2_ex_ex.
+remove_hyp asl_zarb2_ex_ex_ex_ex_o_o.
+add_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex_ex := (asl_zarb2_ex_ex_ex_ex_o_o_ex (head d)).
+remove_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex.
+apply asl_zarb2_ex_ex_ex_ex_o_o_ex_ex.
+replace #3 (n) with (n + 1 -1).
+lia.
+apply factorial_n.
+lia.
+intros.
+remove_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex_ex.
+apply projection_in_intro_l in H1.
+destruct H1 with (ex_ind ? ?) to (ly ly_property).
+destruct ly_property with (and_ind ? ?) to (ly_property_l ly_property_r).
+add_from_lib rule_of_bijectionR.
+add_hyp rule_of_bijectionR_ex := (rule_of_bijectionR (list T)).
+add_hyp rule_of_bijectionR_ex_ex := (rule_of_bijectionR_ex (list T)).
+add_hyp rule_of_bijectionR_ex_ex_ex := (rule_of_bijectionR_ex_ex (tail)).
+apply rule_of_bijectionR_ex_ex_ex.
+remove_hyp rule_of_bijectionR_ex_ex_ex.
+remove_hyp rule_of_bijectionR_ex_ex.
+remove_hyp rule_of_bijectionR_ex.
+replace #1 (projection (list T) { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ (S ∖ {y}) ∧ |l| = n ∧ unique_elements l }).
+apply set_from_func_unfold in ly_property_l.
+destruct ly_property_l with (and_ind ? ?) to (ly_property_l_l ly_property_l_r).
+destruct ly_property_l_r with (and_ind ? ?) to (ly_property_l_r_l ly_property_l_r_r).
+apply set_equality.
+apply included_fold.
+intros.
+apply projection_in_intro_r.
+apply (ex_intro ? ? ([y] ++ a)).
+apply set_from_func_unfold in H1.
+destruct H1 with (and_ind ? ?) to (H1_l H1_r).
+destruct H1_r with (and_ind ? ?) to (H1_r_l H1_r_r).
+apply and_intro.
+apply eq_sym.
+apply tail_add.
+apply set_from_func_fold.
+apply and_intro.
+apply add_head.
+apply set_from_func_fold.
+apply and_intro.
+apply and_intro.
+apply unique_elements_fold.
+apply and_intro.
+assumption.
+intros.
+add_hyp (y ∈ member_set a).
+apply inlist_member_set in H1.
+assumption.
+apply included_unfold in H1_l.
+apply H1_l in H2.
+auto_set.
+lia.
+replace #1 (member_set ([y] ++ a)) with (member_set ([y] ) ∪ member_set a).
+apply member_set_append.
+replace #1 (member_set [y]) with ({y}).
+apply member_set_singleton.
+add_hyp (y ∈ S).
+apply included_unfold in ly_property_l_l.
+apply ly_property_l_l.
+rewrite ly_property_r.
+apply head_in_member_set.
+apply included_fold.
+intros.
+apply union_unfold in H2.
+destruct H2 with (or_ind ? ?).
+apply included_unfold in H1_l.
+apply H1_l in H2.
+auto_set.
+auto_set.
+apply included_fold.
+intros.
+apply set_from_func_fold.
+apply projection_in_intro_l in H1.
+destruct H1 with (ex_ind ? ?) to (ca ca_property).
+destruct ca_property with (and_ind ? ?) to (ca_property_l ca_property_r).
+apply set_from_func_unfold in ca_property_l.
+destruct ca_property_l with (and_ind ? ?) to (ca_property_l_l ca_property_l_r).
+apply set_from_func_unfold in ca_property_l_l.
+destruct ca_property_l_l with (and_ind ? ?) to (ca_property_l_l_l ca_property_l_l_r).
+destruct ca_property_l_l_r with (and_ind ? ?) to (ca_property_l_l_r_l ca_property_l_l_r_r).
+apply and_intro.
+apply and_intro.
+replace #1 (ca) with ([head d ca] ++ tail ca) in ca_property_l_l_r_r.
+apply add_head_tail.
+apply unique_elements_unfold in ca_property_l_l_r_r.
+rewrite ca_property_r.
+assumption.
+rewrite ca_property_r.
+apply tail_len.
+assumption.
+replace #1 (ca) with ([head d ca] ++ a) in ca_property_l_l_l.
+rewrite ca_property_r.
+apply add_head_tail.
+replace #1 (member_set ([head d ca] ++ a)) with (member_set ([head d ca]) ∪ member_set a) in ca_property_l_l_l.
+apply member_set_append.
+add_hyp (member_set a ⊆ S ).
+auto_set.
+replace #1 (ca) with ([y] ++ a) in ca_property_l_l_r_r.
+rewrite ca_property_r.
+apply eq_sym in ca_property_l_r.
+rewrite ca_property_l_r.
+apply add_head_tail.
+apply unique_elements_unfold in ca_property_l_l_r_r.
+destruct ca_property_l_l_r_r with (and_ind ? ?) to (ca_property_l_l_r_r_l ca_property_l_l_r_r_r).
+add_hyp (~ y ∈ member_set a).
+intros.
+apply member_set_inlist in H2.
+assumption.
+auto_set.
+apply H0.
+apply subset_len.
+apply set_from_func_unfold in ly_property_l.
+destruct ly_property_l with (and_ind ? ?) to (ly_property_l_l ly_property_l_r).
+apply included_unfold in ly_property_l_l.
+apply ly_property_l_l.
+rewrite ly_property_r.
+apply head_in_member_set.
+assumption.
+assumption.
+add_from_lib factorial_gt_0.
+add_hyp factorial_gt_0_ex := (factorial_gt_0 (n)).
+assumption.
+apply injective_fold.
+intros.
+apply set_from_func_unfold in H1.
+apply set_from_func_unfold in H2.
+replace #1 (x) with ([head d x] ++ tail x).
+apply add_head_tail.
+replace #1 (y0) with ([head d y0] ++ tail y0).
+apply add_head_tail.
+rewrite H3.
+replace #1 (head d x) with (y).
+assumption.
+replace #1 (head d y0) with (y).
+assumption.
+auto_list.
+replace #1 (projection T { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } (head d)) with (S).
+apply set_equality.
+apply included_fold.
+intros.
+remove_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex_ex.
+apply projection_in_intro_r.
+add_from_lib listing_set.
+add_hyp listing_set_ex := (listing_set (T)).
+add_hyp listing_set_ex_ex := (listing_set_ex (S ∖ {a})).
+Seq (add_hyp (⁨finite (S ∖ {a})⁩)) (remove_hyp listing_set_ex_ex) (Switch 1) (add_hyp listing_set_ex_ex_o := (listing_set_ex_ex H2)) (remove_hyp H2) (remove_hyp listing_set_ex_ex).
+destruct listing_set_ex_ex_o with (ex_ind ? ?) to (l l_property).
+apply (ex_intro ? ? ([a] ++ l)).
+destruct l_property with (and_ind ? ?) to (l_property_l l_property_r).
+destruct l_property_r with (and_ind ? ?) to (l_property_r_l l_property_r_r).
+apply and_intro.
+apply eq_sym.
+apply add_head.
+apply set_from_func_fold.
+apply and_intro.
+apply and_intro.
+apply unique_elements_fold.
+apply and_intro.
+assumption.
+intros.
+apply inlist_member_set in H2.
+replace #1 (member_set l) with (S ∖ {a}) in H2.
+assumption.
+auto_set.
+replace #1 (|[a] ++ l|) with (|l| + 1).
+lia.
+replace #1 (|S ∖ {a}|) with (n) in l_property_r_l.
+apply subset_len.
+assumption.
+assumption.
+assumption.
+lia.
+replace #1 (member_set ([a] ++ l)) with ({a} ∪ member_set (l)).
+apply member_set_add.
+rewrite l_property_l.
+auto_set.
+apply (⁨finite_included ?0 ?2 S ?6 ?8⁩).
+auto_set.
+apply len_ge_0_finite.
+lia.
+apply included_fold.
+intros.
+apply projection_in_intro_l in H1.
+destruct H1 with (ex_ind ? ?) to (ca ca_property).
+destruct ca_property with (and_ind ? ?) to (ca_property_l ca_property_r).
+apply set_from_func_unfold in ca_property_l.
+destruct ca_property_l with (and_ind ? ?) to (ca_property_l_l ca_property_l_r).
+apply included_unfold in ca_property_l_l.
+apply ca_property_l_l.
+rewrite ca_property_r.
+apply head_in_member_set.
+assumption.
+apply factorial_gt_0.
+assumption.
+lia.
+Qed.
