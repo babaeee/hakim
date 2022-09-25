@@ -96,6 +96,9 @@ pub fn len1() -> TermRef {
 pub fn list() -> TermRef {
     term_ref!(axiom "list", forall u(), u())
 }
+pub fn inlist() -> TermRef {
+    term_ref!(axiom "inlist", forall u(), forall v0(), forall app_ref!(list(), v1()), u())
+}
 pub fn plus_list() -> TermRef {
     term_ref!(axiom "plus_list", forall u(), 
         forall app_ref!(list(), v0()), forall app_ref!(list(), v1()), app_ref!(list(), v2()))
@@ -125,7 +128,6 @@ pub fn char_ty() -> TermRef {
 pub fn chr() -> TermRef {
     term_ref!(axiom "chr", forall z(), char_ty())
 }
-
 pub fn init_dict() -> im::HashMap<String, TermRef> {
     let mut name_dict = im::HashMap::<String, TermRef>::default();
     name_dict.insert("U".to_string(), u());
@@ -155,6 +157,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("cons".to_string(), cons());
     name_dict.insert("cnt".to_string(), cnt());
     name_dict.insert("union".to_string(), union());
+    name_dict.insert("inlist".to_string(), inlist());
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());
     name_dict.insert("finite".to_string(), finite());

@@ -83,6 +83,7 @@ Proof.
     lia.
     assumption.
 Qed.
+Suggest hyp default apply nil_unique in $n; |l| = 0 => l = [].
 Axiom #1 repeat: ∀ A: U, ℤ -> A -> list A.
 Axiom repeat_intro: ∀ A: U, ∀ x: A, ∀ t: ℤ, 0 ≤ t -> repeat t x = [x] ++ repeat (t - 1) x.
 Todo repeat_unique: ∀ A: U, ∀ x: A, ∀ l: list A, cnt x l = |l| -> l = repeat (|l|) x.
@@ -99,7 +100,23 @@ Todo member_set_append: ∀ A: U, ∀ x y: list A, member_set (x ++ y) = member_
 Todo member_set_cons: ∀ T: U, ∀ x: list T, ∀ a: T, a ∈ member_set (cons T a x).
 Todo head_in_member_set: ∀ T: U, ∀ x: list T, ∀ default: T, (head default x) ∈ member_set x.
 Todo member_set_repeat: ∀ T: U, ∀ x: T, ∀ t: ℤ, 0 < t -> member_set (repeat t x) = {x}.
+Todo member_set_nil_included: ∀ A: U, ∀ S: set A, member_set (nil A) ⊆ S.
 Suggest goal auto apply member_set_empty; Trivial.
 Suggest goal auto apply member_set_singleton; Trivial.
 Suggest goal auto apply member_set_append; Trivial.
 
+Axiom inlist_nil: ∀ A: U, ∀ a: A, a in [] -> False.
+Axiom inlist_unfold: ∀ A: U, ∀ l: list A, ∀ a x: A, a in [x] ++ l -> a = x ∨ a in l.
+Axiom inlist_fold: ∀ A: U, ∀ l: list A, ∀ a x: A, a = x ∨ a in l -> a in [x] ++ l.
+Todo inlist_singleton: ∀ A: U, ∀ a x: A, a in [x] -> a = x. 
+Todo inlist_add: ∀ A: U, ∀ x y: list A, ∀ a: A, a in x ++ y -> a in x ∨ a in y.
+Suggest hyp default apply inlist_unfold in $n; a in [x] ++ l => a = x ∨ a in l.
+Suggest goal default apply inlist_fold; a in [x] ++ l => a = x ∨ a in l.
+
+Axiom #1 unique_elements: ∀ A: Universe, list A -> Universe.
+Axiom unique_elements_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements ([a] ++ l) -> ~ a in l ∧ unique_elements l.
+Axiom unique_elements_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements ([a] ++ l).
+Axiom unique_elements_nil: ∀ A: U, unique_elements (nil A).
+Suggest hyp default apply unique_elements_unfold in $n; unique_elements ([x] ++ l) => ~ x in l ∧ unique_elements l.
+Suggest goal default apply unique_elements_fold; ~ x in l ∧ unique_elements l => unique_elements ([x] ++ l).
+Suggest goal default apply unique_elements_nil; Trivial.
