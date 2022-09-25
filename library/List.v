@@ -99,6 +99,7 @@ Axiom #1 member_set: ∀ A: U, list A -> set A.
 Todo member_set_subset: ∀ A: U, ∀ l: list A, ∀ m: set A, member_set l ⊆ m -> l = [] ∨ ∃ h: A, ∃ t: list A, h ∈ m ∧ l = [h] ++ t ∧ member_set t ⊆ m.
 Todo member_set_empty: ∀ A: U, member_set (nil A) = {}.
 Todo member_set_singleton: ∀ A: U, ∀ x: A, member_set ([x]) = {x}.
+Todo member_set_add: ∀ A: U, ∀ a: A, ∀ l: list A, member_set ([a] ++ l) = {a} ∪ member_set l.
 Todo member_set_append: ∀ A: U, ∀ x y: list A, member_set (x ++ y) = member_set x ∪ member_set y.
 Todo member_set_cons: ∀ T: U, ∀ x: list T, ∀ a: T, a ∈ member_set (cons T a x).
 Todo head_in_member_set: ∀ T: U, ∀ x: list T, ∀ default: T, (head default x) ∈ member_set x.
@@ -116,7 +117,11 @@ Todo inlist_add: ∀ A: U, ∀ x y: list A, ∀ a: A, a in x ++ y -> a in x ∨ 
 Suggest hyp default apply inlist_unfold in $n; a in [x] ++ l => a = x ∨ a in l.
 Suggest goal default apply inlist_fold; a in [x] ++ l => a = x ∨ a in l.
 
-Todo inlist_member_set: ∀ A: U, ∀ a: A, ∀ l: list A, a in l -> a ∈ member_set l.  
+Todo inlist_member_set: ∀ A: U, ∀ a: A, ∀ l: list A, a in l -> a ∈ member_set l.
+Suggest goal default apply inlist_member_set; a ∈ member_set l => a in l.
+Todo member_set_inlist: ∀ A: U, ∀ a: A, ∀ l: list A, a ∈ member_set l -> a in l.
+Suggest hyp default apply member_set_inlist in $n; a ∈ member_set l => a in l.
+
 Axiom #1 unique_elements: ∀ A: Universe, list A -> Universe.
 Axiom unique_elements_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements ([a] ++ l) -> ~ a in l ∧ unique_elements l.
 Axiom unique_elements_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements ([a] ++ l).
@@ -124,3 +129,5 @@ Axiom unique_elements_nil: ∀ A: U, unique_elements (nil A).
 Suggest hyp default apply unique_elements_unfold in $n; unique_elements ([x] ++ l) => ~ x in l ∧ unique_elements l.
 Suggest goal default apply unique_elements_fold; ~ x in l ∧ unique_elements l => unique_elements ([x] ++ l).
 Suggest goal default apply unique_elements_nil; Trivial.
+
+Todo listing_set: ∀ T: U, ∀ S: set T, finite S -> ∃ l: list T, member_set l = S ∧ |l| = |S| ∧ unique_elements l.
