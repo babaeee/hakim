@@ -12,12 +12,15 @@ Axiom tail_nil: ∀ A: U, tail (nil A) = nil A.
 Axiom tail_cons: ∀ A: U, ∀ x: list A, ∀ a: A, tail (cons A a x) = x.
 
 Todo tail_add: ∀ A: U, ∀ x: list A, ∀ a: A, tail ([a] ++ x) = x.
+Suggest goal default apply tail_add; Trivial.
 Axiom cons_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, x = cons A (head default x) (tail x).
 Axiom cons_to_add_list: ∀ A: U, ∀ x: list A, ∀ a: A, cons A a x = [a] ++ x.
+
 
 Todo add_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, x = [head default x] ++ (tail x).
 Todo list_len_concat_lt: ∀ A: U, ∀ x y: list A, ~ x = nil A -> |y| < |x++y|.
 Todo add_head: ∀ A: U, ∀ default: A, ∀ x: list A, ∀ a: A, head default ([a] ++ x) = a.
+Suggest goal default apply add_head; Trivial.
 Todo Inhabit_not_empty_list: ∀ T: U, ∀ x: list T, |x| > 0 -> ∃ x: T, True.
 
 Theorem list_induction_len: ∀ A: U, ∀ P: list A -> U, (∀ b: list A, (∀ a: list A, |a| < |b| -> P a) -> P b) -> ∀ a: list A, P a.
@@ -113,6 +116,7 @@ Todo inlist_add: ∀ A: U, ∀ x y: list A, ∀ a: A, a in x ++ y -> a in x ∨ 
 Suggest hyp default apply inlist_unfold in $n; a in [x] ++ l => a = x ∨ a in l.
 Suggest goal default apply inlist_fold; a in [x] ++ l => a = x ∨ a in l.
 
+Todo inlist_member_set: ∀ A: U, ∀ a: A, ∀ l: list A, a in l -> a ∈ member_set l.  
 Axiom #1 unique_elements: ∀ A: Universe, list A -> Universe.
 Axiom unique_elements_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements ([a] ++ l) -> ~ a in l ∧ unique_elements l.
 Axiom unique_elements_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements ([a] ++ l).
