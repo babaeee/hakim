@@ -1,20 +1,21 @@
 Import /Induction.
 
-Axiom #1 head: ∀ A: U, A -> list A -> A.
+
 Axiom cons_nil_case: ∀ A: U, ∀ x: list A, x = nil A ∨ ∃ y: list A, ∃ a: A, x = cons A a y.
 
+Axiom #1 head: ∀ A: U, A -> list A -> A.
 Axiom head_nil: ∀ A: U, ∀ default: A, head default [] = default.
 Axiom head_cons: ∀ A: U, ∀ default: A, ∀ x: list A, ∀ a: A, head default (cons A a x) = a.
 
 Axiom #1 tail: ∀ A: U, list A -> list A.
-
 Axiom tail_nil: ∀ A: U, tail (nil A) = nil A.
 Axiom tail_cons: ∀ A: U, ∀ x: list A, ∀ a: A, tail (cons A a x) = x.
+
+Axiom cons_to_add_list: ∀ A: U, ∀ x: list A, ∀ a: A, cons A a x = [a] ++ x.
 
 Todo tail_add: ∀ A: U, ∀ x: list A, ∀ a: A, tail ([a] ++ x) = x.
 Suggest goal default apply tail_add; Trivial.
 Axiom cons_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, x = cons A (head default x) (tail x).
-Axiom cons_to_add_list: ∀ A: U, ∀ x: list A, ∀ a: A, cons A a x = [a] ++ x.
 
 
 Todo add_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, x = [head default x] ++ (tail x).
