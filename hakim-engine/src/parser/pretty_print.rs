@@ -242,7 +242,11 @@ pub fn structural_print(term: &Term) -> String {
                 f(w, op)?;
                 write!(w, ")")
             }
-            Term::Wild { index, .. } => write!(w, "?{index}"),
+            Term::Wild { index, scope: None } => write!(w, "?{index}"),
+            Term::Wild {
+                index,
+                scope: Some(s),
+            } => write!(w, "?{index}{s:?}"),
         }
     }
     let mut s = "".to_string();
@@ -393,7 +397,20 @@ pub fn term_to_ast(
                 Box::new(term_to_ast(op, names, c)),
             )
         }
-        Term::Wild { index, .. } => Wild(Some(format!("{index}"))),
+        Term::Wild { index, scope: None } => Wild(Some(format!("{index}"))),
+        Term::Wild {
+            index,
+            scope: Some(s),
+        } => Wild(Some(format!(
+            "{index}{:?}",
+            s.iter()
+                .map(|i| if let Some(x) = names.0.iter().rev().nth(*i) {
+                    x.0.clone()
+                } else {
+                    format!("@{}", i - names.0.len())
+                })
+                .collect::<Vec<_>>()
+        ))),
     }
 }
 
