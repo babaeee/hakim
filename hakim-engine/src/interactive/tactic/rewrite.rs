@@ -10,7 +10,7 @@ use crate::{
 
 use super::{deny_arg, get_one_arg, next_arg, next_arg_constant, Error::*, Result};
 
-fn replace_term(
+pub fn replace_term(
     exp: TermRef,
     find: TermRef,
     replace: TermRef,
@@ -91,7 +91,31 @@ pub fn get_eq_params(term: &Term) -> Option<[TermRef; 3]> {
     }
     None
 }
-
+pub fn replace_term_in_frame(
+    frame: &mut Frame,
+    exp_index: usize,
+    find: TermRef,
+    replace: TermRef,
+    which: &mut Option<isize>,
+) -> Option<()> {
+    // exp is goal or hyp
+    if exp_index != usize::MAX {
+        let hyp = frame.hyps.get(exp_index)?.clone();
+        let new_hyp = replace_term(hyp.ty.clone(), find, replace, which);
+        if new_hyp == hyp.ty {
+            return None;
+        }
+        frame.remove_hyp_with_index(exp_index);
+        frame.add_hyp_with_name(&hyp.name, new_hyp);
+    } else {
+        let new_goal = replace_term(frame.goal.clone(), find, replace, which);
+        if new_goal == frame.goal {
+            return None;
+        }
+        frame.goal = new_goal;
+    }
+    Some(())
+}
 pub fn rewrite<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     let is_reverse = args.peek() == Some(&"<-");
@@ -100,14 +124,17 @@ pub fn rewrite<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Res
     }
     let exp = &get_one_arg(args, "rewrite")?;
     let term = frame.engine.calc_type(exp)?;
-    let [op1, op2, _] = get_eq_params(&term).ok_or(BadHyp("rewrite expect eq but got", term))?;
-    let goal = frame.goal.clone();
-    frame.goal = if is_reverse {
-        replace_term(goal, op2, op1, &mut None)
+    let [op1, op2, _] =
+        get_eq_params(&(term)).ok_or(BadHyp("rewrite expect eq but got", term.clone()))?;
+    let result = if is_reverse {
+        replace_term_in_frame(&mut frame, usize::MAX, op2, op1, &mut None)
     } else {
-        replace_term(goal, op1, op2, &mut None)
+        replace_term_in_frame(&mut frame, usize::MAX, op1, op2, &mut None)
     };
-    Ok(vec![frame])
+    match result {
+        Some(()) => Ok(vec![frame]),
+        None => Err(BadHyp("no rewrite option", term)),
+    }
 }
 
 pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
@@ -134,24 +161,42 @@ pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<
 
     if let Term::App { func, op: replace } = eq.as_ref() {
         if let Term::App { func: _, op: find } = func.as_ref() {
-            if args.peek().is_some() {
+            let result = if args.peek().is_some() {
                 next_arg_constant(&mut args, "replace", "in")?;
                 let hyp_name = next_arg(&mut args, "replace")?;
-                let hyp = after_replace.remove_hyp_with_name(hyp_name)?.ty;
-                after_replace.add_hyp_with_name(
-                    hyp_name,
-                    replace_term(hyp, find.clone(), replace.clone(), &mut which),
-                )?;
-                deny_arg(args, "replace")?;
+                if let Some((i, _)) = after_replace
+                    .hyps
+                    .iter()
+                    .enumerate()
+                    .find(|(_, x)| x.name == hyp_name)
+                {
+                    deny_arg(args, "replace")?;
+                    replace_term_in_frame(
+                        &mut after_replace,
+                        i,
+                        find.clone(),
+                        replace.clone(),
+                        &mut which,
+                    )
+                } else {
+                    None
+                }
             } else {
-                after_replace.goal = replace_term(
-                    after_replace.goal,
+                replace_term_in_frame(
+                    &mut after_replace,
+                    usize::MAX,
                     find.clone(),
                     replace.clone(),
                     &mut which,
-                );
-            }
-            return Ok(vec![after_replace, proof_eq]);
+                )
+            };
+            return match result {
+                Some(_) => Ok(vec![after_replace, proof_eq]),
+                None => Err(BadArg {
+                    tactic_name: "replace".to_string(),
+                    arg: "no change".to_string(),
+                }),
+            };
         }
     }
     unreachable!();
@@ -238,6 +283,7 @@ mod tests {
             "replace (member_set []) with ({})",
             EngineLevel::Full,
         );
+        /* it is generate (member_set ?4 [] = {}) for eq proof */
     }
     #[test]
     fn detect_infers_of_replace_obj() {
