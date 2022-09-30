@@ -283,7 +283,7 @@ fn strings() {
 fn list() {
     parse_pretty("[] ++ [2, 3, 5]");
     parse_pretty("λ f: list ℤ → ℤ, f [2, 3, 5]");
-    parse_pretty("2 inl [1, 2, 3]");
+    parse_pretty("2 in [1, 2, 3]");
 }
 
 #[test]

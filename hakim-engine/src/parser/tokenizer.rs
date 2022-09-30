@@ -15,7 +15,7 @@ impl Display for AbsSign {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenValue {
     Char(char),
     Str(String),
@@ -26,7 +26,7 @@ pub enum TokenValue {
     Wild(Option<String>),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Token {
     pub value: TokenValue,
     pub span: (usize, usize),

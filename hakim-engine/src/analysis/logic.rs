@@ -225,7 +225,7 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
             hint_name: _,
         }) = term.as_ref()
         {
-            if let Some(body) = remove_unused_var(body.clone(), 0) {
+            if let Some(body) = remove_unused_var(body.clone()) {
                 let op1 = self.convert_term(var_ty.clone());
                 let op2 = self.convert_term(body);
                 return op2.or(op1.not(&self.arena), &self.arena);

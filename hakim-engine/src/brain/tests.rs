@@ -150,6 +150,11 @@ fn eq_explicit() {
 }
 
 #[test]
+fn eq_implicit() {
+    check_type("∀ A: U, ∀ x: A, x = x", "Universe1");
+}
+
+#[test]
 fn tuples() {
     check_type("(1, 2, 3)", "ℤ ∧ ℤ ∧ ℤ");
     check_type("((1, 2), 3)", "(ℤ ∧ ℤ) ∧ ℤ");
@@ -157,14 +162,22 @@ fn tuples() {
 }
 
 #[test]
-#[ignore]
 fn projection_infer() {
     check_type(
         r#"∀ projection: ∀ A B: U, set A -> (A -> B) -> set B,
         ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, inset B y (projection A ? S f)"#,
-        "U",
+        "Universe1",
     );
 }
+
+#[test]
+fn projection_infer2() {
+    check_type(
+        r#"∀ f: ∀ A: U, (ℤ -> A) -> A, ∀ B: U, ∀ x: (ℤ -> B), eq B (f ? x) (x 2)"#,
+        "Universe1",
+    );
+}
+
 #[test]
 fn unique_elements_error() {
     check_type("∀ A: Universe, list A → Universe", "Universe1");

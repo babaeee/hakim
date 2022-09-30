@@ -32,7 +32,7 @@ use self::{
     tokenizer::{tokenize, Token},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     UnexpectedEOF,
     ExpectedIdentButGot(Token),

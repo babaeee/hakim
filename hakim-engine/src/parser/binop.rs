@@ -250,7 +250,7 @@ impl BinOp {
                 var_ty,
                 hint_name: _,
             }) => {
-                let x = remove_unused_var(body.clone(), 0)?;
+                let x = remove_unused_var(body.clone())?;
                 found!(var_ty, Imply, x);
             }
             _ => (),

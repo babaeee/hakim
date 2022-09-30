@@ -100,11 +100,11 @@ pub fn fix_wild_scope(term: TermRef, n: usize) -> TermRef {
     let lca = state.lca;
     fill_wild_with_depth(
         term,
-        &|i, scope, depth| {
-            assert_eq!(scope, 0, "scopes should be clean (= 0) before fixing");
+        &mut |i, scope, depth| {
+            assert_eq!(scope, None, "scopes should be clean before fixing");
             TermRef::new(Term::Wild {
                 index: i,
-                scope: depth - lca[i],
+                scope: Some((depth - lca[i]..depth).collect()),
             })
         },
         0,
