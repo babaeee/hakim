@@ -779,16 +779,15 @@ rewrite ca_property_r.
 apply tail_len.
 assumption.
 replace #1 (member_set ca) with (member_set [y] ∪ member_set a) in ca_property_l_l_l.
-add_from_lib add_head_tail.
-add_hyp add_head_tail_ex := (add_head_tail (T)).
-add_hyp add_head_tail_ex_ex := (add_head_tail_ex (d)).
-remove_hyp add_head_tail_ex.
-add_hyp add_head_tail_ex_ex_ex := (add_head_tail_ex_ex (ca)).
-remove_hyp add_head_tail_ex_ex.
-rewrite add_head_tail_ex_ex_ex.
-rewrite ca_property_l_r.
-apply eq_sym in ca_property_r.
+replace #1 (ca) with ([y] ++ a).
 rewrite ca_property_r.
+apply eq_sym in ca_property_l_r.
+rewrite ca_property_l_r.
+apply add_head_tail.
+intros.
+replace #1 (ca) with ([]) in ca_property_l_l_r.
+assumption.
+lia.
 apply member_set_append.
 auto_set.
 apply (⁨H0 ?0 (|S|) ?4 ?6⁩).
@@ -801,18 +800,24 @@ apply injective_fold.
 intros.
 apply set_from_func_unfold in H2.
 apply set_from_func_unfold in H3.
-add_from_lib add_head_tail.
-add_hyp add_head_tail_ex := (add_head_tail (T)).
-add_hyp add_head_tail_ex_ex := (add_head_tail_ex (d)).
-add_hyp add_head_tail_ex_ex_ex := (add_head_tail_ex_ex (y0)).
-rewrite add_head_tail_ex_ex_ex.
-apply eq_sym in H4.
-rewrite H4.
-replace #1 ([head d y0]) with ([head d x]).
-replace #1 (head d y0) with (head d x).
+replace #1 (y0) with ([head d x] ++ tail x).
+replace #1 (head d x) with (head d y0).
 auto_set.
-auto_list.
+rewrite H4.
 apply add_head_tail.
+destruct H3 with (and_ind ? ?) to (H3_l H3_r).
+intros.
+apply set_from_func_unfold in H3_l.
+replace #2 (y0) with ([]) in H3_l.
+assumption.
+lia.
+apply add_head_tail.
+intros.
+destruct H2 with (and_ind ? ?) to (H2_l H2_r).
+apply set_from_func_unfold in H2_l.
+replace #2 (x) with ([]) in H2_l.
+assumption.
+lia.
 replace #1 (projection T { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } (head d)) with (S).
 apply set_equality.
 apply included_fold.
@@ -876,7 +881,7 @@ Axiom factorial_0: factorial 0 = 1.
 Axiom factorial_n: ∀ n: ℤ, n > 0 -> factorial n = n * factorial (n - 1).
 Todo factorial_gt_0: ∀ n: ℤ, 0 ≤ n -> 0 < factorial n. 
 
-Theorem count_of_permution: ∀ T: U, ∀ S: set T, ∀ n: ℤ, 0 ≤ n -> |S| = n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n ∧ (unique_elements l) }| = factorial n.
+Theorem count_permution: ∀ T: U, ∀ S: set T, ∀ n: ℤ, 0 ≤ n -> |S| = n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n ∧ (unique_elements l) }| = factorial n.
 Proof.
 intros.
 revert H0.
@@ -1013,6 +1018,10 @@ apply and_intro.
 apply and_intro.
 replace #1 (ca) with ([head d ca] ++ tail ca) in ca_property_l_l_r_r.
 apply add_head_tail.
+intros.
+replace #1 (ca) with ([]) in ca_property_l_l_r_l.
+assumption.
+lia.
 apply unique_elements_unfold in ca_property_l_l_r_r.
 rewrite ca_property_r.
 assumption.
@@ -1022,6 +1031,10 @@ assumption.
 replace #1 (ca) with ([head d ca] ++ a) in ca_property_l_l_l.
 rewrite ca_property_r.
 apply add_head_tail.
+intros.
+replace #1 (ca) with ([]) in ca_property_l_l_r_l.
+assumption.
+lia.
 replace #1 (member_set ([head d ca] ++ a)) with (member_set ([head d ca]) ∪ member_set a) in ca_property_l_l_l.
 apply member_set_append.
 add_hyp (member_set a ⊆ S ).
@@ -1031,6 +1044,10 @@ rewrite ca_property_r.
 apply eq_sym in ca_property_l_r.
 rewrite ca_property_l_r.
 apply add_head_tail.
+intros.
+replace #1 (ca) with ([]) in ca_property_l_l_r_l.
+assumption.
+lia.
 apply unique_elements_unfold in ca_property_l_l_r_r.
 destruct ca_property_l_l_r_r with (and_ind ? ?) to (ca_property_l_l_r_r_l ca_property_l_l_r_r_r).
 add_hyp (~ y ∈ member_set a).
@@ -1055,16 +1072,24 @@ apply injective_fold.
 intros.
 apply set_from_func_unfold in H1.
 apply set_from_func_unfold in H2.
-replace #1 (x) with ([head d x] ++ tail x).
-apply add_head_tail.
-replace #1 (y0) with ([head d y0] ++ tail y0).
-apply add_head_tail.
+replace #1 (y0) with ([head d x] ++ tail x).
+replace #1 (head d x) with (head d y0).
+auto_set.
 rewrite H3.
-replace #1 (head d x) with (y).
+apply add_head_tail.
+destruct H2 with (and_ind ? ?) to (H2_l H2_r).
+apply set_from_func_unfold in H2_l.
+intros.
+replace #2 (y0) with ([]) in H2_l.
 assumption.
-replace #1 (head d y0) with (y).
+lia.
+apply add_head_tail.
+intros.
+destruct H1 with (and_ind ? ?) to (H1_l H1_r).
+apply set_from_func_unfold in H1_l.
+replace #2 (x) with ([]) in H1_l.
 assumption.
-auto_list.
+lia.
 replace #1 (projection T { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } (head d)) with (S).
 apply set_equality.
 apply included_fold.

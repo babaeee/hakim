@@ -11,14 +11,35 @@ Axiom #1 tail: ∀ A: U, list A -> list A.
 Axiom tail_nil: ∀ A: U, tail (nil A) = nil A.
 Axiom tail_cons: ∀ A: U, ∀ x: list A, ∀ a: A, tail (cons A a x) = x.
 
-Axiom cons_to_add_list: ∀ A: U, ∀ x: list A, ∀ a: A, cons A a x = [a] ++ x.
+Theorem cons_to_add_list: ∀ A: U, ∀ x: list A, ∀ a: A, cons A a x = [a] ++ x.
+Proof. intros. auto_list. Qed.
 
-Todo tail_add: ∀ A: U, ∀ x: list A, ∀ a: A, tail ([a] ++ x) = x.
+Theorem tail_add: ∀ A: U, ∀ x: list A, ∀ a: A, tail ([a] ++ x) = x.
+Proof. intros. replace #1 ([a] ++ x) with (cons A a x). auto_list. apply tail_cons. Qed.
 Suggest goal default apply tail_add; Trivial.
-Axiom cons_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, x = cons A (head default x) (tail x).
+Theorem cons_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, ~ x = [] -> x = cons A (head default x) (tail x).
+Proof.
+intros.
+add_from_lib cons_nil_case.
+add_hyp cons_nil_case_ex := (cons_nil_case (A)).
+add_hyp cons_nil_case_ex_ex := (cons_nil_case_ex (x)).
+destruct cons_nil_case_ex_ex with (or_ind ? ?).
+destruct cons_nil_case_ex_ex with (ex_ind ? ?) to (a a_property).
+destruct a_property with (ex_ind ? ?) to (y y_property).
+replace #2 (x) with (cons A y a).
+assumption.
+replace #2 (x) with (cons A y a).
+assumption.
+replace #1 (head default (cons A y a)) with (y).
+apply head_cons.
+replace #1 (tail (cons A y a)) with (a).
+apply tail_cons.
+assumption.
+assumption.
+Qed.
 
-
-Todo add_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, x = [head default x] ++ (tail x).
+Theorem add_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, ~ x = [] -> x = [head default x] ++ (tail x).
+Proof. intros. replace #1 ([head default x] ++ tail x) with (cons A (head default x)  (tail x)). auto_list. apply cons_head_tail. assumption. Qed.
 Todo list_len_concat_lt: ∀ A: U, ∀ x y: list A, ~ x = nil A -> |y| < |x++y|.
 Todo add_head: ∀ A: U, ∀ default: A, ∀ x: list A, ∀ a: A, head default ([a] ++ x) = a.
 Suggest goal default apply add_head; Trivial.

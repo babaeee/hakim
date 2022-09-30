@@ -356,7 +356,17 @@ impl Frame {
         self.hyps.push_back(hyp);
         Ok(())
     }
-
+    pub fn add_hyp_with_name_in_index(
+        &mut self,
+        name: &str,
+        ty: TermRef,
+        index: usize,
+    ) -> tactic::Result<()> {
+        self.add_hyp_with_name(name, ty)?;
+        let hyp = self.hyps.pop_back().unwrap();
+        self.hyps.insert(index, hyp);
+        Ok(())
+    }
     pub fn get_hyp_by_name(&self, name: &str) -> Option<&Hyp> {
         self.hyps.iter().find(|x| x.name == name)
     }
@@ -387,11 +397,19 @@ impl Frame {
     pub fn remove_hyp_with_name(&mut self, name: &str) -> tactic::Result<Hyp> {
         self.deny_dependency(name)?;
         if let Some((i, _)) = self.hyps.iter().enumerate().find(|(_, x)| x.name == name) {
-            self.engine.remove_name_unchecked(name);
-            let hyp = self.hyps.remove(i);
-            return Ok(hyp);
+            return self.remove_hyp_with_index(i);
         }
         Err(tactic::Error::UnknownHyp(name.to_string()))
+    }
+    pub fn remove_hyp_with_index(&mut self, index: usize) -> tactic::Result<Hyp> {
+        let hyp = self
+            .hyps
+            .get(index)
+            .ok_or(tactic::Error::UnknownHyp(index.to_string()))?;
+        self.deny_dependency(&hyp.name)?;
+        self.engine.remove_name_unchecked(&hyp.name);
+        let hyp = self.hyps.remove(index);
+        return Ok(hyp);
     }
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
