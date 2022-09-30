@@ -239,7 +239,7 @@ impl Engine {
         let mut infers = InferResults::new(infer_cnt);
         let ty = type_of_and_infer(term.clone(), &mut infers)?;
         type_of_and_infer(ty, &mut infers)?;
-        let term = infers.fill(term);
+        let term = infers.fill(term)?;
         Ok(term)
     }
 

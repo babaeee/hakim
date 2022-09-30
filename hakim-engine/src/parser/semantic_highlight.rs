@@ -117,7 +117,7 @@ impl Write for HtmlRenderer {
                 }
                 self.ignored = false;
             }
-            self.value += &format!(r#"<span data-pos="{}">"#, self.pos);
+            write!(self.value, r#"<span data-pos="{}">"#, self.pos).unwrap();
             self.pos += 1;
             self.value.push(c);
             self.value += "</span>";
@@ -129,7 +129,11 @@ impl Write for HtmlRenderer {
 impl AstStacker for HtmlRenderer {
     fn push_highlight(&mut self, highlight: HighlightTag) {
         let pos = self.pos;
-        self.value += &format!(r#"<span class="highlight{highlight:?}" data-pos="{pos}">"#);
+        write!(
+            self.value,
+            r#"<span class="highlight{highlight:?}" data-pos="{pos}">"#
+        )
+        .unwrap();
     }
 
     fn pop_highlight(&mut self, _: HighlightTag) {

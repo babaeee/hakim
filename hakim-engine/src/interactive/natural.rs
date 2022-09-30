@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use crate::interactive::{
     proof_tree::{ProofNode, ProofTree},
     smart_split,
@@ -31,7 +33,7 @@ impl From<Session> for NaturalProof {
                 let ty = next
                     .engine
                     .pretty_print(&next.get_hyp_by_name(hn).unwrap().ty);
-                r += &format!("$one {} $random_like {}, ", ty, hn);
+                write!(r, "$one {} $random_like {}, ", ty, hn).unwrap();
             }
             r += "$we_consider. $we_know ";
             for hn in next.hyps.iter() {
@@ -45,7 +47,7 @@ impl From<Session> for NaturalProof {
                 let ty = next
                     .engine
                     .pretty_print(&next.get_hyp_by_name(hn).unwrap().ty);
-                r += &format!("{} ($hyp {}) $and ", ty, hn);
+                write!(r, "{} ($hyp {}) $and ", ty, hn).unwrap();
             }
             r += "$its_enough_to_proof ";
             r += &next.engine.pretty_print(&next.goal);
