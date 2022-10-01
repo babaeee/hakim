@@ -247,7 +247,7 @@ fn sigma_to_arith(l: TermRef, r: TermRef, f: TermRef, arena: ArithArena<'_>) -> 
                 let mut rstmp = arena.alloc(Const(x.clone()));
                 let mut deps: Option<TermRef> = None;
                 for x in v {
-                    if let Some(x) = remove_unused_var(x.clone(), 0) {
+                    if let Some(x) = remove_unused_var(x.clone()) {
                         rstmp = arena.alloc(Mult(rstmp, term_ref_to_arith(x.clone(), arena)));
                     } else {
                         deps = Some(match deps {

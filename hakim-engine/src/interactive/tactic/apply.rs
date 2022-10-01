@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use crate::{
     app_ref,
     brain::{
@@ -63,8 +65,8 @@ impl FindInstance {
             .enumerate()
             .filter_map(|(i, x)| x.then(|| i))
         {
-            if self.infer.terms[i] == VarCategory::Term(i).to_term(0) {
-                r += &format!("\u{2068}?{} : {:?}\u{2069}\n", i, self.infer.tys[i]);
+            if self.infer.terms[i] == VarCategory::Term(i).to_term(None) {
+                writeln!(r, "\u{2068}?{} : {:?}\u{2069}", i, self.infer.tys[i]).unwrap();
             }
         }
         r += "$and_we_should_proof:\n";
@@ -73,14 +75,16 @@ impl FindInstance {
             .enumerate()
             .filter_map(|(i, x)| (!x).then(|| i))
         {
-            if self.infer.terms[i] == VarCategory::Term(i).to_term(0) {
-                r += &format!("\u{2068}{:?}\u{2069}\n", self.infer.tys[i]);
+            if self.infer.terms[i] == VarCategory::Term(i).to_term(None) {
+                writeln!(r, "\u{2068}{:?}\u{2069}", self.infer.tys[i]).unwrap();
             }
         }
-        r += &format!(
+        write!(
+            r,
             "\n$enter_value_of1 \u{2068}?{}\u{2069} $enter_value_of2:\n",
             self.first_needed_wild()
-        );
+        )
+        .unwrap();
         r
     }
 
@@ -88,12 +92,13 @@ impl FindInstance {
         let filler = self.engine.parse_text(filler)?;
         let id = self.first_needed_wild();
         let exp = fill_wild(self.exp, &|x, _| {
-            if x == id {
+            Ok(if x == id {
                 filler.clone()
             } else {
                 term_ref!(_ x)
-            }
-        });
+            })
+        })
+        .unwrap();
         Ok(format!("apply ({})", self.engine.pretty_print(&exp)))
     }
 }
@@ -114,13 +119,13 @@ fn find_args_in_apply_hyp(
         let ty = match type_of_and_infer(app_ref!(func, op), &mut infers) {
             Ok(x) => x,
             Err(_) => {
-                func = app_ref!(func, global_infers.add_var());
+                func = app_ref!(func, global_infers.add_var_top_level());
                 continue;
             }
         };
-        let ty = infers.fill(ty);
+        let ty = infers.fill(ty).unwrap();
         if predict_axiom(&ty, |x| x == name) {
-            func = app_ref!(func, global_infers.add_var());
+            func = app_ref!(func, global_infers.add_var_top_level());
             continue;
         }
         return Some((ty, infers));
@@ -181,7 +186,7 @@ fn try_argument_count_for_goal(
 ) -> Result<Vec<Frame>> {
     let mut infers = InferResults::new(inf_num);
     for _ in 0..d_forall {
-        term = app_ref!(term, infers.add_var());
+        term = app_ref!(term, infers.add_var_top_level());
     }
     let twa_ty = type_of_and_infer(term.clone(), &mut infers)?;
     subtype_and_infer(twa_ty.clone(), goal, &mut infers)?;

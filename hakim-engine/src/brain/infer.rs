@@ -1,8 +1,8 @@
-use super::subtype_and_infer;
 use super::{
-    fill_wild, increase_foreign_vars, normalize, predict_wild, remove_unused_var, subst,
-    ErrorContext::*, ErrorReason::*, Result, Term, TermRef,
+    fill_wild, increase_foreign_vars, normalize, predict_wild, subst, ErrorContext::*,
+    ErrorReason::*, Result, Term, TermRef,
 };
+use super::{map_foreign_vars, subtype_and_infer};
 use crate::{app_ref, term_ref, Abstraction};
 
 use std::cmp::max;
@@ -41,12 +41,16 @@ impl From<usize> for VarCategory {
 }
 
 impl VarCategory {
-    pub fn to_term(self, scope: usize) -> TermRef {
-        let index = match self {
+    pub fn to_term(self, scope: Option<Vec<usize>>) -> TermRef {
+        let index = self.to_index();
+        TermRef::new(Term::Wild { index, scope })
+    }
+
+    fn to_index(self) -> usize {
+        match self {
             VarCategory::Term(i) => RESERVED_SPACE * i,
             VarCategory::Ty(i) => RESERVED_SPACE * i + 1,
-        };
-        TermRef::new(Term::Wild { index, scope })
+        }
     }
 }
 
@@ -55,8 +59,8 @@ impl InferResults {
         let mut terms = vec![];
         let mut tys = vec![];
         for i in 0..n {
-            terms.push(VarCategory::Term(i).to_term(0));
-            tys.push(VarCategory::Ty(i).to_term(0));
+            terms.push(VarCategory::Term(i).to_term(None));
+            tys.push(VarCategory::Ty(i).to_term(None));
         }
         InferResults {
             terms,
@@ -66,12 +70,13 @@ impl InferResults {
         }
     }
 
-    pub fn add_var(&mut self) -> TermRef {
-        self.add_var_with_scope(0)
+    /// adds a variable which can not contain foreign bindings
+    pub fn add_var_top_level(&mut self) -> TermRef {
+        self.add_var_with_scope(Some(vec![]))
     }
 
-    pub fn add_var_with_scope(&mut self, scope: usize) -> TermRef {
-        let r = VarCategory::Term(self.n).to_term(scope);
+    pub fn add_var_with_scope(&mut self, scope: Option<Vec<usize>>) -> TermRef {
+        let r = VarCategory::Term(self.n).to_term(scope.clone());
         self.terms.push(r.clone());
         self.tys.push(VarCategory::Ty(self.n).to_term(scope));
         self.n += 1;
@@ -84,15 +89,32 @@ impl InferResults {
             VarCategory::Ty(i) => self.tys[i].clone(),
         }
     }
-    fn get_with_scope(&self, i: usize, scope: usize) -> TermRef {
-        let mut r = self.get(i);
-        for _ in 0..scope {
-            r = increase_foreign_vars(r);
+    fn get_with_scope(&self, i: usize, scope: &[usize]) -> Result<TermRef> {
+        let term = self.get(i);
+        if let Term::Wild { index, scope: None } = term.as_ref() {
+            return Ok(TermRef::new(Term::Wild {
+                index: *index,
+                scope: Some(scope.into()),
+            }));
         }
-        r
+        let mut need_var = false;
+        let r = map_foreign_vars(term, |x, is_var| match scope.get(x) {
+            Some(k) => *k,
+            None => {
+                if is_var {
+                    need_var = true;
+                }
+                2000000
+            }
+        });
+        if need_var {
+            dbg!(&r);
+            return Err(WildNeedLocalVar(i).into());
+        }
+        Ok(r)
     }
     fn is_unknown(&self, i: usize) -> bool {
-        *self.get(i) == Term::Wild { index: i, scope: 0 }
+        matches!(self.get(i).as_ref(), Term::Wild { index, .. } if *index == i)
     }
 
     fn set(&mut self, i: usize, term: TermRef) -> Result<()> {
@@ -104,12 +126,14 @@ impl InferResults {
         // TODO: We should build the graph of dependencies between variables to just
         // update things that will change, not everything
         for _ in 0..self.n {
-            self.relax();
+            self.relax()?;
         }
         let mut loop_free = true;
         for x in 0..RESERVED_SPACE * self.n {
             let t = self.get(x);
-            if t != term_ref!(_ x) && predict_wild(&t, &|j, _| x == j) {
+            if !matches!(t.as_ref(), Term::Wild { index, .. } if *index == x)
+                && predict_wild(&t, &|j, _| x == j)
+            {
                 loop_free = false;
             }
         }
@@ -119,13 +143,22 @@ impl InferResults {
             Err(LoopOfInference(i, term_clone).into())
         }
     }
-    fn set_with_scope(&mut self, i: usize, scope: usize, term: TermRef) -> Result<()> {
-        let mut t = term;
-        for _ in 0..scope {
-            match remove_unused_var(t, 0) {
-                Some(x) => t = x,
-                None => return Err(WildNeedLocalVar(i).into()),
+    fn set_with_scope(&mut self, i: usize, scope: &[usize], term: TermRef) -> Result<()> {
+        let mut need_var = false;
+        let t = map_foreign_vars(term, |vi, is_var| {
+            match scope.iter().enumerate().find(|x| *x.1 == vi) {
+                Some((x, _)) => x,
+                None => {
+                    if is_var {
+                        need_var = true;
+                    }
+                    100000000
+                }
             }
+        });
+        if need_var {
+            dbg!(&t);
+            return Err(WildNeedLocalVar(i).into());
         }
         self.set(i, t)
     }
@@ -136,20 +169,31 @@ impl InferResults {
             VarCategory::Ty(_) => term_ref!(universe 0), // TODO: this can be more general
         }
     }
-    fn type_of_with_scope(&self, i: usize, scope: usize) -> TermRef {
-        let mut r = self.type_of(i);
-        for _ in 0..scope {
-            r = increase_foreign_vars(r);
+    fn type_of_with_scope(&self, i: usize, scope: &[usize]) -> Result<TermRef> {
+        match VarCategory::from(i) {
+            VarCategory::Term(i) => self.get_with_scope(VarCategory::Ty(i).to_index(), scope),
+            VarCategory::Ty(_) => Ok(term_ref!(universe 0)), // TODO: this can be more general
         }
-        r
     }
-    pub fn fill(&self, term: TermRef) -> TermRef {
-        fill_wild(term, &|i, s| self.get_with_scope(i, s))
+    pub fn fill(&self, term: TermRef) -> Result<TermRef> {
+        if let Term::Wild { scope: None, .. } = term.as_ref() {
+            return Ok(term);
+        }
+        fill_wild(term, &|i, s| self.get_with_scope(i, s.unwrap()))
     }
 
-    fn relax(&mut self) {
-        self.terms = self.terms.iter().map(|x| self.fill(x.clone())).collect();
-        self.tys = self.tys.iter().map(|x| self.fill(x.clone())).collect();
+    fn relax(&mut self) -> Result<()> {
+        self.terms = self
+            .terms
+            .iter()
+            .map(|x| self.fill(x.clone()))
+            .collect::<Result<_>>()?;
+        self.tys = self
+            .tys
+            .iter()
+            .map(|x| self.fill(x.clone()))
+            .collect::<Result<_>>()?;
+        Ok(())
     }
 }
 
@@ -160,16 +204,16 @@ fn match_and_infer_without_normalize(
 ) -> Result<()> {
     fn main(t1: TermRef, t2: TermRef, infers: &mut InferResults) -> Result<()> {
         if let Some((i, scope)) = is_wild(&t1) {
-            return match_wild(i, scope, t2, infers);
+            return match_wild(i, scope.unwrap(), t2, infers);
         }
         if let Some((i, scope)) = is_wild(&t2) {
-            return match_wild(i, scope, t1, infers);
+            return match_wild(i, scope.unwrap(), t1, infers);
         }
         if let Some(w) = func_is_wild(&t1) {
-            return match_wild_func(w, t1, t2, infers);
+            return match_wild_func(w.0, t1, t2, infers);
         }
         if let Some(w) = func_is_wild(&t2) {
-            return match_wild_func(w, t2, t1, infers);
+            return match_wild_func(w.0, t2, t1, infers);
         }
         match (t1.as_ref(), t2.as_ref()) {
             (
@@ -242,21 +286,21 @@ fn match_and_infer_without_normalize(
         main(a1.var_ty, a2.var_ty, infers)?;
         main(a1.body, a2.body, infers)
     }
-    fn is_wild(t: &Term) -> Option<(usize, usize)> {
+    fn is_wild(t: &Term) -> Option<(usize, Option<&[usize]>)> {
         if let Term::Wild { index, scope } = t {
-            Some((*index, *scope))
+            Some((*index, scope.as_deref()))
         } else {
             None
         }
     }
-    fn match_wild(i: usize, scope: usize, t: TermRef, infers: &mut InferResults) -> Result<()> {
+    fn match_wild(i: usize, scope: &[usize], t: TermRef, infers: &mut InferResults) -> Result<()> {
         if infers.is_unknown(i) {
             infers.set_with_scope(i, scope, t)
         } else {
-            main(infers.get_with_scope(i, scope), t, infers)
+            main(infers.get_with_scope(i, scope)?, t, infers)
         }
     }
-    fn func_is_wild(t: &Term) -> Option<(usize, usize)> {
+    fn func_is_wild(t: &Term) -> Option<(usize, Option<&[usize]>)> {
         if let Term::App { func, .. } = t {
             is_wild(func).or_else(|| func_is_wild(func))
         } else {
@@ -264,14 +308,14 @@ fn match_and_infer_without_normalize(
         }
     }
     fn match_wild_func(
-        wild: (usize, usize),
+        wild: usize,
         wild_func: TermRef,
         exp: TermRef,
         infers: &mut InferResults,
     ) -> Result<()> {
         let mut unresolved = || {
             infers.unresolved_obligations.push(Obligation {
-                var: wild.0,
+                var: wild,
                 eq: (wild_func.clone(), exp.clone()),
             });
             Ok(())
@@ -284,7 +328,7 @@ fn match_and_infer_without_normalize(
                 if !infers.is_unknown(*index) {
                     return Ok(());
                 } else {
-                    (*index, *scope)
+                    (*index, scope.clone())
                 }
             } else {
                 return unresolved();
@@ -294,7 +338,7 @@ fn match_and_infer_without_normalize(
             } else {
                 return Ok(());
             };
-            if var < scope {
+            if var < scope.map(|x| x.len()).unwrap_or(0) {
                 // in this case wild can contain the variable, so we can not determine
                 // function uniquely
                 return Ok(());
@@ -302,9 +346,15 @@ fn match_and_infer_without_normalize(
             let var_ty = match infers.type_of(wild).as_ref() {
                 Term::Forall(x) => x.var_ty.clone(),
                 Term::Wild { index, scope } => {
-                    let a = infers.add_var_with_scope(*scope);
-                    let b = infers.add_var_with_scope(*scope + 1);
-                    infers.set(*index, term_ref!(forall a, b))?;
+                    let a = infers.add_var_with_scope(scope.clone());
+                    let b = infers.add_var_with_scope(
+                        scope.as_ref().map(|x| x.iter().map(|x| x + 1).collect()),
+                    );
+                    infers.set_with_scope(
+                        *index,
+                        scope.as_deref().unwrap(),
+                        term_ref!(forall a, b),
+                    )?;
                     a
                 }
                 // I think it should always infer the type of functions.
@@ -443,7 +493,9 @@ pub fn type_of_inner(
                 subtype_and_infer(op_ty, var_ty.clone(), infers)?;
                 subst(body.clone(), op.clone())
             }
-            Term::Wild { index, scope } => infers.type_of_with_scope(*index, *scope),
+            Term::Wild { index, scope } => {
+                infers.type_of_with_scope(*index, scope.as_ref().unwrap())?
+            }
         };
         Ok(r)
     }
@@ -457,8 +509,8 @@ pub fn type_of_and_infer(term: TermRef, infers: &mut InferResults) -> Result<Ter
 fn get_universe_and_infer(term: &Term, infers: &mut InferResults) -> Result<usize> {
     match term {
         Term::Universe { index } => Ok(*index),
-        Term::Wild { index, scope: _ } => {
-            infers.set(*index, term_ref!(universe 0))?;
+        Term::Wild { index, scope } => {
+            infers.set_with_scope(*index, scope.as_deref().unwrap(), term_ref!(universe 0))?;
             Ok(0)
         }
         _ => Err(IsNotUniverse.into()),

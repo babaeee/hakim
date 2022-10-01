@@ -58,7 +58,7 @@ pub fn replace_term(
             let mut infers = InferResults::new(n);
             let ty = type_of_and_infer(result.clone(), &mut infers).unwrap();
             type_of_and_infer(ty, &mut infers).unwrap();
-            let result = infers.fill(result);
+            let result = infers.fill(result).unwrap();
             return result;
         }
     }

@@ -36,7 +36,7 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
             let mut ty_subst = ty;
             for _ in 0..forall_diff {
                 if let Term::Forall(Abstraction { body, .. }) = ty_subst.as_ref() {
-                    ty_subst = subst(body.clone(), infers.add_var());
+                    ty_subst = subst(body.clone(), infers.add_var_top_level());
                 } else {
                     return None;
                 }
