@@ -32,21 +32,81 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                     }
                 }
                 Term::App { func, op: op1 } => {
-                    if let Term::App { func, op: _ } = func.as_ref() {
-                        if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                            match unique_name.as_str() {
-                                "cons" => {
-                                    return Box::new(
-                                        iter::once(ListPart::Element(op1.clone()))
-                                            .chain(f(op2.clone())),
-                                    );
+                    match func.as_ref() {
+                        Term::Axiom { unique_name, .. } => {
+                            if unique_name == "tail" {
+                                let mut list = f(op2.clone());
+                                if let Some(first) = list.next() {
+                                    match first {
+                                        ListPart::Element(_) => return Box::new(list),
+                                        ListPart::Atom(_x) => {
+                                            todo!();
+                                            /*let tail_of_first = Term::App {
+                                                func: Term::App {
+                                                    func: TermRef::Axiom {
+                                                        ty: axiom_ty,
+                                                        unique_name: unique_name,
+                                                    },
+                                                    op: op1,
+                                                },
+                                                op: x,
+                                            };
+                                            //tail_of_first := tail op1 x
+                                            return Box::new(
+                                                iter::once(ListPart::Atom(tail_of_first))
+                                                    .chain(list),
+                                            );*/
+                                        }
+                                    };
                                 }
-                                "plus_list" => {
-                                    return Box::new(f(op1.clone()).chain(f(op2.clone())));
-                                }
-                                _ => (),
                             }
                         }
+                        Term::App { func, op: _ } => {
+                            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                                match unique_name.as_str() {
+                                    "cons" => {
+                                        return Box::new(
+                                            iter::once(ListPart::Element(op1.clone()))
+                                                .chain(f(op2.clone())),
+                                        );
+                                    }
+                                    "plus_list" => {
+                                        return Box::new(f(op1.clone()).chain(f(op2.clone())));
+                                    }
+                                    "head" => {
+                                        if let Some(first) = f(op2.clone()).next() {
+                                            return match first {
+                                                ListPart::Element(x) => {
+                                                    Box::new(iter::once(ListPart::Atom(x)))
+                                                    //becuse it just one number
+                                                }
+                                                ListPart::Atom(_x) => {
+                                                    todo!();
+                                                    /*
+                                                    let head_of_frist = Term::App {
+                                                        func: Term::App {
+                                                            func: Term::App {
+                                                                func: Term::Axiom {
+                                                                    ty: axiom_ty,
+                                                                    unique_name: unique_name,
+                                                                },
+                                                                op: ty,
+                                                            },
+                                                            op: op1,
+                                                        },
+                                                        op: x,
+                                                    };
+                                                    //head_of_first = head ty op1 x
+                                                    Box::new(iter::once(ListPart::Atom(t)))*/
+                                                }
+                                            };
+                                        }
+                                    }
+                                    _ => (),
+                                }
+                            }
+                        }
+                        _ => (),
                     }
                 }
                 _ => (),
@@ -126,5 +186,11 @@ mod tests {
     #[test]
     fn string_concat() {
         success(r#""hello" ++ " " ++ "world" = "hello world""#);
+    }
+    #[test]
+    fn list_head_tail() {
+        success(r#"head 0 ([2, 3]) = 2"#);
+        success("tail [2, 3, 4] = [3, 4]");
+        fail("tail [2, 4, 5] = [(head 0 [4, 5]) , 5]")
     }
 }
