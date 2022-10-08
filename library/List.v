@@ -201,6 +201,8 @@ Axiom #1 firstn: ∀ T: U, list T -> ℤ -> list T.
 Axiom firstn_nil: ∀ T: U, ∀ n: ℤ, firstn (nil T) n = [].
 Axiom firstn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> firstn (a::l) (n + 1) = a::firstn l n.
 Axiom firstn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> firstn l n = []. 
+Todo firstn_len: ∀ T: U, ∀ l: list T, firstn l (|l|) = l.
+Todo firstn_cons_1: ∀ T: U, ∀ l: list T, ∀ a, firstn (a::l) 1 = [a].
 
 Axiom #1 skipn: ∀ T: U, list T -> ℤ -> list T.
 Axiom skipn_nil: ∀ T: U, ∀ n: ℤ, skipn (nil T) n = [].
