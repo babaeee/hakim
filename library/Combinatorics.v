@@ -7,45 +7,43 @@ Import /Sigma.
 Theorem rule_of_sum: ∀ T: Universe, ∀ A B: set T, finite A -> finite B -> A ∩ B = {} -> |A ∪ B| = |A| + |B|.
 Proof.
 intros.
-apply (⁨set_induction T (λ D: (set T), A ∩ D = {} → |A ∪ D| = |A| + |D|) ?2 ?4 ?6 ?8⁩).
-assumption.
-assumption.
+revert H1.
+revert H0.
+revert B.
+revert H.
+revert A.
+apply set_induction.
+Switch 1.
 intros.
-replace #1 (A ∪ (x ∪ {a})) with (A ∪ x ∪ {a}).
+replace #1 ({} ∪ B) with (B).
 auto_set.
-apply eq_sym.
-replace #1 (|A ∪ x ∪ {a}|) with (|A ∪ x| + 1).
+lia.
+intros.
+add_hyp (~ a ∈ B).
+apply eq_set_empty in H10.
+add_hyp H10_ex := (H10 (a)).
+auto_set.
+replace #1 (x ∪ {a} ∪ B) with (x ∪ B ∪ {a}).
+auto_set.
+replace #1 (|x ∪ B ∪ {a}|) with (|x ∪ B| + 1).
 apply finite_add_len.
-intros.
-add_hyp (a ∈ A ).
-auto_set.
-apply eq_set_empty in H5.
-add_hyp H5_ex := (H5 (a)).
 auto_set.
 auto_set.
 replace #1 (|x ∪ {a}|) with (|x| + 1).
 apply finite_add_len.
 assumption.
 assumption.
-replace #1 (|A ∪ x|) with (|A ∪ x|).
-auto_list.
-replace #1 (|A ∪ x|) with (|A| + |x|).
-apply H3.
-apply NNPP.
+add_hyp (|x ∪ B| = |x| +  |B|⁩).
+apply H0.
+apply empty_set_eq.
 intros.
-apply non_empty_has_member in H6.
-destruct H6 with (ex_ind ? ?) to (H6_value H6_proof).
-apply set_equality_unfold in H5.
-destruct H5 with (and_ind ? ?) to (H5_l H5_r).
-apply included_unfold in H5_l.
-add_hyp H5_l_ex := (H5_l (H6_value)).
+apply eq_set_empty in H10.
+add_hyp H10_ex := (H10 (x0)).
 auto_set.
-lia.
-intros.
-replace #1 (A ∪ {}) with (A ).
-auto_set.
+assumption.
 lia.
 Qed.
+
 Axiom rule_of_sum2: ∀ T: Universe, ∀ A B: set T, finite A -> B ⊆ A -> |A| = |A ∖ B| + |B|.
 Theorem rule_of_minus: ∀ T: Universe, ∀ A B: set T, finite A -> B ⊆ A -> |A ∖ B| = |A| - |B|.
 Proof.

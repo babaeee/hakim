@@ -284,6 +284,7 @@ fn list() {
     parse_pretty("[] ++ [2, 3, 5]");
     parse_pretty("λ f: list ℤ → ℤ, f [2, 3, 5]");
     parse_pretty("2 in [1, 2, 3]");
+    parse_pretty("∀ l: list ℤ, 3 :: 2 :: l = [3, 2] ++ l");
 }
 
 #[test]

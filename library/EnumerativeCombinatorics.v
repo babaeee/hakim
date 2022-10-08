@@ -281,7 +281,6 @@ Proof.
     apply H1.
     lia.
 Qed.
-
 Theorem binomial_coefficients: ∀ n, 0 ≤ n -> ∀ a b, (a+b) ^ n = (Σ i in [0, n + 1) cm n i * a ^ i * b ^ (n - i)).
 Proof.
     apply z_induction_simple.
@@ -383,7 +382,7 @@ Proof.
     lia.
     replace #1 ((Σ i in [1, n + 1) (cm n (i - 1) + cm n i) * a ^ i * b ^ (n - i + 1))) with ((Σ i in [1, n + 1) (cm (n+1) i) * a ^ i * b ^ (n - i + 1))).
     apply sigma_f_equal.
-    intros.
+        intros.
     add_from_lib cmdefr.
     add_hyp cmdefr_ex := (cmdefr (n+1)).
     add_hyp cmdefr_ex_ex := (cmdefr_ex (i)).
@@ -410,7 +409,6 @@ Proof.
     replace #1 ((n + 1 - 1)) with (n) in cmdefr_ex_ex_o_o_o.
     lia.
     apply eq_sym in cmdefr_ex_ex_o_o_o.
-    rewrite cmdefr_ex_ex_o_o_o.
     apply eq_sym in cmdefr_ex_ex_o_o_o.
     rewrite cmdefr_ex_ex_o_o_o.
     lia.
@@ -662,195 +660,178 @@ Proof.
 Qed.
 Theorem count_of_lists: ∀ T: U, ∀ S: set T, ∀ m, 0 < m -> |S| = m -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n }| = |S| ^ n.
 Proof.
-intros.
-add_hyp (∃ x: T, x ∈ S).
-apply len_gt_0_not_empty_set.
-lia.
-destruct H2 with (ex_ind ? ?) to (d d_property).
-remove_hyp d_property.
-revert H0.
-revert H.
-revert m.
-revert S.
-revert H1.
-revert n.
-apply z_induction_simple.
-Switch 1.
-intros.
-replace #1 ({ l: list T | member_set l ⊆ S ∧ |l| = 0 }) with ({nil T}).
-apply set_equality.
-apply included_fold.
-intros.
-apply singleton_unfold in H1.
-apply set_from_func_fold.
-apply and_intro.
-apply eq_sym in H1.
-rewrite H1.
-lia.
-apply eq_sym in H1.
-rewrite H1.
-add_from_lib member_set_empty.
-add_hyp member_set_empty_ex := (member_set_empty (T)).
-rewrite member_set_empty_ex.
-auto_set.
-apply included_fold.
-intros.
-apply singleton_fold.
-apply set_from_func_unfold in H1.
-destruct H1 with (and_ind ? ?) to (H1_l H1_r).
-apply nil_unique in H1_r.
-auto_set.
-replace #1 (|S| ^ 0) with (1).
-lia.
-apply singleton_len.
-intros.
-add_from_lib asl_zarb2.
-add_hyp asl_zarb2_ex := (asl_zarb2 (list T)).
-add_hyp asl_zarb2_ex_ex := (asl_zarb2_ex ({ l: list T | member_set l ⊆ S ∧ |l| = n + 1 })).
-remove_hyp asl_zarb2_ex.
-add_hyp asl_zarb2_ex_ex_ex := (asl_zarb2_ex_ex (|S|)).
-remove_hyp asl_zarb2_ex_ex.
-add_hyp asl_zarb2_ex_ex_ex_ex := (asl_zarb2_ex_ex_ex (|S|^n)).
-remove_hyp asl_zarb2_ex_ex_ex.
-Seq (add_hyp (⁨0 < |S|⁩)) (remove_hyp asl_zarb2_ex_ex_ex_ex) (Switch 1) (add_hyp asl_zarb2_ex_ex_ex_ex_o := (asl_zarb2_ex_ex_ex_ex H2)) (remove_hyp H2) (remove_hyp asl_zarb2_ex_ex_ex_ex).
-Switch 1.
-lia.
-Seq (add_hyp (⁨0 < |S| ^ n⁩)) (remove_hyp asl_zarb2_ex_ex_ex_ex_o) (Switch 1) (add_hyp asl_zarb2_ex_ex_ex_ex_o_o := (asl_zarb2_ex_ex_ex_ex_o H2)) (remove_hyp H2) (remove_hyp asl_zarb2_ex_ex_ex_ex_o).
-add_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex := (asl_zarb2_ex_ex_ex_ex_o_o (T)).
-remove_hyp asl_zarb2_ex_ex_ex_ex_o_o.
-add_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex_ex := (asl_zarb2_ex_ex_ex_ex_o_o_ex (head d)).
-remove_hyp asl_zarb2_ex_ex_ex_ex_o_o_ex.
-apply asl_zarb2_ex_ex_ex_ex_o_o_ex_ex.
-apply pow_unfold_l.
-assumption.
-intros.
-apply projection_in_intro_l in H2.
-destruct H2 with (ex_ind ? ?) to (some some_property).
-destruct some_property with (and_ind ? ?) to (some_property_l some_property_r).
-apply set_from_func_unfold in some_property_l.
-destruct some_property_l with (and_ind ? ?) to (some_property_l_l some_property_l_r).
-add_from_lib rule_of_bijectionR.
-add_hyp rule_of_bijectionR_ex := (rule_of_bijectionR (list T)).
-add_hyp rule_of_bijectionR_ex_ex := (rule_of_bijectionR_ex (list T)).
-remove_hyp rule_of_bijectionR_ex.
-add_hyp rule_of_bijectionR_ex_ex_ex := (rule_of_bijectionR_ex_ex (tail)).
-remove_hyp rule_of_bijectionR_ex_ex.
-apply rule_of_bijectionR_ex_ex_ex.
-remove_hyp rule_of_bijectionR_ex_ex_ex.
-replace #1 (projection (list T) { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ S  ∧ |l| = n }).
-apply set_equality.
-apply included_fold.
-intros.
-apply projection_in_intro_r.
-apply (ex_intro ? ? ([y] ++ a)).
-apply set_from_func_unfold in H2.
-destruct H2 with (and_ind ? ?) to (H2_l H2_r).
-apply and_intro.
-apply eq_sym.
-apply tail_add.
-apply set_from_func_fold.
-apply and_intro.
-apply add_head.
-apply set_from_func_fold.
-apply and_intro.
-lia.
-replace #1 (member_set ([y] ++ a)) with (member_set [y] ∪ member_set (a)).
-apply member_set_append.
-replace #1 (member_set [y]) with ({y}).
-apply member_set_singleton.
-add_hyp (y ∈ S).
-apply included_unfold in some_property_l_l.
-apply some_property_l_l.
-rewrite some_property_r.
-apply head_in_member_set.
-auto_set.
-apply included_fold.
-intros.
-apply set_from_func_fold.
-apply projection_in_intro_l in H2.
-destruct H2 with (ex_ind ? ?) to (ca ca_property).
-destruct ca_property with (and_ind ? ?) to (ca_property_l ca_property_r).
-apply set_from_func_unfold in ca_property_l.
-destruct ca_property_l with (and_ind ? ?) to (ca_property_l_l ca_property_l_r).
-apply set_from_func_unfold in ca_property_l_l.
-destruct ca_property_l_l with (and_ind ? ?) to (ca_property_l_l_l ca_property_l_l_r).
-apply and_intro.
-rewrite ca_property_r.
-apply tail_len.
-assumption.
-replace #1 (member_set ca) with (member_set [y] ∪ member_set a) in ca_property_l_l_l.
-replace #1 (ca) with ([y] ++ a).
-rewrite ca_property_r.
-apply eq_sym in ca_property_l_r.
-rewrite ca_property_l_r.
-apply add_head_tail.
-intros.
-replace #1 (ca) with ([]) in ca_property_l_l_r.
-assumption.
-lia.
-apply member_set_append.
-auto_set.
-apply (⁨H0 ?0 (|S|) ?4 ?6⁩).
-auto_list.
-lia.
-apply pow_not_neg.
-lia.
-assumption.
-apply injective_fold.
-intros.
-apply set_from_func_unfold in H2.
-apply set_from_func_unfold in H3.
-replace #1 (y0) with ([head d x] ++ tail x).
-replace #1 (head d x) with (head d y0).
-auto_set.
-rewrite H4.
-apply add_head_tail.
-destruct H3 with (and_ind ? ?) to (H3_l H3_r).
-intros.
-apply set_from_func_unfold in H3_l.
-replace #2 (y0) with ([]) in H3_l.
-assumption.
-lia.
-apply add_head_tail.
-intros.
-destruct H2 with (and_ind ? ?) to (H2_l H2_r).
-apply set_from_func_unfold in H2_l.
-replace #2 (x) with ([]) in H2_l.
-assumption.
-lia.
-replace #1 (projection T { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } (head d)) with (S).
-apply set_equality.
-apply included_fold.
-intros.
-apply projection_in_intro_r.
-apply (ex_intro ? ? (repeat (n + 1) a)).
-apply and_intro.
-apply eq_sym.
-apply repeat_head.
-lia.
-apply set_from_func_fold.
-apply and_intro.
-apply repeat_len.
-lia.
-replace #1 (member_set (repeat (n + 1) a)) with ({a}).
-apply member_set_repeat.
-lia.
-auto_set.
-apply included_fold.
-intros.
-apply projection_in_intro_l in H2.
-destruct H2 with (ex_ind ? ?) to (ca ca_property).
-destruct ca_property with (and_ind ? ?) to (ca_property_l ca_property_r).
-apply set_from_func_unfold in ca_property_l.
-destruct ca_property_l with (and_ind ? ?) to (ca_property_l_l ca_property_l_r).
-apply included_unfold in ca_property_l_l.
-apply ca_property_l_l.
-rewrite ca_property_r.
-apply head_in_member_set.
-auto_list.
-apply pow_pos.
-lia.
-assumption.
+    intros.
+    add_hyp (∃ x: T, x ∈ S).
+    apply len_gt_0_not_empty_set.
+    lia.
+    destruct H2 with (ex_ind ? ?) to (d d_property).
+    remove_hyp d_property.
+    revert H0.
+    revert H.
+    revert m.
+    revert S.
+    revert H1.
+    revert n.
+    apply z_induction_simple.
+    Switch 1.
+    intros.
+    replace #1 ({ l: list T | member_set l ⊆ S ∧ |l| = 0 }) with ({nil T}).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    rewrite H1.
+    apply set_from_func_fold.
+    apply and_intro.
+    lia.
+    replace #1 (member_set []) with (set_empty T).
+    apply member_set_empty.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H1.
+    destruct H1 with (and_ind ? ?) to (H1_l H1_r).
+    apply nil_unique in H1_r.
+    auto_set.
+    replace #1 (|S| ^ 0) with (1).
+    lia.
+    apply singleton_len.
+    intros.
+    apply (⁨asl_zarb2 ?0 ?2 (|S|) (|S| ^ n) ?8 ?10 T (head d) ?14 ?16 ?18 ?20⁩).
+    apply pow_unfold_l.
+    assumption.
+    intros.
+    add_hyp (y ∈S).
+    apply projection_in_intro_l in H2.
+    destruct H2 with (ex_ind ? ?) to (x x_property).
+    destruct x_property with (and_ind ? ?) to (x_property_l x_property_r).
+    apply set_from_func_unfold in x_property_l.
+    destruct x.
+    lia.
+    replace #1 (head d (x0 :: l)) with (x0) in x_property_r.
+    auto_list.
+    replace #1 (x0) with (y) in x_property_l.
+    auto_set.
+    destruct x_property_l with (and_ind ? ?) to (x_property_l_l x_property_l_r).
+    add_hyp (y ∈ member_set (y :: l)).
+    apply member_set_cons.
+    auto_set.
+    apply (⁨rule_of_bijectionR ?0 (list T) tail ?4 ?6 ?8 ?10 ?12⁩).
+    replace #1 (projection (list T) { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ S ∧ |l| = n }).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply projection_in_intro_r.
+    apply (ex_intro ? ? (y :: a)).
+    apply and_intro.
+    auto_list.
+    apply set_from_func_unfold in H4.
+    apply set_from_func_fold.
+    destruct H4 with (and_ind ? ?) to (H4_l H4_r).
+    apply and_intro.
+    auto_list.
+    apply set_from_func_fold.
+    apply and_intro.
+    lia.
+    replace #1 (member_set (y :: a)) with ({y} ∪ member_set ( a)).
+    apply member_set_cons_union.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply set_from_func_fold.
+    apply projection_in_intro_l in H4.
+    destruct H4 with (ex_ind ? ?) to (x x_property).
+    destruct x_property with (and_ind ? ?) to (x_property_l x_property_r).
+    apply set_from_func_unfold in x_property_l.
+    destruct x_property_l with (and_ind ? ?) to (x_property_l_l x_property_l_r).
+    apply set_from_func_unfold in x_property_l_l.
+    destruct x_property_l_l with (and_ind ? ?) to (x_property_l_l_l x_property_l_l_r).
+    destruct x.
+    lia.
+    replace #1 (head d (x0 :: l)) with (x0) in x_property_l_r.
+    auto_list.
+    replace #1 (x0) with (y) in x_property_l_l_r.
+    assumption.
+    replace #1 (x0) with (y) in x_property_l_l_l.
+    assumption.
+    replace #1 (x0) with (y) in x_property_r.
+    assumption.
+    replace #1 (tail (y :: l)) with (l) in x_property_r.
+    auto_list.
+    rewrite x_property_r.
+    apply and_intro.
+    lia.
+    replace #1 (member_set (y :: l)) with ({y} ∪ member_set ( l)) in x_property_l_l_l.
+    apply member_set_cons_union.
+    auto_set.
+    apply (⁨H0 ?0 m ?4 ?6⁩).
+    assumption.
+    assumption.
+    apply pow_not_neg.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    apply set_from_func_unfold in H4.
+    apply set_from_func_unfold in H5.
+    destruct H4 with (and_ind ? ?) to (H4_l H4_r).
+    apply set_from_func_unfold in H4_l.
+    destruct H5 with (and_ind ? ?) to (H5_l H5_r).
+    apply set_from_func_unfold in H5_l.
+    destruct x.
+    lia.
+    destruct y0.
+    lia.
+    replace #1 (tail (x0 :: l)) with (l) in H6.
+    auto_list.
+    replace #1 (tail (x :: l0)) with (l0) in H6.
+    auto_list.
+    replace #1 (head d (x0 :: l)) with (x0) in H4_r.
+    auto_list.
+    replace #1 (head d (x :: l0)) with (x) in H5_r.
+    auto_list.
+    rewrite H6.
+    rewrite H4_r.
+    rewrite H5_r.
+    auto_list.
+    replace #1 (projection T { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } (head d)) with (S).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply projection_in_intro_r.
+    apply (ex_intro ? ? (repeat (n + 1) a)).
+    apply and_intro.
+    apply eq_sym.
+    apply repeat_head.
+    lia.
+    apply set_from_func_fold.
+    apply and_intro.
+    apply repeat_len.
+    lia.
+    replace #1 (member_set (repeat (n + 1) a)) with ({a}).
+    apply member_set_repeat.
+    lia.
+    auto_set.
+    apply included_fold.
+    intros.
+    apply projection_in_intro_l in H2.
+    destruct H2 with (ex_ind ? ?) to (x x_property).
+    destruct x_property with (and_ind ? ?) to (x_property_l x_property_r).
+    apply set_from_func_unfold in x_property_l.
+    destruct x_property_l with (and_ind ? ?) to (x_property_l_l x_property_l_r).
+    destruct x.
+    lia.
+    replace #1 (head d (x0 :: l)) with (x0) in x_property_r.
+    auto_list.
+    replace #1 (member_set (x0 :: l)) with ({x0} ∪ member_set ( l)) in x_property_l_l.
+    apply member_set_cons_union.
+    auto_set.
+    auto_list.
+    apply pow_pos.
+    lia.
+    assumption.
+    lia.
 Qed.
 
 Theorem count_of_binary_lists: ∀ T: U, ∀ a b: T, ~ a = b -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ {a, b} ∧ |l| = n }| = 2 ^ n.
@@ -1150,3 +1131,5 @@ apply factorial_gt_0.
 assumption.
 lia.
 Qed.
+
+Todo valid_paren_convert: ∀ l, ∀ n, valid_paren l <-> cnt '(' l = n ∧ cnt ')' l = n ∧ (∀ i, 0 < i -> i ≤ |l| -> cnt ')' (firstn l i) ≤ cnt '(' (firstn l i)).

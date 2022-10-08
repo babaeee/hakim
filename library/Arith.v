@@ -205,3 +205,5 @@ Todo pow_lt_r: ∀ a b c: ℤ, 0 < a -> a < b -> 1 < c -> c ^ a < c ^ b.
 
 Axiom abs_pos: ∀ a: ℤ, 0 ≤ |a|.
 Axiom abs_eq: ∀ a: ℤ, |a| = a ∨ |a| = -a.
+
+Todo ex_min: ∀ P: ℤ -> U, ∀ k, (∃ x, k < x ∧ P x) -> (∃ x, k ≤ x ∧ P x ∧ (∀ y, k < y -> P y -> x ≤ y)).  

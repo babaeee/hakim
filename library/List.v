@@ -15,7 +15,7 @@ Theorem cons_to_add_list: ∀ A: U, ∀ x: list A, ∀ a: A, cons A a x = [a] ++
 Proof. intros. auto_list. Qed.
 
 Theorem tail_add: ∀ A: U, ∀ x: list A, ∀ a: A, tail ([a] ++ x) = x.
-Proof. intros. replace #1 ([a] ++ x) with (cons A a x). auto_list. apply tail_cons. Qed.
+Proof. intros. auto_list. Qed.
 Suggest goal default apply tail_add; Trivial.
 Theorem cons_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, ~ x = [] -> x = cons A (head default x) (tail x).
 Proof.
@@ -38,8 +38,11 @@ assumption.
 assumption.
 Qed.
 
-Theorem add_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, ~ x = [] -> x = [head default x] ++ (tail x).
-Proof. intros. replace #1 ([head default x] ++ tail x) with (cons A (head default x)  (tail x)). auto_list. apply cons_head_tail. assumption. Qed.
+Theorem add_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, ~ x = [] -> x = [ head default x ] ++ (tail x).
+Proof. intros. destruct x. auto_list. replace #1 (head default (x0 :: l)) with (x0). auto_list. auto_list. Qed.
+
+Suggest hyp default destruct $n; l => l = [] ∨ l = x :: l'.
+
 Todo list_len_concat_lt: ∀ A: U, ∀ x y: list A, ~ x = nil A -> |y| < |x++y|.
 Todo add_head: ∀ A: U, ∀ default: A, ∀ x: list A, ∀ a: A, head default ([a] ++ x) = a.
 Suggest goal default apply add_head; Trivial.
@@ -124,6 +127,7 @@ Todo member_set_singleton: ∀ A: U, ∀ x: A, member_set ([x]) = {x}.
 Todo member_set_add: ∀ A: U, ∀ a: A, ∀ l: list A, member_set ([a] ++ l) = {a} ∪ member_set l.
 Todo member_set_append: ∀ A: U, ∀ x y: list A, member_set (x ++ y) = member_set x ∪ member_set y.
 Todo member_set_cons: ∀ T: U, ∀ x: list T, ∀ a: T, a ∈ member_set (cons T a x).
+Todo member_set_cons_union: ∀ T: U, ∀ x: list T, ∀ a: T, member_set (a :: x) = {a} ∪ member_set x.
 Todo head_in_member_set: ∀ T: U, ∀ x: list T, ∀ default: T, (head default x) ∈ member_set x.
 Todo member_set_repeat: ∀ T: U, ∀ x: T, ∀ t: ℤ, 0 < t -> member_set (repeat t x) = {x}.
 Todo member_set_nil_included: ∀ A: U, ∀ S: set A, member_set (nil A) ⊆ S.
@@ -153,3 +157,52 @@ Suggest goal default apply unique_elements_fold; ~ x in l ∧ unique_elements l 
 Suggest goal default apply unique_elements_nil; Trivial.
 
 Todo listing_set: ∀ T: U, ∀ S: set T, finite S -> ∃ l: list T, member_set l = S ∧ |l| = |S| ∧ unique_elements l.
+
+Theorem split_index: ∀ T: U, ∀ l: list T, ∀ i, 0 < i -> i ≤ |l| -> ∃ x y, ∃ a, l = x ++ a :: y ∧ |x| = i - 1 ∧ |y| = |l| - i.
+Proof.
+    intros.
+    add_hyp (1 ≤ i).
+    lia.
+    remove_hyp H.
+    revert H0.
+    revert l.
+    revert H1.
+    revert i.
+    apply z_induction_simple.
+    intros.
+    add_hyp H0_ex := (H0 (l)).
+    Seq (add_hyp (⁨n ≤ |l|⁩)) (remove_hyp H0_ex) (Switch 1) (add_hyp H0_ex_o := (H0_ex H1)) (remove_hyp H1) (remove_hyp H0_ex) .
+    destruct H0_ex_o with (ex_ind ? ?) to (x x_property).
+    destruct x_property with (ex_ind ? ?) to (y y_property).
+    destruct y_property with (ex_ind ? ?) to (a a_property).
+    destruct y.
+    lia.
+    apply (ex_intro ? ? (x ++ [a])).
+    apply (ex_intro ? ? (l0)).
+    apply (ex_intro ? ? (x0)).
+    destruct a_property with (and_ind ? ?) to (a_property_l a_property_r).
+    apply and_intro.
+    lia.
+    rewrite a_property_l.
+    auto_list.
+    lia.
+    intros.
+    apply (ex_intro ? ? ([])).
+    destruct l.
+    lia.
+    apply (ex_intro ? ? (l0)).
+    apply (ex_intro ? ? (x)).
+    apply and_intro.
+    lia.
+    auto_list.
+Qed.
+
+Axiom #1 firstn: ∀ T: U, list T -> ℤ -> list T.
+Axiom firstn_nil: ∀ T: U, ∀ n: ℤ, firstn (nil T) n = [].
+Axiom firstn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> firstn (a::l) (n + 1) = a::firstn l n.
+Axiom firstn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> firstn l n = []. 
+
+Axiom #1 skipn: ∀ T: U, list T -> ℤ -> list T.
+Axiom skipn_nil: ∀ T: U, ∀ n: ℤ, skipn (nil T) n = [].
+Axiom skipn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> skipn (a::l) (n + 1) = skipn l n.
+Axiom skipn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> skipn l n = l.
