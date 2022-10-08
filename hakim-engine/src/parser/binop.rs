@@ -52,6 +52,7 @@ macro_rules! binop {
 binop! {
     And, 80, Right, "∧";
     App, 1, Left, " ";
+    Cons, 45, Right, "::";
     Divide, 70, No, "|";
     Eq, 70, No, "=";
     Ge, 70, No, "≥";
@@ -118,6 +119,11 @@ impl BinOp {
         match self {
             And => app_ref!(and(), l, r),
             App => app_ref!(l, r),
+            Cons => {
+                let i = infer_cnt.generate();
+                let w = term_ref!(_ i);
+                app_ref!(cons(), w, l, r)
+            }
             Divide => app_ref!(divide(), l, r),
             Eq => {
                 let i = infer_cnt.generate();
@@ -198,6 +204,7 @@ impl BinOp {
                 Term::App { func, op } => match func.as_ref() {
                     Term::App { func, op: _ } => match func.as_ref() {
                         Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
+                            "cons" => found!(op, Cons, op2),
                             "eq" => found!(op, Eq, op2),
                             "included" => found!(op, Included, op2),
                             "inlist" => found!(op, Inlist, op2),

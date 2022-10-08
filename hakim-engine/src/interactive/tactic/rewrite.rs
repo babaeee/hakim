@@ -302,4 +302,13 @@ mod tests {
             EngineLevel::Empty,
         );
     }
+    #[test]
+    fn replace_singletone_set_len() {
+        run_interactive(
+            "| { set_empty ℤ } | = 1",
+            r#"
+            replace #1 (|{{}}|) with (1)"#,
+            EngineLevel::Empty,
+        );
+    }
 }

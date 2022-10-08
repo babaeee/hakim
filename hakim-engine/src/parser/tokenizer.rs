@@ -160,6 +160,10 @@ pub fn tokenize(mut text: Cursor<'_>) -> Result<Vec<Token>, String> {
             push!(Sign("→".to_string()));
             continue;
         }
+        if text.eat_prefix("::") {
+            push!(Sign("::".to_string()));
+            continue;
+        }
         if text.eat_prefix("++") {
             push!(Sign("++".to_string()));
             continue;

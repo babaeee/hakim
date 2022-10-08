@@ -39,7 +39,7 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                                 if let Some(first) = list.next() {
                                     match first {
                                         ListPart::Element(_) => return Box::new(list),
-                                        ListPart::Atom(_x) => {
+                                        /*ListPart::Atom(_x) => {
                                             todo!();
                                             /*let tail_of_first = Term::App {
                                                 func: Term::App {
@@ -56,7 +56,8 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                                                 iter::once(ListPart::Atom(tail_of_first))
                                                     .chain(list),
                                             );*/
-                                        }
+                                        }*/
+                                        _ => (),
                                     };
                                 }
                             }
@@ -80,7 +81,8 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                                                     Box::new(iter::once(ListPart::Atom(x)))
                                                     //becuse it just one number
                                                 }
-                                                ListPart::Atom(_x) => {
+                                                _ => Box::new(iter::once(ListPart::Atom(t))),
+                                                /*ListPart::Atom(_x) => {
                                                     todo!();
                                                     /*
                                                     let head_of_frist = Term::App {
@@ -98,7 +100,7 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                                                     };
                                                     //head_of_first = head ty op1 x
                                                     Box::new(iter::once(ListPart::Atom(t)))*/
-                                                }
+                                                } */
                                             };
                                         }
                                     }

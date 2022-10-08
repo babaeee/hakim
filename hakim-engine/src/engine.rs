@@ -127,7 +127,10 @@ impl Engine {
         self.name_dict.insert(name.to_string(), term);
         Ok(())
     }
-
+    pub fn update_term_of_axiom(&mut self, name: &str, term: TermRef) {
+        let axiom = term_ref!(axiom name, term);
+        self.name_dict = self.name_dict.update(name.to_string(), axiom);
+    }
     pub fn add_axiom_with_term(
         &mut self,
         name: &str,

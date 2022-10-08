@@ -75,7 +75,9 @@ fn destruct_varible(frame: Frame, arg: &str) -> Result<Vec<Frame>> {
                         let l = cons_frame.engine.generate_name("l");
                         cons_frame.add_hyp_with_name_in_index(&x, ty.clone(), pos + 1)?;
                         cons_frame.add_hyp_with_name_in_index(&l, app_ref!(list(), ty), pos + 2)?;
-                        let replace = cons_frame.engine.parse_text(&format!("[{}] ++ {}", x, l))?;
+                        let replace = cons_frame
+                            .engine
+                            .parse_text(&format!("({}) :: ({})", x, l))?;
                         destruct_varible_with_term(
                             &mut cons_frame,
                             term_of_varible,
@@ -110,6 +112,9 @@ fn destruct_varible_with_term(
             replace.clone(),
             &mut None,
         );
+        frame
+            .engine
+            .update_term_of_axiom(hyp.name.as_str(), hyp.ty.clone());
     }
     frame.goal = replace_term(frame.goal.clone(), term_of_varible, replace, &mut None);
 }
@@ -156,13 +161,30 @@ mod tests {
         )
     }
     #[test]
-    fn destruct_list_varible() {
+    fn destruct_list_varible_then_destruct_and() {
         run_interactive_to_end(
-            "∀ l: list ℤ, head 0 l = 2 -> tail l = [3] -> l = [2, 3]",
+            "∀ l: list ℤ, head 0 l = 2 ∧ tail l = [3] -> l = [2, 3]",
             r#"
-            intros
-            destruct l
+                intros
+                destruct l
+                Switch 1
+                destruct H with (and_ind ? ?) to (H_l H_r)
         "#,
+        )
+    }
+    #[test]
+    fn destruct_panic() {
+        run_interactive_to_end(
+            r#"∀ l: list char,
+        ∀ n: ℤ,
+          cnt '(' l = n
+                ∧ cnt ')' l = n
+                    ∧ ∀ i: ℤ,
+                        0 < i → i ≤ |l| → cnt ')' (firstn l i) ≤ cnt '(' (firstn l i)"#,
+            r#"
+                intros
+                destruct l
+                "#,
         )
     }
 }
