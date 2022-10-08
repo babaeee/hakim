@@ -311,4 +311,17 @@ mod tests {
             EngineLevel::Empty,
         );
     }
+    #[test]
+    fn rewrite_panic() {
+        run_interactive("∀ l: list char,  ∀ n: ℤ, cnt '(' l = n ∧ cnt ')' l = n  ∧ ∀ i: ℤ,  0 < i → i ≤ |l| → cnt ')' (firstn l i) ≤ cnt '(' (firstn l i)",
+        r#"
+        intros
+        add_from_lib cons_nil_case
+        add_hyp cons_nil_case_ex := (cons_nil_case (char))
+        add_hyp cons_nil_case_ex_ex := (cons_nil_case_ex (l))
+        destruct cons_nil_case_ex_ex with (or_ind ? ?)
+        destruct cons_nil_case_ex_ex with (ex_ind ? ?) to (y y_property)
+        destruct y_property with (ex_ind ? ?) to (a a_property)
+        rewrite a_property"#,  EngineLevel::Full);
+    }
 }

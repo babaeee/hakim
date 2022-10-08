@@ -478,6 +478,7 @@ Axiom valid_paren_unfold: ∀ l, valid_paren l -> l = "" ∨ ∃ x y, valid_pare
 Suggest hyp default apply valid_paren_unfold in $n; Destruct.
 Axiom valid_paren_fold: ∀ l, (∃ x y, valid_paren x ∧ valid_paren y ∧ l = "(" ++ x ++ ")" ++ y) -> valid_paren l.
 Axiom valid_paren_empty: valid_paren "".
+Todo valid_paren_elements_type: ∀ l, valid_paren l -> ∀ a, a in l -> a = '(' ∨ a = ')'.
 Theorem valid_paren_wrap: ∀ l, valid_paren l -> valid_paren ("(" ++ l ++ ")").
 Proof.
     intros.
