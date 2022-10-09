@@ -116,21 +116,27 @@ impl BinOp {
     }
 
     pub fn run_on_term(&self, infer_cnt: &mut InferGenerator, l: TermRef, r: TermRef) -> TermRef {
+        self.run_on_term_with_ty(l, r, || {
+            let i = infer_cnt.generate();
+            term_ref!(_ i)
+        })
+    }
+
+    pub fn run_on_term_with_ty(
+        &self,
+        l: TermRef,
+        r: TermRef,
+        ty: impl FnOnce() -> TermRef,
+    ) -> TermRef {
         match self {
             And => app_ref!(and(), l, r),
             App => app_ref!(l, r),
-            Cons => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(cons(), w, l, r)
-            }
+            Cons => app_ref!(cons(), ty(), l, r),
             Divide => app_ref!(divide(), l, r),
             Eq => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(eq(), w, l, r)
+                app_ref!(eq(), ty(), l, r)
             }
-            Ge => Le.run_on_term(infer_cnt, r, l),
+            Ge => Le.run_on_term_with_ty(r, l, ty),
             Gt => app_ref!(lt(), r, l),
             Iff => app_ref!(
                 and(),
@@ -139,24 +145,16 @@ impl BinOp {
             ),
             Imply => term_ref!(forall l, increase_foreign_vars(r)),
             Included => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(included(), w, l, r)
+                app_ref!(included(), ty(), l, r)
             }
             Inlist => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(inlist(), w, l, r)
+                app_ref!(inlist(), ty(), l, r)
             }
             Intersection => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(intersection(), w, l, r)
+                app_ref!(intersection(), ty(), l, r)
             }
             Inset => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(inset(), w, l, r)
+                app_ref!(inset(), ty(), l, r)
             }
             Le => app_ref!(or(), app_ref!(lt(), l, r), app_ref!(eq(), z(), l, r)),
             Lt => app_ref!(lt(), l, r),
@@ -166,33 +164,36 @@ impl BinOp {
             Or => app_ref!(or(), l, r),
             Plus => app_ref!(plus(), l, r),
             PlusList => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(plus_list(), w, l, r)
+                app_ref!(plus_list(), ty(), l, r)
             }
             Pow => app_ref!(pow(), l, r),
             Union => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(union(), w, l, r)
+                app_ref!(union(), ty(), l, r)
             }
             Setminus => {
-                let i = infer_cnt.generate();
-                let w = term_ref!(_ i);
-                app_ref!(setminus(), w, l, r)
+                app_ref!(setminus(), ty(), l, r)
             }
         }
     }
 
     pub fn detect(t: &Term) -> Option<(TermRef, Self, TermRef)> {
-        Self::detect_custom(t, &HashSet::from([]))
+        let (a, b, c, _) = Self::detect_custom(t, &HashSet::from([]))?;
+        Some((a, b, c))
     }
 
-    pub fn detect_custom(t: &Term, disabled: &HashSet<Self>) -> Option<(TermRef, Self, TermRef)> {
+    pub fn detect_custom(
+        t: &Term,
+        disabled: &HashSet<Self>,
+    ) -> Option<(TermRef, Self, TermRef, Option<TermRef>)> {
         macro_rules! found {
             ($a:expr , $op:ident , $b:expr) => {
                 if !disabled.contains(&BinOp::$op) {
-                    return Some((($a).clone(), BinOp::$op, ($b).clone()));
+                    return Some((($a).clone(), BinOp::$op, ($b).clone(), None));
+                }
+            };
+            ($a:expr , $op:ident , $b:expr, $c:expr) => {
+                if !disabled.contains(&BinOp::$op) {
+                    return Some((($a).clone(), BinOp::$op, ($b).clone(), Some(($c).clone())));
                 }
             };
         }
@@ -202,18 +203,18 @@ impl BinOp {
                 op: op2,
             } => match original_func.as_ref() {
                 Term::App { func, op } => match func.as_ref() {
-                    Term::App { func, op: _ } => match func.as_ref() {
+                    Term::App { func, op: ty } => match func.as_ref() {
                         Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
-                            "cons" => found!(op, Cons, op2),
-                            "eq" => found!(op, Eq, op2),
-                            "included" => found!(op, Included, op2),
-                            "inlist" => found!(op, Inlist, op2),
-                            "inset" => found!(op, Inset, op2),
-                            "intersection" => found!(op, Intersection, op2),
-                            "union" => found!(op, Union, op2),
-                            "setminus" => found!(op, Setminus, op2),
-                            "plus_list" => found!(op, PlusList, op2),
-                            _ => found!(original_func, App, op2),
+                            "cons" => found!(op, Cons, op2, ty),
+                            "eq" => found!(op, Eq, op2, ty),
+                            "included" => found!(op, Included, op2, ty),
+                            "inlist" => found!(op, Inlist, op2, ty),
+                            "inset" => found!(op, Inset, op2, ty),
+                            "intersection" => found!(op, Intersection, op2, ty),
+                            "union" => found!(op, Union, op2, ty),
+                            "setminus" => found!(op, Setminus, op2, ty),
+                            "plus_list" => found!(op, PlusList, op2, ty),
+                            _ => found!(original_func, App, op2, ty),
                         },
                         _ => found!(original_func, App, op2),
                     },

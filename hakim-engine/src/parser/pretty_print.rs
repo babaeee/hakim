@@ -313,7 +313,7 @@ pub fn term_to_ast(
                 body: x.body,
             }));
         }
-        if let Some((l, op, r)) = BinOp::detect_custom(term, &c.disabled_binops) {
+        if let Some((l, op, r, _)) = BinOp::detect_custom(term, &c.disabled_binops) {
             if op != BinOp::App {
                 return Some(BinOp(
                     Box::new(term_to_ast(&l, names, c)),
