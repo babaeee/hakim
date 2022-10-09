@@ -1,10 +1,12 @@
+use std::collections::HashSet;
+
 use crate::{
     brain::{
         infer::{type_of_and_infer, InferResults},
         Term, TermRef,
     },
     interactive::Frame,
-    parser::{fix_wild_scope, BinOp, InferGenerator},
+    parser::BinOp,
     Abstraction,
 };
 
@@ -47,19 +49,11 @@ pub fn replace_term(
         }
     }
     const DUPLICATORS: &[BinOp] = &[BinOp::Le, BinOp::Iff];
-    if let Some((l, op, r)) = BinOp::detect(&exp) {
+    if let Some((l, op, r, ty)) = BinOp::detect_custom(&exp, &HashSet::new()) {
         if DUPLICATORS.contains(&op) {
-            let mut infer_cnt = InferGenerator::default();
             let l = replace_term(l, find.clone(), replace.clone(), which);
             let r = replace_term(r, find, replace, which);
-            let result = op.run_on_term(&mut infer_cnt, l, r);
-            let n = infer_cnt.0;
-            let result = fix_wild_scope(result, n);
-            let mut infers = InferResults::new(n);
-            let ty = type_of_and_infer(result.clone(), &mut infers).unwrap();
-            type_of_and_infer(ty, &mut infers).unwrap();
-            let result = infers.fill(result).unwrap();
-            return result;
+            return op.run_on_term_with_ty(l, r, || ty.unwrap());
         }
     }
     match exp.as_ref() {
