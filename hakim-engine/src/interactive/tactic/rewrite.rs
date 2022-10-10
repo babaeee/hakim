@@ -205,7 +205,9 @@ fn build_eq_term(t1: TermRef, t2: TermRef) -> Result<TermRef> {
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{run_interactive, run_interactive_to_end, EngineLevel};
+    use crate::interactive::tests::{
+        run_interactive, run_interactive_to_end, run_interactive_to_fail, EngineLevel,
+    };
 
     #[test]
     fn replace_hyp() {
@@ -318,5 +320,15 @@ mod tests {
         destruct y_property with (ex_ind ? ?) to (a a_property)
         rewrite a_property"#,  EngineLevel::Full);
     }
-    
+    #[test]
+    fn replace_not_work() {
+        run_interactive_to_fail(
+            r#"cnt '(' "(" ≤ cnt '(' ")""#,
+            r#"
+            replace #1 (cnt '(' ")") with (0)
+            lia
+        "#,
+            r#"replace #1 (cnt '(' "(") with (1)"#,
+        );
+    }
 }
