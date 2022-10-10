@@ -71,11 +71,15 @@ fn smart_split(text: &str) -> Vec<String> {
     let mut r = vec![];
     let mut s = "".to_string();
     let mut d = 0;
+    let mut in_string = false;
     for c in text.chars() {
-        if c == '(' || c == '[' {
+        if c == '\'' || c == '"' {
+            in_string = !in_string;
+        }
+        if !in_string && (c == '(' || c == '[') {
             d += 1;
         }
-        if c == ')' || c == ']' {
+        if !in_string && (c == ')' || c == ']') {
             d -= 1;
         }
         if d != 0 {
