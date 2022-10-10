@@ -361,3 +361,16 @@ fn auto_sugg() {
     s.run_tactic(&tac).unwrap();
     assert!(s.is_finished());
 }
+
+#[test]
+fn tactic_parsing_with_paren() {
+    run_interactive(
+        r#"cnt '(' "(" ≤ cnt '(' ")""#,
+        r#"
+        replace #1 (cnt '(' ")") with (0)
+        lia
+        replace #1 (cnt '(' "(") with (1)
+    "#,
+        EngineLevel::Full,
+    );
+}
