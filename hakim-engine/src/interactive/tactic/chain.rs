@@ -121,9 +121,7 @@ fn destruct_varible_with_term(
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{
-        run_interactive, run_interactive_to_end, run_interactive_to_fail, EngineLevel,
-    };
+    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail};
 
     #[test]
     fn and_destruct() {
@@ -176,7 +174,7 @@ mod tests {
     }
     #[test]
     fn destruct_panic() {
-        run_interactive(
+        run_interactive_to_end(
             r#"∀ l: list char,
         ∀ n: ℤ,
           cnt '(' l = n
@@ -187,7 +185,6 @@ mod tests {
                 intros
                 destruct l
                 "#,
-            EngineLevel::Full,
-        );
+        )
     }
 }
