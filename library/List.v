@@ -71,6 +71,8 @@ Proof.
     lia.
 Qed.
 
+Todo cons_eq: ∀ T: U, ∀ x y: list T, ∀ a b, a :: x = b :: y -> a = b ∧ x = y. 
+
 Todo tail_len: ∀ T: U, ∀ x: list T, ∀ n: ℤ, |x| = n + 1 → |tail x| = n.
 Suggest goal auto apply tail_len; Trivial.
 
@@ -203,8 +205,16 @@ Axiom firstn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> fir
 Axiom firstn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> firstn l n = []. 
 Todo firstn_len: ∀ T: U, ∀ l: list T, firstn l (|l|) = l.
 Todo firstn_cons_1: ∀ T: U, ∀ l: list T, ∀ a, firstn (a::l) 1 = [a].
+Todo firstn_append_l: ∀ T: U, ∀ a b: list T, ∀ m, |a| ≥ m -> firstn (a ++ b) m = firstn a m.
+Todo firstn_append_r: ∀ T: U, ∀ a b: list T, ∀ m, m ≥ 0 -> firstn (a ++ b) (|a| + m) = a ++ firstn b m.
+Todo cnt_of_firstn_dis_range: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, 0 ≤ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ∧ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ≤ 1.
+Todo cnt_of_firstn_dis_1: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, cnt c (firstn a m) = cnt c (firstn a (m - 1)) + 1 -> firstn a m = firstn a (m - 1) ++ [c].
 
 Axiom #1 skipn: ∀ T: U, list T -> ℤ -> list T.
 Axiom skipn_nil: ∀ T: U, ∀ n: ℤ, skipn (nil T) n = [].
 Axiom skipn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> skipn (a::l) (n + 1) = skipn l n.
 Axiom skipn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> skipn l n = l.
+
+Axiom #2 map: ∀ X Y: U, (X -> Y) -> list X -> list Y.
+Axiom map_nil: ∀ X Y: U, ∀ f: X -> Y, map f [] = [].
+Axiom map_cons: ∀ X Y: U, ∀ f: X -> Y, ∀ x, ∀ l, map f (x::l) = (f x)::map f l.
