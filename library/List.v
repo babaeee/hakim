@@ -209,12 +209,17 @@ Todo firstn_append_l: ∀ T: U, ∀ a b: list T, ∀ m, |a| ≥ m -> firstn (a +
 Todo firstn_append_r: ∀ T: U, ∀ a b: list T, ∀ m, m ≥ 0 -> firstn (a ++ b) (|a| + m) = a ++ firstn b m.
 Todo cnt_of_firstn_dis_range: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, 0 ≤ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ∧ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ≤ 1.
 Todo cnt_of_firstn_dis_1: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, cnt c (firstn a m) = cnt c (firstn a (m - 1)) + 1 -> firstn a m = firstn a (m - 1) ++ [c].
+Todo member_set_firstn: ∀ T: U, ∀ l: list T, ∀ i, member_set (firstn l i) ⊆ member_set l.
 
 Axiom #1 skipn: ∀ T: U, list T -> ℤ -> list T.
 Axiom skipn_nil: ∀ T: U, ∀ n: ℤ, skipn (nil T) n = [].
 Axiom skipn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> skipn (a::l) (n + 1) = skipn l n.
 Axiom skipn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> skipn l n = l.
 
-Axiom #2 map: ∀ X Y: U, (X -> Y) -> list X -> list Y.
-Axiom map_nil: ∀ X Y: U, ∀ f: X -> Y, map f [] = [].
-Axiom map_cons: ∀ X Y: U, ∀ f: X -> Y, ∀ x, ∀ l, map f (x::l) = (f x)::map f l.
+Axiom #1 map: ∀ X Y: U, (X -> Y) -> list X -> list Y.
+Axiom map_nil: ∀ X Y: U, ∀ f: X -> Y, map Y f [] = [].
+Axiom map_cons: ∀ X Y: U, ∀ f: X -> Y, ∀ x, ∀ l, map Y f (x::l) = (f x)::map Y f l.
+Todo map_f_o_g: ∀ X Y Z: U, ∀ f: Y -> Z, ∀ g: X -> Y, ∀ l, map Z f (map Y g l) = map Z (λ x, f (g x)) l.
+Todo map_eq: ∀ X Y: U, ∀ f: X -> Y, ∀ g: X -> Y, ∀ l, (∀ a, a in l -> f a = g a) -> map Y f l = map Y g l.
+Todo map_identity: ∀ X: U, ∀ f: X -> X, ∀ l, (∀ a, a in l -> f a = a) ->  map X f l = l.
+Todo firstn_map: ∀ X Y: U, ∀ f: X -> Y, ∀ l, ∀ i, firstn (map Y f l) i = map Y f (firstn l i).

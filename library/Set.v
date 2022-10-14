@@ -50,6 +50,7 @@ Proof. intros. auto_set. Qed.
 Axiom included_fold: ∀ A: U, ∀ x y: set A, (∀ a: A, a ∈ x -> a ∈ y) -> x ⊆ y.
 Suggest hyp default apply included_unfold in $n; a ⊆ b => ∀ x: T, x ∈ a -> x ∈ b.
 Suggest goal default apply included_fold; a ⊆ b => ∀ x: T, x ∈ a -> x ∈ b.
+Todo included_trans: ∀ A: U, ∀ x y z: set A, x ⊆ y -> y ⊆ z -> x ⊆ z.
 
 Theorem set_equality: ∀ A: U, ∀ x y: set A, x ⊆ y -> y ⊆ x -> x = y.
 Proof. intros. auto_set. Qed.

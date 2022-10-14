@@ -98,27 +98,27 @@ Proof.
     lia.
 Qed.
 
-Definition #2 injective := λ A B: U, λ f: A -> B, λ S: set A, ∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y.
-Theorem injective_unfold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective f S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y).
+Definition #1 injective := λ A B: U, λ f: A -> B, λ S: set A, ∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y.
+Theorem injective_unfold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective B f S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y).
 Proof. unfold injective. intros A B f S H. assumption. Qed.
-Theorem injective_fold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> injective f S.
+Theorem injective_fold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> injective B f S.
 Proof. unfold injective. intros. assumption. Qed.
 Suggest hyp default apply injective_unfold in $n; Destruct.
 Suggest goal default apply injective_fold; Destruct.
-Todo injective_included: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, x ⊆ y -> injective f y -> injective f x.
+Todo injective_included: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, x ⊆ y -> injective B f y -> injective B f x.
 
-Definition #2 projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
-Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection S f -> ∃ x: A, x ∈ S ∧ y = f x.
-Axiom projection_in_intro_r: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, (∃ x: A, x ∈ S ∧ y = f x) -> y ∈ projection S f.
+Definition #1 projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
+Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection B S f -> ∃ x: A, x ∈ S ∧ y = f x.
+Axiom projection_in_intro_r: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, (∃ x: A, x ∈ S ∧ y = f x) -> y ∈ projection B S f.
 Suggest hyp default apply projection_in_intro_l in $n; Destruct.
 Suggest goal default apply projection_in_intro_r; Destruct.
 
-Axiom projection_empty: ∀ A B: U, ∀ f: A -> B, projection {} f = {}.
-Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, projection S f = {} -> S = {}.
-Todo projection_singleton: ∀ A B: U, ∀ f: A -> B, ∀ a: A, projection {a} f = {f a}.
-Todo projection_union: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, projection (x ∪ y) f = projection x f ∪ projection y f.
+Axiom projection_empty: ∀ A B: U, ∀ f: A -> B, projection B {} f = {}.
+Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, projection B S f = {} -> S = {}.
+Todo projection_singleton: ∀ A B: U, ∀ f: A -> B, ∀ a: A, projection B {a} f = {f a}.
+Todo projection_union: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, projection B (x ∪ y) f = projection B x f ∪ projection B y f.
 
-Theorem rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective f S -> ∀ n: ℤ, n ≥ 0 -> |projection S f| = n -> |S| = n.
+Theorem rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective B f S -> ∀ n: ℤ, n ≥ 0 -> |projection B S f| = n -> |S| = n.
 Proof.
     intros.
     revert H1.
@@ -135,7 +135,7 @@ Proof.
     rewrite H1.
     lia.
     intros.
-    add_hyp (∃ y: B, y ∈ projection S f).
+    add_hyp (∃ y: B, y ∈ projection B S f).
     apply len_gt_0_not_empty_set.
     lia.
     destruct H2 with (ex_ind ? ?) to (y y_property).
@@ -147,7 +147,7 @@ Proof.
     auto_set.
     apply singleton_len.
     apply (⁨H0 f ?2 ?4 ?6⁩).
-    replace #1 (projection (S ∖ {x}) f) with (projection (S) f ∖ {y}).
+    replace #1 (projection B (S ∖ {x}) f) with (projection B (S) f ∖ {y}).
     apply set_equality.
     apply included_fold.
     intros.
@@ -207,27 +207,27 @@ Proof.
     assumption.
 Qed.
 
-Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection S f).
+Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection B S f).
 
-Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective f S -> |projection S f| = |S|.
+Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective B f S -> |projection B S f| = |S|.
 Proof.
 intros A B f.
 apply set_induction.
 Switch 1.
 intros.
-replace #1 (projection {} f) with ({}).
+replace #1 (projection B {} f) with ({}).
 apply projection_empty.
 lia.
 intros.
-replace #1 (projection (x ∪ {a}) f) with (projection (x) f ∪ projection {a} f).
+replace #1 (projection B (x ∪ {a}) f) with (projection B (x) f ∪ projection B {a} f).
 apply projection_union.
 replace #1 (|x ∪ {a}|) with (|x| + 1).
 apply finite_add_len.
 assumption.
 assumption.
-replace #1 (projection {a} f) with ({f a}).
+replace #1 (projection B {a} f) with ({f a}).
 apply projection_singleton.
-replace #1 (|projection x f ∪ {f a}|) with (|projection x f| + 1).
+replace #1 (|projection B x f ∪ {f a}|) with (|projection B x f| + 1).
 apply finite_add_len.
 intros.
 apply projection_in_intro_l in H3.
@@ -240,7 +240,7 @@ auto_set.
 auto_set.
 apply projection_finiteR.
 assumption.
-Seq (add_hyp (⁨injective f x⁩)) (remove_hyp H0) (Switch 1) (add_hyp H0_o := (H0 H3)) (remove_hyp H3) (remove_hyp H0) .
+Seq (add_hyp (⁨injective B f x⁩)) (remove_hyp H0) (Switch 1) (add_hyp H0_o := (H0 H3)) (remove_hyp H3) (remove_hyp H0) .
 lia.
 apply (⁨injective_included ?0 ?2 ?4 ?6 (x ∪ {a}) ?10 ?12⁩).
 assumption.
@@ -252,7 +252,7 @@ Import /Logic.
 Import /Eq.
 
 
-Todo asl_zarb2: ∀ X: U, ∀ C: set X, ∀ n m: ℤ, n > 0 -> m > 0 -> ∀ Y: U, ∀ f: X -> Y, |projection C f| = n -> (∀ y: Y, y ∈ (projection C f) -> |{ x: X | x ∈ C ∧ f x = y }| = m) -> ∀ c: ℤ, c = n * m -> |C| = c.
+Todo asl_zarb2: ∀ X: U, ∀ C: set X, ∀ n m: ℤ, n > 0 -> m > 0 -> ∀ Y: U, ∀ f: X -> Y, |projection Y C f| = n -> (∀ y: Y, y ∈ (projection Y C f) -> |{ x: X | x ∈ C ∧ f x = y }| = m) -> ∀ c: ℤ, c = n * m -> |C| = c.
 
 Axiom cm: ℤ -> ℤ -> ℤ.
 Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
@@ -487,6 +487,8 @@ Proof.
     lia.
     assumption.
 Qed.
+
+Todo cnt_of_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S, ∀ l, injective Y f S -> (member_set l) ⊆ S -> ∀ a, a ∈ S -> cnt (f a) (map Y f l) = cnt a l.
 
 Todo count_of_paths: ∀ r, 0 ≤ r -> ∀ u, 0 ≤ u -> |{ l: list char | cnt 'r' l = r ∧ cnt 'u' l = u ∧ |l| = r + u }| = cm (r+u) u.
 Todo member_set_is_two_element_l: ∀ T: U, ∀ l: list T, ∀ a b, |l| = cnt a l + cnt b l -> member_set l ⊆ {a, b}.
@@ -741,7 +743,7 @@ Proof.
     apply member_set_cons.
     auto_set.
     apply (⁨rule_of_bijectionR ?0 (list T) tail ?4 ?6 ?8 ?10 ?12⁩).
-    replace #1 (projection { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ S ∧ |l| = n }).
+    replace #1 (projection (list T) { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ S ∧ |l| = n }).
     apply set_equality.
     apply included_fold.
     intros.
@@ -818,7 +820,7 @@ Proof.
     rewrite H4_r.
     rewrite H5_r.
     auto_list.
-    replace #1 (projection { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } (head d)) with (S).
+    replace #1 (projection (T) { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } (head d)) with (S).
     apply set_equality.
     apply included_fold.
     intros.
@@ -958,7 +960,7 @@ Proof.
     remove_hyp rule_of_bijectionR_ex_ex_ex.
     remove_hyp rule_of_bijectionR_ex_ex.
     remove_hyp rule_of_bijectionR_ex.
-    replace #1 (projection { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ (S ∖ {y}) ∧ |l| = n ∧ unique_elements l }).
+    replace #1 (projection (list T) { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ (S ∖ {y}) ∧ |l| = n ∧ unique_elements l }).
     apply set_from_func_unfold in ly_property_l.
     destruct ly_property_l with (and_ind ? ?) to (ly_property_l_l ly_property_l_r).
     destruct ly_property_l_r with (and_ind ? ?) to (ly_property_l_r_l ly_property_l_r_r).
@@ -1094,7 +1096,7 @@ Proof.
     replace #2 (x) with ([]) in H1_l.
     assumption.
     lia.
-    replace #1 (projection { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } (head d)) with (S).
+    replace #1 (projection T { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } (head d)) with (S).
     apply set_equality.
     apply included_fold.
     intros.
