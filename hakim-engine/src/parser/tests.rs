@@ -296,6 +296,7 @@ fn notation_curry() {
 #[test]
 fn hidden_args() {
     parse_pretty(r#"cnt 'a' "salam""#);
+    parse_pretty("injective (λ c: char, if_f (c = '(') 'r' 'u') {'(', ')'}");
 }
 
 #[test]
@@ -334,8 +335,4 @@ fn max_width() {
   ∀ P: ℤ → Universe,
     (∀ n: ℤ, k ≤ n → (∀ m: ℤ, k ≤ m → m < n → P m) → P n) → ∀ n: ℤ, k ≤ n → P n"#,
     );
-}
-#[test]
-fn pretty_print_of_infer_two_varible_bug() {
-    parse_pretty("injective (λ c: char, if_f (c = '(') 'r' 'u') {'(', ')'}");
 }
