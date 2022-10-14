@@ -277,6 +277,7 @@ mod tests {
         fail("∀ a, a mod 2 = 1");
         fail("∀ a, a mod 2 = 0");
         success("∀ a, a mod 2 = 2 -> False");
+        fail("3 mod 4 = 3");
     }
 
     #[test]
@@ -383,5 +384,10 @@ mod tests {
     #[test]
     fn sets() {
         success(r#"|set_empty ℤ| = 0"#);
+
+    }
+    #[test]
+    fn chars() {
+        success("~ 'r' = 'u'");
     }
 }

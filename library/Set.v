@@ -11,7 +11,6 @@ Theorem empty_intro: ∀ A: U, ∀ a: A, a ∈ {} -> False.
 Proof. intros. auto_set. Qed.
 Suggest hyp default chain (apply empty_intro in $n) (apply (False_ind $n ?)); Contradiction.
 Todo eq_set_empty: ∀ A: U, ∀ S: set A, S = {} -> ∀ a: A, ~ a ∈ S.
-Suggest hyp default apply eq_set_empty in $n; A = {} => ∀ a, ~ a ∈ A.
 Todo empty_set_eq: ∀ A: U, ∀ S: set A, (∀ x: A, ~ x ∈ S) -> S = {}.
 Suggest goal default apply empty_set_eq; Trivial.
 

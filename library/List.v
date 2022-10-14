@@ -219,6 +219,7 @@ Axiom skipn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> skipn l n = l.
 Axiom #1 map: ∀ X Y: U, (X -> Y) -> list X -> list Y.
 Axiom map_nil: ∀ X Y: U, ∀ f: X -> Y, map Y f [] = [].
 Axiom map_cons: ∀ X Y: U, ∀ f: X -> Y, ∀ x, ∀ l, map Y f (x::l) = (f x)::map Y f l.
+Todo map_len: ∀ X Y: U, ∀ f: X -> Y, ∀ l, |map Y f l| = |l|.
 Todo map_f_o_g: ∀ X Y Z: U, ∀ f: Y -> Z, ∀ g: X -> Y, ∀ l, map Z f (map Y g l) = map Z (λ x, f (g x)) l.
 Todo map_eq: ∀ X Y: U, ∀ f: X -> Y, ∀ g: X -> Y, ∀ l, (∀ a, a in l -> f a = g a) -> map Y f l = map Y g l.
 Todo map_identity: ∀ X: U, ∀ f: X -> X, ∀ l, (∀ a, a in l -> f a = a) ->  map X f l = l.
