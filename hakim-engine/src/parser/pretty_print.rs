@@ -386,16 +386,43 @@ pub fn term_to_ast(
         }
         Term::Number { value } => Number(value.clone()),
         Term::App { func, op } => {
-            if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                if let Some(1) = c.names_with_hidden_args.get(unique_name) {
-                    return term_to_ast(func, names, c);
+            fn for_func(
+                func: &Term,
+                op: &Term,
+                names: &mut (Vec<(String, usize, TermRef)>, impl Fn(&str) -> bool),
+                c: &PrettyPrintConfig,
+            ) -> (AstTerm, usize) {
+                match func {
+                    Term::Axiom { unique_name, .. } => {
+                        if let Some(&k) = c.names_with_hidden_args.get(unique_name) {
+                            if k > 0 {
+                                return (term_to_ast(func, names, c), k - 1);
+                            }
+                        }
+                    }
+                    Term::App { func, op: op2 } => {
+                        let (r, k) = for_func(func, op2, names, c);
+                        return if k == 0 {
+                            (
+                                BinOp(Box::new(r), BinOp::App, Box::new(term_to_ast(op, names, c))),
+                                0,
+                            )
+                        } else {
+                            (r, k - 1)
+                        };
+                    }
+                    _ => (),
                 }
+                (
+                    BinOp(
+                        Box::new(term_to_ast(func, names, c)),
+                        BinOp::App,
+                        Box::new(term_to_ast(op, names, c)),
+                    ),
+                    0,
+                )
             }
-            BinOp(
-                Box::new(term_to_ast(func, names, c)),
-                BinOp::App,
-                Box::new(term_to_ast(op, names, c)),
-            )
+            for_func(func, op, names, c).0
         }
         Term::Wild { index, scope: None } => Wild(Some(format!("{index}"))),
         Term::Wild {

@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use typed_arena::Arena;
 
 use crate::{
-    brain::{normalize, remove_unused_var, Abstraction, Term, TermRef},
+    brain::{definitely_inequal, normalize, remove_unused_var, Abstraction, Term, TermRef},
     interactive::{self, Frame},
 };
 
@@ -253,6 +253,13 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
                         };
                     }
                 }
+                /*     if let Term::App { func, op } = func.as_ref() {
+                    if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                        if unique_name == "eq" && definitely_inequal(op1, op2) {
+                            return LogicValue::False;
+                        }
+                    }
+                }*/
             }
         }
         (self.f)(term, &self.arena)
