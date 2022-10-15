@@ -355,6 +355,13 @@ fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
                 },
                 _ => atom_normalizer(t),
             },
+            //            Term::Axiom { unique_name, .. } => match unique_name.as_str() {
+            //                "chr" => {
+            //                    definitely_inequal(t1, t2)
+            //                    term_ref_to_arith(op2.clone(), arena), //Todo add mod to term
+            //                },
+            //               _ => atom_normalizer(t),
+            //            },
             _ => atom_normalizer(t),
         },
         Term::Number { value } => Const(value.clone()),
