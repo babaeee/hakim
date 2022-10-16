@@ -394,8 +394,10 @@ pub fn term_to_ast(
             ) -> (AstTerm, usize) {
                 match func {
                     Term::Axiom { unique_name, .. } => {
-                        if let Some(k) = c.names_with_hidden_args.get(unique_name) {
-                            return (term_to_ast(func, names, c), k - 1);
+                        if let Some(&k) = c.names_with_hidden_args.get(unique_name) {
+                            if k > 0 {
+                                return (term_to_ast(func, names, c), k - 1);
+                            }
                         }
                     }
                     Term::App { func, op: op2 } => {
