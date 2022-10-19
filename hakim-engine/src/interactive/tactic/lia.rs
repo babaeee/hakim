@@ -386,8 +386,4 @@ mod tests {
         success(r#"|set_empty ℤ| = 0"#);
 
     }
-    #[test]
-    fn chars() {
-        success("~ 'r' = 'u'");
-    }
 }

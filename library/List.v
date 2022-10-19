@@ -72,6 +72,7 @@ Proof.
 Qed.
 
 Todo cons_eq: ∀ T: U, ∀ x y: list T, ∀ a b, a :: x = b :: y -> a = b ∧ x = y. 
+Todo append_eq: ∀ T: U, ∀ a b c d: list T, |a| = |b| -> a ++ c = b ++ d -> a = b ∧ c = d.
 
 Todo tail_len: ∀ T: U, ∀ x: list T, ∀ n: ℤ, |x| = n + 1 → |tail x| = n.
 Suggest goal auto apply tail_len; Trivial.
@@ -203,24 +204,34 @@ Axiom #1 firstn: ∀ T: U, list T -> ℤ -> list T.
 Axiom firstn_nil: ∀ T: U, ∀ n: ℤ, firstn (nil T) n = [].
 Axiom firstn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> firstn (a::l) (n + 1) = a::firstn l n.
 Axiom firstn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> firstn l n = []. 
+Todo firstn_gt_len: ∀ T: U, ∀ l: list T, ∀ n: ℤ, n > |l| -> firstn l n = l.
 Todo firstn_len: ∀ T: U, ∀ l: list T, firstn l (|l|) = l.
 Todo firstn_cons_1: ∀ T: U, ∀ l: list T, ∀ a, firstn (a::l) 1 = [a].
 Todo firstn_append_l: ∀ T: U, ∀ a b: list T, ∀ m, |a| ≥ m -> firstn (a ++ b) m = firstn a m.
 Todo firstn_append_r: ∀ T: U, ∀ a b: list T, ∀ m, m ≥ 0 -> firstn (a ++ b) (|a| + m) = a ++ firstn b m.
+Todo firstn_append_l_len: ∀ T: U, ∀ a b: list T, firstn (a ++ b) (|a|) = a.
 Todo cnt_of_firstn_dis_range: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, 0 ≤ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ∧ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ≤ 1.
 Todo cnt_of_firstn_dis_1: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, cnt c (firstn a m) = cnt c (firstn a (m - 1)) + 1 -> firstn a m = firstn a (m - 1) ++ [c].
 Todo member_set_firstn: ∀ T: U, ∀ l: list T, ∀ i, member_set (firstn l i) ⊆ member_set l.
+Todo len_firstn: ∀ T: U, ∀ l: list T, ∀ i, 0 ≤ i -> i ≤ |l| -> |firstn l i| = i. 
+Todo firstn_firstn: ∀ T: U, ∀ l: list T, ∀ i j, i ≤ j -> firstn (firstn l j) i = firstn l i.
 
 Axiom #1 skipn: ∀ T: U, list T -> ℤ -> list T.
 Axiom skipn_nil: ∀ T: U, ∀ n: ℤ, skipn (nil T) n = [].
 Axiom skipn_cons: ∀ T: U, ∀ a: T, ∀ l: list T, ∀ n: ℤ, n ≥ 0 -> skipn (a::l) (n + 1) = skipn l n.
 Axiom skipn_le_0: ∀ T: U, ∀ l: list T, ∀ n: ℤ, 0 ≥ n -> skipn l n = l.
+Todo skipn_append_l: ∀ T: U, ∀ a b: list T, ∀ i: ℤ, |a| ≥ i -> skipn (a ++ b) i = skipn a i ++ b.
+Todo skipn_append_r: ∀ T: U, ∀ a b: list T, ∀ i: ℤ, i ≥ 0 -> skipn (a ++ b) (|a| + i) = skipn b i.
+Todo skipn_append_l_len: ∀ T: U, ∀ a b: list T, skipn (a ++ b) (|a|) = b.
+Todo skipn_len: ∀ T: U, ∀ l: list T, skipn l (|l|) = [].
 
-Axiom #1 map: ∀ X Y: U, (X -> Y) -> list X -> list Y.
-Axiom map_nil: ∀ X Y: U, ∀ f: X -> Y, map Y f [] = [].
-Axiom map_cons: ∀ X Y: U, ∀ f: X -> Y, ∀ x, ∀ l, map Y f (x::l) = (f x)::map Y f l.
-Todo map_len: ∀ X Y: U, ∀ f: X -> Y, ∀ l, |map Y f l| = |l|.
-Todo map_f_o_g: ∀ X Y Z: U, ∀ f: Y -> Z, ∀ g: X -> Y, ∀ l, map Z f (map Y g l) = map Z (λ x, f (g x)) l.
-Todo map_eq: ∀ X Y: U, ∀ f: X -> Y, ∀ g: X -> Y, ∀ l, (∀ a, a in l -> f a = g a) -> map Y f l = map Y g l.
-Todo map_identity: ∀ X: U, ∀ f: X -> X, ∀ l, (∀ a, a in l -> f a = a) ->  map X f l = l.
-Todo firstn_map: ∀ X Y: U, ∀ f: X -> Y, ∀ l, ∀ i, firstn (map Y f l) i = map Y f (firstn l i).
+Todo firstn_skipn: ∀ T: U, ∀ l: list T, ∀ i: ℤ, l = firstn l i ++ skipn l i.
+
+Axiom #2 map: ∀ X Y: U, (X -> Y) -> list X -> list Y.
+Axiom map_nil: ∀ X Y: U, ∀ f: X -> Y, map f [] = [].
+Axiom map_cons: ∀ X Y: U, ∀ f: X -> Y, ∀ x, ∀ l, map f (x::l) = (f x)::map f l.
+Todo map_len: ∀ X Y: U, ∀ f: X -> Y, ∀ l, |map f l| = |l|.
+Todo map_f_o_g: ∀ X Y Z: U, ∀ f: Y -> Z, ∀ g: X -> Y, ∀ l, map f (map g l) = map (λ x, f (g x)) l.
+Todo map_eq: ∀ X Y: U, ∀ f: X -> Y, ∀ g: X -> Y, ∀ l, (∀ a, a in l -> f a = g a) -> map f l = map g l.
+Todo map_identity: ∀ X: U, ∀ f: X -> X, ∀ l, (∀ a, a in l -> f a = a) ->  map f l = l.
+Todo firstn_map: ∀ X Y: U, ∀ f: X -> Y, ∀ l, ∀ i, firstn (map f l) i = map f (firstn l i).
