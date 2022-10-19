@@ -106,6 +106,7 @@ Proof. unfold injective. intros. assumption. Qed.
 Suggest hyp default apply injective_unfold in $n; Destruct.
 Suggest goal default apply injective_fold; Destruct.
 Todo injective_included: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, x ⊆ y -> injective B f y -> injective B f x.
+Todo injective_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S: set (list X), ∀ D: set X, (∀ l, l ∈ S -> member_set l ⊆ D) -> injective Y f D -> injective (list Y) (map f) S.
 
 Definition #1 projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
 Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection B S f -> ∃ x: A, x ∈ S ∧ y = f x.
@@ -259,6 +260,8 @@ Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
 Axiom cmeq: ∀ r, 0 ≤ r -> cm r r = 1.
 Axiom cmdefr: ∀ a b, 0 < a -> 0 < b -> b < a -> cm a b = cm (a - 1) b + cm (a - 1) (b - 1).
 Axiom cm2: ∀ r, 2 * cm r 2 = r * (r - 1).
+Todo cm_not_neg: ∀ n r, r ≤ n -> 0 ≤ r -> 0 ≤ cm n r.
+Todo cm_gt: ∀ n r, 2 * r < n -> 0 ≤ r -> cm n r < cm n (r + 1).
 
 Theorem sigma_0_n: ∀ n, (Σ i in [0, n) i) = cm n 2.
 Proof.
@@ -488,7 +491,7 @@ Proof.
     assumption.
 Qed.
 
-Todo cnt_of_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S, ∀ l, injective Y f S -> (member_set l) ⊆ S -> ∀ a, a ∈ S -> cnt (f a) (map Y f l) = cnt a l.
+Todo cnt_of_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S, ∀ l, injective Y f S -> (member_set l) ⊆ S -> ∀ a, a ∈ S -> cnt (f a) (map f l) = cnt a l.
 
 Todo count_of_paths: ∀ r, 0 ≤ r -> ∀ u, 0 ≤ u -> |{ l: list char | cnt 'r' l = r ∧ cnt 'u' l = u ∧ |l| = r + u }| = cm (r+u) u.
 Todo member_set_is_two_element_l: ∀ T: U, ∀ l: list T, ∀ a b, |l| = cnt a l + cnt b l -> member_set l ⊆ {a, b}.
@@ -1707,5 +1710,3 @@ Proof.
     auto_set.
     assumption.
 Qed.
-
-Todo valid_paren_counting:  ∀ n, | { l | |l| = 2 * n ∧ valid_paren l } | = cm (2 * n) (n) - cm (2 * n) (n - 1).
