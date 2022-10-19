@@ -98,15 +98,15 @@ Proof.
     lia.
 Qed.
 
-Definition #1 injective := λ A B: U, λ f: A -> B, λ S: set A, ∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y.
-Theorem injective_unfold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective B f S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y).
+Definition #2 injective := λ A B: U, λ f: A -> B, λ S: set A, ∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y.
+Theorem injective_unfold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective f S -> (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y).
 Proof. unfold injective. intros A B f S H. assumption. Qed.
-Theorem injective_fold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> injective B f S.
+Theorem injective_fold: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, (∀ x y: A, x ∈ S -> y ∈ S -> f x = f y -> x = y) -> injective f S.
 Proof. unfold injective. intros. assumption. Qed.
 Suggest hyp default apply injective_unfold in $n; Destruct.
 Suggest goal default apply injective_fold; Destruct.
-Todo injective_included: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, x ⊆ y -> injective B f y -> injective B f x.
-Todo injective_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S: set (list X), ∀ D: set X, (∀ l, l ∈ S -> member_set l ⊆ D) -> injective Y f D -> injective (list Y) (map f) S.
+Todo injective_included: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, x ⊆ y -> injective f y -> injective f x.
+Todo injective_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S: set (list X), ∀ D: set X, (∀ l, l ∈ S -> member_set l ⊆ D) -> injective f D -> injective (map f) S.
 
 Definition #1 projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
 Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection B S f -> ∃ x: A, x ∈ S ∧ y = f x.
@@ -119,7 +119,7 @@ Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, project
 Todo projection_singleton: ∀ A B: U, ∀ f: A -> B, ∀ a: A, projection B {a} f = {f a}.
 Todo projection_union: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, projection B (x ∪ y) f = projection B x f ∪ projection B y f.
 
-Theorem rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective B f S -> ∀ n: ℤ, n ≥ 0 -> |projection B S f| = n -> |S| = n.
+Theorem rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective f S -> ∀ n: ℤ, n ≥ 0 -> |projection B S f| = n -> |S| = n.
 Proof.
     intros.
     revert H1.
@@ -210,7 +210,7 @@ Qed.
 
 Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection B S f).
 
-Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective B f S -> |projection B S f| = |S|.
+Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective f S -> |projection B S f| = |S|.
 Proof.
 intros A B f.
 apply set_induction.
@@ -241,7 +241,7 @@ auto_set.
 auto_set.
 apply projection_finiteR.
 assumption.
-Seq (add_hyp (⁨injective B f x⁩)) (remove_hyp H0) (Switch 1) (add_hyp H0_o := (H0 H3)) (remove_hyp H3) (remove_hyp H0) .
+Seq (add_hyp (⁨injective f x⁩)) (remove_hyp H0) (Switch 1) (add_hyp H0_o := (H0 H3)) (remove_hyp H3) (remove_hyp H0) .
 lia.
 apply (⁨injective_included ?0 ?2 ?4 ?6 (x ∪ {a}) ?10 ?12⁩).
 assumption.
@@ -491,7 +491,7 @@ Proof.
     assumption.
 Qed.
 
-Todo cnt_of_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S, ∀ l, injective Y f S -> (member_set l) ⊆ S -> ∀ a, a ∈ S -> cnt (f a) (map f l) = cnt a l.
+Todo cnt_of_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S, ∀ l, injective f S -> (member_set l) ⊆ S -> ∀ a, a ∈ S -> cnt (f a) (map f l) = cnt a l.
 
 Todo count_of_paths: ∀ r, 0 ≤ r -> ∀ u, 0 ≤ u -> |{ l: list char | cnt 'r' l = r ∧ cnt 'u' l = u ∧ |l| = r + u }| = cm (r+u) u.
 Todo member_set_is_two_element_l: ∀ T: U, ∀ l: list T, ∀ a b, |l| = cnt a l + cnt b l -> member_set l ⊆ {a, b}.
