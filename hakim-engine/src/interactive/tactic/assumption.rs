@@ -74,4 +74,8 @@ mod tests {
         success("∀ P Q R S: U, R -> R");
         success("∀ P Q R S: U, (R -> S) -> R -> (S -> False) ∨ Q -> Q");
     }
+    #[test]
+    fn chars() {
+        success("~ 'r' = 'u'");
+    }
 }
