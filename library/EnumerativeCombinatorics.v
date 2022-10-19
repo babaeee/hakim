@@ -108,18 +108,18 @@ Suggest goal default apply injective_fold; Destruct.
 Todo injective_included: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, x ⊆ y -> injective f y -> injective f x.
 Todo injective_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S: set (list X), ∀ D: set X, (∀ l, l ∈ S -> member_set l ⊆ D) -> injective f D -> injective (map f) S.
 
-Definition #1 projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
-Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection B S f -> ∃ x: A, x ∈ S ∧ y = f x.
-Axiom projection_in_intro_r: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, (∃ x: A, x ∈ S ∧ y = f x) -> y ∈ projection B S f.
+Definition #2 projection := λ A B: U, λ S: set A, λ f: A -> B, { y: B | ∃ x: A, x ∈ S ∧ y = f x }.
+Axiom projection_in_intro_l: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, y ∈ projection S f -> ∃ x: A, x ∈ S ∧ y = f x.
+Axiom projection_in_intro_r: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, ∀ y: B, (∃ x: A, x ∈ S ∧ y = f x) -> y ∈ projection S f.
 Suggest hyp default apply projection_in_intro_l in $n; Destruct.
 Suggest goal default apply projection_in_intro_r; Destruct.
 
-Axiom projection_empty: ∀ A B: U, ∀ f: A -> B, projection B {} f = {}.
-Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, projection B S f = {} -> S = {}.
-Todo projection_singleton: ∀ A B: U, ∀ f: A -> B, ∀ a: A, projection B {a} f = {f a}.
-Todo projection_union: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, projection B (x ∪ y) f = projection B x f ∪ projection B y f.
+Axiom projection_empty: ∀ A B: U, ∀ f: A -> B, projection {} f = {}.
+Axiom projection_empty_unique:  ∀ A B: U, ∀ f: A -> B, ∀ S: set A, projection S f = {} -> S = {}.
+Todo projection_singleton: ∀ A B: U, ∀ f: A -> B, ∀ a: A, projection {a} f = {f a}.
+Todo projection_union: ∀ A B: U, ∀ f: A -> B, ∀ x y: set A, projection (x ∪ y) f = projection x f ∪ projection y f.
 
-Theorem rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective f S -> ∀ n: ℤ, n ≥ 0 -> |projection B S f| = n -> |S| = n.
+Theorem rule_of_bijectionR: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, injective f S -> ∀ n: ℤ, n ≥ 0 -> |projection S f| = n -> |S| = n.
 Proof.
     intros.
     revert H1.
@@ -136,7 +136,7 @@ Proof.
     rewrite H1.
     lia.
     intros.
-    add_hyp (∃ y: B, y ∈ projection B S f).
+    add_hyp (∃ y: B, y ∈ projection S f).
     apply len_gt_0_not_empty_set.
     lia.
     destruct H2 with (ex_ind ? ?) to (y y_property).
@@ -148,7 +148,7 @@ Proof.
     auto_set.
     apply singleton_len.
     apply (⁨H0 f ?2 ?4 ?6⁩).
-    replace #1 (projection B (S ∖ {x}) f) with (projection B (S) f ∖ {y}).
+    replace #1 (projection (S ∖ {x}) f) with (projection (S) f ∖ {y}).
     apply set_equality.
     apply included_fold.
     intros.
@@ -208,27 +208,27 @@ Proof.
     assumption.
 Qed.
 
-Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection B S f).
+Axiom projection_finiteR: ∀ A B: Universe, ∀ f: A → B, ∀ S: set A, finite S → finite (projection S f).
 
-Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective f S -> |projection B S f| = |S|.
+Theorem rule_of_bijection: ∀ A B: U, ∀ f: A -> B, ∀ S: set A, finite S -> injective f S -> |projection S f| = |S|.
 Proof.
 intros A B f.
 apply set_induction.
 Switch 1.
 intros.
-replace #1 (projection B {} f) with ({}).
+replace #1 (projection {} f) with ({}).
 apply projection_empty.
 lia.
 intros.
-replace #1 (projection B (x ∪ {a}) f) with (projection B (x) f ∪ projection B {a} f).
+replace #1 (projection (x ∪ {a}) f) with (projection (x) f ∪ projection {a} f).
 apply projection_union.
 replace #1 (|x ∪ {a}|) with (|x| + 1).
 apply finite_add_len.
 assumption.
 assumption.
-replace #1 (projection B {a} f) with ({f a}).
+replace #1 (projection {a} f) with ({f a}).
 apply projection_singleton.
-replace #1 (|projection B x f ∪ {f a}|) with (|projection B x f| + 1).
+replace #1 (|projection x f ∪ {f a}|) with (|projection x f| + 1).
 apply finite_add_len.
 intros.
 apply projection_in_intro_l in H3.
@@ -253,7 +253,7 @@ Import /Logic.
 Import /Eq.
 
 
-Todo asl_zarb2: ∀ X: U, ∀ C: set X, ∀ n m: ℤ, n > 0 -> m > 0 -> ∀ Y: U, ∀ f: X -> Y, |projection Y C f| = n -> (∀ y: Y, y ∈ (projection Y C f) -> |{ x: X | x ∈ C ∧ f x = y }| = m) -> ∀ c: ℤ, c = n * m -> |C| = c.
+Todo asl_zarb2: ∀ X: U, ∀ C: set X, ∀ n m: ℤ, n > 0 -> m > 0 -> ∀ Y: U, ∀ f: X -> Y, |projection C f| = n -> (∀ y: Y, y ∈ (projection C f) -> |{ x: X | x ∈ C ∧ f x = y }| = m) -> ∀ c: ℤ, c = n * m -> |C| = c.
 
 Axiom cm: ℤ -> ℤ -> ℤ.
 Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
@@ -746,7 +746,7 @@ Proof.
     apply member_set_cons.
     auto_set.
     apply (⁨rule_of_bijectionR ?0 (list T) tail ?4 ?6 ?8 ?10 ?12⁩).
-    replace #1 (projection (list T) { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ S ∧ |l| = n }).
+    replace #1 (projection { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ S ∧ |l| = n }).
     apply set_equality.
     apply included_fold.
     intros.
@@ -823,7 +823,7 @@ Proof.
     rewrite H4_r.
     rewrite H5_r.
     auto_list.
-    replace #1 (projection (T) { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } (head d)) with (S).
+    replace #1 (projection { l: list T | member_set l ⊆ S ∧ |l| = n + 1 } (head d)) with (S).
     apply set_equality.
     apply included_fold.
     intros.
@@ -963,7 +963,7 @@ Proof.
     remove_hyp rule_of_bijectionR_ex_ex_ex.
     remove_hyp rule_of_bijectionR_ex_ex.
     remove_hyp rule_of_bijectionR_ex.
-    replace #1 (projection (list T) { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ (S ∖ {y}) ∧ |l| = n ∧ unique_elements l }).
+    replace #1 (projection { x: list T | x ∈ { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } ∧ head d x = y } tail) with ({ l: list T | member_set l ⊆ (S ∖ {y}) ∧ |l| = n ∧ unique_elements l }).
     apply set_from_func_unfold in ly_property_l.
     destruct ly_property_l with (and_ind ? ?) to (ly_property_l_l ly_property_l_r).
     destruct ly_property_l_r with (and_ind ? ?) to (ly_property_l_r_l ly_property_l_r_r).
@@ -1099,7 +1099,7 @@ Proof.
     replace #2 (x) with ([]) in H1_l.
     assumption.
     lia.
-    replace #1 (projection T { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } (head d)) with (S).
+    replace #1 (projection { l: list T | member_set l ⊆ S ∧ |l| = n + 1 ∧ unique_elements l } (head d)) with (S).
     apply set_equality.
     apply included_fold.
     intros.
@@ -1710,3 +1710,2424 @@ Proof.
     auto_set.
     assumption.
 Qed.
+
+Theorem valid_parens_count: ∀ n, n > 0 -> | { l | |l| = 2 * n ∧ valid_paren l } | = cm (2 * n) (n) - cm (2 * n) (n - 1).
+Proof.
+    intros n H_gt_0.
+    replace #1 ({ l: list char | |l| = 2 * n ∧ valid_paren l }) with ({ l: list char | |l| = 2 * n ∧ cnt '(' l = n ∧ cnt ')' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt ')' (firstn l i) ≤ cnt '(' (firstn l i) }).
+    apply set_from_func_eq.
+    intros.
+    add_hyp (|x| = 2 * n ->  valid_paren x ↔  cnt '(' x = n ∧ cnt ')' x = n ∧ ∀ i: ℤ, 0 < i → i ≤ |x| → cnt ')' (firstn x i) ≤ cnt '(' (firstn x i)).
+    intros.
+    apply valid_paren_convert.
+    assumption.
+    assumption.
+    apply (⁨rule_of_bijectionR ?0 (list char) (λ l: (list char),   map (λ c: char, if_f (c = '(') 'r' 'u') l) ?4 ?6 ?8 ?10 ?12⁩).
+    replace #1 (projection { l: list char | |l| = 2 * n ∧ cnt '(' l = n ∧ cnt ')' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt ')' (firstn l i) ≤ cnt '(' (firstn l i) } (map (λ c: char, if_f (c = '(') 'r' 'u'))) with ({ l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply projection_in_intro_r.
+    apply set_from_func_unfold in H.
+    apply (ex_intro ? ? (map (λ c: char, if_f (c = 'r') '(' ')') a)).
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    destruct H_r with (and_ind ? ?) to (H_r_l H_r_r).
+    destruct H_r_r with (and_ind ? ?) to (H_r_r_l H_r_r_r).
+    apply and_intro.
+    replace #1 (map (λ c: char, if_f (c = '(') 'r' 'u') (map (λ c: char, if_f (c = 'r') '(' ')') a)) with (map (λ x, (λ c: char, if_f (c = '(') 'r' 'u') ((λ c: char, if_f (c = 'r') '(' ')') x)) a).
+    apply map_f_o_g.
+    apply eq_sym.
+    replace #1 (map (λ x: char, if_f (if_f (x = 'r') '(' ')' = '(') 'r' 'u') a) with (map (λ x: char, x) a).
+    apply map_eq.
+    intros x H.
+    add_from_lib member_set_is_two_element_l.
+    add_hyp member_set_is_two_element_l_ex := (member_set_is_two_element_l (char)).
+    add_hyp member_set_is_two_element_l_ex_ex := (member_set_is_two_element_l_ex (a)).
+    add_hyp member_set_is_two_element_l_ex_ex_ex := (member_set_is_two_element_l_ex_ex ('r')).
+    add_hyp member_set_is_two_element_l_ex_ex_ex_ex := (member_set_is_two_element_l_ex_ex_ex ('u')).
+    Seq (add_hyp (⁨|a| = cnt 'r' a + cnt 'u' a⁩)) (remove_hyp member_set_is_two_element_l_ex_ex_ex_ex) (Switch 1) (add_hyp member_set_is_two_element_l_ex_ex_ex_ex_o := (member_set_is_two_element_l_ex_ex_ex_ex H0)) (remove_hyp H0) (remove_hyp member_set_is_two_element_l_ex_ex_ex_ex).
+    apply included_unfold in member_set_is_two_element_l_ex_ex_ex_ex_o.
+    add_hyp member_set_is_two_element_l_ex_ex_ex_ex_o_ex := (member_set_is_two_element_l_ex_ex_ex_ex_o (x)).
+    Seq (add_hyp (⁨x ∈ member_set a⁩)) (remove_hyp member_set_is_two_element_l_ex_ex_ex_ex_o_ex) (Switch 1) (add_hyp member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o := (member_set_is_two_element_l_ex_ex_ex_ex_o_ex H0)) (remove_hyp H0) (remove_hyp member_set_is_two_element_l_ex_ex_ex_ex_o_ex).
+    apply union_unfold in member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o.
+    destruct member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o with (or_ind ? ?).
+    apply singleton_unfold in member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o.
+    apply eq_sym in member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o.
+    rewrite member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o.
+    replace #1 (if_f ('u' = 'r') '(' ')') with (')').
+    apply if_false.
+    Switch 1.
+    apply if_false.
+    assumption.
+    assumption.
+    apply singleton_unfold in member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o.
+    apply eq_sym in member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o.
+    rewrite member_set_is_two_element_l_ex_ex_ex_ex_o_ex_o.
+    replace #1 (if_f ('r' = 'r') '(' ')') with ('(').
+    apply if_true.
+    auto_list.
+    apply if_true.
+    auto_list.
+    apply inlist_member_set.
+    assumption.
+    lia.
+    apply map_identity.
+    intros.
+    auto_list.
+    apply set_from_func_fold.
+    apply and_intro.
+    apply and_intro.
+    apply and_intro.
+    intros.
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') '(' ')') a) i)) with (map (λ c: char, if_f (c = 'r') '(' ')') (firstn a i)).
+    apply firstn_map.
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') '(' ')') a) i)) with (map (λ c: char, if_f (c = 'r') '(' ')') (firstn a i)).
+    apply firstn_map.
+    replace #1 (cnt ')' (map (λ c: char, if_f (c = 'r') '(' ')') (firstn a i))) with (cnt 'u'  (firstn a i)).
+    replace #1 (')') with ((λ c: char, if_f (c = 'r') '(' ')') 'u').
+    apply eq_sym.
+    apply if_false.
+    assumption.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    add_hyp (⁨member_set (firstn a i) ⊆ member_set a).
+    apply member_set_firstn.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    revert H3.
+    apply union_unfold in H1.
+    destruct H1 with (or_ind ? ?).
+    apply union_unfold in H2.
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    replace #1 (if_f (x = 'r') '(' ')') with (')').
+    apply singleton_unfold in H1.
+    apply if_false.
+    apply eq_sym in H1.
+    rewrite H1.
+    assumption.
+    replace #1 (if_f (y = 'r') '(' ')') with ('(').
+    apply singleton_unfold in H2.
+    apply if_true.
+    auto_set.
+    assumption.
+    apply union_unfold in H2.
+    destruct H2 with (or_ind ? ?).
+    replace #1 (if_f (x = 'r') '(' ')') with ('(').
+    apply if_true.
+    auto_set.
+    replace #1 (if_f (y = 'r') '(' ')') with (')').
+    apply if_false.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H2.
+    assumption.
+    assumption.
+    auto_set.
+    replace #1 (cnt '(' (map (λ c: char, if_f (c = 'r') '(' ')') (firstn a i))) with (cnt 'r' (firstn a i)).
+    replace #1 ('(') with ((λ c: char, if_f (c = 'r') '(' ')') 'r').
+    apply eq_sym.
+    apply if_true.
+    auto_list.
+    add_from_lib cnt_of_map.
+    add_hyp cnt_of_map_ex := (cnt_of_map (char)).
+    add_hyp cnt_of_map_ex_ex := (cnt_of_map_ex (char)).
+    add_hyp cnt_of_map_ex_ex_ex := (cnt_of_map_ex_ex ((λ c: char, if_f (c = 'r') '(' ')'))).
+    add_hyp cnt_of_map_ex_ex_ex_ex := (cnt_of_map_ex_ex_ex ({'r', 'u'})).
+    apply cnt_of_map_ex_ex_ex_ex.
+    auto_set.
+    add_hyp (⁨member_set (firstn a i) ⊆ member_set a).
+    apply member_set_firstn.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    revert H3.
+    apply union_unfold in H1.
+    destruct H1 with (or_ind ? ?).
+    apply union_unfold in H2.
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    replace #1 (if_f (x = 'r') '(' ')') with (')').
+    apply singleton_unfold in H1.
+    apply if_false.
+    apply eq_sym in H1.
+    rewrite H1.
+    assumption.
+    replace #1 (if_f (y = 'r') '(' ')') with ('(').
+    apply singleton_unfold in H2.
+    apply if_true.
+    auto_set.
+    assumption.
+    apply union_unfold in H2.
+    destruct H2 with (or_ind ? ?).
+    replace #1 (if_f (x = 'r') '(' ')') with ('(').
+    apply if_true.
+    auto_set.
+    replace #1 (if_f (y = 'r') '(' ')') with (')').
+    apply if_false.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H2.
+    assumption.
+    assumption.
+    auto_set.
+    apply H_r_r_r.
+    replace #1 (|map (λ c: char, if_f (c = 'r') '(' ')') a|) with (|a|) in H0.
+    apply map_len.
+    assumption.
+    assumption.
+    apply eq_sym in H_r_r_l.
+    rewrite H_r_r_l.
+    replace #1 (')') with ((λ c: char, if_f (c = 'r') '(' ')') 'u').
+    apply eq_sym.
+    apply if_false.
+    assumption.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply member_set_is_two_element_l.
+    lia.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    apply union_unfold in H0.
+    destruct H with (or_ind ? ?).
+    destruct H0 with (or_ind ? ?).
+    auto_set.
+    replace #1 (if_f (x = 'r') '(' ')') with (')') in H1.
+    apply singleton_unfold in H.
+    apply if_false.
+    apply eq_sym in H.
+    rewrite H.
+    assumption.
+    apply singleton_unfold in H0.
+    revert H1.
+    replace #1 (if_f (y = 'r') '(' ')') with ('(').
+    apply if_true.
+    auto_set.
+    lia.
+    destruct H0 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    revert H1.
+    replace #1 (if_f (x = 'r') '(' ')') with ('(').
+    apply if_true.
+    auto_set.
+    replace #1 (if_f (y = 'r') '(' ')') with (')').
+    apply if_false.
+    apply eq_sym in H0.
+    rewrite H0.
+    assumption.
+    assumption.
+    auto_set.
+    apply eq_sym in H_r_l.
+    rewrite H_r_l.
+    replace #1 ('(') with ((λ c: char, if_f (c = 'r') '(' ')') 'r').
+    apply eq_sym.
+    apply if_true.
+    auto_list.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply member_set_is_two_element_l.
+    lia.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    apply union_unfold in H0.
+    destruct H with (or_ind ? ?).
+    destruct H0 with (or_ind ? ?).
+    auto_set.
+    replace #1 (if_f (x = 'r') '(' ')') with (')') in H1.
+    apply singleton_unfold in H.
+    apply if_false.
+    apply eq_sym in H.
+    rewrite H.
+    assumption.
+    apply singleton_unfold in H0.
+    revert H1.
+    replace #1 (if_f (y = 'r') '(' ')') with ('(').
+    apply if_true.
+    auto_set.
+    lia.
+    destruct H0 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    revert H1.
+    replace #1 (if_f (x = 'r') '(' ')') with ('(').
+    apply if_true.
+    auto_set.
+    replace #1 (if_f (y = 'r') '(' ')') with (')').
+    apply if_false.
+    apply eq_sym in H0.
+    rewrite H0.
+    assumption.
+    assumption.
+    auto_set.
+    replace #1 (|map (λ c: char, if_f (c = 'r') '(' ')') a|) with (|a|).
+    apply map_len.
+    assumption.
+    apply included_fold.
+    intros.
+    apply set_from_func_fold.
+    apply projection_in_intro_l in H.
+    destruct H with (ex_ind ? ?) to (x x_property).
+    destruct x_property with (and_ind ? ?) to (x_property_l x_property_r).
+    apply set_from_func_unfold in x_property_l.
+    destruct x_property_l with (and_ind ? ?) to (x_property_l_l x_property_l_r).
+    destruct x_property_l_r with (and_ind ? ?) to (x_property_l_r_l x_property_l_r_r).
+    destruct x_property_l_r_r with (and_ind ? ?) to (x_property_l_r_r_l x_property_l_r_r_r).
+    rewrite x_property_r.
+    apply and_intro.
+    apply and_intro.
+    apply and_intro.
+    intros.
+    add_hyp x_property_l_r_r_r_ex := (x_property_l_r_r_r (i)).
+    replace #1 (cnt 'u' (firstn (map (λ c: char, if_f (c = '(') 'r' 'u') x) i)) with (cnt ')' (firstn x i)).
+    replace #1 ((firstn (map (λ c: char, if_f (c = '(') 'r' 'u') x) i)) with (map (λ c: char, if_f (c = '(') 'r' 'u') (firstn  x i)).
+    apply firstn_map.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'(', ')'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H2.
+    apply eq_sym in H1.
+    rewrite H1.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H2.
+    apply eq_sym in H1.
+    rewrite H1.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'r' (firstn (map (λ c: char, if_f (c = '(') 'r' 'u') x) i)) with (cnt '(' (firstn x i)).
+    replace #1 (firstn (map (λ c: char, if_f (c = '(') 'r' 'u') x) i) with (map (λ c: char, if_f (c = '(') 'r' 'u') (firstn x i)).
+    apply firstn_map.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'(', ')'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H2.
+    apply eq_sym in H1.
+    rewrite H1.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H2.
+    apply eq_sym in H1.
+    rewrite H1.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    apply x_property_l_r_r_r_ex.
+    replace #1 (|map (λ c: char, if_f (c = '(') 'r' 'u') x|) with (|x|) in H0.
+    apply map_len.
+    assumption.
+    assumption.
+    replace #1 (cnt 'u' (map (λ c: char, if_f (c = '(') 'r' 'u') x)) with (cnt ')' x).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'(', ')'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply member_set_is_two_element_l.
+    lia.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    apply union_unfold in H0.
+    destruct H with (or_ind ? ?).
+    destruct H0 with (or_ind ? ?).
+    auto_set.
+    revert H1.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H0 with (or_ind ? ?).
+    revert H1.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    assumption.
+    replace #1 (cnt 'r' (map (λ c: char, if_f (c = '(') 'r' 'u') x)) with (cnt '(' x).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'(', ')'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply member_set_is_two_element_l.
+    lia.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    apply union_unfold in H0.
+    destruct H with (or_ind ? ?).
+    destruct H0 with (or_ind ? ?).
+    auto_set.
+    revert H1.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H0 with (or_ind ? ?).
+    revert H1.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    assumption.
+    replace #1 (|map (λ c: char, if_f (c = '(') 'r' 'u') x|) with (|x|).
+    apply map_len.
+    assumption.
+    apply (⁨rule_of_minus2 ?0 { l: list char | |l| = 2 * n   ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ?14 (cm (2 * n) n) (cm (2 * n) (n   - 1)) ?18 ?20 ?22 ?24 ?26 ?28 ?30⁩).
+    auto_list.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H.
+    apply set_from_func_fold.
+    assumption.
+    add_from_lib exist_function.
+    add_hyp exist_function_ex := (exist_function (list char)).
+    add_hyp exist_function_ex_ex := (exist_function_ex (list char)).
+    add_hyp exist_function_ex_ex_ex := (exist_function_ex_ex (λ x y, x ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) } -> ∃ i, i > 0 ∧ i ≤ |x| ∧ cnt 'r' (firstn x i) + 1 = cnt 'u' (firstn x i) ∧ (∀ j, j > 0 -> cnt 'r' (firstn x j) + 1 = cnt 'u' (firstn x j) -> j ≥ i) ∧ (∀ j, j > 0 -> cnt 'u' (firstn y j) + 1 = cnt 'r' (firstn y j) -> j ≥ i) ∧ y = (map (λ c, if_f (c = 'r') 'u' 'r') (firstn x i) ) ++ skipn x i )).
+    Seq (add_hyp (⁨∀ x: list char,   ∃ x0: list char,     (λ x1 y: list char,       x1         ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }             ∖ { l: list char | |l| = 2 * n                 ∧ cnt 'r' l = n                     ∧ cnt 'u' l = n                         ∧ ∀ i: ℤ,                             0 < i                               → i ≤ |l|                                   → cnt 'u' (firstn l i)                                       ≤ cnt 'r' (firstn l i) }         → ∃ i: ℤ,             0 < i               ∧ i ≤ |x1|                   ∧ cnt 'r' (firstn x1 i) + 1 = cnt 'u' (firstn x1 i)                       ∧ (∀ j: ℤ,                           0 < j                             → cnt 'r' (firstn x1 j) + 1 = cnt 'u' (firstn x1 j)                                 → i ≤ j)                           ∧ (∀ j: ℤ,                               0 < j                                 → cnt 'u' (firstn y j) + 1                                     = cnt 'r' (firstn y j)                                     → i ≤ j)                               ∧ y                                   = map (λ c: char,                                       if_f (c = 'r') 'u' 'r') (firstn x1 i)                                       ++ skipn x1 i) x x0⁩)) (remove_hyp exist_function_ex_ex_ex) (Switch 1) (add_hyp exist_function_ex_ex_ex_o := (exist_function_ex_ex_ex H)) (remove_hyp H) (remove_hyp exist_function_ex_ex_ex).
+    Switch 1.
+    intros.
+    add_hyp (x ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) } ∨ ~ x ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }).
+    assumption.
+    destruct H with (or_ind ? ?).
+    apply (ex_intro ? ? ([])).
+    intros.
+    assumption.
+    apply setminus_unfold in H.
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    add_hyp (~ ∀ i: ℤ, 0 < i → i ≤ |x| → cnt 'u' (firstn x i) ≤ cnt 'r' (firstn x i) ).
+    intros.
+    Seq (add_hyp (⁨x   ∈ { l: list char | |l| = 2 * n       ∧ cnt 'r' l = n           ∧ cnt 'u' l = n               ∧ ∀ i: ℤ,                   0 < i                     → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }⁩)) (remove_hyp H_r) (Switch 1) (add_hyp H_r_o := (H_r H0)) (remove_hyp H0) (remove_hyp H_r).
+    assumption.
+    apply set_from_func_fold.
+    apply set_from_func_unfold in H_l.
+    assumption.
+    apply not_forall_imply_exists in H.
+    add_hyp (∃ i: ℤ, -1 < i ∧ i ≤ |x| ∧ cnt 'r' (firstn x i) + 1 = cnt 'u' (firstn x i)).
+    add_hyp (∃ i: ℤ, -1 < i ∧ i ≤ |x| ∧ cnt 'r' (firstn x i) < cnt 'u' (firstn x i)).
+    destruct H with (ex_ind ? ?) to (i i_property).
+    apply not_forall_imply_exists in i_property.
+    destruct i_property with (ex_ind ? ?) to (h1 h1_property).
+    apply not_forall_imply_exists in h1_property.
+    destruct h1_property with (ex_ind ? ?) to (h2 h2_property).
+    apply (ex_intro ? ? (i)).
+    lia.
+    apply ex_min in H0.
+    destruct H0 with (ex_ind ? ?) to (i i_property).
+    apply (ex_intro ? ? (i)).
+    destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
+    destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
+    apply and_intro.
+    apply NNPP.
+    intros.
+    add_hyp i_property_r_r_ex := (i_property_r_r (i - 1)).
+    Seq (add_hyp (⁨- 1 < i - 1⁩)) (remove_hyp i_property_r_r_ex) (Switch 1) (add_hyp i_property_r_r_ex_o := (i_property_r_r_ex H1)) (remove_hyp H1) (remove_hyp i_property_r_r_ex).
+    Seq (add_hyp (⁨i - 1 ≤ |x| ∧ cnt 'r' (firstn x (i - 1)) < cnt 'u' (firstn x (i - 1))⁩)) (remove_hyp i_property_r_r_ex_o) (Switch 1) (add_hyp i_property_r_r_ex_o_o := (i_property_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp i_property_r_r_ex_o).
+    lia.
+    apply and_intro.
+    add_from_lib cnt_of_firstn_dis_range.
+    add_hyp cnt_of_firstn_dis_range_ex := (cnt_of_firstn_dis_range (char)).
+    add_hyp cnt_of_firstn_dis_range_ex_ex := (cnt_of_firstn_dis_range_ex (x)).
+    add_hyp cnt_of_firstn_dis_range_ex_ex_ex := (cnt_of_firstn_dis_range_ex_ex (i)).
+    add_hyp cnt_of_firstn_dis_range_ex_ex_ex_ex := (cnt_of_firstn_dis_range_ex_ex_ex ('r')).
+    add_hyp cnt_of_firstn_dis_range_ex_ex_ex_ex0 := (cnt_of_firstn_dis_range_ex_ex_ex ('u')).
+    destruct i_property_r_l with (and_ind ? ?) to (i_property_r_l_l i_property_r_l_r).
+    lia.
+    lia.
+    add_hyp (~ i = 0).
+    intros.
+    replace #1 ((firstn x i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    replace #1 ((firstn x i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    lia.
+    lia.
+    assumption.
+    apply ex_min in H0.
+    destruct H0 with (ex_ind ? ?) to (i i_property).
+    add_hyp (∃ x, x = (λ c: char, if_f (c = 'r') 'u' 'r')).
+    apply (ex_intro ? ? ((λ c: char, if_f (c = 'r') 'u' 'r'))).
+    auto_list.
+    destruct H0 with (ex_ind ? ?) to (revert revert_property).
+    apply (ex_intro ? ? (map revert (firstn x i) ++ skipn x i)).
+    intros.
+    apply (ex_intro ? ? (i)).
+    destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
+    apply and_intro.
+    destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
+    apply and_intro.
+    apply and_intro.
+    apply and_intro.
+    apply and_intro.
+    rewrite revert_property.
+    auto_list.
+    intros.
+    apply NNPP.
+    intros.
+    replace #1 ((firstn (map revert (firstn x i) ++ skipn x i) j)) with (map revert (firstn x j)) in H2.
+    replace #1 (firstn (map revert (firstn x i) ++ skipn x i) j) with (firstn (map revert (firstn x i)) j).
+    apply firstn_append_l.
+    replace #1 (|map revert (firstn x i)|) with (i).
+    replace #1 (|map revert (firstn x i)|) with (|(firstn x i)|).
+    apply map_len.
+    apply len_firstn.
+    assumption.
+    lia.
+    lia.
+    replace #1 (firstn (map revert (firstn x i)) j) with (map revert (firstn (firstn x i) j)).
+    apply firstn_map.
+    replace #1 ((firstn (firstn x i) j)) with ((firstn x j)).
+    apply firstn_firstn.
+    lia.
+    auto_list.
+    replace #1 ((firstn (map revert (firstn x i) ++ skipn x i) j)) with ((map revert (firstn x j))) in H2.
+    replace #1 (firstn (map revert (firstn x i) ++ skipn x i) j) with (firstn (map revert (firstn x i)) j).
+    apply firstn_append_l.
+    replace #1 (|map revert (firstn x i)|) with (i).
+    replace #1 (|map revert (firstn x i)|) with (|(firstn x i)|).
+    apply map_len.
+    apply len_firstn.
+    assumption.
+    lia.
+    lia.
+    replace #1 (firstn (map revert (firstn x i)) j) with (map revert (firstn (firstn x i) j)).
+    apply firstn_map.
+    replace #1 ((firstn (firstn x i) j)) with ((firstn x j)).
+    apply firstn_firstn.
+    lia.
+    auto_list.
+    replace #1 (cnt 'u' (map revert (firstn x j))) with (cnt 'r' (firstn x j)) in H2.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply set_from_func_unfold in H_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H4.
+    apply union_unfold in H5.
+    destruct H4 with (or_ind ? ?).
+    destruct H5 with (or_ind ? ?).
+    auto_set.
+    replace #1 (x0) with ('u') in H6.
+    auto_set.
+    replace #1 (y) with ('r') in H6.
+    auto_set.
+    replace #1 (revert 'r') with ('u') in H6.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    replace #1 (revert 'u') with ('r') in H6.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    assumption.
+    destruct H5 with (or_ind ? ?).
+    replace #1 (x0) with ('r') in H6.
+    auto_set.
+    replace #1 (y) with ('u') in H6.
+    auto_set.
+    replace #1 (revert 'r') with ('u') in H6.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    replace #1 (revert 'u') with ('r') in H6.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'r' (map revert (firstn x j))) with (cnt 'u' ((firstn x j))) in H2.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply set_from_func_unfold in H_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H4.
+    apply union_unfold in H5.
+    destruct H4 with (or_ind ? ?).
+    destruct H5 with (or_ind ? ?).
+    auto_set.
+    replace #1 (x0) with ('u') in H6.
+    auto_set.
+    replace #1 (y) with ('r') in H6.
+    auto_set.
+    replace #1 (revert 'r') with ('u') in H6.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    replace #1 (revert 'u') with ('r') in H6.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    assumption.
+    destruct H5 with (or_ind ? ?).
+    replace #1 (x0) with ('r') in H6.
+    auto_set.
+    replace #1 (y) with ('u') in H6.
+    auto_set.
+    replace #1 (revert 'r') with ('u') in H6.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    replace #1 (revert 'u') with ('r') in H6.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    assumption.
+    auto_set.
+    add_hyp i_property_r_r_ex := (i_property_r_r (j)).
+    lia.
+    intros.
+    apply NNPP.
+    intros.
+    apply set_from_func_unfold in H_l.
+    intros.
+    intros.
+    add_hyp i_property_r_r_ex := (i_property_r_r (j)).
+    lia.
+    assumption.
+    assumption.
+    add_hyp (~ i = 0).
+    intros.
+    destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
+    replace #1 ((firstn x i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    replace #1 ((firstn x i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    lia.
+    lia.
+    remove_hyp exist_function_ex_ex.
+    remove_hyp exist_function_ex.
+    destruct exist_function_ex_ex_ex_o with (ex_ind ? ?) to (f f_property).
+    add_hyp (∃ x, x = (λ c: char, if_f (c = 'r') 'u' 'r')).
+    apply (ex_intro ? ? ((λ c: char, if_f (c = 'r') 'u' 'r'))).
+    auto_list.
+    destruct H with (ex_ind ? ?) to (revert revert_property).
+    apply (⁨rule_of_bijectionR ?0 (list char) f ?4 ?6 ?8 ?10 ?12⁩).
+    replace #1 (projection ({ l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }) f) with ({ l: list char | cnt 'r' l = n + 1 ∧ cnt 'u' l =  n - 1 ∧ |l| = n + 1 + (n - 1) }).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H.
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    destruct H_r with (and_ind ? ?) to (H_r_l H_r_r).
+    add_hyp (∃ i, i > -1 ∧ i ≤ |a| ∧ cnt 'r' (firstn a i) = cnt 'u' (firstn a i) + 1).
+    add_hyp (∃ i: ℤ, - 1 < i ∧ i ≤ |a| ∧ cnt 'r' (firstn a i) > cnt 'u' (firstn a i)).
+    apply (ex_intro ? ? (2 * n)).
+    apply and_intro.
+    apply and_intro.
+    replace #2 (firstn a (2 * n)) with (a).
+    replace #1 ((2 * n)) with (|a|).
+    lia.
+    apply firstn_len.
+    replace #1 ((firstn a (2 * n))) with (a).
+    replace #1 ((2 * n)) with (|a|).
+    lia.
+    apply firstn_len.
+    lia.
+    lia.
+    lia.
+    apply ex_min in H.
+    destruct H with (ex_ind ? ?) to (i i_property).
+    apply (ex_intro ? ? (i)).
+    apply and_intro.
+    apply and_intro.
+    destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
+    destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
+    apply NNPP.
+    intros.
+    add_hyp i_property_r_r_ex := (i_property_r_r (i - 1)).
+    Seq (add_hyp (⁨- 1 < i - 1⁩)) (remove_hyp i_property_r_r_ex) (Switch 1) (add_hyp i_property_r_r_ex_o := (i_property_r_r_ex H0)) (remove_hyp H0) (remove_hyp i_property_r_r_ex).
+    Seq (add_hyp (⁨i - 1 ≤ |a| ∧ cnt 'u' (firstn a (i - 1)) < cnt 'r' (firstn a (i - 1))⁩)) (remove_hyp i_property_r_r_ex_o) (Switch 1) (add_hyp i_property_r_r_ex_o_o := (i_property_r_r_ex_o H0)) (remove_hyp H0) (remove_hyp i_property_r_r_ex_o).
+    lia.
+    apply and_intro.
+    add_from_lib cnt_of_firstn_dis_range.
+    add_hyp cnt_of_firstn_dis_range_ex := (cnt_of_firstn_dis_range (char)).
+    add_hyp cnt_of_firstn_dis_range_ex_ex := (cnt_of_firstn_dis_range_ex (a)).
+    add_hyp cnt_of_firstn_dis_range_ex_ex_ex := (cnt_of_firstn_dis_range_ex_ex (i)).
+    add_hyp cnt_of_firstn_dis_range_ex_ex_ex_ex := (cnt_of_firstn_dis_range_ex_ex_ex ('r')).
+    add_hyp cnt_of_firstn_dis_range_ex_ex_ex_ex0 := (cnt_of_firstn_dis_range_ex_ex_ex ('u')).
+    lia.
+    lia.
+    add_hyp (~ i = 0).
+    intros.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    lia.
+    lia.
+    assumption.
+    assumption.
+    apply ex_min in H.
+    destruct H with (ex_ind ? ?) to (i i_property).
+    destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
+    destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
+    apply projection_in_intro_r.
+    apply (ex_intro ? ? (map revert (firstn a i) ++ skipn a i)).
+    apply and_intro.
+    add_hyp (|map revert (firstn a i) ++ skipn a i| = 2 * n).
+    replace #1 (|map revert (firstn a i) ++ skipn a i|) with (|map revert (firstn a i) |+| skipn a i|).
+    lia.
+    replace #1 (|map revert (firstn a i)|) with (|(firstn a i)|).
+    apply map_len.
+    replace #1 (|firstn a i| + |skipn a i|) with (|firstn a i ++ skipn a i|).
+    lia.
+    replace #1 (firstn a i ++ skipn a i) with (a).
+    apply eq_sym.
+    apply firstn_skipn.
+    lia.
+    add_hyp (∀ c, c ∈ {'r', 'u'} -> cnt c ( map revert (firstn a i) ++ skipn a i) = n).
+    intros.
+    replace #1 (cnt c (map revert (firstn a i) ++ skipn a i)) with (cnt c (map revert (firstn a i)) + cnt c ( skipn a i)).
+    lia.
+    apply union_unfold in H0.
+    destruct H0 with (or_ind ? ?).
+    apply singleton_unfold in H0.
+    apply eq_sym in H0.
+    rewrite H0.
+    replace #1 (a) with (firstn a i ++ skipn a i) in H_r_l.
+    apply firstn_skipn.
+    replace #1 (cnt 'u' (map revert (firstn a i))) with (cnt 'r' (firstn a i)).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    replace #1 (firstn a i ++ skipn a i) with (a) in H_r_l.
+    apply eq_sym.
+    apply firstn_skipn.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    lia.
+    apply singleton_unfold in H0.
+    apply eq_sym in H0.
+    rewrite H0.
+    replace #1 (cnt 'r' (map revert (firstn a i))) with (cnt 'u' (firstn a i)).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    add_hyp (⁨member_set (firstn a i) ⊆ member_set a).
+    apply member_set_firstn.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    rewrite revert_property.
+    auto_list.
+    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    apply firstn_skipn.
+    lia.
+    add_hyp f_property_ex := (f_property ( (map revert (firstn a i) ++ skipn a i))).
+    Seq (add_hyp (⁨map revert (firstn a i) ++ skipn a i   ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }       ∖ { l: list char | |l| = 2 * n           ∧ cnt 'r' l = n               ∧ cnt 'u' l = n                   ∧ ∀ i0: ℤ,                       0 < i0                         → i0 ≤ |l|                             → cnt 'u' (firstn l i0) ≤ cnt 'r' (firstn l i0) }⁩)) (remove_hyp f_property_ex) (Switch 1) (add_hyp f_property_ex_o := (f_property_ex H1)) (remove_hyp H1) (remove_hyp f_property_ex).
+    destruct f_property_ex_o with (ex_ind ? ?) to (j j_property).
+    destruct j_property with (and_ind ? ?) to (j_property_l j_property_r).
+    destruct j_property_r with (and_ind ? ?) to (j_property_r_l j_property_r_r).
+    destruct j_property_r_r with (and_ind ? ?) to (j_property_r_r_l j_property_r_r_r).
+    destruct j_property_r_r_r with (and_ind ? ?) to (j_property_r_r_r_l j_property_r_r_r_r).
+    destruct j_property_r_r_r_r with (and_ind ? ?) to (j_property_r_r_r_r_l j_property_r_r_r_r_r).
+    add_hyp (i = j).
+    add_hyp i_property_r_r_ex := (i_property_r_r (j)).
+    add_hyp j_property_r_r_r_l_ex := (j_property_r_r_r_l (i)).
+    Seq (add_hyp (⁨0 < i⁩)) (remove_hyp j_property_r_r_r_l_ex) (Switch 1) (add_hyp j_property_r_r_r_l_ex_o := (j_property_r_r_r_l_ex H1)) (remove_hyp H1) (remove_hyp j_property_r_r_r_l_ex).
+    Seq (add_hyp (⁨cnt 'r' (firstn (map revert (firstn a i) ++ skipn a i) i) + 1   = cnt 'u' (firstn (map revert (firstn a i) ++ skipn a i) i)⁩)) (remove_hyp j_property_r_r_r_l_ex_o) (Switch 1) (add_hyp j_property_r_r_r_l_ex_o_o := (j_property_r_r_r_l_ex_o H1)) (remove_hyp H1) (remove_hyp j_property_r_r_r_l_ex_o).
+    Switch 1.
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((firstn (map revert (firstn a i)) i)).
+    apply firstn_append_l.
+    replace #1 (|map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    replace #1 (|firstn a i|) with (i).
+    apply len_firstn.
+    assumption.
+    lia.
+    auto_list.
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((firstn (map revert (firstn a i)) i)).
+    apply firstn_append_l.
+    replace #1 (|map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    replace #1 (|firstn a i|) with (i).
+    apply len_firstn.
+    assumption.
+    lia.
+    auto_list.
+    replace #1 ((firstn (map revert (firstn a i)) i)) with (map revert (firstn a i)).
+    replace #2 (i) with (|(map revert (firstn a i))|).
+    replace #1 (|map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_len.
+    replace #1 ((firstn (map revert (firstn a i)) i)) with (map revert (firstn a i)).
+    replace #2 (i) with (|(map revert (firstn a i))|).
+    replace #1 (|map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_len.
+    replace #1 (cnt 'r' (map revert (firstn a i))) with (cnt 'u' (firstn a i)).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    add_hyp (⁨member_set (firstn a i) ⊆ member_set a).
+    apply member_set_firstn.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'u' (map revert (firstn a i))) with (cnt 'r' (firstn a i)).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply eq_sym.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    auto_set.
+    Seq (add_hyp (⁨- 1 < j⁩)) (remove_hyp i_property_r_r_ex) (Switch 1) (add_hyp i_property_r_r_ex_o := (i_property_r_r_ex H1)) (remove_hyp H1) (remove_hyp i_property_r_r_ex).
+    Seq (add_hyp (⁨j ≤ |a| ∧ cnt 'r' (firstn a j) = cnt 'u' (firstn a j) + 1⁩)) (remove_hyp i_property_r_r_ex_o) (Switch 1) (add_hyp i_property_r_r_ex_o_o := (i_property_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp i_property_r_r_ex_o).
+    lia.
+    apply and_intro.
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) j)) with (((firstn (map revert (firstn a i)) j))) in j_property_r_r_l.
+    apply firstn_append_l.
+    replace #1 (| map revert (firstn a i)|) with (|(firstn a i)|).
+    apply map_len.
+    replace #1 (|firstn a i|) with (i).
+    apply len_firstn.
+    assumption.
+    lia.
+    assumption.
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) j)) with (((firstn (map revert (firstn a i) ) j))) in j_property_r_r_l.
+    apply firstn_append_l.
+    replace #1 (| map revert (firstn a i)|) with (|(firstn a i)|).
+    apply map_len.
+    replace #1 (|firstn a i|) with (i).
+    apply len_firstn.
+    assumption.
+    lia.
+    assumption.
+    replace #1 ((firstn (map revert (firstn a i)) j)) with (((map revert (firstn a j)))) in j_property_r_r_l.
+    replace #1 (firstn (map revert (firstn a i)) j) with ((map revert (firstn (firstn a i) j) )).
+    apply firstn_map.
+    replace #1 ((firstn (firstn a i) j)) with ((firstn a j)).
+    apply firstn_firstn.
+    assumption.
+    auto_list.
+    replace #1 ((firstn (map revert (firstn a i)) j)) with (map revert (firstn a j)) in j_property_r_r_l.
+    replace #1 (firstn (map revert (firstn a i)) j) with (map revert (firstn (firstn a i) j) ).
+    apply firstn_map.
+    replace #1 ((firstn (firstn a i) j)) with ((firstn a j)).
+    apply firstn_firstn.
+    assumption.
+    auto_list.
+    replace #1 (cnt 'r' (map revert (firstn a j))) with (cnt 'u' (firstn a j)) in j_property_r_r_l.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'u' (map revert (firstn a j))) with ((cnt 'r' (firstn a j))) in j_property_r_r_l.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    auto_set.
+    add_hyp (~ i  =0).
+    intros.
+    destruct i_property_r_l with (and_ind ? ?) to (i_property_r_l_l i_property_r_l_r).
+    replace #2 (firstn a i) with ([]) in i_property_r_l_r.
+    lia.
+    replace #1 (firstn a i) with ([]) in i_property_r_l_r.
+    lia.
+    lia.
+    lia.
+    lia.
+    add_hyp (~ i  =0).
+    intros.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    lia.
+    lia.
+    rewrite j_property_r_r_r_r_r.
+    rewrite H1.
+    replace #1 ((firstn (map revert (firstn a j) ++ skipn a j) j)) with (map revert (firstn a j)).
+    replace #3 (j) with (| map revert (firstn a j)|).
+    replace #1 (| map revert (firstn a j)|) with (|(firstn a j)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    lia.
+    assumption.
+    apply firstn_append_l_len.
+    apply eq_sym.
+    add_hyp (skipn (map revert (firstn a j) ++ skipn a j) j = skipn a j).
+    replace #3 (j) with (| map revert (firstn a j)|).
+    replace #1 (| map revert (firstn a j)|) with (|(firstn a j)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    lia.
+    assumption.
+    apply skipn_append_l_len.
+    rewrite H2.
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    replace #1 (map revert (map revert (firstn a j))) with ((firstn a j)).
+    replace #1 (map revert (map revert (firstn a j))) with (map (λ x, revert ( revert x) ) (firstn a j)).
+    apply map_f_o_g.
+    apply map_identity.
+    intros.
+    add_hyp (a0 ∈ {'r', 'u'}).
+    apply inlist_member_set in H3.
+    add_hyp (member_set a ⊆ {'r', 'u'}).
+    apply member_set_is_two_element_l.
+    lia.
+    add_hyp (member_set (firstn a j) ⊆ member_set a ).
+    apply member_set_firstn.
+    apply included_unfold in H5.
+    apply H5 in H3.
+    apply included_unfold in H4.
+    apply H4 in H3.
+    assumption.
+    apply union_unfold in H4.
+    destruct H4 with (or_ind ? ?).
+    apply singleton_unfold in H4.
+    apply eq_sym in H4.
+    rewrite H4.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    apply singleton_unfold in H4.
+    apply eq_sym in H4.
+    rewrite H4.
+    replace #1 ((revert 'r')) with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    apply eq_sym.
+    apply firstn_skipn.
+    apply setminus_fold.
+    apply and_intro.
+    intros.
+    apply set_from_func_unfold in H1.
+    destruct H1 with (and_ind ? ?) to (H1_l H1_r).
+    destruct H1_r with (and_ind ? ?) to (H1_r_l H1_r_r).
+    destruct H1_r_r with (and_ind ? ?) to (H1_r_r_l H1_r_r_r).
+    add_hyp H1_r_r_r_ex := (H1_r_r_r (i)).
+    Seq (add_hyp (⁨0 < i⁩)) (remove_hyp H1_r_r_r_ex) (Switch 1) (add_hyp H1_r_r_r_ex_o := (H1_r_r_r_ex H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex).
+    Seq (add_hyp (⁨i ≤ | map revert (firstn a i) ++ skipn a i|⁩)) (remove_hyp H1_r_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_r_ex_o_o := (H1_r_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex_o).
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((map revert (firstn a i))) in H1_r_r_r_ex_o_o.
+    replace #3 (i) with (| map revert (firstn a i)|).
+    replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_append_l_len.
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with (map revert (firstn a i)) in H1_r_r_r_ex_o_o.
+    replace #3 (i) with (| map revert (firstn a i)|).
+    replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_append_l_len.
+    replace #1 (cnt 'u' (map revert (firstn a i))) with (cnt 'r' (firstn a i)) in H1_r_r_r_ex_o_o.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply eq_sym.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'r' (map revert (firstn a i))) with ((cnt 'u' (firstn a i))) in H1_r_r_r_ex_o_o.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    add_hyp (⁨member_set (firstn a i) ⊆ member_set a).
+    apply member_set_firstn.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    rewrite revert_property.
+    auto_list.
+    lia.
+    lia.
+    add_hyp (~ i  =0).
+    intros.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    lia.
+    lia.
+    apply set_from_func_fold.
+    apply and_intro.
+    apply and_intro.
+    apply H0.
+    auto_set.
+    apply H0.
+    auto_set.
+    assumption.
+    add_hyp (| map revert (firstn a i) ++ skipn a i| = 2 * n).
+    replace #1 (| map revert (firstn a i) ++ skipn a i|) with (| map revert (firstn a i) |+| skipn a i|).
+    lia.
+    replace #1 (| map revert (firstn a i)|) with (|(firstn a i)|).
+    apply map_len.
+    replace #1 (|firstn a i| + |skipn a i|) with (|firstn a i ++ skipn a i|).
+    lia.
+    replace #1 (firstn a i ++ skipn a i) with (a).
+    apply eq_sym.
+    apply firstn_skipn.
+    lia.
+    add_hyp (∀ c: char, c ∈ {'r', 'u'} → cnt c (map revert (firstn a i) ++ skipn a i) = n).
+    intros.
+    apply union_unfold in H0.
+    replace #1 (cnt c (map revert (firstn a i) ++ skipn a i)) with (cnt c (map revert (firstn a i)) + cnt c ( skipn a i)).
+    lia.
+    destruct H0 with (or_ind ? ?).
+    apply singleton_unfold in H0.
+    apply eq_sym in H0.
+    rewrite H0.
+    replace #1 (cnt 'u' (map revert (firstn a i))) with (((cnt 'r' (firstn a i)))).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    apply member_set_firstn.
+    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    apply firstn_skipn.
+    replace #1 (a) with ((firstn a i ++ skipn a i)) in H_r_l.
+    apply firstn_skipn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    apply firstn_skipn.
+    replace #1 (a) with (firstn a i ++ skipn a i) in H_r_l.
+    apply firstn_skipn.
+    lia.
+    apply singleton_unfold in H0.
+    apply eq_sym in H0.
+    rewrite H0.
+    replace #1 (cnt 'r' (map revert (firstn a i))) with (cnt 'u' (firstn a i)).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    add_hyp (⁨member_set (firstn a i) ⊆ member_set a).
+    apply member_set_firstn.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    rewrite revert_property.
+    auto_list.
+    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    apply firstn_skipn.
+    lia.
+    apply setminus_fold.
+    apply and_intro.
+    intros.
+    apply set_from_func_unfold in H1.
+    destruct H1 with (and_ind ? ?) to (H1_l H1_r).
+    destruct H1_r with (and_ind ? ?) to (H1_r_l H1_r_r).
+    destruct H1_r_r with (and_ind ? ?) to (H1_r_r_l H1_r_r_r).
+    add_hyp H1_r_r_r_ex := (H1_r_r_r (i)).
+    Seq (add_hyp (⁨0 < i⁩)) (remove_hyp H1_r_r_r_ex) (Switch 1) (add_hyp H1_r_r_r_ex_o := (H1_r_r_r_ex H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex).
+    Seq (add_hyp (⁨i ≤ | map revert (firstn a i) ++ skipn a i|⁩)) (remove_hyp H1_r_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_r_ex_o_o := (H1_r_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex_o).
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((map revert (firstn a i))) in H1_r_r_r_ex_o_o.
+    replace #3 (i) with (| map revert (firstn a i)|).
+    replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_append_l_len.
+    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with (map revert (firstn a i)) in H1_r_r_r_ex_o_o.
+    replace #3 (i) with (| map revert (firstn a i)|).
+    replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_append_l_len.
+    replace #1 (cnt 'u' (map revert (firstn a i))) with (cnt 'r' (firstn a i)) in H1_r_r_r_ex_o_o.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply eq_sym.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'r' (map revert (firstn a i))) with ((cnt 'u' (firstn a i))) in H1_r_r_r_ex_o_o.
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    add_hyp (⁨member_set (firstn a i) ⊆ member_set a).
+    apply member_set_firstn.
+    apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    assumption.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H1.
+    apply union_unfold in H2.
+    destruct H1 with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    auto_set.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    revert H3.
+    apply singleton_unfold in H1.
+    apply eq_sym in H1.
+    apply singleton_unfold in H2.
+    apply eq_sym in H2.
+    rewrite H1.
+    apply eq_sym in H1.
+    rewrite H2.
+    rewrite revert_property.
+    auto_list.
+    lia.
+    lia.
+    add_hyp (~ i  =0).
+    intros.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    replace #1 ((firstn a i)) with ([]) in i_property_r_l.
+    apply firstn_le_0.
+    assumption.
+    lia.
+    lia.
+    apply set_from_func_fold.
+    apply and_intro.
+    apply and_intro.
+    apply H0.
+    auto_set.
+    apply H0.
+    auto_set.
+    assumption.
+    apply included_fold.
+    intros.
+    apply projection_in_intro_l in H.
+    destruct H with (ex_ind ? ?) to (x x_property).
+    add_hyp f_property_ex := (f_property (x)).
+    Seq (add_hyp (⁨x   ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }       ∖ { l: list char | |l| = 2 * n           ∧ cnt 'r' l = n               ∧ cnt 'u' l = n                   ∧ ∀ i: ℤ,                       0 < i                         → i ≤ |l|                             → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }⁩)) (remove_hyp f_property_ex) (Switch 1) (add_hyp f_property_ex_o := (f_property_ex H)) (remove_hyp H) (remove_hyp f_property_ex).
+    Switch 1.
+    assumption.
+    destruct f_property_ex_o with (ex_ind ? ?) to (i i_property).
+    destruct x_property with (and_ind ? ?) to (x_property_l x_property_r).
+    apply setminus_unfold in x_property_l.
+    destruct x_property_l with (and_ind ? ?) to (x_property_l_l x_property_l_r).
+    destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
+    destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
+    destruct i_property_r_r with (and_ind ? ?) to (i_property_r_r_l i_property_r_r_r).
+    destruct i_property_r_r_r with (and_ind ? ?) to (i_property_r_r_r_l i_property_r_r_r_r).
+    destruct i_property_r_r_r_r with (and_ind ? ?) to (i_property_r_r_r_r_l i_property_r_r_r_r_r).
+    apply set_from_func_fold.
+    rewrite x_property_r.
+    rewrite i_property_r_r_r_r_r.
+    apply and_intro.
+    apply and_intro.
+    replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i|) with (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) | + |skipn x i|).
+    lia.
+    replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)|) with (|(firstn x i)|).
+    apply map_len.
+    replace #1 (|firstn x i| + |skipn x i|) with (|firstn x i ++ skipn x i|).
+    lia.
+    replace #1 (firstn x i ++ skipn x i) with (x).
+    apply eq_sym.
+    apply firstn_skipn.
+    apply set_from_func_unfold in x_property_l_l.
+    lia.
+    replace #1 (cnt 'u' (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i)) with (cnt 'u' (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i))  + cnt 'u' (skipn x i)).
+    lia.
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    replace #1 (cnt 'u' (map revert (firstn x i))) with (cnt 'r' ( (firstn x i))).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply set_from_func_unfold in x_property_l_l.
+    lia.
+    apply member_set_firstn.
+    apply set_from_func_unfold in x_property_l_l.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    destruct H with (or_ind ? ?).
+    apply union_unfold in H0.
+    destruct H0 with (or_ind ? ?).
+    auto_set.
+    apply singleton_unfold in H.
+    revert H1.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    apply union_unfold in H0.
+    destruct H0 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    revert H1.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    apply set_from_func_unfold in x_property_l_l.
+    destruct x_property_l_l with (and_ind ? ?) to (x_property_l_l_l x_property_l_l_r).
+    destruct x_property_l_l_r with (and_ind ? ?) to (x_property_l_l_r_l x_property_l_l_r_r).
+    replace #1 (x) with ((firstn x i) ++ skipn x i) in x_property_l_l_r_l.
+    apply firstn_skipn.
+    replace #1 (x) with ((firstn x i) ++ skipn x i) in x_property_l_l_r_r.
+    apply firstn_skipn.
+    lia.
+    apply set_from_func_unfold in x_property_l_l.
+    destruct x_property_l_l with (and_ind ? ?) to (x_property_l_l_l x_property_l_l_r).
+    destruct x_property_l_l_r with (and_ind ? ?) to (x_property_l_l_r_l x_property_l_l_r_r).
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    replace #1 (cnt 'r' (map revert (firstn x i) ++ skipn x i)) with (cnt 'r' (map revert (firstn x i)) + cnt 'r' ( skipn x i)).
+    lia.
+    replace #1 (cnt 'r' (map revert (firstn x i))) with (cnt 'u' ((firstn x i))).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    destruct H with (or_ind ? ?).
+    apply union_unfold in H0.
+    destruct H0 with (or_ind ? ?).
+    auto_set.
+    apply singleton_unfold in H.
+    revert H1.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    apply union_unfold in H0.
+    destruct H0 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    revert H1.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (x) with ((firstn x i) ++ skipn x i) in x_property_l_l_r_l.
+    apply firstn_skipn.
+    lia.
+    replace #1 (2 * n) with ( n + 1 + (n - 1)).
+    lia.
+    apply count_of_paths.
+    lia.
+    lia.
+    apply cm_not_neg.
+    lia.
+    lia.
+    apply injective_fold.
+    intros.
+    add_hyp f_property_ex := (f_property (x)).
+    Seq (add_hyp (⁨x   ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }       ∖ { l: list char | |l| = 2 * n           ∧ cnt 'r' l = n               ∧ cnt 'u' l = n                   ∧ ∀ i: ℤ,                       0 < i                         → i ≤ |l|                             → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }⁩)) (remove_hyp f_property_ex) (Switch 1) (add_hyp f_property_ex_o := (f_property_ex H2)) (remove_hyp H2) (remove_hyp f_property_ex).
+    add_hyp f_property_ex := (f_property (y)).
+    Seq (add_hyp (⁨y   ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }       ∖ { l: list char | |l| = 2 * n           ∧ cnt 'r' l = n               ∧ cnt 'u' l = n                   ∧ ∀ i: ℤ,                       0 < i                         → i ≤ |l|                             → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }⁩)) (remove_hyp f_property_ex) (Switch 1) (add_hyp f_property_ex_o0 := (f_property_ex H2)) (remove_hyp H2) (remove_hyp f_property_ex).
+    destruct f_property_ex_o with (ex_ind ? ?) to (i i_property).
+    destruct f_property_ex_o0 with (ex_ind ? ?) to (j j_property).
+    destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
+    destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
+    destruct j_property with (and_ind ? ?) to (j_property_l j_property_r).
+    destruct j_property_r with (and_ind ? ?) to (j_property_r_l j_property_r_r).
+    destruct i_property_r_r with (and_ind ? ?) to (i_property_r_r_l i_property_r_r_r).
+    destruct j_property_r_r with (and_ind ? ?) to (j_property_r_r_l j_property_r_r_r).
+    destruct i_property_r_r_r with (and_ind ? ?) to (i_property_r_r_r_l i_property_r_r_r_r).
+    destruct j_property_r_r_r with (and_ind ? ?) to (j_property_r_r_r_l j_property_r_r_r_r).
+    destruct i_property_r_r_r_r with (and_ind ? ?) to (i_property_r_r_r_r_l i_property_r_r_r_r_r).
+    destruct j_property_r_r_r_r with (and_ind ? ?) to (j_property_r_r_r_r_l j_property_r_r_r_r_r).
+    add_hyp i_property_r_r_r_r_l_ex := (i_property_r_r_r_r_l (j)).
+    add_hyp j_property_r_r_r_r_l_ex := (j_property_r_r_r_r_l (i)).
+    add_hyp (i = j).
+    Seq (add_hyp (⁨0 < j⁩)) (remove_hyp i_property_r_r_r_r_l_ex) (Switch 1) (add_hyp i_property_r_r_r_r_l_ex_o := (i_property_r_r_r_r_l_ex H2)) (remove_hyp H2) (remove_hyp i_property_r_r_r_r_l_ex).
+    Seq (add_hyp (⁨0 < i⁩)) (remove_hyp j_property_r_r_r_r_l_ex) (Switch 1) (add_hyp j_property_r_r_r_r_l_ex_o := (j_property_r_r_r_r_l_ex H2)) (remove_hyp H2) (remove_hyp j_property_r_r_r_r_l_ex).
+    Seq (add_hyp (⁨cnt 'u' (firstn (f x) j) + 1 = cnt 'r' (firstn (f x) j)⁩)) (remove_hyp i_property_r_r_r_r_l_ex_o) (Switch 1) (add_hyp i_property_r_r_r_r_l_ex_o_o := (i_property_r_r_r_r_l_ex_o H2)) (remove_hyp H2) (remove_hyp i_property_r_r_r_r_l_ex_o).
+    apply setminus_unfold in H.
+    Seq (add_hyp (⁨cnt 'u' (firstn (f y) i) + 1 = cnt 'r' (firstn (f y) i)⁩)) (remove_hyp j_property_r_r_r_r_l_ex_o) (Switch 1) (add_hyp j_property_r_r_r_r_l_ex_o_o := (j_property_r_r_r_r_l_ex_o H2)) (remove_hyp H2) (remove_hyp j_property_r_r_r_r_l_ex_o).
+    lia.
+    apply eq_sym in H1.
+    rewrite H1.
+    rewrite i_property_r_r_r_r_r.
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i) i)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)).
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    replace #3 (i) with (| map revert (firstn x i)|).
+    replace #1 (| map revert (firstn x i)|) with (| (firstn x i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_append_l_len.
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i) i)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)).
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    replace #3 (i) with (| map revert (firstn x i)|).
+    replace #1 (| map revert (firstn x i)|) with (| (firstn x i)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    lia.
+    apply firstn_append_l_len.
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    replace #1 (cnt 'u' (map revert (firstn x i))) with (cnt 'r' ( (firstn x i))).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    apply set_from_func_unfold in H_l.
+    lia.
+    apply member_set_firstn.
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    apply set_from_func_unfold in H_l.
+    destruct H_l with (and_ind ? ?) to (H_l_l H_l_r).
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    apply union_unfold in H2.
+    destruct H with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    auto_set.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H2.
+    apply eq_sym in H.
+    apply eq_sym in H2.
+    revert H3.
+    rewrite H.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    apply singleton_unfold in H2.
+    apply eq_sym in H.
+    apply eq_sym in H2.
+    revert H3.
+    rewrite H.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'r' (map revert (firstn x i))) with (cnt 'u' ((firstn x i))).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    apply set_from_func_unfold in H_l.
+    lia.
+    apply member_set_firstn.
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    apply set_from_func_unfold in H_l.
+    destruct H_l with (and_ind ? ?) to (H_l_l H_l_r).
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    apply union_unfold in H2.
+    destruct H with (or_ind ? ?).
+    destruct H2 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    auto_set.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H2.
+    apply eq_sym in H.
+    apply eq_sym in H2.
+    revert H3.
+    rewrite H.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H2 with (or_ind ? ?).
+    apply singleton_unfold in H.
+    apply singleton_unfold in H2.
+    apply eq_sym in H.
+    apply eq_sym in H2.
+    revert H3.
+    rewrite H.
+    rewrite H2.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    assumption.
+    rewrite H1.
+    rewrite j_property_r_r_r_r_r.
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j) ++ skipn y j) j)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)).
+    replace #3 (j) with (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|).
+    replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|) with (| (firstn y j)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    assumption.
+    apply firstn_append_l_len.
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j) ++ skipn y j) j)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)).
+    replace #3 (j) with (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|).
+    replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|) with (| (firstn y j)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    assumption.
+    apply firstn_append_l_len.
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    replace #1 (cnt 'u' (map revert (firstn y j))) with (cnt 'r' ( (firstn y j))).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set y) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply setminus_unfold in H0.
+    destruct H0 with (and_ind ? ?) to (H0_l H0_r).
+    apply set_from_func_unfold in H0_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H2.
+    destruct H2 with (or_ind ? ?).
+    apply union_unfold in H3.
+    destruct H3 with (or_ind ? ?).
+    auto_set.
+    apply singleton_unfold in H2.
+    apply singleton_unfold in H3.
+    apply eq_sym in H2.
+    apply eq_sym in H3.
+    revert H4.
+    rewrite H2.
+    rewrite H3.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    apply union_unfold in H3.
+    destruct H3 with (or_ind ? ?).
+    apply singleton_unfold in H2.
+    apply singleton_unfold in H3.
+    apply eq_sym in H2.
+    apply eq_sym in H3.
+    revert H4.
+    rewrite H2.
+    rewrite H3.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    replace #1 (cnt 'r' (map revert (firstn y j))) with (cnt 'u' ((firstn y j))).
+    apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
+    auto_set.
+    apply (⁨included_trans ?0 ?2 (member_set y) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply setminus_unfold in H0.
+    destruct H0 with (and_ind ? ?) to (H0_l H0_r).
+    apply set_from_func_unfold in H0_l.
+    lia.
+    apply member_set_firstn.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H2.
+    destruct H2 with (or_ind ? ?).
+    apply union_unfold in H3.
+    destruct H3 with (or_ind ? ?).
+    auto_set.
+    apply singleton_unfold in H2.
+    apply singleton_unfold in H3.
+    apply eq_sym in H2.
+    apply eq_sym in H3.
+    revert H4.
+    rewrite H2.
+    rewrite H3.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    apply union_unfold in H3.
+    destruct H3 with (or_ind ? ?).
+    apply singleton_unfold in H2.
+    apply singleton_unfold in H3.
+    apply eq_sym in H2.
+    apply eq_sym in H3.
+    revert H4.
+    rewrite H2.
+    rewrite H3.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    assumption.
+    assumption.
+    assumption.
+    revert j_property_r_r_r_r_r.
+    apply eq_sym in H1.
+    rewrite H1.
+    rewrite i_property_r_r_r_r_r.
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    rewrite H2.
+    intros.
+    apply append_eq in j_property_r_r_r_r_r.
+    replace #1 (| map revert (firstn x j)|) with (|(firstn x j)|).
+    apply map_len.
+    replace #1 (|firstn x j|) with (j).
+    apply len_firstn.
+    lia.
+    assumption.
+    replace #1 (| map revert (firstn y j)|) with (|(firstn y j)|).
+    apply map_len.
+    apply eq_sym.
+    apply len_firstn.
+    assumption.
+    assumption.
+    destruct j_property_r_r_r_r_r with (and_ind ? ?) to (j_property_r_r_r_r_r_l j_property_r_r_r_r_r_r).
+    add_hyp (injective (λ l, map revert l) ({ l: list char | member_set l ⊆ {'r', 'u'} })).
+    Switch 1.
+    apply injective_unfold in H3.
+    apply H3 in j_property_r_r_r_r_r_l.
+    apply set_from_func_fold.
+    apply (⁨included_trans ?0 ?2 (member_set y) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply setminus_unfold in H0.
+    destruct H0 with (and_ind ? ?) to (H0_l H0_r).
+    apply set_from_func_unfold in H0_l.
+    lia.
+    apply member_set_firstn.
+    apply set_from_func_fold.
+    apply eq_sym in H2.
+    rewrite H2.
+    apply (⁨included_trans ?0 ?2 (member_set x) ?6 ?8 ?10⁩).
+    apply member_set_is_two_element_l.
+    apply setminus_unfold in H.
+    destruct H with (and_ind ? ?) to (H_l H_r).
+    apply set_from_func_unfold in H_l.
+    lia.
+    apply member_set_firstn.
+    replace #1 (x) with (firstn x j ++ skipn x j).
+    apply eq_sym in H2.
+    rewrite H2.
+    apply firstn_skipn.
+    replace #1 (y) with (firstn y j ++ skipn y j).
+    apply firstn_skipn.
+    rewrite j_property_r_r_r_r_r_l.
+    rewrite j_property_r_r_r_r_r_r.
+    auto_list.
+    apply (⁨injective_map ?0 ?2 ?4 ?6 {'r', 'u'} ?10 ?12⁩).
+    apply setminus_unfold in H.
+    apply injective_fold.
+    intros.
+    apply union_unfold in H3.
+    destruct H3 with (or_ind ? ?).
+    apply union_unfold in H4.
+    destruct H4 with (or_ind ? ?).
+    auto_set.
+    revert H5.
+    apply singleton_unfold in H3.
+    apply singleton_unfold in H4.
+    apply eq_sym in H3.
+    apply eq_sym in H4.
+    rewrite H3.
+    rewrite H4.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    apply union_unfold in H4.
+    destruct H4 with (or_ind ? ?).
+    revert H5.
+    apply singleton_unfold in H3.
+    apply singleton_unfold in H4.
+    apply eq_sym in H3.
+    apply eq_sym in H4.
+    rewrite H3.
+    rewrite H4.
+    replace #1 (revert 'u') with ('r').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_false.
+    assumption.
+    replace #1 (revert 'r') with ('u').
+    apply eq_sym in revert_property.
+    rewrite revert_property.
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    intros.
+    apply set_from_func_unfold in H3.
+    assumption.
+    assumption.
+    assumption.
+    replace #2 ((2 * n)) with ((n + n)).
+    lia.
+    replace #1 ({ l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }) with ({ l: list char | cnt 'r' l = n ∧ cnt 'u' l = n ∧ |l| = 2 * n  }).
+    apply set_equality.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H.
+    apply set_from_func_fold.
+    assumption.
+    apply included_fold.
+    intros.
+    apply set_from_func_unfold in H.
+    apply set_from_func_fold.
+    assumption.
+    replace #1 (2 * n) with ( n + n).
+    lia.
+    apply count_of_paths.
+    assumption.
+    assumption.
+    apply cm_not_neg.
+    lia.
+    lia.
+    apply cm_not_neg.
+    assumption.
+    lia.
+    add_hyp (cm (2 * n) ((n - 1) + 1) > cm (2 * n) (n - 1)).
+    apply cm_gt.
+    lia.
+    lia.
+    lia.
+    apply (⁨injective_map ?0 ?2 ?4 ?6 {'(', ')'} ?10 ?12⁩).
+    apply injective_fold.
+    intros.
+    apply union_unfold in H.
+    apply union_unfold in H0.
+    destruct H with (or_ind ? ?).
+    destruct H0 with (or_ind ? ?).
+    auto_set.
+    revert H1.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    destruct H0 with (or_ind ? ?).
+    revert H1.
+    apply singleton_unfold in H.
+    apply singleton_unfold in H0.
+    apply eq_sym in H.
+    apply eq_sym in H0.
+    rewrite H.
+    rewrite H0.
+    replace #1 (if_f (')' = '(') 'r' 'u') with ('u').
+    apply if_false.
+    assumption.
+    replace #1 (if_f ('(' = '(') 'r' 'u') with ('r').
+    apply if_true.
+    auto_list.
+    assumption.
+    auto_set.
+    intros.
+    apply set_from_func_unfold in H.
+    apply member_set_is_two_element_l.
+    lia.
+Qed
