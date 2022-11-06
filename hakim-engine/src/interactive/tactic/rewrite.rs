@@ -1,12 +1,9 @@
 use std::collections::HashSet;
 
 use crate::{
-    brain::{
-        infer::{type_of_and_infer, InferResults},
-        Term, TermRef,
-    },
+    brain::{Term, TermRef},
     interactive::Frame,
-    parser::BinOp,
+    parser::{term_pretty_print, BinOp},
     Abstraction,
 };
 
@@ -99,8 +96,12 @@ pub fn replace_term_in_frame(
         if new_hyp == hyp.ty {
             return None;
         }
-        frame.remove_hyp_with_index(exp_index);
-        frame.add_hyp_with_name(&hyp.name, new_hyp);
+        if frame.remove_hyp_with_index(exp_index).is_err() {
+            return None;
+        }
+        if frame.add_hyp_with_name(&hyp.name, new_hyp).is_err() {
+            return None;
+        }
     } else {
         let new_goal = replace_term(frame.goal.clone(), find, replace, which);
         if new_goal == frame.goal {
@@ -274,10 +275,10 @@ mod tests {
     }
     #[test]
     fn panic_rewrite_member_set() {
-        run_interactive(
+        run_interactive_to_fail(
             "member_set [] = {1, 2, 3}",
+            "",
             "replace (member_set []) with ({})",
-            EngineLevel::Full,
         );
         /* it is generate (member_set ?4 [] = {}) for eq proof */
     }
@@ -295,15 +296,6 @@ mod tests {
             assumption
             assumption
             "#,
-            EngineLevel::Empty,
-        );
-    }
-    #[test]
-    fn replace_singletone_set_len() {
-        run_interactive(
-            "| { set_empty ℤ } | = 1",
-            r#"
-            replace #1 (|{{}}|) with (1)"#,
             EngineLevel::Empty,
         );
     }
