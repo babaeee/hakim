@@ -42,10 +42,5 @@ pub fn suggest_on_goal(goal: &Term, frame: &Frame) -> Vec<Suggestion> {
 
 pub fn suggest_on_goal_dblclk(goal: &Term, frame: &Frame) -> Option<Suggestion> {
     let suggs = suggest_on_goal(goal, frame);
-    for sugg in suggs {
-        if sugg.is_default() {
-            return Some(sugg);
-        }
-    }
-    None
+    suggs.into_iter().find(|sugg| sugg.is_default())
 }

@@ -36,29 +36,26 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                         Term::Axiom { unique_name, .. } => {
                             if unique_name == "tail" {
                                 let mut list = f(op2.clone());
-                                if let Some(first) = list.next() {
-                                    match first {
-                                        ListPart::Element(_) => return Box::new(list),
-                                        /*ListPart::Atom(_x) => {
-                                            todo!();
-                                            /*let tail_of_first = Term::App {
-                                                func: Term::App {
-                                                    func: TermRef::Axiom {
-                                                        ty: axiom_ty,
-                                                        unique_name: unique_name,
-                                                    },
-                                                    op: op1,
+                                if let Some(ListPart::Element(_)) = list.next() {
+                                    return Box::new(list);
+                                    /*ListPart::Atom(_x) => {
+                                        todo!();
+                                        /*let tail_of_first = Term::App {
+                                            func: Term::App {
+                                                func: TermRef::Axiom {
+                                                    ty: axiom_ty,
+                                                    unique_name: unique_name,
                                                 },
-                                                op: x,
-                                            };
-                                            //tail_of_first := tail op1 x
-                                            return Box::new(
-                                                iter::once(ListPart::Atom(tail_of_first))
-                                                    .chain(list),
-                                            );*/
-                                        }*/
-                                        _ => (),
-                                    };
+                                                op: op1,
+                                            },
+                                            op: x,
+                                        };
+                                        //tail_of_first := tail op1 x
+                                        return Box::new(
+                                            iter::once(ListPart::Atom(tail_of_first))
+                                                .chain(list),
+                                        );*/
+                                    }*/
                                 }
                             }
                         }

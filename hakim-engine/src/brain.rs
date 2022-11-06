@@ -321,7 +321,7 @@ pub fn remove_unused_var(t: TermRef) -> Option<TermRef> {
             x - 1
         }
     });
-    is_unused.then(|| t)
+    is_unused.then_some(t)
 }
 
 fn deny_wild(t: &Term) -> Result<()> {
