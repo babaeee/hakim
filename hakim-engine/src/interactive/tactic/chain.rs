@@ -121,7 +121,9 @@ fn destruct_varible_with_term(
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail};
+    use crate::interactive::tests::{
+        run_interactive, run_interactive_to_end, run_interactive_to_fail,
+    };
 
     #[test]
     fn and_destruct() {
@@ -165,26 +167,21 @@ mod tests {
         run_interactive_to_end(
             "∀ l: list ℤ, head 0 l = 2 ∧ tail l = [3] -> l = [2, 3]",
             r#"
-                intros
-                destruct l
-                Switch 1
-                destruct H with (and_ind ? ?) to (H_l H_r)
+            intros
+            destruct l
+            destruct H with (and_ind ? ?) to (H_l H_r)
+            replace #1 (head 0 []) with (0) in H_l
+            apply head_nil
+            lia
+            destruct H with (and_ind ? ?) to (H_l H_r)
+            replace #1 (head 0 (x :: l0)) with (x) in H_l
+            auto_list
+            replace #1 (tail (x :: l0)) with (l0) in H_r
+            auto_list
+            rewrite H_l
+            rewrite H_r
+            auto_list
         "#,
-        )
-    }
-    #[test]
-    fn destruct_panic() {
-        run_interactive_to_end(
-            r#"∀ l: list char,
-        ∀ n: ℤ,
-          cnt '(' l = n
-                ∧ cnt ')' l = n
-                    ∧ ∀ i: ℤ,
-                        0 < i → i ≤ |l| → cnt ')' (firstn l i) ≤ cnt '(' (firstn l i)"#,
-            r#"
-                intros
-                destruct l
-                "#,
         )
     }
 }
