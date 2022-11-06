@@ -1,11 +1,9 @@
-use serde::__private::de;
-
 use super::{next_arg, next_arg_constant, rewrite::replace_term, Result};
 use crate::{
-    app, app_ref,
+    app_ref,
     brain::{Term, TermRef},
-    interactive::{tactic::rewrite::replace_term_in_frame, Frame},
-    library::prelude::{cons, list, nil},
+    interactive::Frame,
+    library::prelude::{list, nil},
 };
 
 fn eat_paren(mut x: &str) -> &str {
@@ -121,9 +119,7 @@ fn destruct_varible_with_term(
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{
-        run_interactive, run_interactive_to_end, run_interactive_to_fail,
-    };
+    use crate::interactive::tests::run_interactive_to_end;
 
     #[test]
     fn and_destruct() {

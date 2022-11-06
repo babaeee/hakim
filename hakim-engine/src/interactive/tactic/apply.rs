@@ -73,7 +73,7 @@ impl FindInstance {
         for i in dep_list
             .iter()
             .enumerate()
-            .filter_map(|(i, x)| (!x).then(|| i))
+            .filter_map(|(i, x)| (!x).then_some(i))
         {
             if self.infer.terms[i] == VarCategory::Term(i).to_term(None) {
                 writeln!(r, "\u{2068}{:?}\u{2069}", self.infer.tys[i]).unwrap();

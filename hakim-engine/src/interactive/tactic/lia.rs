@@ -384,6 +384,5 @@ mod tests {
     #[test]
     fn sets() {
         success(r#"|set_empty ℤ| = 0"#);
-
     }
 }
