@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::{
     brain::{Term, TermRef},
     interactive::Frame,
-    parser::{term_pretty_print, BinOp},
+    parser::BinOp,
     Abstraction,
 };
 
@@ -120,7 +120,7 @@ pub fn rewrite<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Res
     let exp = &get_one_arg(args, "rewrite")?;
     let term = frame.engine.calc_type(exp)?;
     let [op1, op2, _] =
-        get_eq_params(&(term)).ok_or(BadHyp("rewrite expect eq but got", term.clone()))?;
+        get_eq_params(&(term)).ok_or_else(|| BadHyp("rewrite expect eq but got", term.clone()))?;
     let result = if is_reverse {
         replace_term_in_frame(&mut frame, usize::MAX, op2, op1, &mut None)
     } else {

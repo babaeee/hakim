@@ -409,11 +409,11 @@ impl Frame {
         let hyp = self
             .hyps
             .get(index)
-            .ok_or(tactic::Error::UnknownHyp(index.to_string()))?;
+            .ok_or_else(|| tactic::Error::UnknownHyp(index.to_string()))?;
         self.deny_dependency(&hyp.name)?;
         self.engine.remove_name_unchecked(&hyp.name);
         let hyp = self.hyps.remove(index);
-        return Ok(hyp);
+        Ok(hyp)
     }
 
     pub fn suggest_on_goal_dblclk(&self) -> Option<Suggestion> {
@@ -431,7 +431,6 @@ impl Frame {
     pub fn suggest_on_hyp_menu(&self, hyp_name: &str) -> Vec<Suggestion> {
         suggest_on_hyp(self, hyp_name)
     }
-
     pub fn run_tactic(&self, line: &str) -> Result<Vec<Self>, tactic::Error> {
         let parts = smart_split(line);
         let mut parts = parts.iter().map(|x| x.as_str());

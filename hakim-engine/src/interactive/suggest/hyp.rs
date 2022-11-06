@@ -71,10 +71,5 @@ fn seq_builder<'a>(l: impl IntoIterator<Item = &'a str>) -> String {
 
 pub fn suggest_on_hyp_dblclk(frame: &Frame, name: &str) -> Option<Suggestion> {
     let suggs = suggest_on_hyp(frame, name);
-    for sugg in suggs {
-        if sugg.is_default() {
-            return Some(sugg);
-        }
-    }
-    None
+    suggs.into_iter().find(|sugg| sugg.is_default())
 }
