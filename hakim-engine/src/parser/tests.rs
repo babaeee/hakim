@@ -130,6 +130,7 @@ fn uniop() {
     parse_pretty("- - - (- 2 + 3)");
     parse_pretty("~ - 2 < - - 5");
     parse_pretty("2 * - (3 + 5)");
+    parse_pretty("2 * 3 / 5 + 4");
 }
 
 #[test]
@@ -340,4 +341,9 @@ fn max_width() {
 #[test]
 fn cm_error() {
     parse_pretty("cm 0 0");
+}
+
+#[test]
+fn r_op() {
+    parse_pretty("∀ r1 r2: ℝ, rplus r1 r2 = rmult r1 r2");
 }

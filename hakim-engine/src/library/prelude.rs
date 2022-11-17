@@ -6,6 +6,9 @@ pub fn u() -> TermRef {
 pub fn z() -> TermRef {
     term_ref!(axiom "ℤ" , u())
 }
+pub fn r() -> TermRef {
+    term_ref!(axiom "ℝ" , u())
+}
 pub fn false_ty() -> TermRef {
     term_ref!(axiom "False" , u())
 }
@@ -41,6 +44,15 @@ pub fn minus() -> TermRef {
 }
 pub fn mult() -> TermRef {
     term_ref!(axiom "mult", forall z(), forall z(), z())
+}
+pub fn q_div() -> TermRef {
+    term_ref!(axiom "Qdiv", forall z(), forall z(), r())
+}
+pub fn rplus() -> TermRef {
+    term_ref!(axiom "rplus", forall r(), forall r(), r())
+}
+pub fn rmult() -> TermRef {
+    term_ref!(axiom "rmult", forall r(), forall r(), r())
 }
 pub fn ex() -> TermRef {
     term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
@@ -132,9 +144,11 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     let mut name_dict = im::HashMap::<String, TermRef>::default();
     name_dict.insert("U".to_string(), u());
     name_dict.insert("ℤ".to_string(), z());
+    name_dict.insert("ℝ".to_string(), r());
     name_dict.insert("False".to_string(), false_ty());
     name_dict.insert("True".to_string(), true_ty());
     name_dict.insert("divide".to_string(), divide());
+    name_dict.insert("Qdiv".to_string(), q_div());
     name_dict.insert("eq".to_string(), eq());
     name_dict.insert("ex".to_string(), ex());
     name_dict.insert("plus".to_string(), plus());
@@ -143,6 +157,8 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("mod_of".to_string(), mod_of());
     name_dict.insert("mult".to_string(), mult());
     name_dict.insert("or".to_string(), or());
+    name_dict.insert("rmult".to_string(), rmult());
+    name_dict.insert("rplus".to_string(), rplus());
     name_dict.insert("lt".to_string(), lt());
     name_dict.insert("and".to_string(), and());
     name_dict.insert("pair".to_string(), pair());

@@ -54,6 +54,7 @@ binop! {
     App, 1, Left, " ";
     Cons, 45, Right, "::";
     Divide, 70, No, "|";
+    QDiv, 60, No, "/";
     Eq, 70, No, "=";
     Ge, 70, No, "≥";
     Gt, 70, No, ">";
@@ -133,6 +134,7 @@ impl BinOp {
             App => app_ref!(l, r),
             Cons => app_ref!(cons(), ty(), l, r),
             Divide => app_ref!(divide(), l, r),
+            QDiv => app_ref!(q_div(), l, r),
             Eq => {
                 app_ref!(eq(), ty(), l, r)
             }
@@ -220,6 +222,7 @@ impl BinOp {
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                         "divide" => found!(op, Divide, op2),
+                        "Qdiv" => found!(op, QDiv, op2),
                         "iff" => found!(op, Iff, op2),
                         "plus" => found!(op, Plus, op2),
                         "pow" => found!(op, Pow, op2),
