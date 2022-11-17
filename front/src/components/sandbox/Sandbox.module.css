@@ -28,7 +28,7 @@
 }
 
 .exampleItem {
-    background-color: yellow;
+    background-color: var(--gray-1);
     display: inline;
     margin: 1rem;
     padding: .5rem;
