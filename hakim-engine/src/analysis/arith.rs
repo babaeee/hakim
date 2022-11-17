@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::brain::detect::detect_list_ty;
+use crate::brain::detect::{detect_list_ty, detect_z_ty};
 use crate::brain::{self, definitely_inequal, increase_foreign_vars, remove_unused_var, type_of};
 use crate::library::prelude::{cnt, len1, mult, plus, pow, sigma, z};
 use crate::{app_ref, brain::Term, term_ref, TermRef};
@@ -332,7 +332,7 @@ fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
                         "cnt" => {
                             return cnt_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
                         }
-                        "plus" => Plus(
+                        "plus" if detect_z_ty(op) => Plus(
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                         ),

@@ -378,6 +378,7 @@ mod tests {
         fail(r#" ∀ A: U, ∀ a b: list A, |a| < |a + b| "#);
         success(r#" ∀ A: U, ∀ a b: list A, |a| ≤ |a + b| "#);
         success(r#"|[1, 2, 3]| = 3"#);
+        fail(r#"[1] + [2] = [2] + [1]"#);
     }
 
     #[test]

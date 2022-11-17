@@ -48,3 +48,12 @@ pub fn detect_list_ty(ty: &Term) -> Option<TermRef> {
     }
     None
 }
+
+pub fn detect_z_ty(ty: &Term) -> bool {
+    if let Term::Axiom { unique_name, .. } = ty {
+        if unique_name == "ℤ" {
+            return true;
+        }
+    }
+    false
+}
