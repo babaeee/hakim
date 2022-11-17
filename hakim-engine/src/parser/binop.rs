@@ -159,7 +159,7 @@ impl BinOp {
             Lt => app_ref!(lt(), l, r),
             Minus => app_ref!(minus(), l, r),
             ModOf => app_ref!(mod_of(), l, r),
-            Mult => app_ref!(mult(), l, r),
+            Mult => app_ref!(mult(), ty(), l, r),
             Or => app_ref!(or(), l, r),
             Plus => app_ref!(plus(), ty(), l, r),
             Pow => app_ref!(pow(), l, r),
@@ -204,6 +204,7 @@ impl BinOp {
                             "cons" => found!(op, Cons, op2, ty),
                             "eq" => found!(op, Eq, op2, ty),
                             "plus" => found!(op, Plus, op2, ty),
+                            "mult" => found!(op, Mult, op2, ty),
                             "included" => found!(op, Included, op2, ty),
                             "inlist" => found!(op, Inlist, op2, ty),
                             "inset" => found!(op, Inset, op2, ty),
@@ -220,7 +221,6 @@ impl BinOp {
                         "pow" => found!(op, Pow, op2),
                         "minus" => found!(op, Minus, op2),
                         "mod_of" => found!(op, ModOf, op2),
-                        "mult" => found!(op, Mult, op2),
                         "lt" => found!(op, Lt, op2),
                         "or" => {
                             if let Some((a1, BinOp::Lt, b1)) = BinOp::detect(op) {

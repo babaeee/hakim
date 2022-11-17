@@ -205,6 +205,7 @@ mod tests {
     fn simple() {
         success("1. + 2. = 3.");
         success("0.5 + 0.5 = 1.");
+        success("0.5 * 0.5 = 0.25");
         fail("1. + 2. = 4.");
     }
 

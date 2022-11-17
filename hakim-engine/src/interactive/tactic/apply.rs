@@ -429,7 +429,7 @@ mod tests {
             r#""#,
             "apply z_recursion_simple",
             6,
-            "λ n pf, n * pf",
+            "λ n pf: ℤ, n * pf",
         );
     }
     #[test]
