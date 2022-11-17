@@ -9,6 +9,9 @@ pub(crate) use unfold::unfold;
 mod lia;
 pub(crate) use lia::lia;
 
+mod lra;
+pub(crate) use lra::lra;
+
 mod intros;
 pub(crate) use intros::intros;
 

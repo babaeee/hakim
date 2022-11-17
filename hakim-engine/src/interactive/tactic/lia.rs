@@ -1,4 +1,4 @@
-use num_bigint::Sign;
+use num_bigint::{BigInt, Sign};
 
 use super::Result;
 use crate::{
@@ -14,9 +14,12 @@ use crate::{
 
 use minilp::{ComparisonOp, OptimizationDirection, Problem};
 
-fn convert_calculator_mode(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
+fn convert_calculator_mode(
+    term: TermRef,
+    arena: LogicArena<'_, Poly<BigInt>>,
+) -> LogicValue<'_, Poly<BigInt>> {
     let r = convert(term, arena);
-    fn is_good(x: &LogicValue<'_, Poly>) -> bool {
+    fn is_good(x: &LogicValue<'_, Poly<BigInt>>) -> bool {
         match x {
             LogicValue::Exp(_) => false,
             LogicValue::True | LogicValue::False => true,
@@ -29,13 +32,13 @@ fn convert_calculator_mode(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicV
     }
 }
 
-fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
+fn convert(term: TermRef, arena: LogicArena<'_, Poly<BigInt>>) -> LogicValue<'_, Poly<BigInt>> {
     if let Term::App { func, op: op2 } = term.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
             if let Term::App { func, op: _ } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "eq" {
-                        let mut d1 = Poly::from_subtract(op2.clone(), op1.clone());
+                        let mut d1 = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
                         if d1.is_zero() {
                             return LogicValue::True;
                         }
@@ -43,7 +46,7 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
                             return LogicValue::False;
                         }
                         d1.add(1.into());
-                        let mut d2 = Poly::from_subtract(op1.clone(), op2.clone());
+                        let mut d2 = Poly::<BigInt>::from_subtract(op1.clone(), op2.clone());
                         d2.add(1.into());
                         let l1 = LogicValue::from(d1);
                         let l2 = LogicValue::from(d2);
@@ -53,7 +56,7 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
             }
             if let Term::Axiom { unique_name, .. } = func.as_ref() {
                 if unique_name == "lt" {
-                    let d = Poly::from_subtract(op2.clone(), op1.clone());
+                    let d = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
                     if d.variables().is_empty() {
                         return if *d.constant() > 0i32.into() {
                             LogicValue::True
@@ -69,7 +72,7 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly>) -> LogicValue<'_, Poly> {
     LogicValue::unknown()
 }
 
-fn inject_conditions(polies: Vec<Poly>) -> Vec<Poly> {
+fn inject_conditions(polies: Vec<Poly<BigInt>>) -> Vec<Poly<BigInt>> {
     let m1 = -1;
     let m1 = term_ref!(n m1);
     let div_mods = polies
@@ -80,7 +83,7 @@ fn inject_conditions(polies: Vec<Poly>) -> Vec<Poly> {
                 return match ty.as_ref() {
                     Term::App { func, op: _ } => match func.as_ref() {
                         Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                            "list" => vec![Poly::from_subtract(x.clone(), m1.clone())],
+                            "list" => vec![Poly::<BigInt>::from_subtract(x.clone(), m1.clone())],
                             _ => vec![],
                         },
                         _ => vec![],
@@ -93,8 +96,8 @@ fn inject_conditions(polies: Vec<Poly>) -> Vec<Poly> {
                 if let Term::Number { value: bval } = b.as_ref() {
                     if bval.sign() == Sign::Plus {
                         return vec![
-                            Poly::from_subtract(b, x.clone()),
-                            Poly::from_subtract(x.clone(), m1.clone()),
+                            Poly::<BigInt>::from_subtract(b, x.clone()),
+                            Poly::<BigInt>::from_subtract(x.clone(), m1.clone()),
                         ]
                         .into_iter();
                     }
@@ -106,7 +109,7 @@ fn inject_conditions(polies: Vec<Poly>) -> Vec<Poly> {
     [div_mods, polies].concat()
 }
 
-fn check_contradiction_lp(var_cnt: usize, linear_polies: &[LinearPoly]) -> bool {
+fn check_contradiction_lp(var_cnt: usize, linear_polies: &[LinearPoly<BigInt>]) -> bool {
     let bounded = |v, minmax| {
         let mut problem = Problem::new(OptimizationDirection::Maximize);
         let vars = (0..var_cnt)
@@ -158,13 +161,13 @@ fn check_contradiction_lp(var_cnt: usize, linear_polies: &[LinearPoly]) -> bool 
     false
 }
 
-fn check_contradiction(polies: &[Poly]) -> bool {
+fn check_contradiction(polies: &[Poly<BigInt>]) -> bool {
     let polies = &inject_conditions(polies.to_vec());
     let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
     check_contradiction_lp(var_cnt, &linear_polies)
 }
 
-fn negator(mut poly: Poly) -> Poly {
+fn negator(mut poly: Poly<BigInt>) -> Poly<BigInt> {
     poly.negate();
     poly.add(1.into());
     poly

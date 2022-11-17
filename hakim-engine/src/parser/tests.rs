@@ -78,6 +78,8 @@ fn numbers() {
     parse_not_pretty("1.0", "1.");
     parse_not_pretty("1.230000", "1.23");
     parse_not_pretty("1000.000", "1000.");
+    parse_not_pretty("0.000", "0.");
+    parse_not_pretty("0000.000", "0.");
 }
 
 #[test]
