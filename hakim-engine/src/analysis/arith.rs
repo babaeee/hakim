@@ -299,7 +299,7 @@ fn sigma_to_arith<N: ConstRepr>(
                         rstmp = arena.alloc(Mult(rstmp, term_ref_to_arith(x.clone(), arena)));
                     } else {
                         deps = Some(match deps {
-                            Some(y) => app_ref!(mult(), x, y),
+                            Some(y) => app_ref!(mult(), z(), x, y),
                             None => x.clone(),
                         });
                     }
@@ -388,6 +388,10 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                         ),
+                        "mult" if detect_z_ty(op) || detect_r_ty(op) => Mult(
+                            term_ref_to_arith(op1.clone(), arena),
+                            term_ref_to_arith(op2.clone(), arena),
+                        ),
                         _ => atom_normalizer(t),
                     },
                     _ => atom_normalizer(t),
@@ -399,10 +403,6 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                         arena,
                     ),
                     "pow" => pow_to_arith(op1.clone(), op2.clone(), arena),
-                    "mult" => Mult(
-                        term_ref_to_arith(op1.clone(), arena),
-                        term_ref_to_arith(op2.clone(), arena),
-                    ),
                     "len1" => return len1_to_arith(op1.clone(), op2.clone(), arena),
                     _ => atom_normalizer(t),
                 },
@@ -478,10 +478,10 @@ impl<N: ConstRepr> From<TermRef> for Poly<N> {
 impl<N: ConstRepr> Poly<N> {
     fn into_term(self) -> TermRef {
         let mut t = self.0.into_term();
-        for (c, zz) in self.1 {
+        for (c, var_list) in self.1 {
             let mut tx = c.into_term();
-            for z in zz {
-                tx = app_ref!(mult(), tx, z);
+            for var in var_list {
+                tx = app_ref!(mult(), z(), tx, var);
             }
             t = app_ref!(plus(), z(), t, tx);
         }

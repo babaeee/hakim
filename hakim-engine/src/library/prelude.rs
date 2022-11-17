@@ -43,7 +43,7 @@ pub fn minus() -> TermRef {
     term_ref!(axiom "minus", forall z(), forall z(), z())
 }
 pub fn mult() -> TermRef {
-    term_ref!(axiom "mult", forall z(), forall z(), z())
+    term_ref!(axiom "mult", forall u(), forall v0(), forall v1(), v2())
 }
 pub fn ex() -> TermRef {
     term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
