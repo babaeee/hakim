@@ -2,7 +2,10 @@ use std::{cmp::min, collections::HashSet, fmt::Display, rc::Rc};
 
 use crate::{
     app_ref,
-    brain::{detect_char, detect_len, increase_foreign_vars},
+    brain::{
+        detect::{detect_char, detect_len},
+        increase_foreign_vars,
+    },
     library::prelude,
     parser::{
         ast::{AstAbs, AstSet, AstSigma},

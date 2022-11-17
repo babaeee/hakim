@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+use crate::brain::detect::detect_list_ty;
 use crate::brain::{self, definitely_inequal, increase_foreign_vars, remove_unused_var, type_of};
 use crate::library::prelude::{cnt, len1, mult, plus, pow, sigma, z};
 use crate::{app_ref, brain::Term, term_ref, TermRef};
@@ -174,7 +175,7 @@ fn cnt_to_arith(ty: TermRef, arg: TermRef, l: TermRef, arena: ArithArena<'_>) ->
                 }
             }
             Term::App { func, op: op1 } => {
-                if let Term::App { func, op: _ } = func.as_ref() {
+                if let Term::App { func, op: list_ty } = func.as_ref() {
                     if let Term::Axiom { unique_name, .. } = func.as_ref() {
                         match unique_name.as_str() {
                             "cons" => {
@@ -186,7 +187,7 @@ fn cnt_to_arith(ty: TermRef, arg: TermRef, l: TermRef, arena: ArithArena<'_>) ->
                                     return r;
                                 }
                             }
-                            "plus_list" => {
+                            "plus" if detect_list_ty(list_ty).is_some() => {
                                 let a = cnt_to_arith(ty.clone(), arg.clone(), op2.clone(), arena);
                                 let b = cnt_to_arith(ty, arg, op1.clone(), arena);
                                 return arena.alloc(Plus(a, b));
@@ -211,14 +212,14 @@ fn len1_to_arith(ty: TermRef, arg: TermRef, arena: ArithArena<'_>) -> &ArithTree
                 }
             }
             Term::App { func, op: op1 } => {
-                if let Term::App { func, op: _ } = func.as_ref() {
+                if let Term::App { func, op: list_ty } = func.as_ref() {
                     if let Term::Axiom { unique_name, .. } = func.as_ref() {
                         match unique_name.as_str() {
                             "cons" => {
                                 let r = len1_to_arith(ty, op2.clone(), arena);
                                 return arena.alloc(Plus(arena.alloc(Const(1i32.into())), r));
                             }
-                            "plus_list" => {
+                            "plus" if detect_list_ty(list_ty).is_some() => {
                                 let a = len1_to_arith(ty.clone(), op2.clone(), arena);
                                 let b = len1_to_arith(ty, op1.clone(), arena);
                                 return arena.alloc(Plus(a, b));

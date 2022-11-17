@@ -99,10 +99,6 @@ pub fn list() -> TermRef {
 pub fn inlist() -> TermRef {
     term_ref!(axiom "inlist", forall u(), forall v0(), forall app_ref!(list(), v1()), u())
 }
-pub fn plus_list() -> TermRef {
-    term_ref!(axiom "plus_list", forall u(), 
-        forall app_ref!(list(), v0()), forall app_ref!(list(), v1()), app_ref!(list(), v2()))
-}
 pub fn nil() -> TermRef {
     term_ref!(axiom "nil", forall u(), app_ref!(list(), v0()))
 }
@@ -152,7 +148,6 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("set_singleton".to_string(), set_singleton());
     name_dict.insert("setminus".to_string(), setminus());
     name_dict.insert("list".to_string(), list());
-    name_dict.insert("plus_list".to_string(), plus_list());
     name_dict.insert("nil".to_string(), nil());
     name_dict.insert("cons".to_string(), cons());
     name_dict.insert("cnt".to_string(), cnt());

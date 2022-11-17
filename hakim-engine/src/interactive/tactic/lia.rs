@@ -6,7 +6,7 @@ use crate::{
         arith::{LinearPoly, Poly},
         logic::{LogicArena, LogicBuilder, LogicValue},
     },
-    brain::{detect_len, Term, TermRef},
+    brain::{detect::detect_len, Term, TermRef},
     interactive::Frame,
     parser::BinOp,
     term_ref,
@@ -372,11 +372,11 @@ mod tests {
 
     #[test]
     fn lists() {
-        success(r#" ∀ l, |l| < |l ++ "x"| "#);
-        success(r#" ∀ l, cnt 'x' l + 1 = cnt 'x' (l ++ "x") "#);
-        success(r#" ∀ l, cnt 'y' l = cnt 'y' (l ++ "x") "#);
-        fail(r#" ∀ A: U, ∀ a b: list A, |a| < |a ++ b| "#);
-        success(r#" ∀ A: U, ∀ a b: list A, |a| ≤ |a ++ b| "#);
+        success(r#" ∀ l, |l| < |l + "x"| "#);
+        success(r#" ∀ l, cnt 'x' l + 1 = cnt 'x' (l + "x") "#);
+        success(r#" ∀ l, cnt 'y' l = cnt 'y' (l + "x") "#);
+        fail(r#" ∀ A: U, ∀ a b: list A, |a| < |a + b| "#);
+        success(r#" ∀ A: U, ∀ a b: list A, |a| ≤ |a + b| "#);
         success(r#"|[1, 2, 3]| = 3"#);
     }
 

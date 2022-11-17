@@ -3,7 +3,7 @@ use std::iter;
 use super::Result;
 use crate::{
     analysis::logic::{LogicArena, LogicBuilder, LogicTree, LogicValue},
-    brain::{Term, TermRef},
+    brain::{detect::detect_list_ty, Term, TermRef},
     interactive::Frame,
 };
 
@@ -59,7 +59,7 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                                 }
                             }
                         }
-                        Term::App { func, op: _ } => {
+                        Term::App { func, op: ty } => {
                             if let Term::Axiom { unique_name, .. } = func.as_ref() {
                                 match unique_name.as_str() {
                                     "cons" => {
@@ -68,8 +68,10 @@ fn list_item_from_term(t: TermRef) -> ListItem {
                                                 .chain(f(op2.clone())),
                                         );
                                     }
-                                    "plus_list" => {
-                                        return Box::new(f(op1.clone()).chain(f(op2.clone())));
+                                    "plus" => {
+                                        if detect_list_ty(ty).is_some() {
+                                            return Box::new(f(op1.clone()).chain(f(op2.clone())));
+                                        }
                                     }
                                     "head" => {
                                         if let Some(first) = f(op2.clone()).next() {
@@ -175,16 +177,16 @@ mod tests {
 
     #[test]
     fn nil_with_nil() {
-        success(r#"""++""="""#);
-        success(r#"∀ A: Universe, ∀ l: list A, l ++ nil A = l"#);
-        success(r#"∀ A: Universe, ∀ l: list A, nil A ++ l = l"#);
+        success(r#"""+""="""#);
+        success(r#"∀ A: Universe, ∀ l: list A, l + nil A = l"#);
+        success(r#"∀ A: Universe, ∀ l: list A, nil A + l = l"#);
         fail(r#"∀ A: Universe, ∀ l: list A, ~ nil A = l"#);
         success(r#" ~ "salam" = "" "#);
     }
 
     #[test]
     fn string_concat() {
-        success(r#""hello" ++ " " ++ "world" = "hello world""#);
+        success(r#""hello" + " " + "world" = "hello world""#);
     }
     #[test]
     fn list_head_tail() {
