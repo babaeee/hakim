@@ -70,7 +70,6 @@ binop! {
     Mult, 40, Left, "*";
     Or, 85, Right, "∨";
     Plus, 50, Left, "+";
-    PlusList, 50, Left, "++";
     Pow, 30, Right, "^";
     Union, 50, Left, "∪";
     Setminus, 30, Left, "∖";
@@ -163,9 +162,6 @@ impl BinOp {
             Mult => app_ref!(mult(), l, r),
             Or => app_ref!(or(), l, r),
             Plus => app_ref!(plus(), ty(), l, r),
-            PlusList => {
-                app_ref!(plus_list(), ty(), l, r)
-            }
             Pow => app_ref!(pow(), l, r),
             Union => {
                 app_ref!(union(), ty(), l, r)
@@ -214,7 +210,6 @@ impl BinOp {
                             "intersection" => found!(op, Intersection, op2, ty),
                             "union" => found!(op, Union, op2, ty),
                             "setminus" => found!(op, Setminus, op2, ty),
-                            "plus_list" => found!(op, PlusList, op2, ty),
                             _ => found!(original_func, App, op2, ty),
                         },
                         _ => found!(original_func, App, op2),

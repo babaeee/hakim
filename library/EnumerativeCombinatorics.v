@@ -499,12 +499,12 @@ Todo member_set_is_two_element_r: ∀ T: U, ∀ l: list T, ∀ a b, member_set l
 
 
 Axiom valid_paren: list char -> Universe.
-Axiom valid_paren_unfold: ∀ l, valid_paren l -> l = "" ∨ ∃ x y, valid_paren x ∧ valid_paren y ∧ l = "(" ++ x ++ ")" ++ y.
+Axiom valid_paren_unfold: ∀ l, valid_paren l -> l = "" ∨ ∃ x y, valid_paren x ∧ valid_paren y ∧ l = "(" + x + ")" + y.
 Suggest hyp default apply valid_paren_unfold in $n; Destruct.
-Axiom valid_paren_fold: ∀ l, (∃ x y, valid_paren x ∧ valid_paren y ∧ l = "(" ++ x ++ ")" ++ y) -> valid_paren l.
+Axiom valid_paren_fold: ∀ l, (∃ x y, valid_paren x ∧ valid_paren y ∧ l = "(" + x + ")" + y) -> valid_paren l.
 Axiom valid_paren_empty: valid_paren "".
 Todo valid_paren_elements_type: ∀ l, valid_paren l -> ∀ a, a in l -> a = '(' ∨ a = ')'.
-Theorem valid_paren_wrap: ∀ l, valid_paren l -> valid_paren ("(" ++ l ++ ")").
+Theorem valid_paren_wrap: ∀ l, valid_paren l -> valid_paren ("(" + l + ")").
 Proof.
     intros.
     apply valid_paren_fold.
@@ -517,7 +517,7 @@ Proof.
     assumption.
     apply valid_paren_empty.
 Qed.
-Theorem valid_paren_concat: ∀ a b, valid_paren a -> valid_paren b -> valid_paren (a ++ b).
+Theorem valid_paren_concat: ∀ a b, valid_paren a -> valid_paren b -> valid_paren (a + b).
 Proof.
     apply list_induction_len.
     intros.
@@ -530,7 +530,7 @@ Proof.
     rewrite y_property_r_r.
     apply valid_paren_fold.
     apply (ex_intro ? ? (x)).
-    apply (ex_intro ? ? (y++b0)).
+    apply (ex_intro ? ? (y+b0)).
     apply and_intro.
     apply and_intro.
     auto_list.
@@ -542,12 +542,12 @@ Proof.
     auto_list.
     assumption.
     rewrite H0.
-    replace #1 (("" ++ b0)) with (b0).
+    replace #1 (("" + b0)) with (b0).
     auto_list.
     assumption.
 Qed.
-Suggest goal default apply valid_paren_wrap; valid_paren ("(" ++ l ++ ")") => valid_paren l.
-Suggest goal default apply valid_paren_concat; valid_paren (a ++ b) => valid_paren a ∧ valid_paren b.
+Suggest goal default apply valid_paren_wrap; valid_paren ("(" + l + ")") => valid_paren l.
+Suggest goal default apply valid_paren_concat; valid_paren (a + b) => valid_paren a ∧ valid_paren b.
 Theorem valid_paren_len_even: ∀ a, valid_paren a -> 2 | |a|.
 Proof.
     apply list_induction_len.
@@ -558,7 +558,7 @@ Proof.
     destruct x_property with (ex_ind ? ?) to (y y_property).
     destruct y_property with (and_ind ? ?) to (y_property_l y_property_r).
     destruct y_property_r with (and_ind ? ?) to (y_property_r_l y_property_r_r).
-    replace #1 (b) with ("(" ++ x ++ ")" ++ y) in H.
+    replace #1 (b) with ("(" + x + ")" + y) in H.
     assumption.
     apply H in y_property_r_l.
     lia.
@@ -581,7 +581,7 @@ Proof.
 Qed.
 Theorem valid_paren_single: valid_paren "()".
 Proof.
-    replace #1 ("()") with ("("++""++")").
+    replace #1 ("()") with ("("+""+")").
     auto_list.
     apply valid_paren_wrap.
     apply valid_paren_empty.
@@ -596,7 +596,7 @@ Proof.
     destruct x_property with (ex_ind ? ?) to (y y_property).
     destruct y_property with (and_ind ? ?) to (y_property_l y_property_r).
     destruct y_property_r with (and_ind ? ?) to (y_property_r_l y_property_r_r).
-    replace #1 (b) with ("(" ++ x ++ ")" ++ y) in H.
+    replace #1 (b) with ("(" + x + ")" + y) in H.
     assumption.
     add_from_lib valid_paren_len_even.
     add_hyp valid_paren_len_even_ex := (valid_paren_len_even (x)).
@@ -619,13 +619,13 @@ Proof.
     destruct valid_paren_len_even_ex0_o with (ex_ind ? ?) to (cy cy_property).
     add_hyp H_ex := (H (x)).
     add_hyp H_ex0 := (H (y)).
-    add_hyp (⁨|x| < |"(" ++ x ++ ")" ++ y|⁩).
+    add_hyp (⁨|x| < |"(" + x + ")" + y|⁩).
     remove_hyp H_ex.
     Switch 1.
     add_hyp H_ex_o := (H_ex H0).
     remove_hyp H0.
     remove_hyp H_ex.
-    add_hyp (⁨|y| < |"(" ++ x ++ ")" ++ y|⁩).
+    add_hyp (⁨|y| < |"(" + x + ")" + y|⁩).
     remove_hyp H_ex0.
     Switch 1.
     add_hyp H_ex0_o := (H_ex0 H0).
@@ -971,7 +971,7 @@ Proof.
     apply included_fold.
     intros.
     apply projection_in_intro_r.
-    apply (ex_intro ? ? ([y] ++ a)).
+    apply (ex_intro ? ? ([y] + a)).
     apply set_from_func_unfold in H1.
     destruct H1 with (and_ind ? ?) to (H1_l H1_r).
     destruct H1_r with (and_ind ? ?) to (H1_r_l H1_r_r).
@@ -995,7 +995,7 @@ Proof.
     apply H1_l in H2.
     auto_set.
     lia.
-    replace #1 (member_set ([y] ++ a)) with (member_set ([y] ) ∪ member_set a).
+    replace #1 (member_set ([y] + a)) with (member_set ([y] ) ∪ member_set a).
     apply member_set_append.
     replace #1 (member_set [y]) with ({y}).
     apply member_set_singleton.
@@ -1025,7 +1025,7 @@ Proof.
     destruct ca_property_l_l_r with (and_ind ? ?) to (ca_property_l_l_r_l ca_property_l_l_r_r).
     apply and_intro.
     apply and_intro.
-    replace #1 (ca) with ([head d ca] ++ tail ca) in ca_property_l_l_r_r.
+    replace #1 (ca) with ([head d ca] + tail ca) in ca_property_l_l_r_r.
     apply add_head_tail.
     intros.
     replace #1 (ca) with ([]) in ca_property_l_l_r_l.
@@ -1037,18 +1037,18 @@ Proof.
     rewrite ca_property_r.
     apply tail_len.
     assumption.
-    replace #1 (ca) with ([head d ca] ++ a) in ca_property_l_l_l.
+    replace #1 (ca) with ([head d ca] + a) in ca_property_l_l_l.
     rewrite ca_property_r.
     apply add_head_tail.
     intros.
     replace #1 (ca) with ([]) in ca_property_l_l_r_l.
     assumption.
     lia.
-    replace #1 (member_set ([head d ca] ++ a)) with (member_set ([head d ca]) ∪ member_set a) in ca_property_l_l_l.
+    replace #1 (member_set ([head d ca] + a)) with (member_set ([head d ca]) ∪ member_set a) in ca_property_l_l_l.
     apply member_set_append.
     add_hyp (member_set a ⊆ S ).
     auto_set.
-    replace #1 (ca) with ([y] ++ a) in ca_property_l_l_r_r.
+    replace #1 (ca) with ([y] + a) in ca_property_l_l_r_r.
     rewrite ca_property_r.
     apply eq_sym in ca_property_l_r.
     rewrite ca_property_l_r.
@@ -1081,7 +1081,7 @@ Proof.
     intros.
     apply set_from_func_unfold in H1.
     apply set_from_func_unfold in H2.
-    replace #1 (y0) with ([head d x] ++ tail x).
+    replace #1 (y0) with ([head d x] + tail x).
     replace #1 (head d x) with (head d y0).
     auto_set.
     rewrite H3.
@@ -1110,7 +1110,7 @@ Proof.
     add_hyp listing_set_ex_ex := (listing_set_ex (S ∖ {a})).
     Seq (add_hyp (⁨finite (S ∖ {a})⁩)) (remove_hyp listing_set_ex_ex) (Switch 1) (add_hyp listing_set_ex_ex_o := (listing_set_ex_ex H2)) (remove_hyp H2) (remove_hyp listing_set_ex_ex).
     destruct listing_set_ex_ex_o with (ex_ind ? ?) to (l l_property).
-    apply (ex_intro ? ? ([a] ++ l)).
+    apply (ex_intro ? ? ([a] + l)).
     destruct l_property with (and_ind ? ?) to (l_property_l l_property_r).
     destruct l_property_r with (and_ind ? ?) to (l_property_r_l l_property_r_r).
     apply and_intro.
@@ -1127,7 +1127,7 @@ Proof.
     replace #1 (member_set l) with (S ∖ {a}) in H2.
     assumption.
     auto_set.
-    replace #1 (|[a] ++ l|) with (|l| + 1).
+    replace #1 (|[a] + l|) with (|l| + 1).
     lia.
     replace #1 (|S ∖ {a}|) with (n) in l_property_r_l.
     apply subset_len.
@@ -1135,7 +1135,7 @@ Proof.
     assumption.
     assumption.
     lia.
-    replace #1 (member_set ([a] ++ l)) with ({a} ∪ member_set (l)).
+    replace #1 (member_set ([a] + l)) with ({a} ∪ member_set (l)).
     apply member_set_add.
     rewrite l_property_l.
     auto_set.
@@ -1257,11 +1257,11 @@ Proof.
     add_hyp (y = '(').
     apply included_unfold in H1.
     add_hyp H1_ex := (H1 (y)).
-    Seq (add_hyp (⁨y ∈ member_set (x :: (a ++ y :: b))⁩)) (remove_hyp H1_ex) (Switch 1) (add_hyp H1_ex_o := (H1_ex H4)) (remove_hyp H4) (remove_hyp H1_ex).
+    Seq (add_hyp (⁨y ∈ member_set (x :: (a + y :: b))⁩)) (remove_hyp H1_ex) (Switch 1) (add_hyp H1_ex_o := (H1_ex H4)) (remove_hyp H4) (remove_hyp H1_ex).
     auto_set.
-    replace #1 (member_set (x :: (a ++ y :: b))) with ({x} ∪ member_set ((a ++ y :: b))).
+    replace #1 (member_set (x :: (a + y :: b))) with ({x} ∪ member_set ((a + y :: b))).
     apply member_set_cons_union.
-    replace #1 (member_set (a ++ y :: b)) with (member_set a ∪ member_set (y :: b)).
+    replace #1 (member_set (a + y :: b)) with (member_set a ∪ member_set (y :: b)).
     apply member_set_append.
     replace #1 (member_set (y :: b)) with ({y} ∪ member_set (b)).
     apply member_set_cons_union.
@@ -1271,8 +1271,8 @@ Proof.
     apply and_intro.
     apply and_intro.
     destruct i_property_r_l with (and_ind ? ?) to (i_property_r_l_l i_property_r_l_r).
-    replace #1 ((firstn (a ++ y :: b) i)) with (a ++ [y]) in i_property_r_l_r.
-    replace #1 (firstn (a ++ y :: b) i) with (a ++ firstn (y :: b) 1).
+    replace #1 ((firstn (a + y :: b) i)) with (a + [y]) in i_property_r_l_r.
+    replace #1 (firstn (a + y :: b) i) with (a + firstn (y :: b) 1).
     replace #1 (i) with ((|a| + 1)).
     lia.
     apply firstn_append_r.
@@ -1280,8 +1280,8 @@ Proof.
     replace #1 (firstn (y :: b) 1) with ([y]).
     apply firstn_cons_1.
     auto_list.
-    replace #1 ((firstn (a ++ y :: b) i)) with ((a ++ [y])) in i_property_r_l_r.
-    replace #1 (firstn (a ++ y :: b) i) with (a ++ firstn (y :: b) 1).
+    replace #1 ((firstn (a + y :: b) i)) with ((a + [y])) in i_property_r_l_r.
+    replace #1 (firstn (a + y :: b) i) with (a + firstn (y :: b) 1).
     replace #1 (i) with ((|a| + 1)).
     lia.
     apply firstn_append_r.
@@ -1309,7 +1309,7 @@ Proof.
     destruct j_property_r with (and_ind ? ?) to (j_property_r_l j_property_r_r).
     add_hyp i_property_r_r_ex := (i_property_r_r (j)).
     Seq (add_hyp (⁨- 1 < j⁩)) (remove_hyp i_property_r_r_ex) (Switch 1) (add_hyp i_property_r_r_ex_o := (i_property_r_r_ex H5)) (remove_hyp H5) (remove_hyp i_property_r_r_ex).
-    add_hyp (( j ≤ |a ++ y :: b| ∧ cnt ')' (firstn (a ++ y :: b) j) = cnt '(' (firstn (a ++ y :: b) j) + 1)).
+    add_hyp (( j ≤ |a + y :: b| ∧ cnt ')' (firstn (a + y :: b) j) = cnt '(' (firstn (a + y :: b) j) + 1)).
     apply and_intro.
     add_hyp (~ cnt '(' (firstn a j) + 1 < cnt ')' (firstn a j)).
     intros.
@@ -1337,10 +1337,10 @@ Proof.
     lia.
     lia.
     destruct j_property_r_l with (and_ind ? ?) to (j_property_r_l_l j_property_r_l_r).
-    replace #1 (firstn (a ++ y :: b) j) with (firstn a j).
+    replace #1 (firstn (a + y :: b) j) with (firstn a j).
     apply firstn_append_l.
     lia.
-    replace #1 ((firstn (a ++ y :: b) j)) with ((firstn (a) j)).
+    replace #1 ((firstn (a + y :: b) j)) with ((firstn (a) j)).
     apply firstn_append_l.
     lia.
     lia.
@@ -1354,25 +1354,25 @@ Proof.
     rewrite H3.
     intros.
     destruct i_property_r_l with (and_ind ? ?) to (i_property_r_l_l i_property_r_l_r).
-    replace #1 ((firstn l i)) with (a ++ ")") in i_property_r_l_r.
+    replace #1 ((firstn l i)) with (a + ")") in i_property_r_l_r.
     rewrite y_property_l.
-    replace #1 (a ++ ')' :: b) with (a ++ ")" ++ b).
+    replace #1 (a + ')' :: b) with (a + ")" + b).
     auto_list.
-    replace #1 (i) with (|a++")"|).
+    replace #1 (i) with (|a+")"|).
     lia.
-    replace #3 (a ++ ")") with (firstn (a ++ ")") (|a++")"|)).
+    replace #3 (a + ")") with (firstn (a + ")") (|a+")"|)).
     apply eq_sym.
     apply firstn_len.
     apply firstn_append_l.
     auto_list.
     add_hyp (cnt ')' a = cnt '(' a).
-    replace #1 ((firstn l i)) with ((a ++ ")")) in i_property_r_l_r.
+    replace #1 ((firstn l i)) with ((a + ")")) in i_property_r_l_r.
     rewrite y_property_l.
-    replace #1 (a ++ ')' :: b) with (a ++ ")" ++ b).
+    replace #1 (a + ')' :: b) with (a + ")" + b).
     auto_list.
-    replace #1 (i) with (|a++")"|).
+    replace #1 (i) with (|a+")"|).
     lia.
-    replace #3 (a ++ ")") with (firstn (a ++ ")") (|a++")"|)).
+    replace #3 (a + ")") with (firstn (a + ")") (|a+")"|)).
     apply eq_sym.
     apply firstn_len.
     apply firstn_append_l.
@@ -1383,9 +1383,9 @@ Proof.
     revert H1.
     rewrite y_property_l.
     intros.
-    replace #1 (member_set (x :: (a ++ ')' :: b))) with ({x} ∪ member_set ( (a ++ ')' :: b))) in H1.
+    replace #1 (member_set (x :: (a + ')' :: b))) with ({x} ∪ member_set ( (a + ')' :: b))) in H1.
     apply member_set_cons_union.
-    replace #1 (member_set (a ++ ')' :: b)) with (member_set (a) ∪ member_set ( ')' :: b)) in H1.
+    replace #1 (member_set (a + ')' :: b)) with (member_set (a) ∪ member_set ( ')' :: b)) in H1.
     apply member_set_append.
     apply included_fold.
     intros.
@@ -1397,9 +1397,9 @@ Proof.
     revert H1.
     rewrite y_property_l.
     intros.
-    replace #1 (member_set (x :: (a ++ ')' :: b))) with ({x} ∪ member_set ( (a ++ ')' :: b))) in H1.
+    replace #1 (member_set (x :: (a + ')' :: b))) with ({x} ∪ member_set ( (a + ')' :: b))) in H1.
     apply member_set_cons_union.
-    replace #1 (member_set (a ++ ')' :: b)) with (member_set (a) ∪ member_set( ')' :: b)) in H1.
+    replace #1 (member_set (a + ')' :: b)) with (member_set (a) ∪ member_set( ')' :: b)) in H1.
     apply member_set_append.
     apply included_fold.
     apply included_unfold in H1.
@@ -1430,17 +1430,17 @@ Proof.
     rewrite H2.
     rewrite y_property_l.
     intros.
-    replace #2 (('(' :: (a ++ ')' :: b))) with (('(' :: a ++ ")") ++ b) in H1_r_r.
+    replace #2 (('(' :: (a + ')' :: b))) with (('(' :: a + ")") + b) in H1_r_r.
     auto_list.
-    add_hyp H1_r_r_ex := (H1_r_r (|'(' :: a ++ ")"| + i0)).
-    Seq (add_hyp (⁨0 < |'(' :: a ++ ")"| + i0⁩)) (remove_hyp H1_r_r_ex) (Switch 1) (add_hyp H1_r_r_ex_o := (H1_r_r_ex H8)) (remove_hyp H8) (remove_hyp H1_r_r_ex).
-    Seq (add_hyp (⁨|'(' :: a ++ ")"| + i0 ≤ |'(' :: (a ++ ')' :: b)|⁩)) (remove_hyp H1_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_ex_o_o := (H1_r_r_ex_o H8)) (remove_hyp H8) (remove_hyp H1_r_r_ex_o).
-    replace #1 (('(' :: (a ++ ')' :: b))) with ('(' :: a ++ ")" ++ b) in H1_r_r_ex_o_o.
+    add_hyp H1_r_r_ex := (H1_r_r (|'(' :: a + ")"| + i0)).
+    Seq (add_hyp (⁨0 < |'(' :: a + ")"| + i0⁩)) (remove_hyp H1_r_r_ex) (Switch 1) (add_hyp H1_r_r_ex_o := (H1_r_r_ex H8)) (remove_hyp H8) (remove_hyp H1_r_r_ex).
+    Seq (add_hyp (⁨|'(' :: a + ")"| + i0 ≤ |'(' :: (a + ')' :: b)|⁩)) (remove_hyp H1_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_ex_o_o := (H1_r_r_ex_o H8)) (remove_hyp H8) (remove_hyp H1_r_r_ex_o).
+    replace #1 (('(' :: (a + ')' :: b))) with ('(' :: a + ")" + b) in H1_r_r_ex_o_o.
     auto_list.
-    replace #1 ((firstn ('(' :: a ++ ")" ++ b) (|'(' :: a ++ ")"| + i0))) with ('(' :: a ++ ")" ++ (firstn (b) (i0))) in H1_r_r_ex_o_o.
+    replace #1 ((firstn ('(' :: a + ")" + b) (|'(' :: a + ")"| + i0))) with ('(' :: a + ")" + (firstn (b) (i0))) in H1_r_r_ex_o_o.
     apply firstn_append_r.
     assumption.
-    replace #1 ((firstn ('(' :: a ++ ")" ++ b) (|'(' :: a ++ ")"| + i0))) with ('(' :: a ++ ")" ++ (firstn (b) (i0))) in H1_r_r_ex_o_o.
+    replace #1 ((firstn ('(' :: a + ")" + b) (|'(' :: a + ")"| + i0))) with ('(' :: a + ")" + (firstn (b) (i0))) in H1_r_r_ex_o_o.
     apply firstn_append_r.
     assumption.
     lia.
@@ -1486,10 +1486,10 @@ Proof.
     revert H1_r_r_ex_o_o.
     rewrite y_property_l.
     intros.
-    replace #1 (firstn (a ++ ')' :: b) i0) with (firstn (a) i0) in H1_r_r_ex_o_o.
+    replace #1 (firstn (a + ')' :: b) i0) with (firstn (a) i0) in H1_r_r_ex_o_o.
     apply firstn_append_l.
     assumption.
-    replace #1 (firstn (a ++ ')' :: b) i0) with (firstn (a ) i0) in H1_r_r_ex_o_o.
+    replace #1 (firstn (a + ')' :: b) i0) with (firstn (a ) i0) in H1_r_r_ex_o_o.
     apply firstn_append_l.
     assumption.
     add_hyp (~ cnt ')' (firstn a i0) = 1 + cnt '(' (firstn a i0)).
@@ -1500,10 +1500,10 @@ Proof.
     lia.
     apply and_intro.
     rewrite y_property_l.
-    replace #1 (firstn (a ++ ')' :: b) i0) with (firstn (a) i0).
+    replace #1 (firstn (a + ')' :: b) i0) with (firstn (a) i0).
     apply firstn_append_l.
     assumption.
-    replace #1 (firstn (a ++ ')' :: b) i0) with (firstn (a ) i0).
+    replace #1 (firstn (a + ')' :: b) i0) with (firstn (a ) i0).
     apply firstn_append_l.
     assumption.
     lia.
@@ -1539,7 +1539,7 @@ Proof.
     destruct a_property with (ex_ind ? ?) to (b b_property).
     destruct b_property with (and_ind ? ?) to (b_property_l b_property_r).
     destruct b_property_r with (and_ind ? ?) to (b_property_r_l b_property_r_r).
-    replace #1 ("(" ++ a ++ ")" ++ b) with ('(' ::( a ++ ")" ++ b)) in b_property_r_r.
+    replace #1 ("(" + a + ")" + b) with ('(' ::( a + ")" + b)) in b_property_r_r.
     auto_list.
     apply cons_eq in b_property_r_r.
     destruct b_property_r_r with (and_ind ? ?) to (b_property_r_r_l b_property_r_r_r).
@@ -1583,21 +1583,21 @@ Proof.
     add_hyp (⁨i ≤ |a| + 1 + 1 ∨ i  > |a| + 1 + 1⁩).
     lia.
     destruct H4 with (or_ind ? ?).
-    replace #1 (('(' :: (a ++ ")" ++ b))) with (('(' :: (a ++ ")") ++ b)).
+    replace #1 (('(' :: (a + ")" + b))) with (('(' :: (a + ")") + b)).
     auto_list.
-    replace #1 (('(' :: (a ++ ")" ++ b))) with (('(' :: (a ++ ")") ++ b)).
+    replace #1 (('(' :: (a + ")" + b))) with (('(' :: (a + ")") + b)).
     auto_list.
-    replace #1 ((firstn ('(' :: (a ++ ")") ++ b) i)) with ('(' :: (a ++ ")") ++ firstn (b) (i - |'(' :: (a ++ ")")| )).
-    replace #1 (i) with (|'(' :: (a ++ ")")| + (i - | '(' :: (a ++ ")")|)).
+    replace #1 ((firstn ('(' :: (a + ")") + b) i)) with ('(' :: (a + ")") + firstn (b) (i - |'(' :: (a + ")")| )).
+    replace #1 (i) with (|'(' :: (a + ")")| + (i - | '(' :: (a + ")")|)).
     lia.
     apply firstn_append_r.
     lia.
-    replace #1 ((firstn ('(' :: (a ++ ")") ++ b) i)) with (('(' :: (a ++ ")") ++ firstn b (i - |'(' :: (a ++ ")")|))).
-    replace #1 (i) with (|'(' :: (a ++ ")")| + (i - | '(' :: (a ++ ")")|)).
+    replace #1 ((firstn ('(' :: (a + ")") + b) i)) with (('(' :: (a + ")") + firstn b (i - |'(' :: (a + ")")|))).
+    replace #1 (i) with (|'(' :: (a + ")")| + (i - | '(' :: (a + ")")|)).
     lia.
     apply firstn_append_r.
     lia.
-    add_hyp (cnt ')' (firstn b (i - |'(' :: (a ++ ")")|)) ≤ cnt '(' (firstn b (i - |'(' :: (a ++ ")")|))).
+    add_hyp (cnt ')' (firstn b (i - |'(' :: (a + ")")|)) ≤ cnt '(' (firstn b (i - |'(' :: (a + ")")|))).
     add_hyp H_ex := (H (b)).
     Seq (add_hyp (⁨|b| < |x :: l|⁩)) (remove_hyp H_ex) (Switch 1) (add_hyp H_ex_o := (H_ex H5)) (remove_hyp H5) (remove_hyp H_ex).
     add_hyp (2 | |b|).
@@ -1612,7 +1612,7 @@ Proof.
     assumption.
     destruct H5 with (and_ind ? ?) to (H5_l H5_r).
     destruct H5_r with (and_ind ? ?) to (H5_r_l H5_r_r).
-    add_hyp H5_r_r_ex := (H5_r_r ((i - |'(' :: (a ++ ")")|))).
+    add_hyp H5_r_r_ex := (H5_r_r ((i - |'(' :: (a + ")")|))).
     lia.
     auto_set.
     rewrite b_property_r_r_r.
@@ -1623,13 +1623,13 @@ Proof.
     replace #1 ((firstn a (|a|))) with (a) in H1_ex.
     apply firstn_len.
     lia.
-    replace #1 ((firstn ('(' :: (a ++ ")" ++ b)) i)) with ((firstn ('(' :: (a ++ ")")) i)).
-    replace #1 ('(' :: (a ++ ")" ++ b)) with ('(' :: (a ++ ")") ++ b).
+    replace #1 ((firstn ('(' :: (a + ")" + b)) i)) with ((firstn ('(' :: (a + ")")) i)).
+    replace #1 ('(' :: (a + ")" + b)) with ('(' :: (a + ")") + b).
     auto_list.
     apply firstn_append_l.
     lia.
-    replace #1 ((firstn ('(' :: (a ++ ")" ++ b)) i)) with ((firstn ('(' :: (a ++ ")")) i)).
-    replace #1 ('(' :: (a ++ ")" ++ b)) with ('(' :: (a ++ ")") ++ b).
+    replace #1 ((firstn ('(' :: (a + ")" + b)) i)) with ((firstn ('(' :: (a + ")")) i)).
+    replace #1 ('(' :: (a + ")" + b)) with ('(' :: (a + ")") + b).
     auto_list.
     apply firstn_append_l.
     lia.
@@ -1637,8 +1637,8 @@ Proof.
     lia.
     destruct H5 with (or_ind ? ?).
     add_hyp H1_ex := (H1 (i - 1)).
-    replace #1 (firstn ('(' :: (a ++ ")")) i) with ('(' :: firstn a (i - 1)).
-    replace #1 (firstn a (i - 1)) with (firstn (a ++ ")") (i - 1)).
+    replace #1 (firstn ('(' :: (a + ")")) i) with ('(' :: firstn a (i - 1)).
+    replace #1 (firstn a (i - 1)) with (firstn (a + ")") (i - 1)).
     apply eq_sym.
     apply firstn_append_l.
     lia.
@@ -1646,8 +1646,8 @@ Proof.
     lia.
     apply firstn_cons.
     lia.
-    replace #1 (firstn ('(' :: (a ++ ")")) i) with (('(' :: firstn a (i - 1))).
-    replace #1 (firstn a (i - 1)) with (firstn (a ++ ")") (i - 1)).
+    replace #1 (firstn ('(' :: (a + ")")) i) with (('(' :: firstn a (i - 1))).
+    replace #1 (firstn a (i - 1)) with (firstn (a + ")") (i - 1)).
     apply eq_sym.
     apply firstn_append_l.
     lia.
@@ -1656,11 +1656,11 @@ Proof.
     apply firstn_cons.
     lia.
     lia.
-    replace #1 (firstn ('(' :: (a ++ ")")) i) with ('(' :: (firstn ( (a)) (i - 2) ++ ")")).
+    replace #1 (firstn ('(' :: (a + ")")) i) with ('(' :: (firstn ( (a)) (i - 2) + ")")).
     replace #2 (")") with (firstn ")" 1).
     apply eq_sym.
     apply firstn_cons_1.
-    replace #1 ((firstn a (i - 2) ++ firstn ")" 1)) with (firstn (a ++ ")") (|a| + 1)).
+    replace #1 ((firstn a (i - 2) + firstn ")" 1)) with (firstn (a + ")") (|a| + 1)).
     replace #1 ((i - 2)) with (|a|).
     lia.
     apply eq_sym.
@@ -1672,11 +1672,11 @@ Proof.
     lia.
     apply firstn_cons.
     lia.
-    replace #1 ((firstn ('(' :: (a ++ ")")) i)) with ('(' :: (firstn a (i - 2) ++ ")")).
+    replace #1 ((firstn ('(' :: (a + ")")) i)) with ('(' :: (firstn a (i - 2) + ")")).
     replace #2 (")") with (firstn ")" 1).
     apply eq_sym.
     apply firstn_cons_1.
-    replace #1 ((firstn a (i - 2) ++ firstn ")" 1)) with (firstn (a ++ ")") (|a| + 1)).
+    replace #1 ((firstn a (i - 2) + firstn ")" 1)) with (firstn (a + ")") (|a| + 1)).
     replace #1 ((i - 2)) with (|a|).
     lia.
     apply eq_sym.
@@ -2184,8 +2184,8 @@ Proof.
     add_from_lib exist_function.
     add_hyp exist_function_ex := (exist_function (list char)).
     add_hyp exist_function_ex_ex := (exist_function_ex (list char)).
-    add_hyp exist_function_ex_ex_ex := (exist_function_ex_ex (λ x y, x ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) } -> ∃ i, i > 0 ∧ i ≤ |x| ∧ cnt 'r' (firstn x i) + 1 = cnt 'u' (firstn x i) ∧ (∀ j, j > 0 -> cnt 'r' (firstn x j) + 1 = cnt 'u' (firstn x j) -> j ≥ i) ∧ (∀ j, j > 0 -> cnt 'u' (firstn y j) + 1 = cnt 'r' (firstn y j) -> j ≥ i) ∧ y = (map (λ c, if_f (c = 'r') 'u' 'r') (firstn x i) ) ++ skipn x i )).
-    Seq (add_hyp (⁨∀ x: list char,   ∃ x0: list char,     (λ x1 y: list char,       x1         ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }             ∖ { l: list char | |l| = 2 * n                 ∧ cnt 'r' l = n                     ∧ cnt 'u' l = n                         ∧ ∀ i: ℤ,                             0 < i                               → i ≤ |l|                                   → cnt 'u' (firstn l i)                                       ≤ cnt 'r' (firstn l i) }         → ∃ i: ℤ,             0 < i               ∧ i ≤ |x1|                   ∧ cnt 'r' (firstn x1 i) + 1 = cnt 'u' (firstn x1 i)                       ∧ (∀ j: ℤ,                           0 < j                             → cnt 'r' (firstn x1 j) + 1 = cnt 'u' (firstn x1 j)                                 → i ≤ j)                           ∧ (∀ j: ℤ,                               0 < j                                 → cnt 'u' (firstn y j) + 1                                     = cnt 'r' (firstn y j)                                     → i ≤ j)                               ∧ y                                   = map (λ c: char,                                       if_f (c = 'r') 'u' 'r') (firstn x1 i)                                       ++ skipn x1 i) x x0⁩)) (remove_hyp exist_function_ex_ex_ex) (Switch 1) (add_hyp exist_function_ex_ex_ex_o := (exist_function_ex_ex_ex H)) (remove_hyp H) (remove_hyp exist_function_ex_ex_ex).
+    add_hyp exist_function_ex_ex_ex := (exist_function_ex_ex (λ x y, x ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) } -> ∃ i, i > 0 ∧ i ≤ |x| ∧ cnt 'r' (firstn x i) + 1 = cnt 'u' (firstn x i) ∧ (∀ j, j > 0 -> cnt 'r' (firstn x j) + 1 = cnt 'u' (firstn x j) -> j ≥ i) ∧ (∀ j, j > 0 -> cnt 'u' (firstn y j) + 1 = cnt 'r' (firstn y j) -> j ≥ i) ∧ y = (map (λ c, if_f (c = 'r') 'u' 'r') (firstn x i) ) + skipn x i )).
+    Seq (add_hyp (⁨∀ x: list char,   ∃ x0: list char,     (λ x1 y: list char,       x1         ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }             ∖ { l: list char | |l| = 2 * n                 ∧ cnt 'r' l = n                     ∧ cnt 'u' l = n                         ∧ ∀ i: ℤ,                             0 < i                               → i ≤ |l|                                   → cnt 'u' (firstn l i)                                       ≤ cnt 'r' (firstn l i) }         → ∃ i: ℤ,             0 < i               ∧ i ≤ |x1|                   ∧ cnt 'r' (firstn x1 i) + 1 = cnt 'u' (firstn x1 i)                       ∧ (∀ j: ℤ,                           0 < j                             → cnt 'r' (firstn x1 j) + 1 = cnt 'u' (firstn x1 j)                                 → i ≤ j)                           ∧ (∀ j: ℤ,                               0 < j                                 → cnt 'u' (firstn y j) + 1                                     = cnt 'r' (firstn y j)                                     → i ≤ j)                               ∧ y                                   = map (λ c: char,                                       if_f (c = 'r') 'u' 'r') (firstn x1 i)                                       + skipn x1 i) x x0⁩)) (remove_hyp exist_function_ex_ex_ex) (Switch 1) (add_hyp exist_function_ex_ex_ex_o := (exist_function_ex_ex_ex H)) (remove_hyp H) (remove_hyp exist_function_ex_ex_ex).
     Switch 1.
     intros.
     add_hyp (x ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) } ∨ ~ x ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n } ∖ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n ∧ ∀ i: ℤ, 0 < i → i ≤ |l| → cnt 'u' (firstn l i) ≤ cnt 'r' (firstn l i) }).
@@ -2252,7 +2252,7 @@ Proof.
     apply (ex_intro ? ? ((λ c: char, if_f (c = 'r') 'u' 'r'))).
     auto_list.
     destruct H0 with (ex_ind ? ?) to (revert revert_property).
-    apply (ex_intro ? ? (map revert (firstn x i) ++ skipn x i)).
+    apply (ex_intro ? ? (map revert (firstn x i) + skipn x i)).
     intros.
     apply (ex_intro ? ? (i)).
     destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
@@ -2267,8 +2267,8 @@ Proof.
     intros.
     apply NNPP.
     intros.
-    replace #1 ((firstn (map revert (firstn x i) ++ skipn x i) j)) with (map revert (firstn x j)) in H2.
-    replace #1 (firstn (map revert (firstn x i) ++ skipn x i) j) with (firstn (map revert (firstn x i)) j).
+    replace #1 ((firstn (map revert (firstn x i) + skipn x i) j)) with (map revert (firstn x j)) in H2.
+    replace #1 (firstn (map revert (firstn x i) + skipn x i) j) with (firstn (map revert (firstn x i)) j).
     apply firstn_append_l.
     replace #1 (|map revert (firstn x i)|) with (i).
     replace #1 (|map revert (firstn x i)|) with (|(firstn x i)|).
@@ -2283,8 +2283,8 @@ Proof.
     apply firstn_firstn.
     lia.
     auto_list.
-    replace #1 ((firstn (map revert (firstn x i) ++ skipn x i) j)) with ((map revert (firstn x j))) in H2.
-    replace #1 (firstn (map revert (firstn x i) ++ skipn x i) j) with (firstn (map revert (firstn x i)) j).
+    replace #1 ((firstn (map revert (firstn x i) + skipn x i) j)) with ((map revert (firstn x j))) in H2.
+    replace #1 (firstn (map revert (firstn x i) + skipn x i) j) with (firstn (map revert (firstn x i)) j).
     apply firstn_append_l.
     replace #1 (|map revert (firstn x i)|) with (i).
     replace #1 (|map revert (firstn x i)|) with (|(firstn x i)|).
@@ -2478,36 +2478,36 @@ Proof.
     destruct i_property with (and_ind ? ?) to (i_property_l i_property_r).
     destruct i_property_r with (and_ind ? ?) to (i_property_r_l i_property_r_r).
     apply projection_in_intro_r.
-    apply (ex_intro ? ? (map revert (firstn a i) ++ skipn a i)).
+    apply (ex_intro ? ? (map revert (firstn a i) + skipn a i)).
     apply and_intro.
-    add_hyp (|map revert (firstn a i) ++ skipn a i| = 2 * n).
-    replace #1 (|map revert (firstn a i) ++ skipn a i|) with (|map revert (firstn a i) |+| skipn a i|).
+    add_hyp (|map revert (firstn a i) + skipn a i| = 2 * n).
+    replace #1 (|map revert (firstn a i) + skipn a i|) with (|map revert (firstn a i) |+| skipn a i|).
     lia.
     replace #1 (|map revert (firstn a i)|) with (|(firstn a i)|).
     apply map_len.
-    replace #1 (|firstn a i| + |skipn a i|) with (|firstn a i ++ skipn a i|).
+    replace #1 (|firstn a i| + |skipn a i|) with (|firstn a i + skipn a i|).
     lia.
-    replace #1 (firstn a i ++ skipn a i) with (a).
+    replace #1 (firstn a i + skipn a i) with (a).
     apply eq_sym.
     apply firstn_skipn.
     lia.
-    add_hyp (∀ c, c ∈ {'r', 'u'} -> cnt c ( map revert (firstn a i) ++ skipn a i) = n).
+    add_hyp (∀ c, c ∈ {'r', 'u'} -> cnt c ( map revert (firstn a i) + skipn a i) = n).
     intros.
-    replace #1 (cnt c (map revert (firstn a i) ++ skipn a i)) with (cnt c (map revert (firstn a i)) + cnt c ( skipn a i)).
+    replace #1 (cnt c (map revert (firstn a i) + skipn a i)) with (cnt c (map revert (firstn a i)) + cnt c ( skipn a i)).
     lia.
     apply union_unfold in H0.
     destruct H0 with (or_ind ? ?).
     apply singleton_unfold in H0.
     apply eq_sym in H0.
     rewrite H0.
-    replace #1 (a) with (firstn a i ++ skipn a i) in H_r_l.
+    replace #1 (a) with (firstn a i + skipn a i) in H_r_l.
     apply firstn_skipn.
     replace #1 (cnt 'u' (map revert (firstn a i))) with (cnt 'r' (firstn a i)).
     apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
     auto_set.
     apply (⁨included_trans ?0 ?2 (member_set a) ?6 ?8 ?10⁩).
     apply member_set_is_two_element_l.
-    replace #1 (firstn a i ++ skipn a i) with (a) in H_r_l.
+    replace #1 (firstn a i + skipn a i) with (a) in H_r_l.
     apply eq_sym.
     apply firstn_skipn.
     lia.
@@ -2621,11 +2621,11 @@ Proof.
     rewrite H2.
     rewrite revert_property.
     auto_list.
-    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    replace #1 (a) with (firstn a i + skipn a i) in H_l.
     apply firstn_skipn.
     lia.
-    add_hyp f_property_ex := (f_property ( (map revert (firstn a i) ++ skipn a i))).
-    Seq (add_hyp (⁨map revert (firstn a i) ++ skipn a i   ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }       ∖ { l: list char | |l| = 2 * n           ∧ cnt 'r' l = n               ∧ cnt 'u' l = n                   ∧ ∀ i0: ℤ,                       0 < i0                         → i0 ≤ |l|                             → cnt 'u' (firstn l i0) ≤ cnt 'r' (firstn l i0) }⁩)) (remove_hyp f_property_ex) (Switch 1) (add_hyp f_property_ex_o := (f_property_ex H1)) (remove_hyp H1) (remove_hyp f_property_ex).
+    add_hyp f_property_ex := (f_property ( (map revert (firstn a i) + skipn a i))).
+    Seq (add_hyp (⁨map revert (firstn a i) + skipn a i   ∈ { l: list char | |l| = 2 * n ∧ cnt 'r' l = n ∧ cnt 'u' l = n }       ∖ { l: list char | |l| = 2 * n           ∧ cnt 'r' l = n               ∧ cnt 'u' l = n                   ∧ ∀ i0: ℤ,                       0 < i0                         → i0 ≤ |l|                             → cnt 'u' (firstn l i0) ≤ cnt 'r' (firstn l i0) }⁩)) (remove_hyp f_property_ex) (Switch 1) (add_hyp f_property_ex_o := (f_property_ex H1)) (remove_hyp H1) (remove_hyp f_property_ex).
     destruct f_property_ex_o with (ex_ind ? ?) to (j j_property).
     destruct j_property with (and_ind ? ?) to (j_property_l j_property_r).
     destruct j_property_r with (and_ind ? ?) to (j_property_r_l j_property_r_r).
@@ -2636,9 +2636,9 @@ Proof.
     add_hyp i_property_r_r_ex := (i_property_r_r (j)).
     add_hyp j_property_r_r_r_l_ex := (j_property_r_r_r_l (i)).
     Seq (add_hyp (⁨0 < i⁩)) (remove_hyp j_property_r_r_r_l_ex) (Switch 1) (add_hyp j_property_r_r_r_l_ex_o := (j_property_r_r_r_l_ex H1)) (remove_hyp H1) (remove_hyp j_property_r_r_r_l_ex).
-    Seq (add_hyp (⁨cnt 'r' (firstn (map revert (firstn a i) ++ skipn a i) i) + 1   = cnt 'u' (firstn (map revert (firstn a i) ++ skipn a i) i)⁩)) (remove_hyp j_property_r_r_r_l_ex_o) (Switch 1) (add_hyp j_property_r_r_r_l_ex_o_o := (j_property_r_r_r_l_ex_o H1)) (remove_hyp H1) (remove_hyp j_property_r_r_r_l_ex_o).
+    Seq (add_hyp (⁨cnt 'r' (firstn (map revert (firstn a i) + skipn a i) i) + 1   = cnt 'u' (firstn (map revert (firstn a i) + skipn a i) i)⁩)) (remove_hyp j_property_r_r_r_l_ex_o) (Switch 1) (add_hyp j_property_r_r_r_l_ex_o_o := (j_property_r_r_r_l_ex_o H1)) (remove_hyp H1) (remove_hyp j_property_r_r_r_l_ex_o).
     Switch 1.
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((firstn (map revert (firstn a i)) i)).
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) i)) with ((firstn (map revert (firstn a i)) i)).
     apply firstn_append_l.
     replace #1 (|map revert (firstn a i)|) with (| (firstn a i)|).
     apply map_len.
@@ -2647,7 +2647,7 @@ Proof.
     assumption.
     lia.
     auto_list.
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((firstn (map revert (firstn a i)) i)).
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) i)) with ((firstn (map revert (firstn a i)) i)).
     apply firstn_append_l.
     replace #1 (|map revert (firstn a i)|) with (| (firstn a i)|).
     apply map_len.
@@ -2782,7 +2782,7 @@ Proof.
     Seq (add_hyp (⁨j ≤ |a| ∧ cnt 'r' (firstn a j) = cnt 'u' (firstn a j) + 1⁩)) (remove_hyp i_property_r_r_ex_o) (Switch 1) (add_hyp i_property_r_r_ex_o_o := (i_property_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp i_property_r_r_ex_o).
     lia.
     apply and_intro.
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) j)) with (((firstn (map revert (firstn a i)) j))) in j_property_r_r_l.
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) j)) with (((firstn (map revert (firstn a i)) j))) in j_property_r_r_l.
     apply firstn_append_l.
     replace #1 (| map revert (firstn a i)|) with (|(firstn a i)|).
     apply map_len.
@@ -2791,7 +2791,7 @@ Proof.
     assumption.
     lia.
     assumption.
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) j)) with (((firstn (map revert (firstn a i) ) j))) in j_property_r_r_l.
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) j)) with (((firstn (map revert (firstn a i) ) j))) in j_property_r_r_l.
     apply firstn_append_l.
     replace #1 (| map revert (firstn a i)|) with (|(firstn a i)|).
     apply map_len.
@@ -2937,7 +2937,7 @@ Proof.
     lia.
     rewrite j_property_r_r_r_r_r.
     rewrite H1.
-    replace #1 ((firstn (map revert (firstn a j) ++ skipn a j) j)) with (map revert (firstn a j)).
+    replace #1 ((firstn (map revert (firstn a j) + skipn a j) j)) with (map revert (firstn a j)).
     replace #3 (j) with (| map revert (firstn a j)|).
     replace #1 (| map revert (firstn a j)|) with (|(firstn a j)|).
     apply map_len.
@@ -2947,7 +2947,7 @@ Proof.
     assumption.
     apply firstn_append_l_len.
     apply eq_sym.
-    add_hyp (skipn (map revert (firstn a j) ++ skipn a j) j = skipn a j).
+    add_hyp (skipn (map revert (firstn a j) + skipn a j) j = skipn a j).
     replace #3 (j) with (| map revert (firstn a j)|).
     replace #1 (| map revert (firstn a j)|) with (|(firstn a j)|).
     apply map_len.
@@ -3013,8 +3013,8 @@ Proof.
     destruct H1_r_r with (and_ind ? ?) to (H1_r_r_l H1_r_r_r).
     add_hyp H1_r_r_r_ex := (H1_r_r_r (i)).
     Seq (add_hyp (⁨0 < i⁩)) (remove_hyp H1_r_r_r_ex) (Switch 1) (add_hyp H1_r_r_r_ex_o := (H1_r_r_r_ex H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex).
-    Seq (add_hyp (⁨i ≤ | map revert (firstn a i) ++ skipn a i|⁩)) (remove_hyp H1_r_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_r_ex_o_o := (H1_r_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex_o).
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((map revert (firstn a i))) in H1_r_r_r_ex_o_o.
+    Seq (add_hyp (⁨i ≤ | map revert (firstn a i) + skipn a i|⁩)) (remove_hyp H1_r_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_r_ex_o_o := (H1_r_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex_o).
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) i)) with ((map revert (firstn a i))) in H1_r_r_r_ex_o_o.
     replace #3 (i) with (| map revert (firstn a i)|).
     replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
     apply map_len.
@@ -3023,7 +3023,7 @@ Proof.
     assumption.
     lia.
     apply firstn_append_l_len.
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with (map revert (firstn a i)) in H1_r_r_r_ex_o_o.
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) i)) with (map revert (firstn a i)) in H1_r_r_r_ex_o_o.
     replace #3 (i) with (| map revert (firstn a i)|).
     replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
     apply map_len.
@@ -3165,21 +3165,21 @@ Proof.
     apply H0.
     auto_set.
     assumption.
-    add_hyp (| map revert (firstn a i) ++ skipn a i| = 2 * n).
-    replace #1 (| map revert (firstn a i) ++ skipn a i|) with (| map revert (firstn a i) |+| skipn a i|).
+    add_hyp (| map revert (firstn a i) + skipn a i| = 2 * n).
+    replace #1 (| map revert (firstn a i) + skipn a i|) with (| map revert (firstn a i) |+| skipn a i|).
     lia.
     replace #1 (| map revert (firstn a i)|) with (|(firstn a i)|).
     apply map_len.
-    replace #1 (|firstn a i| + |skipn a i|) with (|firstn a i ++ skipn a i|).
+    replace #1 (|firstn a i| + |skipn a i|) with (|firstn a i + skipn a i|).
     lia.
-    replace #1 (firstn a i ++ skipn a i) with (a).
+    replace #1 (firstn a i + skipn a i) with (a).
     apply eq_sym.
     apply firstn_skipn.
     lia.
-    add_hyp (∀ c: char, c ∈ {'r', 'u'} → cnt c (map revert (firstn a i) ++ skipn a i) = n).
+    add_hyp (∀ c: char, c ∈ {'r', 'u'} → cnt c (map revert (firstn a i) + skipn a i) = n).
     intros.
     apply union_unfold in H0.
-    replace #1 (cnt c (map revert (firstn a i) ++ skipn a i)) with (cnt c (map revert (firstn a i)) + cnt c ( skipn a i)).
+    replace #1 (cnt c (map revert (firstn a i) + skipn a i)) with (cnt c (map revert (firstn a i)) + cnt c ( skipn a i)).
     lia.
     destruct H0 with (or_ind ? ?).
     apply singleton_unfold in H0.
@@ -3192,9 +3192,9 @@ Proof.
     apply member_set_is_two_element_l.
     lia.
     apply member_set_firstn.
-    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    replace #1 (a) with (firstn a i + skipn a i) in H_l.
     apply firstn_skipn.
-    replace #1 (a) with ((firstn a i ++ skipn a i)) in H_r_l.
+    replace #1 (a) with ((firstn a i + skipn a i)) in H_r_l.
     apply firstn_skipn.
     apply injective_fold.
     intros.
@@ -3239,9 +3239,9 @@ Proof.
     auto_list.
     assumption.
     auto_set.
-    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    replace #1 (a) with (firstn a i + skipn a i) in H_l.
     apply firstn_skipn.
-    replace #1 (a) with (firstn a i ++ skipn a i) in H_r_l.
+    replace #1 (a) with (firstn a i + skipn a i) in H_r_l.
     apply firstn_skipn.
     lia.
     apply singleton_unfold in H0.
@@ -3309,7 +3309,7 @@ Proof.
     rewrite H2.
     rewrite revert_property.
     auto_list.
-    replace #1 (a) with (firstn a i ++ skipn a i) in H_l.
+    replace #1 (a) with (firstn a i + skipn a i) in H_l.
     apply firstn_skipn.
     lia.
     apply setminus_fold.
@@ -3321,8 +3321,8 @@ Proof.
     destruct H1_r_r with (and_ind ? ?) to (H1_r_r_l H1_r_r_r).
     add_hyp H1_r_r_r_ex := (H1_r_r_r (i)).
     Seq (add_hyp (⁨0 < i⁩)) (remove_hyp H1_r_r_r_ex) (Switch 1) (add_hyp H1_r_r_r_ex_o := (H1_r_r_r_ex H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex).
-    Seq (add_hyp (⁨i ≤ | map revert (firstn a i) ++ skipn a i|⁩)) (remove_hyp H1_r_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_r_ex_o_o := (H1_r_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex_o).
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with ((map revert (firstn a i))) in H1_r_r_r_ex_o_o.
+    Seq (add_hyp (⁨i ≤ | map revert (firstn a i) + skipn a i|⁩)) (remove_hyp H1_r_r_r_ex_o) (Switch 1) (add_hyp H1_r_r_r_ex_o_o := (H1_r_r_r_ex_o H1)) (remove_hyp H1) (remove_hyp H1_r_r_r_ex_o).
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) i)) with ((map revert (firstn a i))) in H1_r_r_r_ex_o_o.
     replace #3 (i) with (| map revert (firstn a i)|).
     replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
     apply map_len.
@@ -3331,7 +3331,7 @@ Proof.
     assumption.
     lia.
     apply firstn_append_l_len.
-    replace #1 ((firstn (map revert (firstn a i) ++ skipn a i) i)) with (map revert (firstn a i)) in H1_r_r_r_ex_o_o.
+    replace #1 ((firstn (map revert (firstn a i) + skipn a i) i)) with (map revert (firstn a i)) in H1_r_r_r_ex_o_o.
     replace #3 (i) with (| map revert (firstn a i)|).
     replace #1 (| map revert (firstn a i)|) with (| (firstn a i)|).
     apply map_len.
@@ -3495,18 +3495,18 @@ Proof.
     rewrite i_property_r_r_r_r_r.
     apply and_intro.
     apply and_intro.
-    replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i|) with (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) | + |skipn x i|).
+    replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) + skipn x i|) with (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) | + |skipn x i|).
     lia.
     replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)|) with (|(firstn x i)|).
     apply map_len.
-    replace #1 (|firstn x i| + |skipn x i|) with (|firstn x i ++ skipn x i|).
+    replace #1 (|firstn x i| + |skipn x i|) with (|firstn x i + skipn x i|).
     lia.
-    replace #1 (firstn x i ++ skipn x i) with (x).
+    replace #1 (firstn x i + skipn x i) with (x).
     apply eq_sym.
     apply firstn_skipn.
     apply set_from_func_unfold in x_property_l_l.
     lia.
-    replace #1 (cnt 'u' (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i)) with (cnt 'u' (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i))  + cnt 'u' (skipn x i)).
+    replace #1 (cnt 'u' (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) + skipn x i)) with (cnt 'u' (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i))  + cnt 'u' (skipn x i)).
     lia.
     apply eq_sym in revert_property.
     rewrite revert_property.
@@ -3568,9 +3568,9 @@ Proof.
     apply set_from_func_unfold in x_property_l_l.
     destruct x_property_l_l with (and_ind ? ?) to (x_property_l_l_l x_property_l_l_r).
     destruct x_property_l_l_r with (and_ind ? ?) to (x_property_l_l_r_l x_property_l_l_r_r).
-    replace #1 (x) with ((firstn x i) ++ skipn x i) in x_property_l_l_r_l.
+    replace #1 (x) with ((firstn x i) + skipn x i) in x_property_l_l_r_l.
     apply firstn_skipn.
-    replace #1 (x) with ((firstn x i) ++ skipn x i) in x_property_l_l_r_r.
+    replace #1 (x) with ((firstn x i) + skipn x i) in x_property_l_l_r_r.
     apply firstn_skipn.
     lia.
     apply set_from_func_unfold in x_property_l_l.
@@ -3578,7 +3578,7 @@ Proof.
     destruct x_property_l_l_r with (and_ind ? ?) to (x_property_l_l_r_l x_property_l_l_r_r).
     apply eq_sym in revert_property.
     rewrite revert_property.
-    replace #1 (cnt 'r' (map revert (firstn x i) ++ skipn x i)) with (cnt 'r' (map revert (firstn x i)) + cnt 'r' ( skipn x i)).
+    replace #1 (cnt 'r' (map revert (firstn x i) + skipn x i)) with (cnt 'r' (map revert (firstn x i)) + cnt 'r' ( skipn x i)).
     lia.
     replace #1 (cnt 'r' (map revert (firstn x i))) with (cnt 'u' ((firstn x i))).
     apply (⁨cnt_of_map ?0 ?2 ?4 {'r', 'u'} ?8 ?10 ?12 ?14 ?16⁩).
@@ -3633,7 +3633,7 @@ Proof.
     auto_list.
     assumption.
     auto_set.
-    replace #1 (x) with ((firstn x i) ++ skipn x i) in x_property_l_l_r_l.
+    replace #1 (x) with ((firstn x i) + skipn x i) in x_property_l_l_r_l.
     apply firstn_skipn.
     lia.
     replace #1 (2 * n) with ( n + 1 + (n - 1)).
@@ -3674,7 +3674,7 @@ Proof.
     apply eq_sym in H1.
     rewrite H1.
     rewrite i_property_r_r_r_r_r.
-    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i) i)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)).
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) + skipn x i) i)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)).
     apply eq_sym in revert_property.
     rewrite revert_property.
     replace #3 (i) with (| map revert (firstn x i)|).
@@ -3685,7 +3685,7 @@ Proof.
     assumption.
     lia.
     apply firstn_append_l_len.
-    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) ++ skipn x i) i)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)).
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i) + skipn x i) i)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn x i)).
     apply eq_sym in revert_property.
     rewrite revert_property.
     replace #3 (i) with (| map revert (firstn x i)|).
@@ -3817,7 +3817,7 @@ Proof.
     assumption.
     rewrite H1.
     rewrite j_property_r_r_r_r_r.
-    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j) ++ skipn y j) j)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)).
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j) + skipn y j) j)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)).
     replace #3 (j) with (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|).
     replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|) with (| (firstn y j)|).
     apply map_len.
@@ -3826,7 +3826,7 @@ Proof.
     assumption.
     assumption.
     apply firstn_append_l_len.
-    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j) ++ skipn y j) j)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)).
+    replace #1 ((firstn (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j) + skipn y j) j)) with (map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)).
     replace #3 (j) with (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|).
     replace #1 (|map (λ c: char, if_f (c = 'r') 'u' 'r') (firstn y j)|) with (| (firstn y j)|).
     apply map_len.
@@ -3996,11 +3996,11 @@ Proof.
     apply set_from_func_unfold in H_l.
     lia.
     apply member_set_firstn.
-    replace #1 (x) with (firstn x j ++ skipn x j).
+    replace #1 (x) with (firstn x j + skipn x j).
     apply eq_sym in H2.
     rewrite H2.
     apply firstn_skipn.
-    replace #1 (y) with (firstn y j ++ skipn y j).
+    replace #1 (y) with (firstn y j + skipn y j).
     apply firstn_skipn.
     rewrite j_property_r_r_r_r_r_l.
     rewrite j_property_r_r_r_r_r_r.
