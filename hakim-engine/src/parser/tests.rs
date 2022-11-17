@@ -65,6 +65,22 @@ fn forall_arrow() {
 }
 
 #[test]
+fn numbers() {
+    parse_pretty("0");
+    parse_pretty("1");
+    parse_pretty("123");
+    parse_pretty("1.23");
+    parse_pretty("1.");
+    parse_pretty("12.");
+    parse_pretty("0.5");
+    parse_pretty("0.123");
+    parse_pretty("0.");
+    parse_not_pretty("1.0", "1.");
+    parse_not_pretty("1.230000", "1.23");
+    parse_not_pretty("1000.000", "1000.");
+}
+
+#[test]
 fn number_ops() {
     parse_pretty("∀ x0 x1 x2: ℤ, x0 < x1 → x0 + x2 < x1 + x2");
     parse_pretty("∀ x0 x1: ℤ, (x0 + x1) * (x0 + x1) < x0 * x0 + x1 * x1");
@@ -88,6 +104,7 @@ fn minus_prec() {
 #[test]
 fn bigint() {
     parse_pretty("1 < 100000000000000000000000");
+    parse_pretty("1.23 = 100000000000000000000000.00000000000000000000000000000000000000000000001");
 }
 
 #[test]

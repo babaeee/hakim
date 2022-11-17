@@ -50,6 +50,11 @@ pub enum Term {
     Number {
         value: BigInt,
     },
+    /// Stores real numbers. 10.234 will be stored as `NumberR { value: 10234, point: 3 }`
+    NumberR {
+        value: BigInt,
+        point: usize,
+    },
     App {
         func: TermRef,
         op: TermRef,
@@ -199,7 +204,11 @@ pub fn map_reduce_wild<T>(
         }
     };
     match t {
-        Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => None,
+        Term::Axiom { .. }
+        | Term::Universe { .. }
+        | Term::Var { .. }
+        | Term::Number { .. }
+        | Term::NumberR { .. } => None,
         Term::App { func, op } => combine(func, op),
         Term::Forall(Abstraction {
             var_ty,
@@ -253,7 +262,11 @@ pub fn fill_axiom(t: TermRef, converter: impl Fn(&str, TermRef, usize) -> TermRe
     fn fa_rec(t: TermRef, f: &impl Fn(&str, TermRef, usize) -> TermRef, depth: usize) -> TermRef {
         match t.as_ref() {
             Term::Axiom { ty, unique_name } => f(unique_name, ty.clone(), depth),
-            Term::Wild { .. } | Term::Number { .. } | Term::Var { .. } | Term::Universe { .. } => t,
+            Term::Wild { .. }
+            | Term::NumberR { .. }
+            | Term::Number { .. }
+            | Term::Var { .. }
+            | Term::Universe { .. } => t,
             Term::Forall(abs) => TermRef::new(Term::Forall(for_abs(abs, f, depth))),
             Term::Fun(abs) => TermRef::new(Term::Fun(for_abs(abs, f, depth))),
             Term::App { func, op } => {
@@ -281,7 +294,11 @@ pub fn map_reduce_axiom<T>(
         }
     };
     match t {
-        Term::Wild { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => None,
+        Term::Wild { .. }
+        | Term::Universe { .. }
+        | Term::Var { .. }
+        | Term::Number { .. }
+        | Term::NumberR { .. } => None,
         Term::App { func, op } => combine(func, op),
         Term::Forall(Abstraction {
             var_ty,
@@ -357,7 +374,11 @@ pub fn fill_wild_with_depth(
         }
     }
     match t.as_ref() {
-        Term::Axiom { .. } | Term::Universe { .. } | Term::Var { .. } | Term::Number { .. } => t,
+        Term::Axiom { .. }
+        | Term::Universe { .. }
+        | Term::Var { .. }
+        | Term::Number { .. }
+        | Term::NumberR { .. } => t,
         Term::App { func, op } => app_ref!(
             fill_wild_with_depth(func.clone(), f, depth),
             fill_wild_with_depth(op.clone(), f, depth)
@@ -403,6 +424,7 @@ pub fn normalize(t: TermRef) -> TermRef {
         | Term::Axiom { .. }
         | Term::Universe { .. }
         | Term::Number { .. }
+        | Term::NumberR { .. }
         | Term::Wild { .. } => t,
         Term::Forall(x) => TermRef::new(Term::Forall(for_abs(x.clone()))),
         Term::Fun(x) => {
@@ -466,6 +488,7 @@ pub fn subst(exp: TermRef, to_put: TermRef) -> TermRef {
             Term::Axiom { .. }
             | Term::Universe { .. }
             | Term::Number { .. }
+            | Term::NumberR { .. }
             | Term::Wild { scope: None, .. } => exp,
             Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a.clone(), to_put, i))),
             Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a.clone(), to_put, i))),
@@ -533,6 +556,7 @@ pub fn map_foreign_vars(term: TermRef, mut f: impl FnMut(usize, bool) -> usize) 
             | Term::Axiom { .. }
             | Term::Universe { .. }
             | Term::Number { .. }
+            | Term::NumberR { .. }
             | Term::Var { .. } => term,
             Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a, depth, f))),
             Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a, depth, f))),

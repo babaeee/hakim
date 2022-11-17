@@ -58,7 +58,8 @@ pub fn replace_term(
         | Term::Universe { .. }
         | Term::Var { .. }
         | Term::Wild { .. }
-        | Term::Number { .. } => exp,
+        | Term::Number { .. }
+        | Term::NumberR { .. } => exp,
         Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a, find, replace, which))),
         Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a, find, replace, which))),
         Term::App { func, op } => TermRef::new(Term::App {

@@ -76,6 +76,7 @@ pub fn fill_highlight_dummy(mut ast: AstTerm) -> AstTerm {
             AstTerm::Char(_)
             | AstTerm::Str(_)
             | AstTerm::Number(_)
+            | AstTerm::NumberR(..)
             | AstTerm::Wild(_)
             | AstTerm::Universe(_) => (),
         }
