@@ -255,6 +255,11 @@ Import /Eq.
 
 Todo asl_zarb2: ∀ X: U, ∀ C: set X, ∀ n m: ℤ, n > 0 -> m > 0 -> ∀ Y: U, ∀ f: X -> Y, |projection C f| = n -> (∀ y: Y, y ∈ (projection C f) -> |{ x: X | x ∈ C ∧ f x = y }| = m) -> ∀ c: ℤ, c = n * m -> |C| = c.
 
+Axiom digits: ℤ -> list ℤ.
+Axiom digits_neg: ∀ x, x < 0 -> digits x = digits (-x).
+Axiom digits_ge_0: ∀ x c, 0 < x -> 0 ≤ c -> digits (10 * x + c) = c :: digits x.  
+Axiom digits_lt_10: ∀ x, 0 ≤ x -> x < 10 -> digits x = [x].
+
 Axiom cm: ℤ -> ℤ -> ℤ.
 Axiom cm0: ∀ r, 0 ≤ r -> cm r 0 = 1.
 Axiom cmeq: ∀ r, 0 ≤ r -> cm r r = 1.
