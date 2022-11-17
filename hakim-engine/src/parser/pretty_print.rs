@@ -238,6 +238,11 @@ pub fn structural_print(term: &Term) -> String {
             Term::Fun(abs) => g(w, 'λ', abs),
             Term::Var { index } => write!(w, "@{index}"),
             Term::Number { value } => write!(w, "{value}"),
+            Term::NumberR { value, point } => {
+                let s = format!("{value}");
+                let pos = s.len() - point;
+                write!(w, "{}.{}", &s[..pos], &s[pos..])
+            }
             Term::App { func, op } => {
                 write!(w, "(")?;
                 f(w, func)?;
@@ -388,6 +393,7 @@ pub fn term_to_ast(
             Ident(var_name, Some(tag))
         }
         Term::Number { value } => Number(value.clone()),
+        Term::NumberR { value, point } => NumberR(value.clone(), *point),
         Term::App { func, op } => {
             fn for_func(
                 func: &Term,
@@ -607,6 +613,17 @@ pub fn pretty_print_ast(
         }
         AstTerm::Number(x) => {
             HighlightTag::Literal.print(r, |r| write!(r, "{x}"))?;
+        }
+        AstTerm::NumberR(value, point) => {
+            HighlightTag::Literal.print(r, |r| {
+                let s = format!("{value}");
+                let pos = s.len() - point;
+                if pos == 0 {
+                    write!(r, "0.{}", s)
+                } else {
+                    write!(r, "{}.{}", &s[..pos], &s[pos..])
+                }
+            })?;
         }
         AstTerm::Wild(Some(x)) => write!(r, "?{x}")?,
         AstTerm::Wild(None) => write!(r, "?")?,

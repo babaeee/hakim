@@ -23,6 +23,7 @@ pub enum TokenValue {
     Abs(AbsSign),
     Sign(String),
     Number(BigInt),
+    NumberR(BigInt, usize),
     Wild(Option<String>),
 }
 
@@ -234,7 +235,22 @@ pub fn tokenize(mut text: Cursor<'_>) -> Result<Vec<Token>, String> {
                 text.eat_char()?;
                 num = num * 10 + d;
             }
-            push!(Number(num));
+            if let Some('.') = text.pick_char() {
+                text.eat_char()?;
+                let mut point = 0;
+                while let Some(d) = text.pick_char().and_then(|x| x.to_digit(10)) {
+                    text.eat_char()?;
+                    num = num * 10 + d;
+                    point += 1;
+                }
+                while point > 0 && (&num) % 10 == 0.into() {
+                    point -= 1;
+                    num /= 10;
+                }
+                push!(NumberR(num, point));
+            } else {
+                push!(Number(num));
+            }
             continue;
         }
         push!(Sign(c.to_string()));

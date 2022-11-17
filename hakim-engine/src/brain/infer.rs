@@ -395,6 +395,7 @@ fn match_and_infer_without_normalize(
                 Term::Axiom { .. }
                 | Term::Universe { .. }
                 | Term::Number { .. }
+                | Term::NumberR { .. }
                 | Term::Wild { .. } => exp,
                 Term::Forall(a) => TermRef::new(Term::Forall(for_abs(a.clone(), depth, var))),
                 Term::Fun(a) => TermRef::new(Term::Fun(for_abs(a.clone(), depth, var))),
@@ -473,6 +474,7 @@ pub fn type_of_inner(
                 .ok_or_else(|| ForiegnVariableInTerm(index - var_ty_stack.len()))?
                 .clone(),
             Term::Number { .. } => term_ref!(axiom "ℤ".to_string(), universe 0),
+            Term::NumberR { .. } => term_ref!(axiom "ℝ".to_string(), universe 0),
             Term::App { func, op } => {
                 let op_ty = type_of_inner(op.clone(), var_ty_stack, infers)?;
                 let func_type = type_of_inner(func.clone(), var_ty_stack, infers)?;

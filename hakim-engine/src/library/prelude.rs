@@ -6,6 +6,9 @@ pub fn u() -> TermRef {
 pub fn z() -> TermRef {
     term_ref!(axiom "ℤ" , u())
 }
+pub fn r() -> TermRef {
+    term_ref!(axiom "ℝ" , u())
+}
 pub fn false_ty() -> TermRef {
     term_ref!(axiom "False" , u())
 }
@@ -128,6 +131,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     let mut name_dict = im::HashMap::<String, TermRef>::default();
     name_dict.insert("U".to_string(), u());
     name_dict.insert("ℤ".to_string(), z());
+    name_dict.insert("ℝ".to_string(), r());
     name_dict.insert("False".to_string(), false_ty());
     name_dict.insert("True".to_string(), true_ty());
     name_dict.insert("divide".to_string(), divide());

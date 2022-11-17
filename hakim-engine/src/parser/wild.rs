@@ -56,8 +56,11 @@ impl FixWildDfsState {
 
     fn dfs(&mut self, term: &Term) {
         match term {
-            Term::Var { .. } | Term::Number { .. } | Term::Axiom { .. } | Term::Universe { .. } => {
-            }
+            Term::Var { .. }
+            | Term::Number { .. }
+            | Term::NumberR { .. }
+            | Term::Axiom { .. }
+            | Term::Universe { .. } => {}
             Term::Forall(a) | Term::Fun(a) => {
                 self.dfs(&a.var_ty);
                 self.group.push(self.dsu.add_group());

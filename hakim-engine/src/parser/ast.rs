@@ -48,6 +48,7 @@ pub enum AstTerm {
     BinOp(Box<AstTerm>, BinOp, Box<AstTerm>),
     UniOp(UniOp, Box<AstTerm>),
     Number(BigInt),
+    NumberR(BigInt, usize),
     Char(char),
     Str(String),
     List(Vec<AstTerm>),
@@ -235,6 +236,7 @@ trait TokenEater {
                 })),
             },
             TokenValue::Number(x) => Ok(Number(x)),
+            TokenValue::NumberR(value, point) => Ok(NumberR(value, point)),
             TokenValue::Char(c) => Ok(Char(c)),
             TokenValue::Str(c) => Ok(Str(c)),
         }
@@ -475,6 +477,7 @@ pub fn ast_to_term(
             }
         }
         Number(num) => Ok(term_ref!(n num)),
+        NumberR(value, point) => Ok(TermRef::new(Term::NumberR { value, point })),
         Str(s) => {
             let v = s.chars().map(char_to_term).collect::<Result<Vec<_>>>()?;
             let r = list_to_term(v, prelude::char_ty());
