@@ -66,11 +66,7 @@ impl Identifier {
     }
 }
 
-fn from_set_type<'a>(
-    t: &TermRef,
-    arena: EnsembleArena<'a>,
-    sets_id: &mut Identifier,
-) -> &'a EnsembleTree<'a> {
+fn from_set_type<'a>(t: &TermRef, arena: EnsembleArena<'a>) -> &'a EnsembleTree<'a> {
     if let Term::App { func, op: op2 } = t.as_ref() {
         if let Term::Axiom { unique_name, .. } = func.as_ref() {
             if unique_name == "set_empty" {
@@ -86,18 +82,18 @@ fn from_set_type<'a>(
             if let Term::App { func, op: _ } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "union" {
-                        let set_a = from_set_type(op1, arena, sets_id);
-                        let set_b = from_set_type(op2, arena, sets_id);
+                        let set_a = from_set_type(op1, arena);
+                        let set_b = from_set_type(op2, arena);
                         return arena.alloc(Union(set_a, set_b));
                     }
                     if unique_name == "intersection" {
-                        let set_a = from_set_type(op1, arena, sets_id);
-                        let set_b = from_set_type(op2, arena, sets_id);
+                        let set_a = from_set_type(op1, arena);
+                        let set_b = from_set_type(op2, arena);
                         return arena.alloc(Intersection(set_a, set_b));
                     }
                     if unique_name == "setminus" {
-                        let set_a = from_set_type(op1, arena, sets_id);
-                        let set_b = from_set_type(op2, arena, sets_id);
+                        let set_a = from_set_type(op1, arena);
+                        let set_b = from_set_type(op2, arena);
                         return arena.alloc(Setminus(set_a, set_b));
                     }
                 }
@@ -106,17 +102,13 @@ fn from_set_type<'a>(
     }
     return arena.alloc(Set(t.clone()));
 }
-fn from_prop_type<'a>(
-    t: TermRef,
-    arena: EnsembleArena<'a>,
-    sets_id: &mut Identifier,
-) -> Option<(&'a EnsembleTree<'a>, TermRef)> {
+fn from_prop_type(t: TermRef, arena: EnsembleArena<'_>) -> Option<(&EnsembleTree<'_>, TermRef)> {
     if let Term::App { func, op: op2 } = t.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
             if let Term::Axiom { unique_name, .. } = func.as_ref() {
                 if unique_name == "finite" {
                     return Some((
-                        arena.alloc(Finite(from_set_type(op2, arena, sets_id))),
+                        arena.alloc(Finite(from_set_type(op2, arena))),
                         term_ref!(app_ref!(set(), op1)),
                     ));
                 }
@@ -124,21 +116,15 @@ fn from_prop_type<'a>(
             if let Term::App { func, op: ty } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "inset" {
-                        let tree = Inset(op1.clone(), from_set_type(op2, arena, sets_id));
+                        let tree = Inset(op1.clone(), from_set_type(op2, arena));
                         return Some((arena.alloc(tree), term_ref!(app_ref!(set(), ty))));
                     }
                     if unique_name == "included" {
-                        let tree = Included(
-                            from_set_type(op1, arena, sets_id),
-                            from_set_type(op2, arena, sets_id),
-                        );
+                        let tree = Included(from_set_type(op1, arena), from_set_type(op2, arena));
                         return Some((arena.alloc(tree), term_ref!(app_ref!(set(), ty))));
                     }
                     if unique_name == "eq" {
-                        let tree = Eq(
-                            from_set_type(op1, arena, sets_id),
-                            from_set_type(op2, arena, sets_id),
-                        );
+                        let tree = Eq(from_set_type(op1, arena), from_set_type(op2, arena));
                         return Some((arena.alloc(tree), ty.clone()));
                     }
                 }
@@ -153,7 +139,7 @@ fn convert(
     logic_arena: LogicArena<'_, EnsembleStatement>,
 ) -> LogicValue<'_, EnsembleStatement> {
     let my_arena = Arena::new();
-    let exp = if let Some(x) = from_prop_type(term, &my_arena, &mut Identifier::new()) {
+    let exp = if let Some(x) = from_prop_type(term, &my_arena) {
         x.0
     } else {
         return LogicValue::unknown();
