@@ -19,7 +19,7 @@ mod proof_tree;
 pub mod suggest;
 pub mod tactic;
 
-use tactic::{add_hyp, apply, destruct, intros, lia, replace, rewrite};
+use tactic::{add_hyp, apply, destruct, intros, lia, lra, replace, rewrite};
 
 use self::action_of_tactic::GraphicalAction;
 use self::history_auto::history_lookup_auto;
@@ -452,6 +452,7 @@ impl Frame {
             "destruct" => destruct(frame, parts),
             "add_from_lib" => add_from_lib(frame, parts),
             "lia" => lia(frame),
+            "lra" => lra(frame),
             "auto_set" => auto_set(frame),
             "auto_list" => auto_list(frame),
             "assumption" => assumption(frame),

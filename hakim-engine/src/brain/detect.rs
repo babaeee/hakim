@@ -57,3 +57,12 @@ pub fn detect_z_ty(ty: &Term) -> bool {
     }
     false
 }
+
+pub fn detect_r_ty(ty: &Term) -> bool {
+    if let Term::Axiom { unique_name, .. } = ty {
+        if unique_name == "ℝ" {
+            return true;
+        }
+    }
+    false
+}
