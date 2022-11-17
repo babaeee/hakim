@@ -97,10 +97,10 @@ impl LinearPolyBuilder {
 fn normalize<'a>(tree: &'a ArithTree<'a>, arena: ArithArena<'a>) -> &'a ArithTree<'a> {
     match tree {
         Atom(_) | Const(_) => tree,
-        Plus(a, b) => arena.alloc(Plus(normalize(*a, arena), normalize(*b, arena))),
+        Plus(a, b) => arena.alloc(Plus(normalize(a, arena), normalize(b, arena))),
         Mult(a, b) => {
-            let a = normalize(*a, arena);
-            let b = normalize(*b, arena);
+            let a = normalize(a, arena);
+            let b = normalize(b, arena);
             if let Plus(x, y) = a {
                 let xb = normalize(arena.alloc(Mult(x, b)), arena);
                 let yb = normalize(arena.alloc(Mult(y, b)), arena);
@@ -120,7 +120,7 @@ fn tree_to_d2(tree: &ArithTree<'_>) -> Poly {
     match tree {
         Atom(t) => Poly(0.into(), vec![(1.into(), vec![t.clone()])]),
         Const(i) => Poly(i.clone(), vec![]),
-        Plus(t1, t2) => tree_to_d2(*t1) + tree_to_d2(*t2),
+        Plus(t1, t2) => tree_to_d2(t1) + tree_to_d2(t2),
         Mult(t1, t2) => {
             fn to_mul(x: &ArithTree<'_>) -> (BigInt, Vec<TermRef>) {
                 let Poly(c1, mut r1) = tree_to_d2(x);
