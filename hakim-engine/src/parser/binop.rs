@@ -162,7 +162,7 @@ impl BinOp {
             ModOf => app_ref!(mod_of(), l, r),
             Mult => app_ref!(mult(), l, r),
             Or => app_ref!(or(), l, r),
-            Plus => app_ref!(plus(), l, r),
+            Plus => app_ref!(plus(), ty(), l, r),
             PlusList => {
                 app_ref!(plus_list(), ty(), l, r)
             }
@@ -207,6 +207,7 @@ impl BinOp {
                         Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                             "cons" => found!(op, Cons, op2, ty),
                             "eq" => found!(op, Eq, op2, ty),
+                            "plus" => found!(op, Plus, op2, ty),
                             "included" => found!(op, Included, op2, ty),
                             "inlist" => found!(op, Inlist, op2, ty),
                             "inset" => found!(op, Inset, op2, ty),
@@ -221,7 +222,6 @@ impl BinOp {
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
                         "divide" => found!(op, Divide, op2),
                         "iff" => found!(op, Iff, op2),
-                        "plus" => found!(op, Plus, op2),
                         "pow" => found!(op, Pow, op2),
                         "minus" => found!(op, Minus, op2),
                         "mod_of" => found!(op, ModOf, op2),

@@ -331,15 +331,15 @@ fn term_ref_to_arith(t: TermRef, arena: ArithArena<'_>) -> &ArithTree<'_> {
                         "cnt" => {
                             return cnt_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
                         }
+                        "plus" => Plus(
+                            term_ref_to_arith(op1.clone(), arena),
+                            term_ref_to_arith(op2.clone(), arena),
+                        ),
                         _ => atom_normalizer(t),
                     },
                     _ => atom_normalizer(t),
                 },
                 Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                    "plus" => Plus(
-                        term_ref_to_arith(op1.clone(), arena),
-                        term_ref_to_arith(op2.clone(), arena),
-                    ),
                     "minus" => minus(
                         term_ref_to_arith(op1.clone(), arena),
                         term_ref_to_arith(op2.clone(), arena),
@@ -431,7 +431,7 @@ impl Poly {
             for z in zz {
                 tx = app_ref!(mult(), tx, z);
             }
-            t = app_ref!(plus(), t, tx);
+            t = app_ref!(plus(), z(), t, tx);
         }
         t
     }

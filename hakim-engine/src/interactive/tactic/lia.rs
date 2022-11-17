@@ -350,7 +350,6 @@ mod tests {
                 write!(s, "a{} = a{} * 1000 -> ", i, i - 1)?;
             }
             write!(s, "x = a{t} -> y = a{t} + 1 -> x = y")?;
-            dbg!(&s);
             fail(&s);
             Ok(())
         })()

@@ -379,9 +379,9 @@ pub mod tests {
     fn most_simple_test() {
         let eng = build_engine(EngineLevel::Empty);
         let term = eng.parse_text("2 + 3").unwrap();
-        assert_eq!(structural_print(&term), "((plus 2) 3)");
+        assert_eq!(structural_print(&term), "(((plus ℤ) 2) 3)");
         let term = eng.parse_text("2 + 3 = 5").unwrap();
-        assert_eq!(structural_print(&term), "(((eq ℤ) ((plus 2) 3)) 5)");
+        assert_eq!(structural_print(&term), "(((eq ℤ) (((plus ℤ) 2) 3)) 5)");
     }
 
     #[test]
