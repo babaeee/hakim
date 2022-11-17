@@ -1,0 +1,40 @@
+name: Vercel Preview Deployment
+env:
+  VERCEL_ORG_ID: hkalbasi
+  VERCEL_PROJECT_ID: hakim
+on:
+  push:
+    branches-ignore:
+      - main
+jobs:
+  Deploy-Preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        run: |
+          rustup update --no-self-update stable
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: Build wasm
+        run: |
+          cd hakim-wasm
+          wasm-pack build
+      - name: Build www
+        run: |
+          cd front
+          npm install -g yarn
+          yarn
+          yarn build
+          cat dist/index.html > dist/404.html
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Deploy Project Artifacts to Vercel
+        run: |
+          cd front
+          cd dist
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
