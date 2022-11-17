@@ -79,6 +79,7 @@ fn lambda_dependent() {
 fn forall_bad_ty() {
     fail_type("∀ A: U, 2");
     fail_type("∀ A: 2, U");
+    fail_type("∀ f: ∀ T: U, T -> T, ∀ T: U, ∀ x: T, f ? x");
     fail_type("∀ x: ℤ, x + 2");
 }
 

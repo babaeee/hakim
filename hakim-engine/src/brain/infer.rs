@@ -197,6 +197,14 @@ impl InferResults {
     }
 }
 
+fn match_wild(i: usize, scope: &[usize], t: TermRef, infers: &mut InferResults) -> Result<()> {
+    if infers.is_unknown(i) {
+        infers.set_with_scope(i, scope, t)
+    } else {
+        match_and_infer_without_normalize(infers.get_with_scope(i, scope)?, t, infers)
+    }
+}
+
 fn match_and_infer_without_normalize(
     t1: TermRef,
     t2: TermRef,
@@ -291,13 +299,6 @@ fn match_and_infer_without_normalize(
             Some((*index, scope.as_deref()))
         } else {
             None
-        }
-    }
-    fn match_wild(i: usize, scope: &[usize], t: TermRef, infers: &mut InferResults) -> Result<()> {
-        if infers.is_unknown(i) {
-            infers.set_with_scope(i, scope, t)
-        } else {
-            main(infers.get_with_scope(i, scope)?, t, infers)
         }
     }
     fn func_is_wild(t: &Term) -> Option<(usize, Option<&[usize]>)> {
@@ -510,7 +511,12 @@ fn get_universe_and_infer(term: &Term, infers: &mut InferResults) -> Result<usiz
     match term {
         Term::Universe { index } => Ok(*index),
         Term::Wild { index, scope } => {
-            infers.set_with_scope(*index, scope.as_deref().unwrap(), term_ref!(universe 0))?;
+            match_wild(
+                *index,
+                scope.as_deref().unwrap(),
+                term_ref!(universe 0),
+                infers,
+            )?;
             Ok(0)
         }
         _ => Err(IsNotUniverse.into()),
