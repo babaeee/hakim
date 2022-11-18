@@ -3,11 +3,17 @@ use std::cmp::Ordering;
 use super::Result;
 use crate::{
     analysis::{
-        arith::{ConstRepr, LinearPoly, Poly},
+        arith::{ConstRepr, LinearPoly, Poly, Rati},
         logic::{LogicArena, LogicBuilder, LogicValue},
     },
-    brain::{detect::detect_r_ty, Term, TermRef},
+    app_ref,
+    brain::{
+        detect::{detect_r_ty, detect_z_ty},
+        Term, TermRef,
+    },
     interactive::Frame,
+    library::prelude::{div, z},
+    term_ref,
 };
 
 use minilp::{ComparisonOp, OptimizationDirection, Problem};
@@ -109,6 +115,10 @@ impl std::ops::Mul for BigFraction {
 impl ConstRepr for BigFraction {
     fn from_term(term: &Term) -> Option<Self> {
         match term {
+            Term::Number { value } => Some(BigFraction {
+                soorat: value.clone(),
+                makhraj: 1.into(),
+            }),
             Term::NumberR { value, point } => Some(BigFraction {
                 soorat: value.clone(),
                 makhraj: BigInt::pow(&10.into(), *point as u32),
@@ -118,7 +128,12 @@ impl ConstRepr for BigFraction {
     }
 
     fn into_term(self) -> TermRef {
-        todo!()
+        app_ref!(
+            div(),
+            z(),
+            term_ref!(n self.soorat),
+            term_ref!(n self.makhraj)
+        )
     }
 }
 
@@ -154,31 +169,43 @@ fn convert(term: TermRef, arena: LogicArena<'_, RealIneq>) -> LogicValue<'_, Rea
         if let Term::App { func, op: op1 } = func.as_ref() {
             if let Term::App { func, op: ty } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                    if detect_r_ty(ty) {
+                    if detect_r_ty(ty) || detect_z_ty(ty) {
                         if unique_name == "eq" {
-                            let d1 = Poly::<BigFraction>::from_subtract(op2.clone(), op1.clone());
-                            if d1.is_zero() {
+                            let d = Rati::<BigFraction>::from_subtract(op2.clone(), op1.clone());
+                            if d.is_zero() {
                                 return LogicValue::True;
                             }
-                            if d1.variables().is_empty() {
+                            if d.is_constant() {
                                 return LogicValue::False;
                             }
-                            let mut d2 = d1.clone();
-                            d2.negate();
-                            let l1 = LogicValue::from(RealIneq(d1, CmpOp::Le));
-                            let l2 = LogicValue::from(RealIneq(d2, CmpOp::Le));
-                            return l1.and(l2, arena);
+                            let Rati(d1s, d1m) = d;
+                            let (mut d2s, mut d2m) = (d1s.clone(), d1m.clone());
+                            d2s.negate();
+                            d2m.negate();
+                            let l1 = LogicValue::from(RealIneq(d1s, CmpOp::Le));
+                            let l2 = LogicValue::from(RealIneq(d2s, CmpOp::Le));
+                            let l3 = LogicValue::from(RealIneq(d1m, CmpOp::Le));
+                            let l4 = LogicValue::from(RealIneq(d2m, CmpOp::Le));
+                            return l1.and(l2, arena).or(l3.and(l4, arena), arena);
                         }
                         if unique_name == "lt" {
-                            let d = Poly::<BigFraction>::from_subtract(op2.clone(), op1.clone());
-                            if d.variables().is_empty() {
-                                return if *d.constant() > 0i32.into() {
+                            let d = Rati::<BigFraction>::from_subtract(op2.clone(), op1.clone());
+                            if d.is_constant() {
+                                return if !d.is_zero() && *d.0.constant() > 0i32.into() {
                                     LogicValue::True
                                 } else {
                                     LogicValue::False
                                 };
                             }
-                            return LogicValue::from(RealIneq(d, CmpOp::Lt));
+                            let Rati(d1s, d1m) = d;
+                            let (mut d2s, mut d2m) = (d1s.clone(), d1m.clone());
+                            d2s.negate();
+                            d2m.negate();
+                            let l1 = LogicValue::from(RealIneq(d1s, CmpOp::Lt));
+                            let l2 = LogicValue::from(RealIneq(d1m, CmpOp::Lt));
+                            let l3 = LogicValue::from(RealIneq(d2s, CmpOp::Lt));
+                            let l4 = LogicValue::from(RealIneq(d2m, CmpOp::Lt));
+                            return l1.and(l2, arena).or(l3.and(l4, arena), arena);
                         }
                     }
                 }
@@ -265,6 +292,7 @@ mod tests {
     fn simple() {
         success("1. + 2. = 3.");
         success("0.5 + 0.5 = 1.");
+        success("1 / 2 + 0.5 = 1.");
         success("0.5 * 0.5 = 0.25");
         fail("1. + 2. = 4.");
     }
@@ -276,9 +304,22 @@ mod tests {
 
     #[test]
     fn lra_simple() {
+        fail("∀ x: ℝ, x > 1.2");
         success("∀ x: ℝ, 0.5 * x > 3. -> x > 1.2 -> 0.6 * x > 3.");
         fail("∀ x: ℝ, 0.5 * x > 3. -> x > 1.2 -> 0.4 * x > 3.");
         success("∀ x: ℝ, x = 3. -> x < 3.01");
+    }
+
+    #[test]
+    fn div_simple() {
+        success("∀ a b: ℝ, b > 0. -> a / b > 2. -> a > 2. * b");
+        success("∀ a b: ℤ, b > 0 -> a / b > 2. -> a > 2 * b");
+        success("∀ a b: ℤ, ~ b * b = 0 -> (a * a) / (b * b) = 2. -> a * a = 2 * b * b");
+    }
+
+    #[test]
+    fn div_catch_zero_err() {
+        fail("∀ a b c d: ℝ, a / b + c / d = (a * d + b * c) / (b * d)");
     }
 
     #[test]
