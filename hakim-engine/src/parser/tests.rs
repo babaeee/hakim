@@ -127,7 +127,7 @@ fn simple_exists() {
 
 #[test]
 fn exists_raw() {
-    parse_not_pretty("ex ℤ (lt 5)", "∃ x: ℤ, 5 < x");
+    parse_not_pretty("ex ℤ (lt ℤ 5)", "∃ x: ℤ, 5 < x");
 }
 
 #[test]
@@ -195,7 +195,7 @@ fn sets() {
     parse_pretty("{ x0: ℤ | 5 < x0 } ∩ { x0: ℤ | x0 < 10 }");
     parse_pretty("{2} ∩ {}");
     parse_pretty("{1, 2, 3}");
-    parse_not_pretty("set_from_func ℤ (lt 5)", "{ x: ℤ | 5 < x }");
+    parse_not_pretty("set_from_func ℤ (lt ℤ 5)", "{ x: ℤ | 5 < x }");
 }
 
 #[test]
