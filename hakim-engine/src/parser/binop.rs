@@ -208,6 +208,7 @@ impl BinOp {
                             "eq" => found!(op, Eq, op2, ty),
                             "plus" => found!(op, Plus, op2, ty),
                             "mult" => found!(op, Mult, op2, ty),
+                            "lt" => found!(op, Lt, op2, ty),
                             "included" => found!(op, Included, op2, ty),
                             "inlist" => found!(op, Inlist, op2, ty),
                             "inset" => found!(op, Inset, op2, ty),
@@ -224,12 +225,14 @@ impl BinOp {
                         "pow" => found!(op, Pow, op2),
                         "minus" => found!(op, Minus, op2),
                         "mod_of" => found!(op, ModOf, op2),
-                        "lt" => found!(op, Lt, op2),
                         "or" => {
-                            if let Some((a1, BinOp::Lt, b1)) = BinOp::detect(op) {
-                                if let Some((a2, BinOp::Eq, b2)) = BinOp::detect(op2) {
+                            if let Some((a1, BinOp::Lt, b1, _)) = BinOp::detect_custom(op, disabled)
+                            {
+                                if let Some((a2, BinOp::Eq, b2, ty)) =
+                                    BinOp::detect_custom(op2, disabled)
+                                {
                                     if a1 == a2 && b1 == b2 {
-                                        found!(a1, Le, b1);
+                                        found!(a1, Le, b1, ty.unwrap());
                                     }
                                 }
                             }
