@@ -14,12 +14,17 @@ pub enum ArithTree<'a, N> {
     Const(N),
     Plus(&'a ArithTree<'a, N>, &'a ArithTree<'a, N>),
     Mult(&'a ArithTree<'a, N>, &'a ArithTree<'a, N>),
+    Div(&'a ArithTree<'a, N>, &'a ArithTree<'a, N>),
 }
 
 use ArithTree::*;
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Poly<N>(N, Vec<(N, Vec<TermRef>)>);
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Rati<N>(pub Poly<N>, pub Poly<N>);
+
 impl<N: Debug> Debug for Poly<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?} ", self.0)?;
@@ -40,6 +45,7 @@ pub trait ConstRepr:
     + From<i32>
     + TryInto<i32>
     + Default
+    + Debug
     + 'static
 {
     fn from_term(term: &Term) -> Option<Self>;
@@ -127,21 +133,52 @@ impl LinearPolyBuilder {
 fn normalize<'a, N>(tree: &'a ArithTree<'a, N>, arena: ArithArena<'a, N>) -> &'a ArithTree<'a, N> {
     match tree {
         Atom(_) | Const(_) => tree,
-        Plus(a, b) => arena.alloc(Plus(normalize(a, arena), normalize(b, arena))),
+        Div(a, b) => {
+            let a = normalize(a, arena);
+            let b = normalize(b, arena);
+            if let Div(x, y) = a {
+                let yb = normalize(arena.alloc(Mult(y, b)), arena);
+                return normalize(arena.alloc(Div(x, yb)), arena);
+            }
+            if let Div(x, y) = b {
+                let ya = normalize(arena.alloc(Mult(y, a)), arena);
+                return normalize(arena.alloc(Div(ya, x)), arena);
+            }
+            arena.alloc(Div(a, b))
+        }
+        Plus(a, b) => {
+            let a = normalize(a, arena);
+            let b = normalize(b, arena);
+            match (a, b) {
+                (Div(x, y), t) | (t, Div(x, y)) => {
+                    // report y as non zero
+                    normalize(
+                        arena.alloc(Div(arena.alloc(Plus(arena.alloc(Mult(y, t)), x)), y)),
+                        arena,
+                    )
+                }
+                _ => arena.alloc(Plus(a, b)),
+            }
+        }
         Mult(a, b) => {
             let a = normalize(a, arena);
             let b = normalize(b, arena);
             if let Plus(x, y) = a {
                 let xb = normalize(arena.alloc(Mult(x, b)), arena);
                 let yb = normalize(arena.alloc(Mult(y, b)), arena);
-                return arena.alloc(Plus(xb, yb));
+                return normalize(arena.alloc(Plus(xb, yb)), arena);
             }
             if let Plus(x, y) = b {
                 let xa = normalize(arena.alloc(Mult(x, a)), arena);
                 let ya = normalize(arena.alloc(Mult(y, a)), arena);
-                return arena.alloc(Plus(xa, ya));
+                return normalize(arena.alloc(Plus(xa, ya)), arena);
             }
-            arena.alloc(Mult(a, b))
+            match (a, b) {
+                (Div(x, y), t) | (t, Div(x, y)) => {
+                    normalize(arena.alloc(Div(arena.alloc(Mult(x, t)), y)), arena)
+                }
+                _ => arena.alloc(Mult(a, b)),
+            }
         }
     }
 }
@@ -169,6 +206,7 @@ fn tree_to_d2<N: ConstRepr>(tree: &ArithTree<'_, N>) -> Poly<N> {
             }
             Poly(0.into(), vec![(c1 * c2, unordered_concat(r1, r2))])
         }
+        Div(..) => unreachable!(),
     }
 }
 
@@ -392,6 +430,10 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                         ),
+                        "div" if detect_z_ty(op) || detect_r_ty(op) => Div(
+                            term_ref_to_arith(op1.clone(), arena),
+                            term_ref_to_arith(op2.clone(), arena),
+                        ),
                         _ => atom_normalizer(t),
                     },
                     _ => atom_normalizer(t),
@@ -461,17 +503,36 @@ fn sorter<N: ConstRepr>(x: Poly<N>) -> Poly<N> {
     Poly(c, ss)
 }
 
-fn canonical<'a, N: ConstRepr>(x: &'a ArithTree<'a, N>, arena: ArithArena<'a, N>) -> Poly<N> {
-    let x = normalize(x, arena);
-    let x = tree_to_d2(x);
-    sorter(x)
+fn canonical<N: ConstRepr>(x: &ArithTree<'_, N>) -> Poly<N> {
+    sorter(tree_to_d2(x))
 }
 
 impl<N: ConstRepr> From<TermRef> for Poly<N> {
     fn from(t: TermRef) -> Self {
         let arena = &Arena::new();
-        let a = term_ref_to_arith(t, arena);
-        canonical(a, arena)
+        let a = normalize(term_ref_to_arith(t, arena), arena);
+        canonical(a)
+    }
+}
+
+impl<N: ConstRepr> Rati<N> {
+    pub fn from_subtract(t1: TermRef, t2: TermRef) -> Self {
+        let arena = &Arena::with_capacity(32);
+        let a = arith_tree_of_substract::<N>(t1, arena, t2);
+        let a = normalize(a, arena);
+        let (soorat, makhraj) = match a {
+            Div(x, y) => (*x, *y),
+            _ => (a, &*arena.alloc(Const(1.into()))),
+        };
+        Rati(canonical(soorat), canonical(makhraj))
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.0.is_zero() || self.1.is_zero()
+    }
+
+    pub fn is_constant(&self) -> bool {
+        self.0.variables().is_empty() && self.1.variables().is_empty()
     }
 }
 
@@ -490,12 +551,8 @@ impl<N: ConstRepr> Poly<N> {
 
     pub fn from_subtract(t1: TermRef, t2: TermRef) -> Self {
         let arena = &Arena::with_capacity(32);
-        let a1 = term_ref_to_arith(t1, arena);
-        let a2 = term_ref_to_arith(t2, arena);
-        let m1 = &Const((-1).into());
-        let neg_a2 = &Mult(m1, a2);
-        let a = &Plus(a1, neg_a2);
-        canonical(a, arena)
+        let a = normalize(arith_tree_of_substract(t1, arena, t2), arena);
+        canonical(a)
     }
 
     pub fn constant(&self) -> &N {
@@ -530,4 +587,17 @@ impl<N: ConstRepr> Poly<N> {
     pub fn add(&mut self, num: N) {
         self.0 = self.0.clone() + num;
     }
+}
+
+fn arith_tree_of_substract<N: ConstRepr>(
+    t1: TermRef,
+    arena: ArithArena<'_, N>,
+    t2: TermRef,
+) -> &ArithTree<'_, N> {
+    let a1 = term_ref_to_arith(t1, arena);
+    let a2 = term_ref_to_arith(t2, arena);
+    let m1 = arena.alloc(Const((-1).into()));
+    let neg_a2 = arena.alloc(Mult(m1, a2));
+    let a = arena.alloc(Plus(a1, neg_a2));
+    a
 }

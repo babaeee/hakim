@@ -68,6 +68,7 @@ binop! {
     Minus, 50, Left, "-";
     ModOf, 60, Left, "mod";
     Mult, 40, Left, "*";
+    Div, 40, Left, "/";
     Or, 85, Right, "∨";
     Plus, 50, Left, "+";
     Pow, 30, Right, "^";
@@ -131,6 +132,7 @@ impl BinOp {
             And => app_ref!(and(), l, r),
             App => app_ref!(l, r),
             Cons => app_ref!(cons(), ty(), l, r),
+            Div => app_ref!(div(), ty(), l, r),
             Divide => app_ref!(divide(), l, r),
             Eq => {
                 app_ref!(eq(), ty(), l, r)
@@ -208,6 +210,7 @@ impl BinOp {
                             "eq" => found!(op, Eq, op2, ty),
                             "plus" => found!(op, Plus, op2, ty),
                             "mult" => found!(op, Mult, op2, ty),
+                            "div" => found!(op, Div, op2, ty),
                             "lt" => found!(op, Lt, op2, ty),
                             "included" => found!(op, Included, op2, ty),
                             "inlist" => found!(op, Inlist, op2, ty),

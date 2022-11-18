@@ -45,6 +45,9 @@ pub fn minus() -> TermRef {
 pub fn mult() -> TermRef {
     term_ref!(axiom "mult", forall u(), forall v0(), forall v1(), v2())
 }
+pub fn div() -> TermRef {
+    term_ref!(axiom "div", forall u(), forall v0(), forall v1(), r())
+}
 pub fn ex() -> TermRef {
     term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
 }
@@ -142,6 +145,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("minus".to_string(), minus());
     name_dict.insert("mod_of".to_string(), mod_of());
     name_dict.insert("mult".to_string(), mult());
+    name_dict.insert("div".to_string(), div());
     name_dict.insert("or".to_string(), or());
     name_dict.insert("lt".to_string(), lt());
     name_dict.insert("and".to_string(), and());

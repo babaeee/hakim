@@ -89,6 +89,8 @@ fn number_ops() {
     parse_pretty("1 + 2 * 3 * 4 + 5 * 6 < 7 + 8 * 9");
     parse_pretty("(1 * 2 + 3 * 4) * (1 * 2 + 3 * 4)");
     parse_pretty("3 * 2 ^ 5 + 4 = 100");
+    parse_pretty("1 / 2 + 3.");
+    parse_pretty("1 / (2 + 3)");
     parse_pretty("~ (3 * 2) ^ (5 + 4) = 100");
 }
 

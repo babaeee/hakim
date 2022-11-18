@@ -6,7 +6,10 @@ use crate::{
         arith::{LinearPoly, Poly},
         logic::{LogicArena, LogicBuilder, LogicValue},
     },
-    brain::{detect::detect_len, Term, TermRef},
+    brain::{
+        detect::{detect_len, detect_z_ty},
+        Term, TermRef,
+    },
     interactive::Frame,
     parser::BinOp,
     term_ref,
@@ -35,33 +38,35 @@ fn convert_calculator_mode(
 fn convert(term: TermRef, arena: LogicArena<'_, Poly<BigInt>>) -> LogicValue<'_, Poly<BigInt>> {
     if let Term::App { func, op: op2 } = term.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
-            if let Term::App { func, op: _ } = func.as_ref() {
+            if let Term::App { func, op: ty } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                    if unique_name == "eq" {
-                        let mut d1 = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
-                        if d1.is_zero() {
-                            return LogicValue::True;
+                    if detect_z_ty(ty) {
+                        if unique_name == "eq" {
+                            let mut d1 = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
+                            if d1.is_zero() {
+                                return LogicValue::True;
+                            }
+                            if d1.variables().is_empty() {
+                                return LogicValue::False;
+                            }
+                            d1.add(1.into());
+                            let mut d2 = Poly::<BigInt>::from_subtract(op1.clone(), op2.clone());
+                            d2.add(1.into());
+                            let l1 = LogicValue::from(d1);
+                            let l2 = LogicValue::from(d2);
+                            return l1.and(l2, arena);
                         }
-                        if d1.variables().is_empty() {
-                            return LogicValue::False;
+                        if unique_name == "lt" {
+                            let d = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
+                            if d.variables().is_empty() {
+                                return if *d.constant() > 0i32.into() {
+                                    LogicValue::True
+                                } else {
+                                    LogicValue::False
+                                };
+                            }
+                            return LogicValue::from(d);
                         }
-                        d1.add(1.into());
-                        let mut d2 = Poly::<BigInt>::from_subtract(op1.clone(), op2.clone());
-                        d2.add(1.into());
-                        let l1 = LogicValue::from(d1);
-                        let l2 = LogicValue::from(d2);
-                        return l1.and(l2, arena);
-                    }
-                    if unique_name == "lt" {
-                        let d = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
-                        if d.variables().is_empty() {
-                            return if *d.constant() > 0i32.into() {
-                                LogicValue::True
-                            } else {
-                                LogicValue::False
-                            };
-                        }
-                        return LogicValue::from(d);
                     }
                 }
             }
@@ -385,5 +390,10 @@ mod tests {
     #[test]
     fn sets() {
         success(r#"|set_empty ℤ| = 0"#);
+    }
+
+    #[test]
+    fn reals() {
+        fail("1 / 2 = 1 / 3");
     }
 }
