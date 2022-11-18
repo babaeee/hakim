@@ -3,9 +3,9 @@ env:
   VERCEL_ORG_ID: hkalbasi
   VERCEL_PROJECT_ID: hakim
 on:
-  push:
-    branches-ignore:
-      - main
+  pull_request:
+    branches: ["main"]
+
 jobs:
   Deploy-Preview:
     runs-on: ubuntu-latest
