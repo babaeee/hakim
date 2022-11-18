@@ -10,6 +10,7 @@ use crate::{
     interactive::Frame,
 };
 
+use minilp::{ComparisonOp, OptimizationDirection, Problem};
 use num_bigint::BigInt;
 
 #[derive(Debug, Clone)]
@@ -21,6 +22,16 @@ struct BigFraction {
 impl BigFraction {
     fn is_negative(&self) -> bool {
         (self.soorat < 0i32.into()) ^ (self.makhraj < 0i32.into())
+    }
+
+    fn as_f64_safe(&self) -> Option<f64> {
+        let soorat = i32::try_from(&self.soorat).ok()?;
+        let makhraj = i32::try_from(&self.makhraj).ok()?;
+        const SAFE_LIMIT: i32 = 1_000_000;
+        if soorat > SAFE_LIMIT || makhraj > SAFE_LIMIT {
+            return None;
+        }
+        Some(soorat as f64 / makhraj as f64)
     }
 }
 
@@ -111,12 +122,21 @@ impl ConstRepr for BigFraction {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+enum CmpOp {
+    Lt,
+    Le,
+}
+
+#[derive(Clone, Debug)]
+struct RealIneq(Poly<BigFraction>, CmpOp);
+
 fn convert_calculator_mode(
     term: TermRef,
-    arena: LogicArena<'_, Poly<BigFraction>>,
-) -> LogicValue<'_, Poly<BigFraction>> {
+    arena: LogicArena<'_, RealIneq>,
+) -> LogicValue<'_, RealIneq> {
     let r = convert(term, arena);
-    fn is_good(x: &LogicValue<'_, Poly<BigFraction>>) -> bool {
+    fn is_good(x: &LogicValue<'_, RealIneq>) -> bool {
         match x {
             LogicValue::Exp(_) => false,
             LogicValue::True | LogicValue::False => true,
@@ -129,28 +149,37 @@ fn convert_calculator_mode(
     }
 }
 
-fn convert(
-    term: TermRef,
-    arena: LogicArena<'_, Poly<BigFraction>>,
-) -> LogicValue<'_, Poly<BigFraction>> {
+fn convert(term: TermRef, arena: LogicArena<'_, RealIneq>) -> LogicValue<'_, RealIneq> {
     if let Term::App { func, op: op2 } = term.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
             if let Term::App { func, op: ty } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                    if unique_name == "eq" && detect_r_ty(ty) {
-                        let mut d1 = Poly::<BigFraction>::from_subtract(op2.clone(), op1.clone());
-                        if d1.is_zero() {
-                            return LogicValue::True;
+                    if detect_r_ty(ty) {
+                        if unique_name == "eq" {
+                            let d1 = Poly::<BigFraction>::from_subtract(op2.clone(), op1.clone());
+                            if d1.is_zero() {
+                                return LogicValue::True;
+                            }
+                            if d1.variables().is_empty() {
+                                return LogicValue::False;
+                            }
+                            let mut d2 = d1.clone();
+                            d2.negate();
+                            let l1 = LogicValue::from(RealIneq(d1, CmpOp::Le));
+                            let l2 = LogicValue::from(RealIneq(d2, CmpOp::Le));
+                            return l1.and(l2, arena);
                         }
-                        if d1.variables().is_empty() {
-                            return LogicValue::False;
+                        if unique_name == "lt" {
+                            let d = Poly::<BigFraction>::from_subtract(op2.clone(), op1.clone());
+                            if d.variables().is_empty() {
+                                return if *d.constant() > 0i32.into() {
+                                    LogicValue::True
+                                } else {
+                                    LogicValue::False
+                                };
+                            }
+                            return LogicValue::from(RealIneq(d, CmpOp::Lt));
                         }
-                        d1.add(1.into());
-                        let mut d2 = Poly::<BigFraction>::from_subtract(op1.clone(), op2.clone());
-                        d2.add(1.into());
-                        let l1 = LogicValue::from(d1);
-                        let l2 = LogicValue::from(d2);
-                        return l1.and(l2, arena);
                     }
                 }
             }
@@ -159,18 +188,49 @@ fn convert(
     LogicValue::unknown()
 }
 
-fn check_contradiction_lp(_: usize, _: &[LinearPoly<BigFraction>]) -> bool {
-    false
+fn check_contradiction_lp(
+    var_cnt: usize,
+    linear_polies: &[(LinearPoly<BigFraction>, CmpOp)],
+) -> bool {
+    let mut problem = Problem::new(OptimizationDirection::Maximize);
+    let vars = (0..var_cnt)
+        .map(|_| problem.add_var(1., (-f64::INFINITY, f64::INFINITY)))
+        .collect::<Vec<_>>();
+    for (poly, op) in linear_polies {
+        let x = poly
+            .variables()
+            .iter()
+            .map(|(x, c)| {
+                let t = x.as_f64_safe()?;
+                Some((vars[*c], t))
+            })
+            .collect::<Option<Vec<_>>>();
+        let Some(x) = x else { continue };
+        let Some(mut c) = poly.constant().as_f64_safe() else { continue };
+        c *= -1.;
+        if matches!(op, CmpOp::Lt) {
+            c += 1e-7;
+        }
+        problem.add_constraint(&x, ComparisonOp::Ge, c)
+    }
+    matches!(problem.solve(), Err(minilp::Error::Infeasible))
 }
 
-fn check_contradiction(polies: &[Poly<BigFraction>]) -> bool {
-    let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
-    check_contradiction_lp(var_cnt, &linear_polies)
+fn check_contradiction(polies: &[RealIneq]) -> bool {
+    let (var_cnt, linear_polies) = LinearPoly::from_slice(polies.iter().map(|x| x.0.clone()));
+    let lp_with_op = linear_polies
+        .into_iter()
+        .zip(polies.iter().map(|x| x.1))
+        .collect::<Vec<_>>();
+    check_contradiction_lp(var_cnt, &lp_with_op)
 }
 
-fn negator(mut poly: Poly<BigFraction>) -> Poly<BigFraction> {
-    poly.negate();
-    poly.add(1.into());
+fn negator(mut poly: RealIneq) -> RealIneq {
+    poly.0.negate();
+    poly.1 = match poly.1 {
+        CmpOp::Lt => CmpOp::Le,
+        CmpOp::Le => CmpOp::Lt,
+    };
     poly
 }
 
@@ -191,7 +251,7 @@ pub fn lra(frame: Frame) -> Result<Vec<Frame>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail};
+    use crate::interactive::tests::{run_interactive_to_end, run_interactive_to_fail, with_params};
 
     fn success(goal: &str) {
         run_interactive_to_end(goal, "intros\nlra");
@@ -212,5 +272,43 @@ mod tests {
     #[test]
     fn ring() {
         success("∀ x: ℝ, 0.5 * x + 0.5 * x = x");
+    }
+
+    #[test]
+    fn lra_simple() {
+        success("∀ x: ℝ, 0.5 * x > 3. -> x > 1.2 -> 0.6 * x > 3.");
+        fail("∀ x: ℝ, 0.5 * x > 3. -> x > 1.2 -> 0.4 * x > 3.");
+        success("∀ x: ℝ, x = 3. -> x < 3.01");
+    }
+
+    #[test]
+    fn transitivity() {
+        success("∀ a b c d: ℝ, a < b -> b < c -> c < d -> a < d");
+        success("∀ a b c d: ℝ, a ≤ b -> b ≤ c -> c ≤ d -> a ≤ d");
+        fail("∀ a b c d: ℝ, a ≤ b -> b ≤ c -> c ≤ d -> a < d");
+        success("∀ a b c d: ℝ, a ≤ b -> b < c -> c ≤ d -> a < d");
+    }
+
+    #[test]
+    fn catch_float_error() {
+        for i in 0..20 {
+            let x = "0".repeat(i);
+            fail(&format!("∀ x: ℝ, 1{x}. * x < 5. -> 1{x}.{x}1 * x < 5."));
+            fail(&format!("∀ x: ℝ, 1{x}0. * x < 5. -> 1{x}1. * x < 5."));
+            fail(&format!("∀ x: ℝ, 0.{x}1 * x < 5. -> 0.{x}2 * x < 5."));
+        }
+    }
+
+    #[test]
+    fn calculator_mode() {
+        with_params("lra=calculator", || {
+            success("1. < 2.");
+            success("0.1 + 0.2 = 0.3");
+            fail("1 < 1");
+            fail("0.1 + 0.2 = 0.30000000000000004");
+            fail("∀ x: ℝ, 2. * x = 4. -> x = 2.");
+            success("∀ x: ℝ, x + x = 2. * x");
+        });
+        success("∀ x: ℝ, 2. * x = 4. -> x = 2.");
     }
 }

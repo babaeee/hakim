@@ -136,7 +136,7 @@ impl BinOp {
                 app_ref!(eq(), ty(), l, r)
             }
             Ge => Le.run_on_term_with_ty(r, l, ty),
-            Gt => app_ref!(lt(), r, l),
+            Gt => Lt.run_on_term_with_ty(r, l, ty),
             Iff => app_ref!(
                 and(),
                 term_ref!(forall l, increase_foreign_vars(r.clone())),
@@ -155,8 +155,11 @@ impl BinOp {
             Inset => {
                 app_ref!(inset(), ty(), l, r)
             }
-            Le => app_ref!(or(), app_ref!(lt(), l, r), app_ref!(eq(), z(), l, r)),
-            Lt => app_ref!(lt(), l, r),
+            Le => {
+                let t = ty();
+                app_ref!(or(), app_ref!(lt(), t, l, r), app_ref!(eq(), t, l, r))
+            }
+            Lt => app_ref!(lt(), ty(), l, r),
             Minus => app_ref!(minus(), l, r),
             ModOf => app_ref!(mod_of(), l, r),
             Mult => app_ref!(mult(), ty(), l, r),

@@ -40,7 +40,7 @@ pub fn run_interactive_to_fail(goal: &str, tactics: &str, fail_tactic: &str) {
     let mut session = run_interactive(goal, tactics, EngineLevel::Full);
     if session.run_tactic(fail_tactic).is_ok() {
         panic!(
-            "tactic succeed but we need fail. Current monitor:\n{}",
+            "tactic succeed but we need fail.\nQuery: {goal}\nCurrent monitor:\n{}",
             session.monitor_string()
         )
     }

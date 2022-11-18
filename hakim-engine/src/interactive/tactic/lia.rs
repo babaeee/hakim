@@ -52,19 +52,17 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly<BigInt>>) -> LogicValue<'_,
                         let l2 = LogicValue::from(d2);
                         return l1.and(l2, arena);
                     }
-                }
-            }
-            if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                if unique_name == "lt" {
-                    let d = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
-                    if d.variables().is_empty() {
-                        return if *d.constant() > 0i32.into() {
-                            LogicValue::True
-                        } else {
-                            LogicValue::False
-                        };
+                    if unique_name == "lt" {
+                        let d = Poly::<BigInt>::from_subtract(op2.clone(), op1.clone());
+                        if d.variables().is_empty() {
+                            return if *d.constant() > 0i32.into() {
+                                LogicValue::True
+                            } else {
+                                LogicValue::False
+                            };
+                        }
+                        return LogicValue::from(d);
                     }
-                    return LogicValue::from(d);
                 }
             }
         }
@@ -163,7 +161,7 @@ fn check_contradiction_lp(var_cnt: usize, linear_polies: &[LinearPoly<BigInt>]) 
 
 fn check_contradiction(polies: &[Poly<BigInt>]) -> bool {
     let polies = &inject_conditions(polies.to_vec());
-    let (var_cnt, linear_polies) = LinearPoly::from_slice(polies);
+    let (var_cnt, linear_polies) = LinearPoly::from_slice(polies.iter().cloned());
     check_contradiction_lp(var_cnt, &linear_polies)
 }
 
