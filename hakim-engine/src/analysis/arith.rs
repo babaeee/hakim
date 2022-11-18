@@ -87,9 +87,9 @@ pub struct LinearPolyBuilder(HashMap<Vec<TermRef>, usize>);
 pub struct LinearPoly<N>(N, Vec<(N, usize)>);
 
 impl<N: Clone> LinearPoly<N> {
-    pub fn from_slice(s: &[Poly<N>]) -> (usize, Vec<LinearPoly<N>>) {
+    pub fn from_slice(s: impl Iterator<Item = Poly<N>>) -> (usize, Vec<LinearPoly<N>>) {
         let mut builder = LinearPolyBuilder::default();
-        let r = s.iter().cloned().map(|x| builder.convert_poly(x)).collect();
+        let r = s.map(|x| builder.convert_poly(x)).collect();
         (builder.0.len(), r)
     }
 

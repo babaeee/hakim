@@ -31,7 +31,7 @@ pub fn eq() -> TermRef {
     term_ref!(axiom "eq" , forall u(), forall v0(), forall v1(), u())
 }
 pub fn lt() -> TermRef {
-    term_ref!(axiom "lt" , forall z(), forall z(), u())
+    term_ref!(axiom "lt" , forall u(), forall v0(), forall v1(), u())
 }
 pub fn plus() -> TermRef {
     term_ref!(axiom "plus" , forall u(), forall v0(), forall v1(), v2())
