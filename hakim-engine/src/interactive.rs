@@ -470,7 +470,7 @@ impl Frame {
     }
 
     pub fn try_auto(&self) -> Option<String> {
-        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia"];
+        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia", "lra"];
         for tac in AUTO_TAC {
             if self.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
                 return Some(tac.to_string());
