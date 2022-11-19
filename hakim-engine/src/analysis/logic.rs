@@ -18,7 +18,7 @@ pub enum LogicTree<'a, T> {
 }
 use LogicTree::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LogicValue<'a, T> {
     Exp(LogicTree<'a, T>),
     True,

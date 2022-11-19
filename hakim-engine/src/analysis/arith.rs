@@ -50,6 +50,7 @@ pub trait ConstRepr:
 {
     fn from_term(term: &Term) -> Option<Self>;
     fn into_term(self) -> TermRef;
+    fn mult_inverse(self) -> Self;
 }
 
 impl ConstRepr for BigInt {
@@ -62,6 +63,11 @@ impl ConstRepr for BigInt {
 
     fn into_term(self) -> TermRef {
         term_ref!(n self)
+    }
+
+    fn mult_inverse(self) -> Self {
+        // Z doesn't support division
+        unreachable!()
     }
 }
 
@@ -130,83 +136,70 @@ impl LinearPolyBuilder {
     }
 }
 
-fn normalize<'a, N>(tree: &'a ArithTree<'a, N>, arena: ArithArena<'a, N>) -> &'a ArithTree<'a, N> {
+fn normalize<'a, N: ConstRepr>(
+    tree: &'a ArithTree<'a, N>,
+    arena: ArithArena<'a, N>,
+    should_be_non_zero: &mut Vec<Poly<N>>,
+) -> &'a ArithTree<'a, N> {
     match tree {
         Atom(_) | Const(_) => tree,
+        Plus(Const(x), Const(y)) => arena.alloc(Const(x.clone() + y.clone())),
+        Mult(Const(x), Const(y)) => arena.alloc(Const(x.clone() * y.clone())),
+        Div(x, Const(y)) => normalize(
+            arena.alloc(Mult(x, arena.alloc(Const(y.clone().mult_inverse())))),
+            arena,
+            should_be_non_zero,
+        ),
         Div(a, b) => {
-            let a = normalize(a, arena);
-            let b = normalize(b, arena);
+            let a = normalize(a, arena, should_be_non_zero);
+            let b = normalize(b, arena, should_be_non_zero);
             if let Div(x, y) = a {
-                let yb = normalize(arena.alloc(Mult(y, b)), arena);
-                return normalize(arena.alloc(Div(x, yb)), arena);
+                let yb = normalize(arena.alloc(Mult(y, b)), arena, should_be_non_zero);
+                return normalize(arena.alloc(Div(x, yb)), arena, should_be_non_zero);
             }
             if let Div(x, y) = b {
-                let ya = normalize(arena.alloc(Mult(y, a)), arena);
-                return normalize(arena.alloc(Div(ya, x)), arena);
+                let ya = normalize(arena.alloc(Mult(y, a)), arena, should_be_non_zero);
+                return normalize(arena.alloc(Div(ya, x)), arena, should_be_non_zero);
             }
             arena.alloc(Div(a, b))
         }
         Plus(a, b) => {
-            let a = normalize(a, arena);
-            let b = normalize(b, arena);
+            let a = normalize(a, arena, should_be_non_zero);
+            let b = normalize(b, arena, should_be_non_zero);
             match (a, b) {
                 (Div(x, y), t) | (t, Div(x, y)) => {
-                    // report y as non zero
+                    should_be_non_zero.push(normal_tree_to_poly(y));
                     normalize(
                         arena.alloc(Div(arena.alloc(Plus(arena.alloc(Mult(y, t)), x)), y)),
                         arena,
+                        should_be_non_zero,
                     )
                 }
                 _ => arena.alloc(Plus(a, b)),
             }
         }
         Mult(a, b) => {
-            let a = normalize(a, arena);
-            let b = normalize(b, arena);
+            let a = normalize(a, arena, should_be_non_zero);
+            let b = normalize(b, arena, should_be_non_zero);
             if let Plus(x, y) = a {
-                let xb = normalize(arena.alloc(Mult(x, b)), arena);
-                let yb = normalize(arena.alloc(Mult(y, b)), arena);
-                return normalize(arena.alloc(Plus(xb, yb)), arena);
+                let xb = normalize(arena.alloc(Mult(x, b)), arena, should_be_non_zero);
+                let yb = normalize(arena.alloc(Mult(y, b)), arena, should_be_non_zero);
+                return normalize(arena.alloc(Plus(xb, yb)), arena, should_be_non_zero);
             }
             if let Plus(x, y) = b {
-                let xa = normalize(arena.alloc(Mult(x, a)), arena);
-                let ya = normalize(arena.alloc(Mult(y, a)), arena);
-                return normalize(arena.alloc(Plus(xa, ya)), arena);
+                let xa = normalize(arena.alloc(Mult(x, a)), arena, should_be_non_zero);
+                let ya = normalize(arena.alloc(Mult(y, a)), arena, should_be_non_zero);
+                return normalize(arena.alloc(Plus(xa, ya)), arena, should_be_non_zero);
             }
             match (a, b) {
-                (Div(x, y), t) | (t, Div(x, y)) => {
-                    normalize(arena.alloc(Div(arena.alloc(Mult(x, t)), y)), arena)
-                }
+                (Div(x, y), t) | (t, Div(x, y)) => normalize(
+                    arena.alloc(Div(arena.alloc(Mult(x, t)), y)),
+                    arena,
+                    should_be_non_zero,
+                ),
                 _ => arena.alloc(Mult(a, b)),
             }
         }
-    }
-}
-
-fn tree_to_d2<N: ConstRepr>(tree: &ArithTree<'_, N>) -> Poly<N> {
-    match tree {
-        Atom(t) => Poly(0.into(), vec![(1.into(), vec![t.clone()])]),
-        Const(i) => Poly(i.clone(), vec![]),
-        Plus(t1, t2) => tree_to_d2(t1) + tree_to_d2(t2),
-        Mult(t1, t2) => {
-            fn to_mul<N: ConstRepr>(x: &ArithTree<'_, N>) -> (N, Vec<TermRef>) {
-                let Poly(c1, mut r1) = tree_to_d2(x);
-                if r1.is_empty() {
-                    return (c1, vec![]);
-                }
-                if r1.len() != 1 || c1 != 0.into() {
-                    panic!("tree is not normalized. this is a bug");
-                }
-                r1.pop().unwrap()
-            }
-            let (c1, r1) = to_mul(t1);
-            let (c2, r2) = to_mul(t2);
-            if r1.is_empty() && r2.is_empty() {
-                return Poly(c1 * c2, vec![]);
-            }
-            Poly(0.into(), vec![(c1 * c2, unordered_concat(r1, r2))])
-        }
-        Div(..) => unreachable!(),
     }
 }
 
@@ -472,67 +465,88 @@ fn minus<'a, N: ConstRepr>(
     Plus(op1, arena.alloc(Mult(arena.alloc(Const((-1).into())), op2)))
 }
 
-fn sorter<N: ConstRepr>(x: Poly<N>) -> Poly<N> {
-    let Poly(c, mut v) = x;
-    for e in &mut v {
-        e.1.sort();
-    }
-    v.sort_by(|a, b| a.1.cmp(&b.1));
-    let mut ss = vec![];
-    let mut iter = v.into_iter();
-    let (mut k, mut x) = match iter.next() {
-        Some(f) => f,
-        None => return Poly(c, vec![]),
-    };
-    let mut ins = |k, x| {
-        if k == 0.into() {
-            return;
+fn normal_tree_to_poly<N: ConstRepr>(x: &ArithTree<'_, N>) -> Poly<N> {
+    fn sorter<N: ConstRepr>(x: Poly<N>) -> Poly<N> {
+        let Poly(c, mut v) = x;
+        for e in &mut v {
+            e.1.sort();
         }
-        ss.push((k, x));
-    };
-    for (k2, x2) in iter {
-        if x == x2 {
-            k = k + k2;
-        } else {
-            ins(k, x);
-            k = k2;
-            x = x2;
+        v.sort_by(|a, b| a.1.cmp(&b.1));
+        let mut ss = vec![];
+        let mut iter = v.into_iter();
+        let (mut k, mut x) = match iter.next() {
+            Some(f) => f,
+            None => return Poly(c, vec![]),
+        };
+        let mut ins = |k, x| {
+            if k == 0.into() {
+                return;
+            }
+            ss.push((k, x));
+        };
+        for (k2, x2) in iter {
+            if x == x2 {
+                k = k + k2;
+            } else {
+                ins(k, x);
+                k = k2;
+                x = x2;
+            }
+        }
+        ins(k, x);
+        Poly(c, ss)
+    }
+    fn tree_to_d2<N: ConstRepr>(tree: &ArithTree<'_, N>) -> Poly<N> {
+        match tree {
+            Atom(t) => Poly(0.into(), vec![(1.into(), vec![t.clone()])]),
+            Const(i) => Poly(i.clone(), vec![]),
+            Plus(t1, t2) => tree_to_d2(t1) + tree_to_d2(t2),
+            Mult(t1, t2) => {
+                fn to_mul<N: ConstRepr>(x: &ArithTree<'_, N>) -> (N, Vec<TermRef>) {
+                    let Poly(c1, mut r1) = tree_to_d2(x);
+                    if r1.is_empty() {
+                        return (c1, vec![]);
+                    }
+                    if r1.len() != 1 || c1 != 0.into() {
+                        panic!("tree is not normalized. this is a bug");
+                    }
+                    r1.pop().unwrap()
+                }
+                let (c1, r1) = to_mul(t1);
+                let (c2, r2) = to_mul(t2);
+                if r1.is_empty() && r2.is_empty() {
+                    return Poly(c1 * c2, vec![]);
+                }
+                Poly(0.into(), vec![(c1 * c2, unordered_concat(r1, r2))])
+            }
+            Div(..) => unreachable!(),
         }
     }
-    ins(k, x);
-    Poly(c, ss)
-}
-
-fn canonical<N: ConstRepr>(x: &ArithTree<'_, N>) -> Poly<N> {
     sorter(tree_to_d2(x))
 }
 
 impl<N: ConstRepr> From<TermRef> for Poly<N> {
     fn from(t: TermRef) -> Self {
         let arena = &Arena::new();
-        let a = normalize(term_ref_to_arith(t, arena), arena);
-        canonical(a)
+        let a = normalize(term_ref_to_arith(t, arena), arena, &mut vec![]);
+        normal_tree_to_poly(a)
     }
 }
 
 impl<N: ConstRepr> Rati<N> {
-    pub fn from_subtract(t1: TermRef, t2: TermRef) -> Self {
+    pub fn from_subtract(t1: TermRef, t2: TermRef) -> (Self, Vec<Poly<N>>) {
         let arena = &Arena::with_capacity(32);
         let a = arith_tree_of_substract::<N>(t1, arena, t2);
-        let a = normalize(a, arena);
+        let mut oblications = vec![];
+        let a = normalize(a, arena, &mut oblications);
         let (soorat, makhraj) = match a {
             Div(x, y) => (*x, *y),
             _ => (a, &*arena.alloc(Const(1.into()))),
         };
-        Rati(canonical(soorat), canonical(makhraj))
-    }
-
-    pub fn is_zero(&self) -> bool {
-        self.0.is_zero() || self.1.is_zero()
-    }
-
-    pub fn is_constant(&self) -> bool {
-        self.0.variables().is_empty() && self.1.variables().is_empty()
+        (
+            Rati(normal_tree_to_poly(soorat), normal_tree_to_poly(makhraj)),
+            oblications,
+        )
     }
 }
 
@@ -551,8 +565,8 @@ impl<N: ConstRepr> Poly<N> {
 
     pub fn from_subtract(t1: TermRef, t2: TermRef) -> Self {
         let arena = &Arena::with_capacity(32);
-        let a = normalize(arith_tree_of_substract(t1, arena, t2), arena);
-        canonical(a)
+        let a = normalize(arith_tree_of_substract(t1, arena, t2), arena, &mut vec![]);
+        normal_tree_to_poly(a)
     }
 
     pub fn constant(&self) -> &N {
