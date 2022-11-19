@@ -1,141 +1,18 @@
-use std::cmp::Ordering;
-
 use super::Result;
 use crate::{
     analysis::{
-        arith::{ConstRepr, LinearPoly, Poly, Rati},
+        arith::{LinearPoly, Poly, Rati},
+        big_fraction::BigFraction,
         logic::{LogicArena, LogicBuilder, LogicValue},
     },
-    app_ref,
     brain::{
         detect::{detect_r_ty, detect_z_ty},
         Term, TermRef,
     },
     interactive::Frame,
-    library::prelude::{div, z},
-    term_ref,
 };
 
 use minilp::{ComparisonOp, OptimizationDirection, Problem};
-use num_bigint::BigInt;
-
-#[derive(Debug, Clone)]
-struct BigFraction {
-    soorat: BigInt,
-    makhraj: BigInt,
-}
-
-impl BigFraction {
-    fn is_negative(&self) -> bool {
-        (self.soorat < 0i32.into()) ^ (self.makhraj < 0i32.into())
-    }
-
-    fn as_f64_safe(&self) -> Option<f64> {
-        let soorat = i32::try_from(&self.soorat).ok()?;
-        let makhraj = i32::try_from(&self.makhraj).ok()?;
-        const SAFE_LIMIT: i32 = 1_000_000;
-        if soorat > SAFE_LIMIT || makhraj > SAFE_LIMIT {
-            return None;
-        }
-        Some(soorat as f64 / makhraj as f64)
-    }
-}
-
-impl Default for BigFraction {
-    fn default() -> Self {
-        Self {
-            soorat: 0.into(),
-            makhraj: 1.into(),
-        }
-    }
-}
-
-impl PartialEq for BigFraction {
-    fn eq(&self, other: &Self) -> bool {
-        &self.soorat * &other.makhraj == &self.makhraj * &other.soorat
-    }
-}
-
-impl From<i32> for BigFraction {
-    fn from(k: i32) -> Self {
-        Self {
-            soorat: k.into(),
-            makhraj: 1.into(),
-        }
-    }
-}
-
-impl TryFrom<BigFraction> for i32 {
-    type Error = ();
-
-    fn try_from(_: BigFraction) -> std::result::Result<Self, Self::Error> {
-        todo!()
-    }
-}
-
-impl PartialOrd for BigFraction {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match (self.is_negative(), other.is_negative()) {
-            (true, false) => Some(Ordering::Greater),
-            (false, true) => Some(Ordering::Less),
-            _ => (&self.soorat * &other.makhraj).partial_cmp(&(&other.soorat * &self.makhraj)),
-        }
-    }
-}
-
-impl std::ops::Neg for BigFraction {
-    type Output = BigFraction;
-
-    fn neg(mut self) -> Self::Output {
-        self.soorat *= -1;
-        self
-    }
-}
-
-impl std::ops::Add for BigFraction {
-    type Output = BigFraction;
-
-    fn add(mut self, rhs: Self) -> Self::Output {
-        self.soorat = self.soorat * &rhs.makhraj + &self.makhraj * rhs.soorat;
-        self.makhraj *= rhs.makhraj;
-        self
-    }
-}
-
-impl std::ops::Mul for BigFraction {
-    type Output = BigFraction;
-
-    fn mul(mut self, rhs: Self) -> Self::Output {
-        self.soorat *= rhs.soorat;
-        self.makhraj *= rhs.makhraj;
-        self
-    }
-}
-
-impl ConstRepr for BigFraction {
-    fn from_term(term: &Term) -> Option<Self> {
-        match term {
-            Term::Number { value } => Some(BigFraction {
-                soorat: value.clone(),
-                makhraj: 1.into(),
-            }),
-            Term::NumberR { value, point } => Some(BigFraction {
-                soorat: value.clone(),
-                makhraj: BigInt::pow(&10.into(), *point as u32),
-            }),
-            _ => None,
-        }
-    }
-
-    fn into_term(self) -> TermRef {
-        app_ref!(
-            div(),
-            z(),
-            term_ref!(n self.soorat),
-            term_ref!(n self.makhraj)
-        )
-    }
-}
 
 #[derive(Clone, Copy, Debug)]
 enum CmpOp {
@@ -164,6 +41,51 @@ fn convert_calculator_mode(
     }
 }
 
+fn poly_to_logic_value(poly: Poly<BigFraction>, op: CmpOp) -> LogicValue<'static, RealIneq> {
+    if poly.variables().is_empty() {
+        let is_correct = match op {
+            CmpOp::Lt => poly.constant().clone() > 0.into(),
+            CmpOp::Le => poly.constant().clone() >= 0.into(),
+        };
+        match is_correct {
+            true => LogicValue::True,
+            false => LogicValue::False,
+        }
+    } else {
+        LogicValue::from(RealIneq(poly, op))
+    }
+}
+
+fn is_zero_logic_value(
+    mut poly: Poly<BigFraction>,
+    arena: LogicArena<'_, RealIneq>,
+) -> LogicValue<'_, RealIneq> {
+    let l1 = poly_to_logic_value(poly.clone(), CmpOp::Le);
+    poly.negate();
+    let l2 = poly_to_logic_value(poly, CmpOp::Le);
+    l1.and(l2, arena)
+}
+
+fn add_non_zero_conditions<'a>(
+    mut core: LogicValue<'a, RealIneq>,
+    arena: LogicArena<'a, RealIneq>,
+    conditions: impl Iterator<Item = Poly<BigFraction>>,
+) -> LogicValue<'a, RealIneq> {
+    for c in conditions {
+        let c_is_zero = is_zero_logic_value(c, arena);
+        let c_is_not_zero = c_is_zero.clone().not(arena);
+        // This one is nice. We need to replace a logic value with a equivalent one (with iff relation), to work in both goal
+        // and hyp. So (precondition -> statement) is not correct (because in goal position, it always holds if precondition is
+        // not true, but the original condition might not) and (precondition /\ statement) is not true as well (because in
+        // hyp position, it will add a precondition to our knowledge which might be wrong). The solution used here is
+        // (~ precondition /\ unknown \/ precondition /\ statement) which is iff of the original statement.
+        core = c_is_zero
+            .and(LogicValue::unknown(), arena)
+            .or(c_is_not_zero.and(core, arena), arena)
+    }
+    core
+}
+
 fn convert(term: TermRef, arena: LogicArena<'_, RealIneq>) -> LogicValue<'_, RealIneq> {
     if let Term::App { func, op: op2 } = term.as_ref() {
         if let Term::App { func, op: op1 } = func.as_ref() {
@@ -171,41 +93,32 @@ fn convert(term: TermRef, arena: LogicArena<'_, RealIneq>) -> LogicValue<'_, Rea
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if detect_r_ty(ty) || detect_z_ty(ty) {
                         if unique_name == "eq" {
-                            let d = Rati::<BigFraction>::from_subtract(op2.clone(), op1.clone());
-                            if d.is_zero() {
-                                return LogicValue::True;
-                            }
-                            if d.is_constant() {
-                                return LogicValue::False;
-                            }
-                            let Rati(d1s, d1m) = d;
-                            let (mut d2s, mut d2m) = (d1s.clone(), d1m.clone());
-                            d2s.negate();
-                            d2m.negate();
-                            let l1 = LogicValue::from(RealIneq(d1s, CmpOp::Le));
-                            let l2 = LogicValue::from(RealIneq(d2s, CmpOp::Le));
-                            let l3 = LogicValue::from(RealIneq(d1m, CmpOp::Le));
-                            let l4 = LogicValue::from(RealIneq(d2m, CmpOp::Le));
-                            return l1.and(l2, arena).or(l3.and(l4, arena), arena);
+                            let (d, should_not_zeros) =
+                                Rati::<BigFraction>::from_subtract(op2.clone(), op1.clone());
+                            let Rati(ds, dm) = d;
+                            return add_non_zero_conditions(
+                                is_zero_logic_value(ds, arena)
+                                    .or(is_zero_logic_value(dm, arena), arena),
+                                arena,
+                                should_not_zeros.into_iter(),
+                            );
                         }
                         if unique_name == "lt" {
-                            let d = Rati::<BigFraction>::from_subtract(op2.clone(), op1.clone());
-                            if d.is_constant() {
-                                return if !d.is_zero() && *d.0.constant() > 0i32.into() {
-                                    LogicValue::True
-                                } else {
-                                    LogicValue::False
-                                };
-                            }
+                            let (d, should_not_zeros) =
+                                Rati::<BigFraction>::from_subtract(op2.clone(), op1.clone());
                             let Rati(d1s, d1m) = d;
                             let (mut d2s, mut d2m) = (d1s.clone(), d1m.clone());
                             d2s.negate();
                             d2m.negate();
-                            let l1 = LogicValue::from(RealIneq(d1s, CmpOp::Lt));
-                            let l2 = LogicValue::from(RealIneq(d1m, CmpOp::Lt));
-                            let l3 = LogicValue::from(RealIneq(d2s, CmpOp::Lt));
-                            let l4 = LogicValue::from(RealIneq(d2m, CmpOp::Lt));
-                            return l1.and(l2, arena).or(l3.and(l4, arena), arena);
+                            let l1 = poly_to_logic_value(d1s, CmpOp::Lt);
+                            let l2 = poly_to_logic_value(d1m, CmpOp::Lt);
+                            let l3 = poly_to_logic_value(d2s, CmpOp::Lt);
+                            let l4 = poly_to_logic_value(d2m, CmpOp::Lt);
+                            return add_non_zero_conditions(
+                                l1.and(l2, arena).or(l3.and(l4, arena), arena),
+                                arena,
+                                should_not_zeros.into_iter(),
+                            );
                         }
                     }
                 }
@@ -318,8 +231,17 @@ mod tests {
     }
 
     #[test]
+    fn div_by_zero_is_zero() {
+        success("∀ a: ℝ, a / 0. = 0.");
+        success("∀ a: ℤ, a / 0 = 0.");
+        fail("∀ a: ℤ, a / 0 = 5.");
+        fail("∀ a: ℤ, a / (a - a) = 5.");
+    }
+
+    #[test]
     fn div_catch_zero_err() {
         fail("∀ a b c d: ℝ, a / b + c / d = (a * d + b * c) / (b * d)");
+        success("∀ a b c d: ℝ, ~ b = 0. -> ~ d = 0. -> ~ b * d = 0. -> a / b + c / d = (a * d + b * c) / (b * d)");
     }
 
     #[test]
