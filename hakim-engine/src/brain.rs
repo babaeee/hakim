@@ -1,11 +1,10 @@
-use crate::parser::{term_pretty_print, BinOp, PrettyPrintConfig};
+use crate::parser::{term_pretty_print, PrettyPrintConfig};
 use std::{cmp::Ordering, fmt::Debug, hash::Hash, rc::Rc};
 
 pub mod detect;
 pub mod infer;
 mod subtyping;
 
-use std::collections::HashSet;
 pub use subtyping::subtype_and_infer;
 
 #[cfg(test)]
@@ -72,10 +71,7 @@ impl Debug for Term {
         f.write_str(&term_pretty_print::<String, _>(
             self,
             |_| true,
-            &PrettyPrintConfig {
-                disabled_binops: HashSet::from([BinOp::Eq]),
-                names_with_hidden_args: Default::default(),
-            },
+            &PrettyPrintConfig::default(),
         ))
     }
 }

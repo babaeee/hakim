@@ -3,7 +3,7 @@ use std::{cmp::min, collections::HashSet, fmt::Display, rc::Rc};
 use crate::{
     app_ref,
     brain::{
-        detect::{detect_char, detect_len},
+        detect::{detect_char, detect_len, detect_tuple_items},
         increase_foreign_vars,
     },
     library::prelude,
@@ -45,33 +45,6 @@ fn detect_sigma(t: &Term) -> Option<(TermRef, TermRef, TermRef)> {
         }
     }
     None
-}
-
-fn detect_tuple_items(mut t: TermRef) -> Option<Vec<TermRef>> {
-    let mut r = vec![];
-    loop {
-        if let Term::App { func, op: op2 } = t.as_ref() {
-            if let Term::App { func, op: op1 } = func.as_ref() {
-                if let Term::App { func, op: _ } = func.as_ref() {
-                    if let Term::App { func, op: _ } = func.as_ref() {
-                        if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                            if unique_name == "pair" {
-                                r.push(op1.clone());
-                                t = op2.clone();
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        break;
-    }
-    if r.is_empty() {
-        return None;
-    }
-    r.push(t);
-    Some(r)
 }
 
 fn detect_list_items(mut t: &Term) -> Option<(Vec<TermRef>, TermRef)> {
