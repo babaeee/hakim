@@ -66,3 +66,47 @@ pub fn detect_r_ty(ty: &Term) -> bool {
     }
     false
 }
+
+pub fn detect_pair(t: &Term) -> Option<(TermRef, TermRef, TermRef, TermRef)> {
+    if let Term::App { func, op: op2 } = t {
+        if let Term::App { func, op: op1 } = func.as_ref() {
+            if let Term::App { func, op: ty2 } = func.as_ref() {
+                if let Term::App { func, op: ty1 } = func.as_ref() {
+                    if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                        if unique_name == "pair" {
+                            return Some((op1.clone(), op2.clone(), ty1.clone(), ty2.clone()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+pub fn detect_tuple_items(mut t: TermRef) -> Option<Vec<TermRef>> {
+    let mut r = vec![];
+    loop {
+        if let Term::App { func, op: op2 } = t.as_ref() {
+            if let Term::App { func, op: op1 } = func.as_ref() {
+                if let Term::App { func, op: _ } = func.as_ref() {
+                    if let Term::App { func, op: _ } = func.as_ref() {
+                        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                            if unique_name == "pair" {
+                                r.push(op1.clone());
+                                t = op2.clone();
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        break;
+    }
+    if r.is_empty() {
+        return None;
+    }
+    r.push(t);
+    Some(r)
+}

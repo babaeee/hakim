@@ -4,8 +4,13 @@ use std::fmt::Debug;
 use typed_arena::Arena;
 
 use crate::{
-    brain::{definitely_inequal, normalize, remove_unused_var, Abstraction, Term, TermRef},
+    app_ref,
+    brain::{
+        definitely_inequal, detect::detect_pair, normalize, remove_unused_var, Abstraction, Term,
+        TermRef,
+    },
     interactive::{self, Frame},
+    library::prelude::eq,
 };
 
 #[derive(Debug, Clone)]
@@ -255,8 +260,17 @@ impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
                 }
                 if let Term::App { func, op: _ } = func.as_ref() {
                     if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                        if unique_name == "eq" && definitely_inequal(op1, op2) {
-                            return LogicValue::False;
+                        if unique_name == "eq" {
+                            if definitely_inequal(op1, op2) {
+                                return LogicValue::False;
+                            }
+                            if let Some((a, b, ty1, ty2)) = detect_pair(op1) {
+                                if let Some((c, d, _, _)) = detect_pair(op2) {
+                                    let x1 = self.convert_term(app_ref!(eq(), ty1, a, c));
+                                    let x2 = self.convert_term(app_ref!(eq(), ty2, b, d));
+                                    return x1.and(x2, &self.arena);
+                                }
+                            }
                         }
                     }
                 }

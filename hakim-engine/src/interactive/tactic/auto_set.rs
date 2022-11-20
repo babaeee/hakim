@@ -167,7 +167,7 @@ fn convert(
             Included(Union(a, b), x) => {
                 let l = f(&Included(a, x), arena);
                 let r = f(&Included(b, x), arena);
-                l.and(dbg!(r), arena)
+                l.and(r, arena)
             }
             Included(Set(a), Set(b)) => {
                 LogicValue::from(EnsembleStatement::IsSubset(a.clone(), b.clone()))

@@ -1,5 +1,7 @@
 use std::panic::catch_unwind;
 
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+
 use crate::{engine::Engine, library::ast::Signature};
 
 use super::{
@@ -31,18 +33,21 @@ fn any() {
 
 #[test]
 fn check_library_proofs() {
-    for lib_name in all_names() {
+    let names = all_names().collect::<Vec<_>>();
+    names.par_iter().for_each(|lib_name| {
         let mut eng = Engine::default();
         let lib = File::parse(text_of_name(lib_name).unwrap());
+        eprintln!("lib {lib_name} started");
         for st in lib.0 {
             if let Sentence::Theorem { sig, proof } = &st {
                 let Signature { ty, name, .. } = sig;
                 let mut session = eng.interactive_session(ty).unwrap();
-                for tactic in proof {
+                for (i, tactic) in proof.iter().enumerate() {
                     match session.run_tactic(tactic) {
                         Ok(_) => (),
                         Err(e) => panic!(
-                            "In library {lib_name}\nIn theorem {name}: {ty}\nIn tactic: {tactic}\nProof failed with error: {e:?}",
+                            "In library {lib_name}\nIn theorem {name}: {ty}\nIn tactic: {tactic} ({i})\nProof failed with error: {e:?}\nMonitor: {}",
+                            session.monitor_string(),
                         ),
                     }
                 }
@@ -54,5 +59,6 @@ fn check_library_proofs() {
             }
             st.add_to_engine(&mut eng).unwrap();
         }
-    }
+        eprintln!("lib {lib_name} finished");
+    });
 }

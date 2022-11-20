@@ -32,7 +32,7 @@ impl Display for Monitor {
                 for (name, ty) in hyps {
                     writeln!(f, " {}: {}", name, ty)?;
                 }
-                for (i, goal) in goals.iter().enumerate() {
+                for (i, goal) in goals.iter().rev().enumerate() {
                     writeln!(
                         f,
                         "--------------------------------------------({}/{})",
