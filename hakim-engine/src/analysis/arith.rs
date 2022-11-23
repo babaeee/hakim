@@ -98,6 +98,16 @@ type ArithArena<'a, N> = &'a Arena<ArithTree<'a, N>>;
 pub struct LinearPolyBuilder(HashMap<Vec<TermRef>, usize>);
 pub struct LinearPoly<N>(N, Vec<(N, usize)>);
 
+impl<N: Debug> Debug for LinearPoly<N> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} ", self.0)?;
+        for (a, x) in &self.1 {
+            write!(f, "+ {a:?} * v{x}")?;
+        }
+        Ok(())
+    }
+}
+
 impl<N: Clone> LinearPoly<N> {
     pub fn from_slice(s: impl Iterator<Item = Poly<N>>) -> (usize, Vec<LinearPoly<N>>) {
         let mut builder = LinearPolyBuilder::default();

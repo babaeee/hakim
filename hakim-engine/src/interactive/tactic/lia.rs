@@ -248,6 +248,12 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
+    fn success_lia_unused_var() {
+        success("forall x c a: ℤ, 2 * c = a -> ~ 2 * x = 1");
+    }
+
+    #[test]
     fn big_integer() {
         fail("∀ x: ℤ, 10000000000000000000000000000000000000000001 * x = 10000000000000000000000000000000000000000000");
     }

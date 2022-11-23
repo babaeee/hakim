@@ -43,7 +43,15 @@ fn fail_type(exp: &str) {
     }
 }
 
-fn fail_match_infer(a: &str, b: &str) {
+fn check_match(a: &str, b: &str) {
+    let eng = Engine::default();
+    let (a, c1) = eng.parse_text_with_wild(a).unwrap();
+    let (b, c2) = eng.parse_text_with_wild(b).unwrap();
+    let c = std::cmp::max(c1, c2);
+    match_and_infer(a, b, &mut InferResults::new(c)).unwrap();
+}
+
+fn fail_match(a: &str, b: &str) {
     let eng = Engine::default();
     let (a, c1) = eng.parse_text_with_wild(a).unwrap();
     let (b, c2) = eng.parse_text_with_wild(b).unwrap();
@@ -114,7 +122,7 @@ fn exists_bad() {
 
 #[test]
 fn infer_stack_overflow() {
-    fail_match_infer(
+    fail_match(
         "?x -> ?x -> ?x -> ?x",
         "(?a → ?b) → ((?b → ?c) → (?a → ?c))",
     );
@@ -182,4 +190,13 @@ fn projection_infer2() {
 #[test]
 fn unique_elements_error() {
     check_type("∀ A: Universe, list A → Universe", "Universe1");
+}
+
+#[test]
+fn real_match() {
+    check_match("2.", "2.");
+    check_match("2.3", "2.3");
+    check_match("2.3", "2.30");
+    check_match("2.000000", "2.");
+    fail_match("2.0000001", "2.");
 }
