@@ -151,6 +151,23 @@ fn normalize<'a, N: ConstRepr>(
     arena: ArithArena<'a, N>,
     should_be_non_zero: &mut Vec<Poly<N>>,
 ) -> &'a ArithTree<'a, N> {
+    fn mult_soorat_makhraj_in<'a, N: ConstRepr>(
+        input: &'a ArithTree<'a, N>,
+        zarib: &'a ArithTree<'a, N>,
+        arena: ArithArena<'a, N>,
+        should_be_non_zero: &mut Vec<Poly<N>>,
+    ) -> &'a ArithTree<'a, N> {
+        if let Div(ks, km) = input {
+            let x = arena.alloc(minus(zarib, km, arena));
+            let x = normalize(x, arena, &mut vec![]);
+            let x = normal_tree_to_poly(x);
+            if x.is_zero() {
+                return ks;
+            }
+        }
+        should_be_non_zero.push(normal_tree_to_poly(zarib));
+        arena.alloc(Mult(zarib, input))
+    }
     match tree {
         Atom(_) | Const(_) => tree,
         Plus(Const(x), Const(y)) => arena.alloc(Const(x.clone() + y.clone())),
@@ -177,14 +194,17 @@ fn normalize<'a, N: ConstRepr>(
             let a = normalize(a, arena, should_be_non_zero);
             let b = normalize(b, arena, should_be_non_zero);
             match (a, b) {
-                (Div(x, y), t) | (t, Div(x, y)) => {
-                    should_be_non_zero.push(normal_tree_to_poly(y));
-                    normalize(
-                        arena.alloc(Div(arena.alloc(Plus(arena.alloc(Mult(y, t)), x)), y)),
-                        arena,
-                        should_be_non_zero,
-                    )
-                }
+                (Div(x, y), t) | (t, Div(x, y)) => normalize(
+                    arena.alloc(Div(
+                        arena.alloc(Plus(
+                            mult_soorat_makhraj_in(t, y, arena, should_be_non_zero),
+                            x,
+                        )),
+                        y,
+                    )),
+                    arena,
+                    should_be_non_zero,
+                ),
                 _ => arena.alloc(Plus(a, b)),
             }
         }

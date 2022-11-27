@@ -241,7 +241,13 @@ mod tests {
     #[test]
     fn div_catch_zero_err() {
         fail("∀ a b c d: ℝ, a / b + c / d = (a * d + b * c) / (b * d)");
-        success("∀ a b c d: ℝ, ~ b = 0. -> ~ d = 0. -> ~ b * d = 0. -> a / b + c / d = (a * d + b * c) / (b * d)");
+        success("∀ a b c d: ℝ, ~ b = 0. -> ~ d = 0. -> a / b + c / d = (a * d + b * c) / (b * d)");
+    }
+
+    #[test]
+    fn no_unneeded_div_zero_precondition() {
+        success("∀ a b: ℝ, a / b = a / b");
+        success("∀ a b c d: ℝ, (a / b) / (c / d) = (a * d) / (b * c)");
     }
 
     #[test]
