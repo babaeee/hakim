@@ -449,6 +449,11 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                         ),
+                        "minus"  if detect_z_ty(op) || detect_r_ty(op) => minus(
+                            term_ref_to_arith(op1.clone(), arena),
+                            term_ref_to_arith(op2.clone(), arena),
+                            arena,
+                        ),
                         "mult" if detect_z_ty(op) || detect_r_ty(op) => Mult(
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
@@ -462,11 +467,6 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                     _ => atom_normalizer(t),
                 },
                 Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                    "minus" => minus(
-                        term_ref_to_arith(op1.clone(), arena),
-                        term_ref_to_arith(op2.clone(), arena),
-                        arena,
-                    ),
                     "pow" => pow_to_arith(op1.clone(), op2.clone(), arena),
                     "len1" => return len1_to_arith(op1.clone(), op2.clone(), arena),
                     _ => atom_normalizer(t),

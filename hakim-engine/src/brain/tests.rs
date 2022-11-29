@@ -96,6 +96,7 @@ fn lambda_bad_ty() {
     check_type("λ A: U, 2", "U → ℤ");
     fail_type("λ A: 2, U");
     check_type("λ A: U, U", "U → Universe1");
+    check_type("∀ x: ℝ, x + 0. = x", "U");
 }
 
 #[test]
