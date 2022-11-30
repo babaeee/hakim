@@ -449,7 +449,7 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                         ),
-                        "minus"  if detect_z_ty(op) || detect_r_ty(op) => minus(
+                        "minus" if detect_z_ty(op) || detect_r_ty(op) => minus(
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                             arena,
