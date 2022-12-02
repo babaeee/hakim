@@ -1,9 +1,18 @@
 Import /NumberTheory;
 
-Todo eq_lt_gt: ∀ x: ℝ, ∀ a: ℝ, x = a ∨ x < a ∨ x > a;
+Todo Rtotal_order: ∀ x: ℝ, ∀ a: ℝ, x = a ∨ x < a ∨ x > a;
 
 Todo Q_lt: ∀ a b c d: ℤ, ~ b = 0 -> ~ d = 0 -> a * d < b * c -> a / b < c / d;
 Suggest goal default apply Q_lt with label a / b < c / d => a * d < b * c;
+
+Todo Rle_trans: ∀ r1 r2 r3: ℝ, r1 ≤ r2 -> r2 ≤ r3 -> r1 ≤ r3;
+Suggest goal default apply Rle_trans with label a ≤ c => enter b so that a ≤ b and b ≤ c;
+Todo Rle_lt_trans: ∀ r1 r2 r3: ℝ, r1 ≤ r2 -> r2 < r3 -> r1 < r3;
+Suggest goal default apply Rle_lt_trans with label a < c => enter b so that a ≤ b and b < c;
+Todo Rlt_le_trans: ∀ r1 r2 r3: ℝ, r1 < r2 -> r2 ≤ r3 -> r1 < r3;
+Suggest goal default apply Rlt_le_trans with label a < c => enter b so that a < b and b ≤ c;
+
+Todo lt_pow_2: ∀ a b: ℝ, a * a < b * b -> a < b;
 
 Axiom sqrt: ℝ -> ℝ;
 
@@ -14,6 +23,13 @@ Axiom is_q: ℝ -> U;
 Axiom is_q_unfold: ∀ x: ℝ, is_q x -> ∃ a b: ℤ, x = a / b ∧ gcd a b = 1 ∧ b > 0;
 
 Suggest hyp default apply is_q_unfold in $n with label is_q x => ∃ a b: ℤ, a / b = x ∧ gcd a b = 1 ∧ b > 0;
+
+Todo is_q_plus: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a + b);
+Suggest goal default apply is_q_plus with label is_q (a + b) => is_q a and is_q b;
+Todo is_q_minus: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a - b);
+Suggest goal default apply is_q_minus with label is_q (a - b) => is_q a and is_q b;
+Todo is_q_mult: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a * b);
+Suggest goal default apply is_q_mult with label is_q (a * b) => is_q a and is_q b;
 
 Theorem multiple_gt_Q: ∀ x: ℝ, ∀ e: ℝ, is_q x -> is_q e -> e > 0. -> ∃ N, N > 0 ∧ (N / 1) * e > x;
 Proof;

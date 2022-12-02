@@ -160,6 +160,10 @@ Proof; unfold prime; intros; lia; Qed;
 Theorem prime_is_positive: ∀ x: ℤ, prime x -> 0 < x;
 Proof; unfold prime; intros; lia; Qed;
 Todo prime_2: prime 2;
+
+Todo divide_prime_or_mult: ∀ a b c: ℤ, prime a -> a | b * c -> a | b ∨ a | c;
+Suggest hyp default apply divide_prime_or_mult in $n with label a | b * c => prime a and (a | b or a | c);
+
 Theorem prime_divisor_for_positive: ∀ x: ℤ, 1 < x -> ∃ p: ℤ, prime p ∧ p | x;
 Proof;
     intros;
@@ -201,6 +205,7 @@ Todo prime_divide_mult: ∀ x: ℤ, prime x -> ∀ a b: ℤ, x | a * b -> x | a 
 
 Axiom gcd: ℤ -> ℤ -> ℤ;
 Axiom gcd_divide: ∀ k x y: ℤ, k | x -> k | y -> k | gcd x y;
+Suggest goal default apply gcd_divide with label k | gcd a b => k | a and k | b;
 
 Import /ProductOperator;
 Axiom divide_multi:   ∀ A: set ℤ, ∀ a : ℤ, a ∈ A -> a | multi A;
