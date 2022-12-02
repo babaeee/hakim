@@ -7,7 +7,7 @@ use crate::{
     brain::TermRef,
     interactive::Frame,
 };
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum PropStatement {
     Atom(TermRef),
     Not(TermRef),

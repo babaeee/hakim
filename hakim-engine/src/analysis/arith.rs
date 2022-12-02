@@ -631,6 +631,19 @@ impl<N: ConstRepr> Poly<N> {
     pub fn add(&mut self, num: N) {
         self.0 = self.0.clone() + num;
     }
+
+    pub fn decompose(self) -> Vec<Self> {
+        if *self.constant() == 0.into() {
+            if let [(k, vars)] = self.variables() {
+                return vars
+                    .iter()
+                    .map(|x| Poly(0.into(), vec![(1.into(), vec![x.clone()])]))
+                    .chain(Some(Poly(k.clone(), vec![])))
+                    .collect();
+            }
+        }
+        vec![self]
+    }
 }
 
 fn arith_tree_of_substract<N: ConstRepr>(
