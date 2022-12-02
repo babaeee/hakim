@@ -13,13 +13,31 @@ use crate::{
     library::prelude::eq,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LogicTree<'a, T> {
     Atom(T),
     Unknown,
     And(&'a LogicTree<'a, T>, &'a LogicTree<'a, T>),
     Or(&'a LogicTree<'a, T>, &'a LogicTree<'a, T>),
     Not(&'a LogicTree<'a, T>),
+}
+
+impl<'a, T: Clone> LogicTree<'a, T> {
+    fn not(self, arena: LogicArena<'a, T>) -> LogicTree<'a, T> {
+        match self {
+            Atom(_) => Not(arena.alloc(self)),
+            Unknown => Unknown,
+            And(x, y) => Or(
+                arena.alloc(x.clone().not(arena)),
+                arena.alloc(y.clone().not(arena)),
+            ),
+            Or(x, y) => And(
+                arena.alloc(x.clone().not(arena)),
+                arena.alloc(y.clone().not(arena)),
+            ),
+            Not(x) => x.clone(),
+        }
+    }
 }
 use LogicTree::*;
 
@@ -42,10 +60,10 @@ mod logic_value_impls {
         }
     }
 
-    impl<'a, T> LogicValue<'a, T> {
+    impl<'a, T: Eq + Clone> LogicValue<'a, T> {
         pub fn not(self, arena: LogicArena<'a, T>) -> Self {
             match self {
-                Exp(x) => Exp(LogicTree::Not(arena.alloc(x))),
+                Exp(x) => Exp(x.not(arena)),
                 True => False,
                 False => True,
             }
@@ -54,9 +72,13 @@ mod logic_value_impls {
         pub fn or(self, other: Self, arena: LogicArena<'a, T>) -> Self {
             match (self, other) {
                 (Exp(a), Exp(b)) => {
-                    let a = arena.alloc(a);
-                    let b = arena.alloc(b);
-                    Exp(LogicTree::Or(a, b))
+                    if a == b {
+                        Exp(a)
+                    } else {
+                        let a = arena.alloc(a);
+                        let b = arena.alloc(b);
+                        Exp(LogicTree::Or(a, b))
+                    }
                 }
                 (True, _) | (_, True) => True,
                 (False, x) | (x, False) => x,
@@ -66,9 +88,13 @@ mod logic_value_impls {
         pub fn and(self, other: Self, arena: LogicArena<'a, T>) -> Self {
             match (self, other) {
                 (Exp(a), Exp(b)) => {
-                    let a = arena.alloc(a);
-                    let b = arena.alloc(b);
-                    Exp(LogicTree::And(a, b))
+                    if a == b {
+                        Exp(a)
+                    } else {
+                        let a = arena.alloc(a);
+                        let b = arena.alloc(b);
+                        Exp(LogicTree::And(a, b))
+                    }
                 }
                 (False, _) | (_, False) => False,
                 (True, x) | (x, True) => x,
@@ -80,7 +106,7 @@ mod logic_value_impls {
         }
     }
 
-    impl<'a, T> Default for LogicValue<'a, T> {
+    impl<'a, T: Eq + Clone> Default for LogicValue<'a, T> {
         fn default() -> Self {
             Self::unknown()
         }
@@ -174,7 +200,7 @@ pub struct LogicBuilder<'a, T> {
     f: fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>,
 }
 
-impl<T: Clone + Debug> LogicBuilder<'_, T> {
+impl<T: Clone + Debug + Eq> LogicBuilder<'_, T> {
     pub fn build_tactic(
         name: &'static str,
         frame: Frame,
@@ -196,7 +222,7 @@ impl<T: Clone + Debug> LogicBuilder<'_, T> {
     }
 }
 
-impl<'a, T: Clone + Debug> LogicBuilder<'a, T> {
+impl<'a, T: Clone + Debug + Eq> LogicBuilder<'a, T> {
     pub fn new(f: fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>) -> Self {
         let arena = Arena::new();
         Self {

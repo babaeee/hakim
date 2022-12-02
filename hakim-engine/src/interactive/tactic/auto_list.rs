@@ -7,16 +7,16 @@ use crate::{
     interactive::Frame,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum ListPart {
     Atom(TermRef),
     Element(TermRef),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct ListItem(Vec<ListPart>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum ListStatement {
     IsEq(ListItem, ListItem),
     IsNeq(ListItem, ListItem),
