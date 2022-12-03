@@ -48,6 +48,9 @@ pub fn mult() -> TermRef {
 pub fn div() -> TermRef {
     term_ref!(axiom "div", forall u(), forall v0(), forall v1(), r())
 }
+pub fn is_q() -> TermRef {
+    term_ref!(axiom "is_q", forall r(), u())
+}
 pub fn ex() -> TermRef {
     term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
 }
@@ -164,6 +167,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("inlist".to_string(), inlist());
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());
+    name_dict.insert("is_q".to_string(), is_q());
     name_dict.insert("finite".to_string(), finite());
     name_dict.insert("included".to_string(), included());
     name_dict.insert("sigma".to_string(), sigma());

@@ -5,20 +5,25 @@ Todo Rtotal_order: ∀ x: ℝ, ∀ a: ℝ, x = a ∨ x < a ∨ x > a;
 Todo Q_lt: ∀ a b c d: ℤ, ~ b = 0 -> ~ d = 0 -> a * d < b * c -> a / b < c / d;
 Suggest goal default apply Q_lt with label a / b < c / d => a * d < b * c;
 
-Todo Rle_trans: ∀ r1 r2 r3: ℝ, r1 ≤ r2 -> r2 ≤ r3 -> r1 ≤ r3;
+Todo Rle_trans: ∀ a b c: ℝ, a ≤ b -> b ≤ c -> a ≤ c;
 Suggest goal default apply Rle_trans with label a ≤ c => enter b so that a ≤ b and b ≤ c;
-Todo Rle_lt_trans: ∀ r1 r2 r3: ℝ, r1 ≤ r2 -> r2 < r3 -> r1 < r3;
+Todo Rle_lt_trans: ∀ a b c: ℝ, a ≤ b -> b < c -> a < c;
 Suggest goal default apply Rle_lt_trans with label a < c => enter b so that a ≤ b and b < c;
-Todo Rlt_le_trans: ∀ r1 r2 r3: ℝ, r1 < r2 -> r2 ≤ r3 -> r1 < r3;
+Todo Rlt_le_trans: ∀ a b c: ℝ, a < b -> b ≤ c -> a < c;
 Suggest goal default apply Rlt_le_trans with label a < c => enter b so that a < b and b ≤ c;
+
+Todo Rplus_le_compat: ∀ a b c d: ℝ, a ≤ b -> c ≤ d -> a + c ≤ b + d;
+Suggest goal default apply Rplus_le_compat with label a + c ≤ b + d => a ≤ b and c ≤ d;
+Todo Rplus_lt_le_compat: ∀ a b c d: ℝ, a < b -> c ≤ d -> a + c < b + d;
+Suggest goal default apply Rplus_lt_le_compat with label a + c < b + d => a < b and c ≤ d;
+Todo Rplus_le_lt_compat: ∀ a b c d: ℝ, a ≤ b -> c < d -> a + c < b + d;
+Suggest goal default apply Rplus_le_lt_compat with label a + c < b + d => a ≤ b and c < d;
 
 Todo lt_pow_2: ∀ a b: ℝ, a * a < b * b -> a < b;
 
 Axiom sqrt: ℝ -> ℝ;
 
 Axiom sqrt_def: ∀ x: ℝ, 0. ≤ x -> sqrt x * sqrt x = x;
-
-Axiom is_q: ℝ -> U;
 
 Axiom is_q_unfold: ∀ x: ℝ, is_q x -> ∃ a b: ℤ, x = a / b ∧ gcd a b = 1 ∧ b > 0;
 

@@ -4,8 +4,10 @@
 use super::Result;
 use crate::{
     analysis::logic::{LogicArena, LogicBuilder, LogicValue},
-    brain::TermRef,
+    app_ref,
+    brain::{Term, TermRef},
     interactive::Frame,
+    library::prelude::is_q,
 };
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum PropStatement {
@@ -19,7 +21,36 @@ fn convert(
     term: TermRef,
     _logic_arena: LogicArena<'_, PropStatement>,
 ) -> LogicValue<'_, PropStatement> {
+    /*  if let Term::App { func, op } = term.as_ref() {
+        if let Term::Axiom {unique_name, .. } = func.as_ref() {
+            if unique_name == "is_q" {
+                if let Term::App { func, op: op2 } = op.as_ref() {
+                    if let Term::App { func, op: op1 } = func.as_ref() {
+                        if let Term::App { func, op } = func.as_ref() {
+                            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                                match unique_name.as_str() {
+                                    "plus" | "minus" => convert(is_q_term(op1), logic_arena).and(convert(is_q_term(op2), logic_arena), arena);
+
+                                "mult" if detect_z_ty(op) || detect_r_ty(op) => Mult(
+                                    term_ref_to_arith(op1.clone(), arena),
+                                    term_ref_to_arith(op2.clone(), arena),
+                                ),
+                                "div" if detect_z_ty(op) || detect_r_ty(op) => Div(
+                                    term_ref_to_arith(op1.clone(), arena),
+                                    term_ref_to_arith(op2.clone(), arena),
+                                ),
+                                _ => atom_normalizer(t),
+                            },
+                            _ => atom_normalizer(t),
+                        },
+
+            }
+        }
+    }*/
     LogicValue::from(PropStatement::Atom(term))
+}
+fn is_q_term(r: TermRef) -> TermRef {
+    app_ref!(is_q(), r)
 }
 fn check_contradiction(a: &[PropStatement]) -> bool {
     let mut map = HashMap::<TermRef, bool>::new();
