@@ -3,7 +3,7 @@ use num_bigint::{BigInt, Sign};
 use super::Result;
 use crate::{
     analysis::{
-        arith::{LinearPoly, Poly},
+        arith::{ConstRepr, LinearPoly, Poly},
         logic::{LogicArena, LogicBuilder, LogicValue},
     },
     brain::{
@@ -67,6 +67,16 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly<BigInt>>) -> LogicValue<'_,
                             }
                             return LogicValue::from(d);
                         }
+                    }
+                }
+            }
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                if unique_name == "divide" {
+                    if let (Some(a), Some(b)) = (BigInt::from_term(op1), BigInt::from_term(op2)) {
+                        if b == BigInt::from(0) || (b % a) == BigInt::from(0) {
+                            return LogicValue::True;
+                        }
+                        return LogicValue::False;
                     }
                 }
             }
@@ -300,6 +310,7 @@ mod tests {
         success("sigma 2 4 (λ i: ℤ, i * i) = 13");
         success("2 * sigma 0 (0 + 1) (λ i: ℤ, i) = 0 * (0 + 1)");
     }
+
     #[test]
     fn sigma_factor() {
         success("∀ n, (Σ i in [0, n) 1) = n");
@@ -411,5 +422,11 @@ mod tests {
     #[test]
     fn fail_even_eq_odd() {
         fail("∀ a b: ℤ, ~ 2 * a = 2 * b + 1")
+    }
+    #[test]
+    fn divide_calculte() {
+        success("2 | 10000");
+        fail("2 | 1");
+        success("2 | 0")
     }
 }
