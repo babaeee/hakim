@@ -2,3 +2,4 @@
 lcov.info
 perf.data*
 flamegraph.svg
+.z3-trace

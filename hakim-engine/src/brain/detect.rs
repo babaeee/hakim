@@ -38,6 +38,17 @@ pub fn detect_len(t: &Term) -> Option<(TermRef, TermRef)> {
     }
 }
 
+pub fn detect_set_ty(ty: &Term) -> Option<TermRef> {
+    if let Term::App { func, op } = ty {
+        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+            if unique_name == "set" {
+                return Some(op.clone());
+            }
+        }
+    }
+    None
+}
+
 pub fn detect_list_ty(ty: &Term) -> Option<TermRef> {
     if let Term::App { func, op } = ty {
         if let Term::Axiom { unique_name, .. } = func.as_ref() {

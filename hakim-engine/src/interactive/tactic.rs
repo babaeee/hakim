@@ -33,6 +33,9 @@ pub(crate) use chain::{chain, destruct};
 mod assumption;
 pub(crate) use assumption::assumption;
 
+mod z3_auto;
+pub(crate) use z3_auto::z3_auto;
+
 #[derive(Debug)]
 pub enum Error {
     UnknownTactic(String),

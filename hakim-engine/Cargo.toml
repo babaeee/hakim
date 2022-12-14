@@ -13,6 +13,12 @@ typed-arena = "2.0.1"
 lazy_static = "1.2.0"
 minilp = { git = "https://github.com/HKalbasi/minilp" }
 pretty = "0.11.3"
+z3 = { git = "https://github.com/HKalbasi/z3.rs", features = [
+    "static-link-z3",
+] }
+z3-sys = { git = "https://github.com/HKalbasi/z3.rs", features = [
+    "static-link-z3",
+] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 serde-wasm-bindgen = "0.4.2"

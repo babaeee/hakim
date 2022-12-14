@@ -195,10 +195,14 @@ mod tests {
 
     fn success(goal: &str) {
         run_interactive_to_end(goal, "intros\nlra");
+        // Check all tests with z3 as well
+        run_interactive_to_end(goal, "intros\nz3");
     }
 
     fn fail(goal: &str) {
         run_interactive_to_fail(goal, "intros", "lra");
+        // Check all tests with z3 as well
+        run_interactive_to_fail(goal, "intros", "z3");
     }
 
     #[test]
@@ -263,6 +267,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn calculator_mode() {
         with_params("lra=calculator", || {
             success("1. < 2.");
