@@ -3,7 +3,7 @@ use num_bigint::{BigInt, Sign};
 use super::Result;
 use crate::{
     analysis::{
-        arith::{LinearPoly, Poly},
+        arith::{ConstRepr, LinearPoly, Poly},
         logic::{LogicArena, LogicBuilder, LogicValue},
     },
     brain::{
@@ -67,6 +67,16 @@ fn convert(term: TermRef, arena: LogicArena<'_, Poly<BigInt>>) -> LogicValue<'_,
                             }
                             return LogicValue::from(d);
                         }
+                    }
+                }
+            }
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                if unique_name == "divide" {
+                    if let (Some(a), Some(b)) = (BigInt::from_term(op1), BigInt::from_term(op2)) {
+                        if b == BigInt::from(0) || (b % a) == BigInt::from(0) {
+                            return LogicValue::True;
+                        }
+                        return LogicValue::False;
                     }
                 }
             }
@@ -248,6 +258,12 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
+    fn success_lia_unused_var() {
+        success("forall x c a: ℤ, 2 * c = a -> ~ 2 * x = 1");
+    }
+
+    #[test]
     fn big_integer() {
         fail("∀ x: ℤ, 10000000000000000000000000000000000000000001 * x = 10000000000000000000000000000000000000000000");
     }
@@ -402,5 +418,15 @@ mod tests {
         success("(1, 2, 3, 4) = (1, 1 + 1, 1 + 1 + 1, 1 + 1 + 1 + 1)");
         fail("(1, 2, 3, 4, 5) = (1, 2, 4, 4, 5)");
         success("0 ≤ 0 ∧ ((3 * 0 + 2, 0) = (0 + 1, 0) ∨ (3 * 0 + 2, 0) = (0 + 2, 0))");
+    }
+    #[test]
+    fn fail_even_eq_odd() {
+        fail("∀ a b: ℤ, ~ 2 * a = 2 * b + 1")
+    }
+    #[test]
+    fn divide_calculte() {
+        success("2 | 10000");
+        fail("2 | 1");
+        success("2 | 0")
     }
 }

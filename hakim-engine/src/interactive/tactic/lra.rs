@@ -14,13 +14,13 @@ use crate::{
 
 use minilp::{ComparisonOp, OptimizationDirection, Problem};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum CmpOp {
     Lt,
     Le,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct RealIneq(Poly<BigFraction>, CmpOp);
 
 fn convert_calculator_mode(
@@ -57,13 +57,17 @@ fn poly_to_logic_value(poly: Poly<BigFraction>, op: CmpOp) -> LogicValue<'static
 }
 
 fn is_zero_logic_value(
-    mut poly: Poly<BigFraction>,
+    poly: Poly<BigFraction>,
     arena: LogicArena<'_, RealIneq>,
 ) -> LogicValue<'_, RealIneq> {
-    let l1 = poly_to_logic_value(poly.clone(), CmpOp::Le);
-    poly.negate();
-    let l2 = poly_to_logic_value(poly, CmpOp::Le);
-    l1.and(l2, arena)
+    let mut result = LogicValue::False;
+    for mut p in poly.decompose() {
+        let l1 = poly_to_logic_value(p.clone(), CmpOp::Le);
+        p.negate();
+        let l2 = poly_to_logic_value(p, CmpOp::Le);
+        result = result.or(l1.and(l2, arena), arena);
+    }
+    result
 }
 
 fn add_non_zero_conditions<'a>(
@@ -245,7 +249,16 @@ mod tests {
     #[test]
     fn div_catch_zero_err() {
         fail("∀ a b c d: ℝ, a / b + c / d = (a * d + b * c) / (b * d)");
-        success("∀ a b c d: ℝ, ~ b = 0. -> ~ d = 0. -> ~ b * d = 0. -> a / b + c / d = (a * d + b * c) / (b * d)");
+        success("∀ a b c d: ℝ, ~ b = 0. -> ~ d = 0. -> a / b + c / d = (a * d + b * c) / (b * d)");
+    }
+
+    #[test]
+    fn no_unneeded_div_zero_precondition() {
+        success("∀ a b: ℝ, a / b = a / b");
+        success("∀ a b c d: ℝ, (a / b) / (c / d) = (a * d) / (b * c)");
+        success(
+            "∀ x n: ℝ, ~ n = 0. -> (x - 1. / n) * (x - 1. / n) = x * x - 2. * x * (1. / n) + (1. / n) * (1. / n)",
+        );
     }
 
     #[test]

@@ -69,7 +69,7 @@ fn eat_hidden_args(r: &mut &str) -> usize {
 }
 
 impl Sentence {
-    fn parse<'a, T: Iterator<Item = &'a str> + 'a>(it: &mut T) -> Self {
+    fn parse<'a, T: Iterator<Item = &'a str>>(it: &mut T) -> Self {
         let s = it.next().unwrap();
         if let Some(mut r) = s.strip_prefix("Suggest ") {
             let target = if let Some(x) = r.strip_prefix("goal ") {
@@ -90,12 +90,12 @@ impl Sentence {
             } else {
                 Applicablity::Normal
             };
-            let tactic = match r.split_once(';') {
+            let tactic = match r.split_once("with label") {
                 Some((t, rest)) => {
                     r = rest;
                     t.to_string()
                 }
-                None => panic!("missing semicolon in suggestion"),
+                None => panic!("missing label in suggestion"),
             };
             let class = match r.split_once("=>") {
                 Some((l, r)) => SuggClass::Pattern(l.trim().to_string(), r.trim().to_string()),
@@ -211,7 +211,7 @@ impl Sentence {
 pub struct File(pub(crate) Vec<Sentence>);
 
 fn split_by_sentence(text: &str) -> impl Iterator<Item = &str> {
-    text.split('.').map(|x| x.trim()).filter(|x| !x.is_empty())
+    text.split(';').map(|x| x.trim()).filter(|x| !x.is_empty())
 }
 
 impl File {

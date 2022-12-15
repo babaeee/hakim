@@ -40,13 +40,16 @@ pub fn pow() -> TermRef {
     term_ref!(axiom "pow", forall z(), forall z(), z())
 }
 pub fn minus() -> TermRef {
-    term_ref!(axiom "minus", forall z(), forall z(), z())
+    term_ref!(axiom "minus", forall u(), forall v0(), forall v1(), v2())
 }
 pub fn mult() -> TermRef {
     term_ref!(axiom "mult", forall u(), forall v0(), forall v1(), v2())
 }
 pub fn div() -> TermRef {
     term_ref!(axiom "div", forall u(), forall v0(), forall v1(), r())
+}
+pub fn is_q() -> TermRef {
+    term_ref!(axiom "is_q", forall r(), u())
 }
 pub fn ex() -> TermRef {
     term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
@@ -137,6 +140,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("ℝ".to_string(), r());
     name_dict.insert("False".to_string(), false_ty());
     name_dict.insert("True".to_string(), true_ty());
+    name_dict.insert("div".to_string(), div());
     name_dict.insert("divide".to_string(), divide());
     name_dict.insert("eq".to_string(), eq());
     name_dict.insert("ex".to_string(), ex());
@@ -163,6 +167,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("inlist".to_string(), inlist());
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());
+    name_dict.insert("is_q".to_string(), is_q());
     name_dict.insert("finite".to_string(), finite());
     name_dict.insert("included".to_string(), included());
     name_dict.insert("sigma".to_string(), sigma());

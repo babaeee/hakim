@@ -378,6 +378,16 @@ mod tests {
     }
 
     #[test]
+    fn sqrt_failure() {
+        run_interactive(
+            "sqrt 2. * sqrt 2. = 2.000",
+            r#"
+            apply sqrt_def"#,
+            EngineLevel::Full,
+        );
+    }
+
+    #[test]
     fn soundness_bug_simple_recursion() {
         run_interactive_to_fail(
             "∃ f: ℤ → ℤ, f 0 = 1 ∧ ∀ n: ℤ, 0 ≤ n → f (n + 1) = n * f (n + 2)",

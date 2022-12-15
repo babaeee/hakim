@@ -26,7 +26,7 @@ use EnsembleTree::*;
 
 type EnsembleArena<'a> = &'a Arena<EnsembleTree<'a>>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum EnsembleStatement {
     IsMember(TermRef, TermRef),
     IsNotMember(TermRef, TermRef),

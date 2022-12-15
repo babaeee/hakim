@@ -98,6 +98,16 @@ type ArithArena<'a, N> = &'a Arena<ArithTree<'a, N>>;
 pub struct LinearPolyBuilder(HashMap<Vec<TermRef>, usize>);
 pub struct LinearPoly<N>(N, Vec<(N, usize)>);
 
+impl<N: Debug> Debug for LinearPoly<N> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} ", self.0)?;
+        for (a, x) in &self.1 {
+            write!(f, "+ {a:?} * v{x}")?;
+        }
+        Ok(())
+    }
+}
+
 impl<N: Clone> LinearPoly<N> {
     pub fn from_slice(s: impl Iterator<Item = Poly<N>>) -> (usize, Vec<LinearPoly<N>>) {
         let mut builder = LinearPolyBuilder::default();
@@ -141,6 +151,23 @@ fn normalize<'a, N: ConstRepr>(
     arena: ArithArena<'a, N>,
     should_be_non_zero: &mut Vec<Poly<N>>,
 ) -> &'a ArithTree<'a, N> {
+    fn mult_soorat_makhraj_in<'a, N: ConstRepr>(
+        input: &'a ArithTree<'a, N>,
+        zarib: &'a ArithTree<'a, N>,
+        arena: ArithArena<'a, N>,
+        should_be_non_zero: &mut Vec<Poly<N>>,
+    ) -> &'a ArithTree<'a, N> {
+        if let Div(ks, km) = input {
+            let x = arena.alloc(minus(zarib, km, arena));
+            let x = normalize(x, arena, &mut vec![]);
+            let x = normal_tree_to_poly(x);
+            if x.is_zero() {
+                return ks;
+            }
+        }
+        should_be_non_zero.push(normal_tree_to_poly(zarib));
+        arena.alloc(Mult(zarib, input))
+    }
     match tree {
         Atom(_) | Const(_) => tree,
         Plus(Const(x), Const(y)) => arena.alloc(Const(x.clone() + y.clone())),
@@ -167,14 +194,17 @@ fn normalize<'a, N: ConstRepr>(
             let a = normalize(a, arena, should_be_non_zero);
             let b = normalize(b, arena, should_be_non_zero);
             match (a, b) {
-                (Div(x, y), t) | (t, Div(x, y)) => {
-                    should_be_non_zero.push(normal_tree_to_poly(y));
-                    normalize(
-                        arena.alloc(Div(arena.alloc(Plus(arena.alloc(Mult(y, t)), x)), y)),
-                        arena,
-                        should_be_non_zero,
-                    )
-                }
+                (Div(x, y), t) | (t, Div(x, y)) => normalize(
+                    arena.alloc(Div(
+                        arena.alloc(Plus(
+                            mult_soorat_makhraj_in(t, y, arena, should_be_non_zero),
+                            x,
+                        )),
+                        y,
+                    )),
+                    arena,
+                    should_be_non_zero,
+                ),
                 _ => arena.alloc(Plus(a, b)),
             }
         }
@@ -419,6 +449,11 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                         ),
+                        "minus" if detect_z_ty(op) || detect_r_ty(op) => minus(
+                            term_ref_to_arith(op1.clone(), arena),
+                            term_ref_to_arith(op2.clone(), arena),
+                            arena,
+                        ),
                         "mult" if detect_z_ty(op) || detect_r_ty(op) => Mult(
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
@@ -432,11 +467,6 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                     _ => atom_normalizer(t),
                 },
                 Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                    "minus" => minus(
-                        term_ref_to_arith(op1.clone(), arena),
-                        term_ref_to_arith(op2.clone(), arena),
-                        arena,
-                    ),
                     "pow" => pow_to_arith(op1.clone(), op2.clone(), arena),
                     "len1" => return len1_to_arith(op1.clone(), op2.clone(), arena),
                     _ => atom_normalizer(t),
@@ -600,6 +630,19 @@ impl<N: ConstRepr> Poly<N> {
 
     pub fn add(&mut self, num: N) {
         self.0 = self.0.clone() + num;
+    }
+
+    pub fn decompose(self) -> Vec<Self> {
+        if *self.constant() == 0.into() {
+            if let [(k, vars)] = self.variables() {
+                return vars
+                    .iter()
+                    .map(|x| Poly(0.into(), vec![(1.into(), vec![x.clone()])]))
+                    .chain(Some(Poly(k.clone(), vec![])))
+                    .collect();
+            }
+        }
+        vec![self]
     }
 }
 
