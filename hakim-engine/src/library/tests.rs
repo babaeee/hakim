@@ -14,7 +14,7 @@ use super::{
 fn all() {
     let mut eng = Engine::default();
     for lib in all_names() {
-        eng.load_library(dbg!(lib)).unwrap();
+        eng.load_library(dbg!(&lib)).unwrap();
     }
 }
 
@@ -22,7 +22,7 @@ fn all() {
 fn any() {
     for lib in all_names() {
         let r = catch_unwind(|| {
-            Engine::default().load_library(lib).unwrap();
+            Engine::default().load_library(&lib).unwrap();
         });
         dbg!(&lib);
         if let Err(e) = r {
@@ -36,7 +36,7 @@ fn check_library_proofs() {
     let names = all_names().collect::<Vec<_>>();
     names.par_iter().for_each(|lib_name| {
         let mut eng = Engine::default();
-        let lib = File::parse(text_of_name(lib_name).unwrap());
+        let lib = File::parse(&text_of_name(lib_name).unwrap());
         eprintln!("lib {lib_name} started");
         for st in lib.0 {
             if let Sentence::Theorem { sig, proof } = &st {

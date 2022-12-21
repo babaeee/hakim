@@ -186,7 +186,7 @@ impl Engine {
     pub fn load_library(&mut self, name: &str) -> Result<()> {
         for lib in all_names() {
             if lib.starts_with(name) {
-                self.load_library_single(lib)?;
+                self.load_library_single(&lib)?;
             }
         }
         Ok(())

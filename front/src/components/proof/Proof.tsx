@@ -7,18 +7,12 @@ import { LemmaBox } from './sidebar/LemmaBox';
 import { createContext, useState } from 'react';
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { cancelProof, proofState, solveProof } from '../root/Root';
+import { cancelProof, proofState, solveProof, Lemma } from '../root/Root';
 import { useNavigate } from 'react-router-dom';
 import { Title } from '../util/Title';
 import Markdown from "markdown-it";
-import { check } from '../../hakim';
 
 const markdown = new Markdown();
-
-type Lemma = {
-  name: string,
-  ty: string,
-};
 
 type MouseTarget = { kind: "goal" } | { kind: "hyp" | "lem", name: string }
 
@@ -54,10 +48,7 @@ const HeadText: React.FC<{ text: string | undefined }> = ({ text }) => {
 export const ProofContext = createContext({} as ProofContextType);
 
 export const Proof = () => {
-  const [lemmaBox, setLemmaBox] = useState(proofState.suggestedLemmas.map((x) => ({
-    name: x,
-    ty: check(x),
-  })) as Lemma[]);
+  const [lemmaBox, setLemmaBox] = useState(proofState.suggestedLemmas);
   const navigator = useNavigate();
   const [natural, setNatural] = useState(undefined as string | undefined);
   const [actionHint, setActionHint] = useState(undefined as any);

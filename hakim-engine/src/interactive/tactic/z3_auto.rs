@@ -353,4 +353,9 @@ mod tests {
     fn simple_variables() {
         success("∀ x: ℝ, x = 3. -> x < 3.01");
     }
+
+    #[test]
+    fn multiple_theories() {
+        success("∀ x: ℤ, x ∈ {2} -> x + x = 4");
+    }
 }

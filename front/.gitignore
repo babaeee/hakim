@@ -23,3 +23,6 @@ yarn-debug.log*
 yarn-error.log*
 
 dist
+
+static/hakim-json.js
+static/hakim_json.wasm

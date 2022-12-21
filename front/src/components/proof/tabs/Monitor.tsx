@@ -150,9 +150,9 @@ const Hyp = ({ name, ty, mode, setMode }: HypProps): JSX.Element => {
                     [css.drop]: canDrop,
                     [css.over]: isOver,
                 })}
-                onContextMenu={(e) => {
+                onContextMenu={async (e) => {
                     e.preventDefault();
-                    setSuggs(suggMenuHyp(name));
+                    setSuggs(await suggMenuHyp(name));
                     setAnchorPoint({ x: e.clientX, y: e.clientY });
                     toggleMenu(true);
                 }}
@@ -232,9 +232,9 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
                     e.preventDefault();
                 }
             }}
-            onContextMenu={e => {
+            onContextMenu={async (e) => {
                 e.preventDefault();
-                setSuggs(suggMenuGoal());
+                setSuggs(await suggMenuGoal());
                 setAnchorPoint({ x: e.clientX, y: e.clientY });
                 toggleMenu(true);
             }}>

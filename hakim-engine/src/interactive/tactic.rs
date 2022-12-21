@@ -17,6 +17,7 @@ pub(crate) use intros::intros;
 
 mod apply;
 pub(crate) use apply::apply;
+pub use apply::FindInstance;
 
 mod hyps;
 pub(crate) use hyps::{add_from_lib, add_hyp, remove_hyp, revert_hyp as revert};
@@ -79,8 +80,6 @@ impl From<brain::Error> for Error {
 }
 
 use Error::*;
-
-use self::apply::FindInstance;
 
 pub(crate) fn next_arg<'a>(
     args: &mut impl Iterator<Item = &'a str>,

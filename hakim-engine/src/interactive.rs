@@ -135,6 +135,13 @@ impl Session {
         &self.history.last().unwrap().snapshot
     }
 
+    pub fn try_tactic(&self, line: &str) -> bool {
+        match self.last_snapshot().run_tactic(line) {
+            Ok(_) => true,
+            Err(e) => e.is_actionable(),
+        }
+    }
+
     pub fn run_tactic(&mut self, line: &str) -> Result<(), tactic::Error> {
         if line.trim() == "UndoAll" {
             while self.undo().is_ok() {}
@@ -471,7 +478,7 @@ impl Frame {
     }
 
     pub fn try_auto(&self) -> Option<String> {
-        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia", "lra"];
+        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia", "lra", "z3"];
         for tac in AUTO_TAC {
             if self.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
                 return Some(tac.to_string());
