@@ -153,6 +153,7 @@ fn uniop() {
     parse_pretty("2 * - (3 + 5)");
     parse_pretty("2. * 3. / 5. + 4.");
     parse_pretty("∀ x: ℝ, x + 0. = x");
+    parse_pretty("2. ^ 3. * 4.");
 }
 
 #[test]

@@ -33,7 +33,7 @@ fn convert(
                 }
                 if let Term::App { func, op: op2 } = op.as_ref() {
                     if let Term::App { func, op: op1 } = func.as_ref() {
-                        if let Term::App { func, op } = func.as_ref() {
+                        if let Term::App { func, op: _ } = func.as_ref() {
                             if let Term::Axiom { unique_name, .. } = func.as_ref() {
                                 match unique_name.as_str() {
                                     "plus" | "minus" | "mult" => {

@@ -103,6 +103,17 @@ impl<'a> Z3Manager<'a> {
                         }
                     }
                 }
+                if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                    if unique_name == "divide" {
+                        let op1 = self.convert_int_term(op1)?;
+                        let op2 = self.convert_int_term(op2)?;
+                        let exp = op2
+                            .modulo(&op1)
+                            ._safe_eq(&ast::Int::from_i64(self.ctx, 0))
+                            .ok()?;
+                        return Some(exp);
+                    }
+                }
             }
         }
         None
@@ -255,6 +266,19 @@ impl<'a> Z3Manager<'a> {
                                     }
                                     return None;
                                 }
+                                "pow" => {
+                                    if detect_z_ty(op) {
+                                        let op2 = self.convert_int_term(op2)?;
+                                        let op1 = self.convert_int_term(op1)?;
+                                        return Some(op1.power(&op2).into());
+                                    }
+                                    if detect_r_ty(op) {
+                                        let op2 = self.convert_real_term(op2)?;
+                                        let op1 = self.convert_real_term(op1)?;
+                                        return Some(op1.power(&op2).into());
+                                    }
+                                    return None;
+                                }
                                 _ => (),
                             },
                             _ => (),
@@ -352,5 +376,10 @@ mod tests {
     #[test]
     fn simple_variables() {
         success("∀ x: ℝ, x = 3. -> x < 3.01");
+    }
+    #[test]
+    fn modulo_test() {
+        success("6 | 24");
+        success("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
     }
 }

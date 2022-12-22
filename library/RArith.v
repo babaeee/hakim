@@ -28,7 +28,7 @@ Axiom sqrt_def: ∀ x: ℝ, 0. ≤ x -> sqrt x * sqrt x = x;
 Axiom is_q_unfold: ∀ x: ℝ, is_q x -> ∃ a b: ℤ, x = a / b ∧ gcd a b = 1 ∧ b > 0;
 
 Suggest hyp default apply is_q_unfold in $n with label is_q x => ∃ a b: ℤ, a / b = x ∧ gcd a b = 1 ∧ b > 0;
-
+ 
 Todo is_q_plus: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a + b);
 Suggest goal default apply is_q_plus with label is_q (a + b) => is_q a and is_q b;
 Todo is_q_minus: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a - b);

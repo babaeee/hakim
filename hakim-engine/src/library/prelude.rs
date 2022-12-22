@@ -37,7 +37,7 @@ pub fn plus() -> TermRef {
     term_ref!(axiom "plus" , forall u(), forall v0(), forall v1(), v2())
 }
 pub fn pow() -> TermRef {
-    term_ref!(axiom "pow", forall z(), forall z(), z())
+    term_ref!(axiom "pow", forall u(), forall v0(), forall v1(), v2())
 }
 pub fn minus() -> TermRef {
     term_ref!(axiom "minus", forall u(), forall v0(), forall v1(), v2())
