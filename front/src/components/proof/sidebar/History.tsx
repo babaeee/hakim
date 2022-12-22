@@ -12,11 +12,11 @@ export const History = ({ onNatural }: { onNatural: (x: string) => void }) => {
     const myRef: any = useRef(null);
     const { setActionHint } = useContext(ProofContext);
     useEffect(() => {
-        return subscribe((newS) => {
+        return subscribe(async (newS) => {
             setUndos(newS.undoHistory);
             setRedos(newS.redoHistory);
             if (mouseOnRedo) {
-                setActionHint(getActionHint(newS.redoHistory[0] || ''));
+                setActionHint(await getActionHint(newS.redoHistory[0] || ''));
             }
             myRef.current?.scrollIntoView();
         })
@@ -29,17 +29,17 @@ export const History = ({ onNatural }: { onNatural: (x: string) => void }) => {
             </ol>
             <button onClick={() => sendTactic('Undo')}>{g`undo`}</button>
             <button
-                onMouseEnter={() => {
+                onMouseEnter={async () => {
                     setMouseOnRedo(true);
-                    setActionHint(getActionHint(redos[0] || ''));
+                    setActionHint(await getActionHint(redos[0] || ''));
                 }}
                 onMouseLeave={() => {
                     setMouseOnRedo(false);
                     setActionHint(undefined);
                 }}
                 onClick={() => sendTactic('Redo')}>{g`redo`}</button>
-            <CopyButton label={g`export`} text={() => `${localStorage.getItem('last_goal')};\n${undos.join(';\n')};\n`} />
-            <button onClick={() => onNatural(getNatural())}>{g`in_natural`}</button>
+            <CopyButton label={g`export`} text={() => `${localStorage.getItem('last_goal')}.\n${undos.join('.\n')}.\n`} />
+            <button onClick={async () => onNatural(await getNatural())}>{g`in_natural`}</button>
             <button onClick={() => window.history.back()}>{g`exit`}</button>
         </div>
     );

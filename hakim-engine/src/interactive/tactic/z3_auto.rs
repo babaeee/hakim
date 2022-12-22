@@ -382,4 +382,8 @@ mod tests {
         success("6 | 24");
         success("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
     }
+    #[test]
+    fn multiple_theories() {
+        success("∀ x: ℤ, x ∈ {2} -> x + x = 4");
+    }
 }

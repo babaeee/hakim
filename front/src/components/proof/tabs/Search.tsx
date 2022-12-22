@@ -11,8 +11,8 @@ export const Search = () => {
     const [help, setHelp] = useState(false);
     const [searchResult, setSearchResult] = useState([] as SearchResult[]);
     const { appendLemma, lemmaBox } = useContext(ProofContext);
-    const work = () => {
-        const r = searchPattern(value);
+    const work = async () => {
+        const r = await searchPattern(value);
         setSearchResult(r);
     };
     return (

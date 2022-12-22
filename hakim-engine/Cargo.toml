@@ -20,9 +20,5 @@ z3-sys = { git = "https://github.com/HKalbasi/z3.rs", features = [
     "static-link-z3",
 ] }
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-serde-wasm-bindgen = "0.4.2"
-wasm-bindgen = { version = "0.2.63" }
-
 [dev-dependencies]
 rayon = "1.6.0"

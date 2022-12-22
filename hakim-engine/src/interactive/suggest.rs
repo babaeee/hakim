@@ -90,7 +90,7 @@ impl SuggRule {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Suggestion {
     pub class: SuggClass,
     pub tactic: String,

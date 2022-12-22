@@ -1,4 +1,5 @@
 use num_bigint::BigInt;
+use serde::{Deserialize, Serialize};
 
 use super::{
     fill_wild, increase_foreign_vars, normalize, predict_wild, subst, ErrorContext::*,
@@ -10,13 +11,13 @@ use crate::{app_ref, term_ref, Abstraction};
 use std::cmp::max;
 use std::iter::once;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Obligation {
     pub var: usize,
     pub eq: (TermRef, TermRef),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferResults {
     pub n: usize,
     pub terms: Vec<TermRef>,

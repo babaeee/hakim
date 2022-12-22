@@ -1,5 +1,7 @@
 use std::fmt::Write;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     app_ref,
     brain::{
@@ -14,7 +16,7 @@ use crate::{
 
 use super::{next_arg, Error::*, Result};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FindInstance {
     infer: InferResults,
     exp: TermRef,
