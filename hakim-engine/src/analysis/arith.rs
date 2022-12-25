@@ -308,26 +308,59 @@ fn len1_to_arith<N: ConstRepr>(
     arena.alloc(atom_normalizer(app_ref!(len1(), ty, arg)))
 }
 
-fn sigma_to_arith<N: ConstRepr>(
+pub trait SigmaSimplifier: Copy {
+    type T;
+    fn handle_sigma_atom(self, r: TermRef, f: TermRef) -> Self::T;
+    fn minus(self, x: Self::T, y: Self::T) -> Self::T;
+    fn mult(self, x: Self::T, y: Self::T) -> Self::T;
+    fn plus(self, x: Self::T, y: Self::T) -> Self::T;
+    fn handle_term(self, t: TermRef) -> Self::T;
+}
+
+impl<'a, N: ConstRepr> SigmaSimplifier for ArithArena<'a, N> {
+    type T = &'a ArithTree<'a, N>;
+
+    fn handle_sigma_atom(self, r: TermRef, f: TermRef) -> Self::T {
+        self.alloc(Atom(app_ref!(sigma(), term_ref!(n 0), r, f)))
+    }
+
+    fn minus(self, x: Self::T, y: Self::T) -> Self::T {
+        self.alloc(minus(x, y, self))
+    }
+
+    fn mult(self, x: Self::T, y: Self::T) -> Self::T {
+        self.alloc(Mult(x, y))
+    }
+
+    fn plus(self, x: Self::T, y: Self::T) -> Self::T {
+        self.alloc(Plus(x, y))
+    }
+
+    fn handle_term(self, t: TermRef) -> Self::T {
+        term_ref_to_arith(t, self)
+    }
+}
+
+pub fn sigma_to_arith<S: SigmaSimplifier, N: ConstRepr>(
     l: TermRef,
     r: TermRef,
     f: TermRef,
-    arena: ArithArena<'_, N>,
-) -> &ArithTree<'_, N> {
-    fn atom<N: ConstRepr>(r: TermRef, f: TermRef, arena: ArithArena<'_, N>) -> &ArithTree<'_, N> {
-        arena.alloc(Atom(app_ref!(sigma(), term_ref!(n 0), r, f)))
-    }
-    fn phase2<N: ConstRepr>(r: TermRef, f: TermRef, arena: ArithArena<'_, N>) -> &ArithTree<'_, N> {
+    simplifier: S,
+) -> S::T {
+    fn phase2<S: SigmaSimplifier, N: ConstRepr>(r: TermRef, f: TermRef, simplifier: S) -> S::T {
         if let Term::Fun(abs) = f.as_ref() {
             let body = Poly::<N>::from(abs.body.clone());
-            let ra = term_ref_to_arith(r.clone(), arena);
-            let mut result = arena.alloc(Mult(arena.alloc(Const(body.constant().clone())), ra));
+            let ra = simplifier.handle_term(r.clone());
+            let mut result = simplifier.mult(
+                simplifier.handle_term(body.constant().clone().into_term()),
+                ra,
+            );
             for (x, v) in body.variables() {
-                let mut rstmp = arena.alloc(Const(x.clone()));
+                let mut rstmp = simplifier.handle_term(x.clone().into_term());
                 let mut deps: Option<TermRef> = None;
                 for x in v {
                     if let Some(x) = remove_unused_var(x.clone()) {
-                        rstmp = arena.alloc(Mult(rstmp, term_ref_to_arith(x.clone(), arena)));
+                        rstmp = simplifier.mult(rstmp, simplifier.handle_term(x.clone()));
                     } else {
                         deps = Some(match deps {
                             Some(y) => app_ref!(mult(), z(), x, y),
@@ -336,48 +369,47 @@ fn sigma_to_arith<N: ConstRepr>(
                     }
                 }
                 if let Some(deps) = deps {
-                    rstmp = arena.alloc(Mult(
+                    rstmp = simplifier.mult(
                         rstmp,
-                        atom(r.clone(), term_ref!(fun z(), deps), arena),
-                    ));
+                        simplifier.handle_sigma_atom(r.clone(), term_ref!(fun z(), deps)),
+                    );
                 }
-                result = arena.alloc(Plus(result, rstmp));
+                result = simplifier.plus(result, rstmp);
             }
             result
         } else {
             let f = increase_foreign_vars(f);
             let f = app_ref!(f, term_ref!(v 0));
             let f = term_ref!(fun z(), f);
-            phase2(r, f, arena)
+            phase2::<S, N>(r, f, simplifier)
         }
     }
     if l != term_ref!(n 0) {
-        return arena.alloc(minus(
-            sigma_to_arith(term_ref!(n 0), r, f.clone(), arena),
-            sigma_to_arith(term_ref!(n 0), l, f, arena),
-            arena,
-        ));
+        return simplifier.minus(
+            sigma_to_arith::<S, N>(term_ref!(n 0), r, f.clone(), simplifier),
+            sigma_to_arith::<S, N>(term_ref!(n 0), l, f, simplifier),
+        );
     }
     let rp = Poly::<N>::from(r);
     let rpc = rp.constant();
     if *rpc > 5i32.into() || *rpc < (-5i32).into() {
-        return phase2(rp.into_term(), f, arena);
+        return phase2::<S, N>(rp.into_term(), f, simplifier);
     }
     let Ok(rpc): Result<i32, _> = rpc.clone().try_into() else {
         todo!()
     };
     let mut t = if rp.variables().is_empty() {
-        arena.alloc(Const(0.into()))
+        simplifier.handle_term(term_ref!(n 0))
     } else {
-        phase2(rp.with_constant(0).into_term(), f.clone(), arena)
+        phase2::<S, N>(rp.with_constant(0).into_term(), f.clone(), simplifier)
     };
     for i in 0..rpc {
         let f_i = brain::normalize(app_ref!(f, rp.with_constant(i).into_term()));
-        t = arena.alloc(Plus(t, term_ref_to_arith(f_i, arena)));
+        t = simplifier.plus(t, simplifier.handle_term(f_i));
     }
     for i in rpc..0 {
         let f_i = brain::normalize(app_ref!(f, rp.with_constant(i).into_term()));
-        t = arena.alloc(minus(t, term_ref_to_arith(f_i, arena), arena));
+        t = simplifier.minus(t, simplifier.handle_term(f_i));
     }
     t
 }
@@ -410,7 +442,12 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                 Term::App { func, op } => match func.as_ref() {
                     Term::Axiom { unique_name, .. } => match unique_name.as_str() {
                         "sigma" => {
-                            return sigma_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
+                            return sigma_to_arith::<_, N>(
+                                op.clone(),
+                                op1.clone(),
+                                op2.clone(),
+                                arena,
+                            );
                         }
                         "cnt" => {
                             return cnt_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
