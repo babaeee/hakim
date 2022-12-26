@@ -327,13 +327,13 @@ impl<'a> Z3Manager<'a> {
                                 }
                                 "pow" => {
                                     if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2)?;
-                                        let op1 = self.convert_int_term(op1)?;
+                                        let op2 = self.convert_int_term(op2.clone())?;
+                                        let op1 = self.convert_int_term(op1.clone())?;
                                         return Some(op1.power(&op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2)?;
-                                        let op1 = self.convert_real_term(op1)?;
+                                        let op2 = self.convert_real_term(op2.clone())?;
+                                        let op1 = self.convert_real_term(op1.clone())?;
                                         return Some(op1.power(&op2).into());
                                     }
                                     return None;
