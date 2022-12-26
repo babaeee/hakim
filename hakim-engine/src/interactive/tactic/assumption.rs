@@ -3,11 +3,17 @@
 */
 use super::Result;
 use crate::{
-    analysis::logic::{LogicArena, LogicBuilder, LogicValue},
-    brain::TermRef,
+    analysis::{
+        arith::ConstRepr,
+        big_fraction::BigFraction,
+        logic::{LogicArena, LogicBuilder, LogicValue},
+    },
+    app_ref,
+    brain::{Term, TermRef},
     interactive::Frame,
+    library::prelude::is_q,
 };
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum PropStatement {
     Atom(TermRef),
     Not(TermRef),
@@ -19,7 +25,36 @@ fn convert(
     term: TermRef,
     _logic_arena: LogicArena<'_, PropStatement>,
 ) -> LogicValue<'_, PropStatement> {
+    if let Term::App { func, op } = term.as_ref() {
+        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+            if unique_name == "is_q" {
+                if BigFraction::from_term(op).is_some() {
+                    return LogicValue::True;
+                }
+                if let Term::App { func, op: op2 } = op.as_ref() {
+                    if let Term::App { func, op: op1 } = func.as_ref() {
+                        if let Term::App { func, op: _ } = func.as_ref() {
+                            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                                match unique_name.as_str() {
+                                    "plus" | "minus" | "mult" => {
+                                        return convert(is_q_term(op1.clone()), _logic_arena).and(
+                                            convert(is_q_term(op2.clone()), _logic_arena),
+                                            _logic_arena,
+                                        );
+                                    }
+                                    _ => (),
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     LogicValue::from(PropStatement::Atom(term))
+}
+fn is_q_term(r: TermRef) -> TermRef {
+    app_ref!(is_q(), r)
 }
 fn check_contradiction(a: &[PropStatement]) -> bool {
     let mut map = HashMap::<TermRef, bool>::new();
@@ -77,5 +112,10 @@ mod tests {
     #[test]
     fn chars() {
         success("~ 'r' = 'u'");
+    }
+    #[test]
+    fn is_q_checks() {
+        success("is_q 2.");
+        success("∀ x y z t, is_q x -> is_q y -> is_q z -> is_q t -> is_q (x * y + z - t)");
     }
 }

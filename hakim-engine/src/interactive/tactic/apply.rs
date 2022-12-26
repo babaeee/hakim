@@ -1,5 +1,7 @@
 use std::fmt::Write;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     app_ref,
     brain::{
@@ -14,7 +16,7 @@ use crate::{
 
 use super::{next_arg, Error::*, Result};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FindInstance {
     infer: InferResults,
     exp: TermRef,
@@ -373,6 +375,16 @@ mod tests {
             r#"
             intros a
             apply z_induction_simple"#,
+            EngineLevel::Full,
+        );
+    }
+
+    #[test]
+    fn sqrt_failure() {
+        run_interactive(
+            "sqrt 2. * sqrt 2. = 2.000",
+            r#"
+            apply sqrt_def"#,
             EngineLevel::Full,
         );
     }

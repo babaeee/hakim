@@ -98,6 +98,16 @@ type ArithArena<'a, N> = &'a Arena<ArithTree<'a, N>>;
 pub struct LinearPolyBuilder(HashMap<Vec<TermRef>, usize>);
 pub struct LinearPoly<N>(N, Vec<(N, usize)>);
 
+impl<N: Debug> Debug for LinearPoly<N> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} ", self.0)?;
+        for (a, x) in &self.1 {
+            write!(f, "+ {a:?} * v{x}")?;
+        }
+        Ok(())
+    }
+}
+
 impl<N: Clone> LinearPoly<N> {
     pub fn from_slice(s: impl Iterator<Item = Poly<N>>) -> (usize, Vec<LinearPoly<N>>) {
         let mut builder = LinearPolyBuilder::default();
@@ -141,6 +151,23 @@ fn normalize<'a, N: ConstRepr>(
     arena: ArithArena<'a, N>,
     should_be_non_zero: &mut Vec<Poly<N>>,
 ) -> &'a ArithTree<'a, N> {
+    fn mult_soorat_makhraj_in<'a, N: ConstRepr>(
+        input: &'a ArithTree<'a, N>,
+        zarib: &'a ArithTree<'a, N>,
+        arena: ArithArena<'a, N>,
+        should_be_non_zero: &mut Vec<Poly<N>>,
+    ) -> &'a ArithTree<'a, N> {
+        if let Div(ks, km) = input {
+            let x = arena.alloc(minus(zarib, km, arena));
+            let x = normalize(x, arena, &mut vec![]);
+            let x = normal_tree_to_poly(x);
+            if x.is_zero() {
+                return ks;
+            }
+        }
+        should_be_non_zero.push(normal_tree_to_poly(zarib));
+        arena.alloc(Mult(zarib, input))
+    }
     match tree {
         Atom(_) | Const(_) => tree,
         Plus(Const(x), Const(y)) => arena.alloc(Const(x.clone() + y.clone())),
@@ -167,14 +194,17 @@ fn normalize<'a, N: ConstRepr>(
             let a = normalize(a, arena, should_be_non_zero);
             let b = normalize(b, arena, should_be_non_zero);
             match (a, b) {
-                (Div(x, y), t) | (t, Div(x, y)) => {
-                    should_be_non_zero.push(normal_tree_to_poly(y));
-                    normalize(
-                        arena.alloc(Div(arena.alloc(Plus(arena.alloc(Mult(y, t)), x)), y)),
-                        arena,
-                        should_be_non_zero,
-                    )
-                }
+                (Div(x, y), t) | (t, Div(x, y)) => normalize(
+                    arena.alloc(Div(
+                        arena.alloc(Plus(
+                            mult_soorat_makhraj_in(t, y, arena, should_be_non_zero),
+                            x,
+                        )),
+                        y,
+                    )),
+                    arena,
+                    should_be_non_zero,
+                ),
                 _ => arena.alloc(Plus(a, b)),
             }
         }
@@ -308,26 +338,59 @@ fn len1_to_arith<N: ConstRepr>(
     arena.alloc(atom_normalizer(app_ref!(len1(), ty, arg)))
 }
 
-fn sigma_to_arith<N: ConstRepr>(
+pub trait SigmaSimplifier: Copy {
+    type T;
+    fn handle_sigma_atom(self, r: TermRef, f: TermRef) -> Self::T;
+    fn minus(self, x: Self::T, y: Self::T) -> Self::T;
+    fn mult(self, x: Self::T, y: Self::T) -> Self::T;
+    fn plus(self, x: Self::T, y: Self::T) -> Self::T;
+    fn handle_term(self, t: TermRef) -> Self::T;
+}
+
+impl<'a, N: ConstRepr> SigmaSimplifier for ArithArena<'a, N> {
+    type T = &'a ArithTree<'a, N>;
+
+    fn handle_sigma_atom(self, r: TermRef, f: TermRef) -> Self::T {
+        self.alloc(Atom(app_ref!(sigma(), term_ref!(n 0), r, f)))
+    }
+
+    fn minus(self, x: Self::T, y: Self::T) -> Self::T {
+        self.alloc(minus(x, y, self))
+    }
+
+    fn mult(self, x: Self::T, y: Self::T) -> Self::T {
+        self.alloc(Mult(x, y))
+    }
+
+    fn plus(self, x: Self::T, y: Self::T) -> Self::T {
+        self.alloc(Plus(x, y))
+    }
+
+    fn handle_term(self, t: TermRef) -> Self::T {
+        term_ref_to_arith(t, self)
+    }
+}
+
+pub fn sigma_to_arith<S: SigmaSimplifier, N: ConstRepr>(
     l: TermRef,
     r: TermRef,
     f: TermRef,
-    arena: ArithArena<'_, N>,
-) -> &ArithTree<'_, N> {
-    fn atom<N: ConstRepr>(r: TermRef, f: TermRef, arena: ArithArena<'_, N>) -> &ArithTree<'_, N> {
-        arena.alloc(Atom(app_ref!(sigma(), term_ref!(n 0), r, f)))
-    }
-    fn phase2<N: ConstRepr>(r: TermRef, f: TermRef, arena: ArithArena<'_, N>) -> &ArithTree<'_, N> {
+    simplifier: S,
+) -> S::T {
+    fn phase2<S: SigmaSimplifier, N: ConstRepr>(r: TermRef, f: TermRef, simplifier: S) -> S::T {
         if let Term::Fun(abs) = f.as_ref() {
             let body = Poly::<N>::from(abs.body.clone());
-            let ra = term_ref_to_arith(r.clone(), arena);
-            let mut result = arena.alloc(Mult(arena.alloc(Const(body.constant().clone())), ra));
+            let ra = simplifier.handle_term(r.clone());
+            let mut result = simplifier.mult(
+                simplifier.handle_term(body.constant().clone().into_term()),
+                ra,
+            );
             for (x, v) in body.variables() {
-                let mut rstmp = arena.alloc(Const(x.clone()));
+                let mut rstmp = simplifier.handle_term(x.clone().into_term());
                 let mut deps: Option<TermRef> = None;
                 for x in v {
                     if let Some(x) = remove_unused_var(x.clone()) {
-                        rstmp = arena.alloc(Mult(rstmp, term_ref_to_arith(x.clone(), arena)));
+                        rstmp = simplifier.mult(rstmp, simplifier.handle_term(x.clone()));
                     } else {
                         deps = Some(match deps {
                             Some(y) => app_ref!(mult(), z(), x, y),
@@ -336,48 +399,47 @@ fn sigma_to_arith<N: ConstRepr>(
                     }
                 }
                 if let Some(deps) = deps {
-                    rstmp = arena.alloc(Mult(
+                    rstmp = simplifier.mult(
                         rstmp,
-                        atom(r.clone(), term_ref!(fun z(), deps), arena),
-                    ));
+                        simplifier.handle_sigma_atom(r.clone(), term_ref!(fun z(), deps)),
+                    );
                 }
-                result = arena.alloc(Plus(result, rstmp));
+                result = simplifier.plus(result, rstmp);
             }
             result
         } else {
             let f = increase_foreign_vars(f);
             let f = app_ref!(f, term_ref!(v 0));
             let f = term_ref!(fun z(), f);
-            phase2(r, f, arena)
+            phase2::<S, N>(r, f, simplifier)
         }
     }
     if l != term_ref!(n 0) {
-        return arena.alloc(minus(
-            sigma_to_arith(term_ref!(n 0), r, f.clone(), arena),
-            sigma_to_arith(term_ref!(n 0), l, f, arena),
-            arena,
-        ));
+        return simplifier.minus(
+            sigma_to_arith::<S, N>(term_ref!(n 0), r, f.clone(), simplifier),
+            sigma_to_arith::<S, N>(term_ref!(n 0), l, f, simplifier),
+        );
     }
     let rp = Poly::<N>::from(r);
     let rpc = rp.constant();
     if *rpc > 5i32.into() || *rpc < (-5i32).into() {
-        return phase2(rp.into_term(), f, arena);
+        return phase2::<S, N>(rp.into_term(), f, simplifier);
     }
     let Ok(rpc): Result<i32, _> = rpc.clone().try_into() else {
         todo!()
     };
     let mut t = if rp.variables().is_empty() {
-        arena.alloc(Const(0.into()))
+        simplifier.handle_term(term_ref!(n 0))
     } else {
-        phase2(rp.with_constant(0).into_term(), f.clone(), arena)
+        phase2::<S, N>(rp.with_constant(0).into_term(), f.clone(), simplifier)
     };
     for i in 0..rpc {
         let f_i = brain::normalize(app_ref!(f, rp.with_constant(i).into_term()));
-        t = arena.alloc(Plus(t, term_ref_to_arith(f_i, arena)));
+        t = simplifier.plus(t, simplifier.handle_term(f_i));
     }
     for i in rpc..0 {
         let f_i = brain::normalize(app_ref!(f, rp.with_constant(i).into_term()));
-        t = arena.alloc(minus(t, term_ref_to_arith(f_i, arena), arena));
+        t = simplifier.minus(t, simplifier.handle_term(f_i));
     }
     t
 }
@@ -410,7 +472,12 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                 Term::App { func, op } => match func.as_ref() {
                     Term::Axiom { unique_name, .. } => match unique_name.as_str() {
                         "sigma" => {
-                            return sigma_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
+                            return sigma_to_arith::<_, N>(
+                                op.clone(),
+                                op1.clone(),
+                                op2.clone(),
+                                arena,
+                            );
                         }
                         "cnt" => {
                             return cnt_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
@@ -418,6 +485,11 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                         "plus" if detect_z_ty(op) || detect_r_ty(op) => Plus(
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
+                        ),
+                        "minus" if detect_z_ty(op) || detect_r_ty(op) => minus(
+                            term_ref_to_arith(op1.clone(), arena),
+                            term_ref_to_arith(op2.clone(), arena),
+                            arena,
                         ),
                         "mult" if detect_z_ty(op) || detect_r_ty(op) => Mult(
                             term_ref_to_arith(op1.clone(), arena),
@@ -427,17 +499,12 @@ fn term_ref_to_arith<N: ConstRepr>(t: TermRef, arena: ArithArena<'_, N>) -> &Ari
                             term_ref_to_arith(op1.clone(), arena),
                             term_ref_to_arith(op2.clone(), arena),
                         ),
+                        "pow" if detect_z_ty(op) => pow_to_arith(op1.clone(), op2.clone(), arena),
                         _ => atom_normalizer(t),
                     },
                     _ => atom_normalizer(t),
                 },
                 Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                    "minus" => minus(
-                        term_ref_to_arith(op1.clone(), arena),
-                        term_ref_to_arith(op2.clone(), arena),
-                        arena,
-                    ),
-                    "pow" => pow_to_arith(op1.clone(), op2.clone(), arena),
                     "len1" => return len1_to_arith(op1.clone(), op2.clone(), arena),
                     _ => atom_normalizer(t),
                 },
@@ -600,6 +667,19 @@ impl<N: ConstRepr> Poly<N> {
 
     pub fn add(&mut self, num: N) {
         self.0 = self.0.clone() + num;
+    }
+
+    pub fn decompose(self) -> Vec<Self> {
+        if *self.constant() == 0.into() {
+            if let [(k, vars)] = self.variables() {
+                return vars
+                    .iter()
+                    .map(|x| Poly(0.into(), vec![(1.into(), vec![x.clone()])]))
+                    .chain(Some(Poly(k.clone(), vec![])))
+                    .collect();
+            }
+        }
+        vec![self]
     }
 }
 

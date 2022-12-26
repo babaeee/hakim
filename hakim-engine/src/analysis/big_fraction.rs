@@ -45,6 +45,8 @@ impl PartialEq for BigFraction {
     }
 }
 
+impl Eq for BigFraction {}
+
 impl From<i32> for BigFraction {
     fn from(k: i32) -> Self {
         Self {
@@ -65,6 +67,12 @@ impl TryFrom<BigFraction> for i32 {
 impl PartialOrd for BigFraction {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         (&self.soorat * &other.makhraj).partial_cmp(&(&other.soorat * &self.makhraj))
+    }
+}
+
+impl Ord for BigFraction {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (&self.soorat * &other.makhraj).cmp(&(&other.soorat * &self.makhraj))
     }
 }
 

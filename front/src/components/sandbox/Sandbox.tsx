@@ -1,3 +1,4 @@
+/* eslint-disable no-multi-str */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendTactic, setGoal } from "../../hakim";
@@ -47,7 +48,7 @@ Proof.',
 Proof.\
 intros farz.',
     'Goal (∀ A B: set ℤ, (A ∖ B) ∪ (A ∩ B) = A).\
-Proof.\cd \
+Proof.cd \
 intros.',
     'finite { x: ℤ | prime x} -> False',
     '∀ A: U, ∀ a: A, a ∈ {} -> False',
@@ -63,6 +64,7 @@ intros.',
     '∀ A B: U, ∀ f: A -> B, ∀ x y: A, x = y -> f x = f y',
     '∀ T: U, ∀ A B C: set T, A ⊆ B -> B ⊆ C -> A ⊆ C',
     '∀ n: ℤ, 2 < n -> ∀ a b c, a ^ n + b ^ n = c ^ n -> False',
+    '~ is_q (sqrt 2.)',
 ];
 
 export const Sandbox = () => {
@@ -74,7 +76,7 @@ export const Sandbox = () => {
         const goal = t.trim();
         let toProof = false;
         if (goal.startsWith('Goal')) {
-            const [g, , ...v] = goal.split('.');
+            const [g, , ...v] = goal.split(';');
             if (!await setGoal(g.slice(6, -1))) {
                 return;
             }

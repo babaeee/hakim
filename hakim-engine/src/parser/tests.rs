@@ -151,6 +151,9 @@ fn uniop() {
     parse_pretty("- - - (- 2 + 3)");
     parse_pretty("~ - 2 < - - 5");
     parse_pretty("2 * - (3 + 5)");
+    parse_pretty("2. * 3. / 5. + 4.");
+    parse_pretty("∀ x: ℝ, x + 0. = x");
+    parse_pretty("2. ^ 3. * 4.");
 }
 
 #[test]
@@ -310,7 +313,7 @@ fn list() {
 
 #[test]
 fn notation_curry() {
-    parse_not_pretty("pow 2", "λ x: ℤ, 2 ^ x");
+    parse_not_pretty("pow ℤ 2", "λ x: ℤ, 2 ^ x");
     parse_not_pretty("len1 ℤ", "λ x: ℤ, |x|");
 }
 

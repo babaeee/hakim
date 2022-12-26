@@ -4,7 +4,7 @@ pub(crate) mod analysis;
 pub(crate) mod brain;
 pub mod engine;
 pub mod interactive;
-mod library;
+pub mod library;
 pub(crate) mod parser;
 pub use parser::notation_list;
 pub(crate) mod search;

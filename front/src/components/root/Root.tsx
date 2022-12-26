@@ -1,4 +1,4 @@
-import { toBackup } from "../../hakim";
+import { check, toBackup } from "../../hakim";
 import { g, isRTL } from "../../i18n";
 import { Adventure } from "../adventure/Adventure";
 import { LibraryViewer } from "../library_viewer/LibraryViewer";
@@ -55,9 +55,14 @@ type AfterProof = {
     onCancel?: AfterProofAction | undefined,
 };
 
+export type Lemma = {
+    name: string,
+    ty: string,
+};
+
 type ProofState = {
     afterProof: AfterProof,
-    suggestedLemmas: string[],
+    suggestedLemmas: Lemma[],
     text: string,
 };
 
@@ -91,11 +96,15 @@ type OpenProofOptions = {
     suggestedLemmas?: string[] | undefined,
 };
 
-export const openProofSession = (navigate: NavigateFunction, options: OpenProofOptions = {}) => {
+export const openProofSession = async (navigate: NavigateFunction, options: OpenProofOptions = {}) => {
     const afterProof = options.afterProof || {};
     const text = options.text || "";
     const replace = options.replace || false;
-    const suggestedLemmas = options.suggestedLemmas || [];
+    const suggestedLemmaNames = options.suggestedLemmas || [];
+    const suggestedLemmas = await Promise.all(suggestedLemmaNames.map(async (x) => ({
+        name: x,
+        ty: await check(x),
+    })));
     proofState = { afterProof, text, suggestedLemmas };
     stateToStore.proofState = proofState;
     navigate('/proof', { replace });

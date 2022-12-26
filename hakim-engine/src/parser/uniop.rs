@@ -37,7 +37,12 @@ impl UniOp {
     pub fn run_on_term(&self, _: &mut InferGenerator, t: TermRef) -> TermRef {
         match self {
             Not => term_ref!(forall t, library::prelude::false_ty()),
-            Neg => app_ref!(library::prelude::minus(), term_ref!(n 0), t),
+            Neg => app_ref!(
+                library::prelude::minus(),
+                library::prelude::z(),
+                term_ref!(n 0),
+                t
+            ),
         }
     }
 

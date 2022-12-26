@@ -3,18 +3,8 @@ use std::collections::HashMap;
 use lazy_static::lazy_static;
 
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-#[cfg(target_arch = "wasm32")]
-extern "C" {
-    fn load_lib_json() -> JsValue;
-}
-
-#[cfg(target_arch = "wasm32")]
-lazy_static! {
-    static ref LIB_TEXT_STORE: HashMap<String, String> =
-        serde_wasm_bindgen::from_value(load_lib_json()).unwrap();
+thread_local! {
+    pub static LIB_TEXT_STORE: std::cell::RefCell<HashMap<String,String>> = std::cell::RefCell::new(HashMap::new());
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -40,10 +30,20 @@ lazy_static! {
     };
 }
 
-pub fn load_text(name: &str) -> Option<&str> {
-    LIB_TEXT_STORE.get(name).map(|x| x.as_str())
+#[cfg(not(target_arch = "wasm32"))]
+fn get_lib_text<K>(job: impl FnOnce(&HashMap<String, String>) -> K) -> K {
+    job(&LIB_TEXT_STORE)
 }
 
-pub fn all_names() -> impl Iterator<Item = &'static String> {
-    LIB_TEXT_STORE.keys()
+#[cfg(target_arch = "wasm32")]
+fn get_lib_text<K>(job: impl FnOnce(&HashMap<String, String>) -> K) -> K {
+    LIB_TEXT_STORE.with(|x| job(&x.borrow()))
+}
+
+pub fn load_text(name: &str) -> Option<String> {
+    get_lib_text(|x| x.get(name).cloned())
+}
+
+pub fn all_names() -> impl Iterator<Item = String> {
+    get_lib_text(|x| x.keys().cloned().collect::<Vec<_>>().into_iter())
 }

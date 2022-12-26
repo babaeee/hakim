@@ -1,3 +1,6 @@
+use num_bigint::BigInt;
+use serde::{Deserialize, Serialize};
+
 use super::{
     fill_wild, increase_foreign_vars, normalize, predict_wild, subst, ErrorContext::*,
     ErrorReason::*, Result, Term, TermRef,
@@ -8,13 +11,13 @@ use crate::{app_ref, term_ref, Abstraction};
 use std::cmp::max;
 use std::iter::once;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Obligation {
     pub var: usize,
     pub eq: (TermRef, TermRef),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferResults {
     pub n: usize,
     pub terms: Vec<TermRef>,
@@ -260,6 +263,22 @@ fn match_and_infer_without_normalize(
             }
             (Term::Number { value: i1 }, Term::Number { value: i2 }) => {
                 if i1 == i2 {
+                    Ok(())
+                } else {
+                    Err(TypeMismatch(t1, t2).into())
+                }
+            }
+            (
+                Term::NumberR {
+                    value: r1,
+                    point: p1,
+                },
+                Term::NumberR {
+                    value: r2,
+                    point: p2,
+                },
+            ) => {
+                if r1 * BigInt::from(10).pow(*p2 as u32) == r2 * BigInt::from(10).pow(*p1 as u32) {
                     Ok(())
                 } else {
                     Err(TypeMismatch(t1, t2).into())

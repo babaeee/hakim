@@ -32,7 +32,7 @@ use self::suggest::{
 pub use self::action_of_tactic::action_of_tactic;
 pub use self::suggest::{SuggClass, SuggRule, Suggestion};
 use self::tactic::{
-    add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp, revert, unfold,
+    add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp, revert, unfold, z3_auto,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,6 +133,13 @@ impl Session {
 
     pub fn last_snapshot(&self) -> &Snapshot {
         &self.history.last().unwrap().snapshot
+    }
+
+    pub fn try_tactic(&self, line: &str) -> bool {
+        match self.last_snapshot().run_tactic(line) {
+            Ok(_) => true,
+            Err(e) => e.is_actionable(),
+        }
     }
 
     pub fn run_tactic(&mut self, line: &str) -> Result<(), tactic::Error> {
@@ -456,6 +463,7 @@ impl Frame {
             "auto_set" => auto_set(frame),
             "auto_list" => auto_list(frame),
             "assumption" => assumption(frame),
+            "z3" => z3_auto(frame),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }
     }
@@ -470,7 +478,7 @@ impl Frame {
     }
 
     pub fn try_auto(&self) -> Option<String> {
-        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia", "lra"];
+        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia", "lra", "z3"];
         for tac in AUTO_TAC {
             if self.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
                 return Some(tac.to_string());

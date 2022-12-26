@@ -26,7 +26,7 @@ use EnsembleTree::*;
 
 type EnsembleArena<'a> = &'a Arena<EnsembleTree<'a>>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum EnsembleStatement {
     IsMember(TermRef, TermRef),
     IsNotMember(TermRef, TermRef),
@@ -419,10 +419,14 @@ mod tests {
 
     fn success(goal: &str) {
         run_interactive_to_end(goal, "intros\nauto_set");
+        // Check all tests with z3 as well
+        run_interactive_to_end(goal, "intros\nz3");
     }
 
     fn fail(goal: &str) {
         run_interactive_to_fail(goal, "intros", "auto_set");
+        // Check all tests with z3 as well
+        run_interactive_to_fail(goal, "intros", "z3");
     }
 
     #[test]
@@ -549,6 +553,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "z3 does not support finite"]
     fn finite() {
         success("finite {2}");
         success("finite {2, 3, 5}");

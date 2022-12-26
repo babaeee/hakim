@@ -1,4 +1,5 @@
 import Arith from "../../../library/Arith.v";
+import RArith from "../../../library/RArith.v";
 import Combinatorics from "../../../library/Combinatorics.v";
 import Eq from "../../../library/Eq.v";
 import Function from "../../../library/Function.v";
@@ -15,21 +16,22 @@ import Tuples from "../../../library/Tuples.v";
 import EnumerativeCombinatorics from "../../../library/EnumerativeCombinatorics.v";
 
 export const loadLibText = () => {
-    return {
-        '/Arith': Arith,
-        '/Combinatorics': Combinatorics,
-        '/Eq': Eq,
-        '/Function': Function,
-        '/Induction': Induction,
-        '/Logic': Logic,
-        '/NumberTheory': NumberTheory,
-        '/ProductOperator': ProductOperator,
-        '/Set': Set,
-        '/Sigma': Sigma,
-        '/List': List,
-        '/Graph': Graph,
-        '/Game': Game,
-        '/Tuples': Tuples,
-        '/EnumerativeCombinatorics': EnumerativeCombinatorics,
-    };
+  return {
+    "/Arith": Arith,
+    "/RArith": RArith,
+    "/Combinatorics": Combinatorics,
+    "/Eq": Eq,
+    "/Function": Function,
+    "/Induction": Induction,
+    "/Logic": Logic,
+    "/NumberTheory": NumberTheory,
+    "/ProductOperator": ProductOperator,
+    "/Set": Set,
+    "/Sigma": Sigma,
+    "/List": List,
+    "/Graph": Graph,
+    "/Game": Game,
+    "/Tuples": Tuples,
+    "/EnumerativeCombinatorics": EnumerativeCombinatorics,
+  };
 };
