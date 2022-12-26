@@ -294,6 +294,18 @@ impl<'a> Z3Manager<'a> {
                                         return Some((op1 + op2).into());
                                     }
                                 }
+                                "minus" => {
+                                    if detect_z_ty(op) {
+                                        let op2 = self.convert_int_term(op2.clone())?;
+                                        let op1 = self.convert_int_term(op1.clone())?;
+                                        return Some((op1 - op2).into());
+                                    }
+                                    if detect_r_ty(op) {
+                                        let op2 = self.convert_real_term(op2.clone())?;
+                                        let op1 = self.convert_real_term(op1.clone())?;
+                                        return Some((op1 - op2).into());
+                                    }
+                                }
                                 "mult" => {
                                     if detect_z_ty(op) {
                                         let op2 = self.convert_int_term(op2.clone())?;
@@ -325,19 +337,19 @@ impl<'a> Z3Manager<'a> {
                                         return Some((op1 / op2).into());
                                     }
                                 }
-                                "pow" => {
-                                    if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2.clone())?;
-                                        let op1 = self.convert_int_term(op1.clone())?;
-                                        return Some(op1.power(&op2).into());
-                                    }
-                                    if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2.clone())?;
-                                        let op1 = self.convert_real_term(op1.clone())?;
-                                        return Some(op1.power(&op2).into());
-                                    }
-                                    return None;
-                                }
+                                // "pow" => {
+                                //     if detect_z_ty(op) {
+                                //         let op2 = self.convert_int_term(op2.clone())?;
+                                //         let op1 = self.convert_int_term(op1.clone())?;
+                                //         return Some(op1.power(&op2).into());
+                                //     }
+                                //     if detect_r_ty(op) {
+                                //         let op2 = self.convert_real_term(op2.clone())?;
+                                //         let op1 = self.convert_real_term(op1.clone())?;
+                                //         return Some(op1.power(&op2).into());
+                                //     }
+                                //     return None;
+                                // }
                                 _ => (),
                             },
                             _ => (),
@@ -354,11 +366,6 @@ impl<'a> Z3Manager<'a> {
                                 let op2 = self.convert_int_term(op2.clone())?;
                                 let op1 = self.convert_int_term(op1.clone())?;
                                 return Some((op1.rem(&op2)).into());
-                            }
-                            "minus" => {
-                                let op2 = self.convert_int_term(op2.clone())?;
-                                let op1 = self.convert_int_term(op1.clone())?;
-                                return Some((op1 - op2).into());
                             }
                             "pow" => {
                                 let op2 = self.convert_int_term(op2.clone())?;
@@ -427,7 +434,7 @@ fn z3_can_solve(frame: Frame) -> bool {
         unknowns: Z3Names::default(),
     };
     let solver = Tactic::new(ctx, "default")
-        .try_for(Duration::from_millis(200))
+        .try_for(Duration::from_millis(400))
         .solver();
     for hyp in frame.hyps {
         let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty) else { continue; };

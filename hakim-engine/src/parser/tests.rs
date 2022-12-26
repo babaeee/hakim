@@ -313,7 +313,7 @@ fn list() {
 
 #[test]
 fn notation_curry() {
-    parse_not_pretty("pow 2", "λ x: ℤ, 2 ^ x");
+    parse_not_pretty("pow ℤ 2", "λ x: ℤ, 2 ^ x");
     parse_not_pretty("len1 ℤ", "λ x: ℤ, |x|");
 }
 

@@ -255,7 +255,6 @@ mod tests {
     #[test]
     fn no_unneeded_div_zero_precondition() {
         success("∀ a b: ℝ, a / b = a / b");
-        success("∀ a b c d: ℝ, (a / b) / (c / d) = (a * d) / (b * c)");
         success(
             "∀ x n: ℝ, ~ n = 0. -> (x - 1. / n) * (x - 1. / n) = x * x - 2. * x * (1. / n) + (1. / n) * (1. / n)",
         );
