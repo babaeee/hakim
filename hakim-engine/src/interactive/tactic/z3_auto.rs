@@ -1,10 +1,10 @@
-use std::cell::Cell;
+use std::{cell::Cell, time::Duration};
 
 use im::HashMap;
 use num_bigint::BigInt;
 use z3::{
     ast::{self, Ast},
-    Config, Context, FuncDecl, SatResult, Solver, Sort,
+    Config, Context, FuncDecl, SatResult, Sort, Tactic,
 };
 
 use crate::{
@@ -426,7 +426,9 @@ fn z3_can_solve(frame: Frame) -> bool {
         ctx,
         unknowns: Z3Names::default(),
     };
-    let solver = Solver::new(ctx);
+    let solver = Tactic::new(ctx, "default")
+        .try_for(Duration::from_millis(200))
+        .solver();
     for hyp in frame.hyps {
         let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty) else { continue; };
         solver.assert(&b);
@@ -472,8 +474,12 @@ mod tests {
     #[test]
     fn modulo_test() {
         success("6 | 24");
-        success("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
+        success("∀ x, ~ 2 | 2 * x + 1");
+        success("∀ x, 5 | 5 * x");
+        // It is correct, but z3 can't understand it. We just want to check it doesn't hang.
+        fail("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
     }
+
     #[test]
     fn multiple_theories() {
         success("∀ x: ℤ, x ∈ {2} -> x + x = 4");
