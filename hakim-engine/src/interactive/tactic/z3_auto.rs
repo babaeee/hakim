@@ -1,12 +1,17 @@
+use std::cell::Cell;
+
+use im::HashMap;
+use num_bigint::BigInt;
 use z3::{
     ast::{self, Ast},
-    Config, Context, SatResult, Solver, Sort,
+    Config, Context, FuncDecl, SatResult, Solver, Sort,
 };
 
 use crate::{
+    analysis::arith::{sigma_to_arith, SigmaSimplifier},
     brain::{
         detect::{detect_r_ty, detect_set_ty, detect_z_ty},
-        remove_unused_var, Abstraction, Term, TermRef,
+        remove_unused_var, type_of, Abstraction, Term, TermRef,
     },
     interactive::Frame,
 };
@@ -21,8 +26,51 @@ pub fn z3_auto(frame: Frame) -> Result<Vec<Frame>> {
     }
 }
 
+#[derive(Default)]
+struct Z3Names(Cell<HashMap<TermRef, usize>>);
+
+fn lookup_in_cell_hashmap(x: &Cell<HashMap<TermRef, usize>>, key: TermRef) -> usize {
+    let mut h = x.take();
+    let prev_len = h.len();
+    let r = *h.entry(key).or_insert(prev_len);
+    x.set(h);
+    r
+}
+
 struct Z3Manager<'a> {
     ctx: &'a Context,
+    unknowns: Z3Names,
+}
+
+impl<'a> SigmaSimplifier for &Z3Manager<'a> {
+    type T = ast::Int<'a>;
+
+    fn handle_sigma_atom(self, r: TermRef, f: TermRef) -> Self::T {
+        let id = lookup_in_cell_hashmap(&self.unknowns.0, f);
+        let f = FuncDecl::new(
+            self.ctx,
+            format!("$sigma{id}"),
+            &[&Sort::int(self.ctx)],
+            &Sort::int(self.ctx),
+        );
+        f.apply(&[&self.handle_term(r)]).try_into().unwrap()
+    }
+
+    fn minus(self, x: Self::T, y: Self::T) -> Self::T {
+        x - y
+    }
+
+    fn mult(self, x: Self::T, y: Self::T) -> Self::T {
+        x * y
+    }
+
+    fn plus(self, x: Self::T, y: Self::T) -> Self::T {
+        x + y
+    }
+
+    fn handle_term(self, t: TermRef) -> Self::T {
+        self.convert_int_term(t).unwrap()
+    }
 }
 
 impl<'a> Z3Manager<'a> {
@@ -68,7 +116,9 @@ impl<'a> Z3Manager<'a> {
             }
         }
         if let Term::App { func, op: op2 } = t.as_ref() {
+            let op2 = op2.clone();
             if let Term::App { func, op: op1 } = func.as_ref() {
+                let op1 = op1.clone();
                 if let Term::App { func, op: ty } = func.as_ref() {
                     if let Term::Axiom { unique_name, .. } = func.as_ref() {
                         match unique_name.as_str() {
@@ -116,10 +166,19 @@ impl<'a> Z3Manager<'a> {
                 }
             }
         }
-        None
+        Some(
+            self.generate_unknown(t, Sort::bool(self.ctx))
+                .try_into()
+                .unwrap(),
+        )
     }
 
-    fn convert_int_term(&self, t: &Term) -> Option<ast::Int<'a>> {
+    fn generate_unknown(&self, t: TermRef, sort: Sort<'a>) -> ast::Dynamic<'a> {
+        let id = lookup_in_cell_hashmap(&self.unknowns.0, t);
+        ast::Dynamic::new_const(self.ctx, format!("$x{id}"), &sort)
+    }
+
+    fn convert_int_term(&self, t: TermRef) -> Option<ast::Int<'a>> {
         Some(
             self.convert_general_term(t)?
                 .try_into()
@@ -127,7 +186,7 @@ impl<'a> Z3Manager<'a> {
         )
     }
 
-    fn convert_set_term(&self, t: &Term) -> Option<ast::Set<'a>> {
+    fn convert_set_term(&self, t: TermRef) -> Option<ast::Set<'a>> {
         Some(
             self.convert_general_term(t)?
                 .try_into()
@@ -135,7 +194,7 @@ impl<'a> Z3Manager<'a> {
         )
     }
 
-    fn convert_real_term(&self, t: &Term) -> Option<ast::Real<'a>> {
+    fn convert_real_term(&self, t: TermRef) -> Option<ast::Real<'a>> {
         Some(
             self.convert_general_term(t)?
                 .try_into()
@@ -144,8 +203,8 @@ impl<'a> Z3Manager<'a> {
     }
 
     #[allow(clippy::single_match)]
-    fn convert_general_term(&self, t: &Term) -> Option<ast::Dynamic<'a>> {
-        match t {
+    fn convert_general_term(&self, t: TermRef) -> Option<ast::Dynamic<'a>> {
+        match t.as_ref() {
             Term::Axiom { ty, unique_name } => {
                 if detect_z_ty(ty) {
                     return Some(ast::Int::new_const(self.ctx, unique_name.as_str()).into());
@@ -154,19 +213,19 @@ impl<'a> Z3Manager<'a> {
                     return Some(ast::Real::new_const(self.ctx, unique_name.as_str()).into());
                 }
                 let sort = self.convert_sort(ty)?;
-                Some(ast::Dynamic::new_const(
+                return Some(ast::Dynamic::new_const(
                     self.ctx,
                     unique_name.as_str(),
                     &sort,
-                ))
+                ));
             }
-            Term::Universe { .. } => None,
+            Term::Universe { .. } => (),
             Term::Forall(_) => todo!(),
             Term::Fun(_) => todo!(),
             Term::Var { .. } => unreachable!(),
             Term::Number { value } => {
                 let x = ast::Int::from_i64(self.ctx, value.try_into().ok()?);
-                Some(x.into())
+                return Some(x.into());
             }
             Term::NumberR { value, point } => {
                 let x = ast::Real::from_real(
@@ -174,7 +233,7 @@ impl<'a> Z3Manager<'a> {
                     value.try_into().ok()?,
                     (*point < 10).then(|| 10_i32.pow(*point as u32))?,
                 );
-                Some(x.into())
+                return Some(x.into());
             }
             Term::App { func, op: op2 } => {
                 match func.as_ref() {
@@ -186,85 +245,85 @@ impl<'a> Z3Manager<'a> {
                         }
                     }
                     Term::App { func, op: op1 } => match func.as_ref() {
-                        Term::Axiom { unique_name, .. } => {
-                            if unique_name == "set_singleton" {
-                                return Some(
-                                    ast::Set::empty(self.ctx, &self.convert_sort(op1)?)
-                                        .add(&self.convert_general_term(op2)?)
-                                        .into(),
-                                );
-                            }
-                        }
                         Term::App { func, op } => match func.as_ref() {
                             Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                                // "sigma" => {
-                                //     return sigma_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
-                                // }
+                                "sigma" => {
+                                    return Some(
+                                        sigma_to_arith::<_, BigInt>(
+                                            op.clone(),
+                                            op1.clone(),
+                                            op2.clone(),
+                                            self,
+                                        )
+                                        .into(),
+                                    );
+                                }
                                 // "cnt" => {
                                 //     return cnt_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
                                 // }
                                 "union" => {
-                                    let op2 = self.convert_set_term(op2)?;
-                                    let op1 = self.convert_set_term(op1)?;
+                                    let op2 = self.convert_set_term(op2.clone())?;
+                                    let op1 = self.convert_set_term(op1.clone())?;
                                     return Some(
                                         ast::Set::set_union(self.ctx, &[&op1, &op2]).into(),
                                     );
                                 }
                                 "intersection" => {
-                                    let op2 = self.convert_set_term(op2)?;
-                                    let op1 = self.convert_set_term(op1)?;
+                                    let op2 = self.convert_set_term(op2.clone())?;
+                                    let op1 = self.convert_set_term(op1.clone())?;
                                     return Some(
                                         ast::Set::intersect(self.ctx, &[&op1, &op2]).into(),
                                     );
                                 }
                                 "setminus" => {
-                                    let op2 = self.convert_set_term(op2)?.complement();
-                                    let op1 = self.convert_set_term(op1)?;
+                                    let op2 = self.convert_set_term(op2.clone())?.complement();
+                                    let op1 = self.convert_set_term(op1.clone())?;
                                     return Some(
                                         ast::Set::intersect(self.ctx, &[&op1, &op2]).into(),
                                     );
                                 }
                                 "plus" => {
                                     if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2)?;
-                                        let op1 = self.convert_int_term(op1)?;
+                                        let op2 = self.convert_int_term(op2.clone())?;
+                                        let op1 = self.convert_int_term(op1.clone())?;
                                         return Some((op1 + op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2)?;
-                                        let op1 = self.convert_real_term(op1)?;
+                                        let op2 = self.convert_real_term(op2.clone())?;
+                                        let op1 = self.convert_real_term(op1.clone())?;
                                         return Some((op1 + op2).into());
                                     }
-                                    return None;
                                 }
                                 "mult" => {
                                     if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2)?;
-                                        let op1 = self.convert_int_term(op1)?;
+                                        let op2 = self.convert_int_term(op2.clone())?;
+                                        let op1 = self.convert_int_term(op1.clone())?;
                                         return Some((op1 * op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2)?;
-                                        let op1 = self.convert_real_term(op1)?;
+                                        let op2 = self.convert_real_term(op2.clone())?;
+                                        let op1 = self.convert_real_term(op1.clone())?;
                                         return Some((op1 * op2).into());
                                     }
-                                    return None;
                                 }
                                 "div" => {
                                     if definitely_zero(op2) {
                                         return Some(ast::Real::from_real(self.ctx, 0, 1).into());
                                     }
                                     if detect_z_ty(op) {
-                                        let op2 = ast::Real::from_int(&self.convert_int_term(op2)?);
-                                        let op1 = ast::Real::from_int(&self.convert_int_term(op1)?);
+                                        let op2 = ast::Real::from_int(
+                                            &self.convert_int_term(op2.clone())?,
+                                        );
+                                        let op1 = ast::Real::from_int(
+                                            &self.convert_int_term(op1.clone())?,
+                                        );
                                         return Some((op1 / op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2)?;
-                                        let op1 = self.convert_real_term(op1)?;
+                                        let op2 = self.convert_real_term(op2.clone())?;
+                                        let op1 = self.convert_real_term(op1.clone())?;
                                         return Some((op1 / op2).into());
                                     }
-                                    return None;
                                 }
                                 "pow" => {
                                     if detect_z_ty(op) {
@@ -283,24 +342,54 @@ impl<'a> Z3Manager<'a> {
                             },
                             _ => (),
                         },
-                        // Term::Axiom { unique_name, .. } => match unique_name.as_str() {
-                        //     "minus" => minus(
-                        //         term_ref_to_arith(op1.clone(), arena),
-                        //         term_ref_to_arith(op2.clone(), arena),
-                        //         arena,
-                        //     ),
-                        //     "pow" => pow_to_arith(op1.clone(), op2.clone(), arena),
-                        //     "len1" => return len1_to_arith(op1.clone(), op2.clone(), arena),
-                        //     _ => atom_normalizer(t),
-                        // },
+                        Term::Axiom { unique_name, .. } => match unique_name.as_str() {
+                            "set_singleton" => {
+                                return Some(
+                                    ast::Set::empty(self.ctx, &self.convert_sort(op1)?)
+                                        .add(&self.convert_general_term(op2.clone())?)
+                                        .into(),
+                                );
+                            }
+                            "mod_of" => {
+                                let op2 = self.convert_int_term(op2.clone())?;
+                                let op1 = self.convert_int_term(op1.clone())?;
+                                return Some((op1.rem(&op2)).into());
+                            }
+                            "minus" => {
+                                let op2 = self.convert_int_term(op2.clone())?;
+                                let op1 = self.convert_int_term(op1.clone())?;
+                                return Some((op1 - op2).into());
+                            }
+                            "pow" => {
+                                let op2 = self.convert_int_term(op2.clone())?;
+                                let op1 = self.convert_int_term(op1.clone())?;
+                                return Some(
+                                    ast::Real::try_from(ast::Dynamic::from(op1.power(&op2)))
+                                        .unwrap()
+                                        .to_int()
+                                        .into(),
+                                );
+                            }
+                            _ => (),
+                            //     "minus" => minus(
+                            //         term_ref_to_arith(op1.clone(), arena),
+                            //         term_ref_to_arith(op2.clone(), arena),
+                            //         arena,
+                            //     ),
+                            //     "pow" => pow_to_arith(op1.clone(), op2.clone(), arena),
+                            //     "len1" => return len1_to_arith(op1.clone(), op2.clone(), arena),
+                            //     _ => atom_normalizer(t),
+                        },
                         _ => (),
                     },
                     _ => (),
                 }
-                None
             }
             Term::Wild { .. } => unreachable!(),
         }
+        let ty = type_of(t.clone()).unwrap();
+        let sort = self.convert_sort(&ty)?;
+        Some(self.generate_unknown(t, sort))
     }
 
     fn convert_sort(&self, t: &Term) -> Option<Sort<'a>> {
@@ -333,7 +422,10 @@ fn definitely_zero(op2: &Term) -> bool {
 fn z3_can_solve(frame: Frame) -> bool {
     let cfg = &Config::new();
     let ctx = &Context::new(cfg);
-    let z3manager = Z3Manager { ctx };
+    let z3manager = Z3Manager {
+        ctx,
+        unknowns: Z3Names::default(),
+    };
     let solver = Solver::new(ctx);
     for hyp in frame.hyps {
         let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty) else { continue; };
