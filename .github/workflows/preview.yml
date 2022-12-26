@@ -11,16 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+            - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v11
+
       - name: Install Rust toolchain
-        run: |
-          rustup update --no-self-update stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-emscripten
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
           node-version: "16"
       - name: Build wasm
         run: |
-          bash init-script.sh
+          cd hakim-json
+          EMCC_CFLAGS="-s TOTAL_STACK=32MB" cargo build -vv --release --target wasm32-unknown-emscripten
+          cd ..
+          node scripts/patch-emscripten.js ./target/wasm32-unknown-emscripten/release/hakim-json.js
+          cp ./target/wasm32-unknown-emscripten/release/hakim-json.js ./front/static/.
+          cp ./target/wasm32-unknown-emscripten/release/hakim_json.wasm ./front/static/.
       - name: Build www
         run: |
           cd front
