@@ -1,10 +1,10 @@
-use std::cell::Cell;
+use std::{cell::Cell, time::Duration};
 
 use im::HashMap;
 use num_bigint::BigInt;
 use z3::{
     ast::{self, Ast, Dynamic},
-    Config, Context, FuncDecl, SatResult, Solver, Sort,
+    Config, Context, FuncDecl, SatResult, Sort, Tactic,
 };
 
 use crate::{
@@ -206,12 +206,6 @@ impl<'a> Z3Manager<'a> {
     fn convert_general_term(&self, t: TermRef) -> Option<ast::Dynamic<'a>> {
         match t.as_ref() {
             Term::Axiom { ty, unique_name } => {
-                if detect_z_ty(ty) {
-                    return Some(ast::Int::new_const(self.ctx, unique_name.as_str()).into());
-                }
-                if detect_r_ty(ty) {
-                    return Some(ast::Real::new_const(self.ctx, unique_name.as_str()).into());
-                }
                 let sort = self.convert_sort(ty)?;
                 return Some(ast::Dynamic::new_const(
                     self.ctx,
@@ -294,6 +288,18 @@ impl<'a> Z3Manager<'a> {
                                         return Some((op1 + op2).into());
                                     }
                                 }
+                                "minus" => {
+                                    if detect_z_ty(op) {
+                                        let op2 = self.convert_int_term(op2.clone())?;
+                                        let op1 = self.convert_int_term(op1.clone())?;
+                                        return Some((op1 - op2).into());
+                                    }
+                                    if detect_r_ty(op) {
+                                        let op2 = self.convert_real_term(op2.clone())?;
+                                        let op1 = self.convert_real_term(op1.clone())?;
+                                        return Some((op1 - op2).into());
+                                    }
+                                }
                                 "mult" => {
                                     if detect_z_ty(op) {
                                         let op2 = self.convert_int_term(op2.clone())?;
@@ -357,11 +363,6 @@ impl<'a> Z3Manager<'a> {
                                 let op1 = self.convert_int_term(op1.clone())?;
                                 return Some((op1.rem(&op2)).into());
                             }
-                            "minus" => {
-                                let op2 = self.convert_int_term(op2.clone())?;
-                                let op1 = self.convert_int_term(op1.clone())?;
-                                return Some((op1 - op2).into());
-                            }
                             /*      "pow" => {
                                 let op2 = self.convert_int_term(op2.clone())?;
                                 let op1 = self.convert_int_term(op1.clone())?;
@@ -398,6 +399,9 @@ impl<'a> Z3Manager<'a> {
         if detect_z_ty(t) {
             return Some(Sort::int(self.ctx));
         }
+        if detect_r_ty(t) {
+            return Some(Sort::real(self.ctx));
+        }
         if let Some(ty) = detect_set_ty(t) {
             let sort = self.convert_sort(&ty)?;
             return Some(Sort::set(self.ctx, &sort));
@@ -428,7 +432,9 @@ fn z3_can_solve(frame: Frame) -> bool {
         ctx,
         unknowns: Z3Names::default(),
     };
-    let solver = Solver::new(ctx);
+    let solver = Tactic::new(ctx, "default")
+        .try_for(Duration::from_millis(400))
+        .solver();
     for hyp in frame.hyps {
         let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty) else { continue; };
         solver.assert(&b);
@@ -474,8 +480,8 @@ mod tests {
     #[test]
     fn modulo_test() {
         success("6 | 24");
-        success("∀ x: ℤ, x | x * x")
-        //   success("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
+        // z3 can't prove that, we just want to check it doesn't hang
+        fail("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
     }
     #[test]
     fn multiple_theories() {
@@ -486,5 +492,10 @@ mod tests {
         success("2 ^ 3 = 8");
         // success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x -> (∀ y: ℤ, y > 0 -> 2 ^ (y + y) = 2 ^ y * 2 ^ y)");
         //   success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x");
+    }
+
+    #[test]
+    fn z3_panic1() {
+        fail("∀ f: ℝ -> ℝ, f 2. = 3. -> False");
     }
 }

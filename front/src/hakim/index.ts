@@ -213,8 +213,10 @@ export const setGoal = (
   );
 };
 
-export const runSuggMenuHyp = (hypName: string, i: number) => {
-  // FIXME: return checkErrorAndUpdate(() => instance.run_suggest_menu_hyp(hypName, i));
+export const runSuggMenuHyp = (hyp_name: string, index: number) => {
+  return checkErrorAndUpdate(() =>
+    instance.run_suggest_menu_hyp({ hyp_name, index })
+  );
 };
 
 export const runSuggMenuGoal = (i: number) => {
