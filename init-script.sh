@@ -19,7 +19,7 @@ rustup target add wasm32-unknown-emscripten
 
 cd hakim-json
 echo "building hakim json..."
-EMCC_CFLAGS="-s TOTAL_STACK=32MB" cargo build -vv --release --target wasm32-unknown-emscripten
+EMCC_CFLAGS="-s TOTAL_STACK=32MB -s INITIAL_MEMORY=64MB" cargo build -vv --release --target wasm32-unknown-emscripten
 cd ..
 node scripts/patch-emscripten.js ./target/wasm32-unknown-emscripten/release/hakim-json.js
 cp ./target/wasm32-unknown-emscripten/release/hakim-json.js ./front/static/.
