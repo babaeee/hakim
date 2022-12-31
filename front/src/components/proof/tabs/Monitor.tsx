@@ -31,7 +31,7 @@ type onSelectLogicType = (x: {
     setSuggs: (x: Sugg[]) => void,
     setAnchorPoint: (a: { x: number, y: number }) => void,
     toggleMenu: (x: boolean) => void,
-    replaceTactic: (x: { start: number, end: number, text: string, userInp: string }) => string | undefined,
+    replaceTactic: (x: { start: number, end: number, text: string, userInp: string }) => Promise<string | undefined>,
 }) => (e: any) => Promise<void>;
 const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggleMenu, replaceTactic }) => async (e) => {
     ty = ty.replaceAll(/<span [^>]*>/g, '');
@@ -77,7 +77,7 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
         }
     }
     end = start + text.length;
-    const dummyReplace = replaceTactic({ start, end, text, userInp: '2' });
+    const dummyReplace = await replaceTactic({ start, end, text, userInp: '2' });
     setSuggs([{
         label: text,
         debugInfo: `(${start}, ${end})`,
@@ -94,7 +94,7 @@ const onSelectLogic: onSelectLogicType = ({ ty, setSuggs, setAnchorPoint, toggle
         debugInfo: dummyReplace,
         action: async () => {
             const userInp = await normalPrompt(g`replace_with_what1 ${text} replace_with_what2`, text);
-            const tac = replaceTactic({ start, end, text, userInp });
+            const tac = await replaceTactic({ start, end, text, userInp });
             if (!tac) return;
             sendTactic(tac);
         },
@@ -158,8 +158,8 @@ const Hyp = ({ name, ty, mode, setMode }: HypProps): JSX.Element => {
                 }}
                 onMouseUp={onSelectLogic({
                     ty, setAnchorPoint, setSuggs, toggleMenu,
-                    replaceTactic: ({ start, end, text, userInp }) => {
-                        let cnt = spanPosOfHyp(name, start, end);
+                    replaceTactic: async ({ start, end, text, userInp }) => {
+                        let cnt = await spanPosOfHyp(name, start, end);
                         if (!cnt) return;
                         return `replace #${cnt} (${text}) with (${userInp}) in ${name}`;
                     },
@@ -219,8 +219,8 @@ const Goal = ({ ty }: { ty: string }): JSX.Element => {
             })}
             onMouseUp={onSelectLogic({
                 ty, setAnchorPoint, setSuggs, toggleMenu,
-                replaceTactic: ({ start, end, text, userInp }) => {
-                    const cnt = spanPosOfGoal(start, end);
+                replaceTactic: async ({ start, end, text, userInp }) => {
+                    const cnt = await spanPosOfGoal(start, end);
                     if (!cnt) return;
                     return `replace #${cnt} (${text}) with (${userInp})`;
                 },

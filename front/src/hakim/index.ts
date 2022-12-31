@@ -231,19 +231,18 @@ export const runSuggDblHyp = (hyp: string) => {
   return checkErrorAndUpdate(() => instance.suggest_dblclk_hyp(hyp));
 };
 
-export const spanPosOfHyp = (
+export const spanPosOfHyp = async (
   hyp: string,
   l: number,
   r: number
-): number | undefined => {
-  // FIXME: const x = instance.pos_of_span_hyp(hyp, l, r);
-  // FIXME: return x;
-  return;
+): Promise<number | undefined> => {
+  return instance.pos_of_span_hyp({ hyp, l, r });
 };
-export const spanPosOfGoal = (l: number, r: number): number | undefined => {
-  // FIXME: const x = instance.pos_of_span_goal(l, r);
-  // FIXME: return x;
-  return;
+export const spanPosOfGoal = (
+  l: number,
+  r: number
+): Promise<number | undefined> => {
+  return instance.pos_of_span_goal({ l, r });
 };
 
 const parenSplit = (txt: string): string[] => {
