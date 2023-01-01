@@ -209,3 +209,22 @@ Axiom abs_pos: ∀ a: ℤ, 0 ≤ |a|;
 Axiom abs_eq: ∀ a: ℤ, |a| = a ∨ |a| = -a;
 
 Todo ex_min: ∀ P: ℤ -> U, ∀ k, (∃ x, k < x ∧ P x) -> (∃ x, k < x ∧ P x ∧ (∀ y, k < y -> P y -> x ≤ y));  
+
+Definition even := λ x: ℤ, ∃ k: ℤ, x = 2 * k;
+Theorem even_unfold: ∀ x: ℤ, even x -> ∃ k: ℤ, x = 2 * k;
+Proof; unfold even; intros; assumption; Qed;
+Theorem even_fold: ∀ x: ℤ, (∃ k: ℤ, x = 2 * k) -> even x;
+Proof; unfold even; intros; assumption; Qed;
+Suggest hyp default apply even_unfold in $n with label even x => ∃ k, x = 2 * k;
+Suggest goal default apply even_fold with label even x => ∃ k, x = 2 * k;
+Definition odd := λ x: ℤ, ∃ k: ℤ, x = 2 * k + 1;
+Theorem odd_unfold: ∀ x: ℤ, odd x -> ∃ k: ℤ, x = 2 * k + 1;
+Proof; unfold odd; intros; assumption; Qed;
+Theorem odd_fold: ∀ x: ℤ, (∃ k: ℤ, x = 2 * k + 1) -> odd x;
+Proof; unfold odd; intros; assumption; Qed;
+Suggest hyp default apply odd_unfold in $n with label odd x => ∃ k, x = 2 * k + 1;
+Suggest goal default apply odd_fold with label odd x => ∃ k, x = 2 * k + 1;
+
+Todo even_or_odd: ∀ x: ℤ, even x ∨ odd x;
+
+Todo not_even: ∀ x: ℤ, ~ even x -> odd x;

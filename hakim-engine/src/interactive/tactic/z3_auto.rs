@@ -237,6 +237,10 @@ impl<'a> Z3Manager<'a> {
                                 ast::Set::empty(self.ctx, &self.convert_sort(op2)?).into(),
                             );
                         }
+                        if unique_name == "sqrt" {
+                            let op2 = self.convert_real_term(op2.clone())?;
+                            return Some(op2.power(&ast::Real::from_real(self.ctx, 5, 10)).into());
+                        }
                     }
                     Term::App { func, op: op1 } => match func.as_ref() {
                         Term::App { func, op } => match func.as_ref() {
@@ -436,6 +440,7 @@ fn z3_can_solve(frame: Frame) -> bool {
         .try_for(Duration::from_millis(400))
         .solver();
     for hyp in frame.hyps {
+        println!("{:?}", &hyp.ty.clone());
         let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty) else { continue; };
         solver.assert(&b);
     }
@@ -486,10 +491,13 @@ mod tests {
     #[test]
     fn multiple_theories() {
         success("∀ x: ℤ, x ∈ {2} -> x + x = 4");
+        //    success("∀ k p: ℤ, ~ 4 * k * + 4 * k + 1 = 2 * p");
     }
     #[test]
     fn pow_rules() {
         success("2 ^ 3 = 8");
+        success("sqrt 8. = 2. * sqrt 2.");
+        success("∀ a b: ℤ, ~ b = 0 -> (a / b) ^ 2. = (a * a) / (b * b)");
         // success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x -> (∀ y: ℤ, y > 0 -> 2 ^ (y + y) = 2 ^ y * 2 ^ y)");
         //   success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x");
     }
@@ -497,5 +505,11 @@ mod tests {
     #[test]
     fn z3_panic1() {
         fail("∀ f: ℝ -> ℝ, f 2. = 3. -> False");
+    }
+    #[test]
+    fn z3_simple_can_solve() {
+        //   fail("∀ k p: ℤ, ~ 2 * (2 * k ^ 2 + 2 * k) + 1 = 2 * p");
+        fail("∀ k: ℤ, True");
+       // fail("∀ p q: ℤ, ~ 2 * gcd p q = 1");
     }
 }

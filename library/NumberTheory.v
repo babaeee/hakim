@@ -127,6 +127,9 @@ Theorem prime_unfold: ∀ x: ℤ, prime x -> 1 < x ∧ (∀ y: ℤ, 0 < y -> y |
 Proof; unfold prime; intros; assumption; Qed;
 Theorem prime_fold: ∀ x: ℤ, 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x) -> prime x;
 Proof; unfold prime; intros; assumption; Qed;
+Suggest hyp default chain (apply prime_unfold in $n) (destruct $n with (and_ind ? ?) to ($n_pos $n_div)) with label prime x => 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x);
+Suggest goal default apply prime_fold with label prime x => 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x);
+
 Theorem contpos_prime_fold: ∀ x: ℤ, ~ prime x -> 1 < x -> ∃ y: ℤ, 1 < y ∧ y < x ∧ y | x; 
 Proof;
     intros;
