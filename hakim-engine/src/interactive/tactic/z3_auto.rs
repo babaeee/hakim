@@ -1,4 +1,4 @@
-use std::{cell::Cell, time::Duration};
+use std::{cell::Cell, sync::Mutex, time::Duration};
 
 use im::HashMap;
 use num_bigint::BigInt;
@@ -429,6 +429,8 @@ fn definitely_zero(op2: &Term) -> bool {
     }
 }
 
+pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(400));
+
 fn z3_can_solve(frame: Frame) -> bool {
     let cfg = &Config::new();
     let ctx = &Context::new(cfg);
@@ -437,7 +439,7 @@ fn z3_can_solve(frame: Frame) -> bool {
         unknowns: Z3Names::default(),
     };
     let solver = Tactic::new(ctx, "default")
-        .try_for(Duration::from_millis(400))
+        //.try_for(*Z3_TIMEOUT.lock().unwrap())
         .solver();
     for hyp in frame.hyps {
         println!("{:?}", &hyp.ty.clone());
@@ -508,8 +510,8 @@ mod tests {
     }
     #[test]
     fn z3_simple_can_solve() {
-        //   fail("∀ k p: ℤ, ~ 2 * (2 * k ^ 2 + 2 * k) + 1 = 2 * p");
-        fail("∀ k: ℤ, True");
-       // fail("∀ p q: ℤ, ~ 2 * gcd p q = 1");
+        success("∀ k p: ℤ, ~ 2 * (2 * k ^ 2 + 2 * k) + 1 = 2 * p");
+        success("∀ k: ℤ, True");
+        success("∀ p q: ℤ, ~ 2 * gcd p q = 1");
     }
 }

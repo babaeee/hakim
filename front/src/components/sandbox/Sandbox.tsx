@@ -65,6 +65,7 @@ intros.',
     '∀ T: U, ∀ A B C: set T, A ⊆ B -> B ⊆ C -> A ⊆ C',
     '∀ n: ℤ, 2 < n -> ∀ a b c, a ^ n + b ^ n = c ^ n -> False',
     '~ is_q (sqrt 2.)',
+    '∀ x: ℤ, x ∈ {2} -> x + x = 4',
 ];
 
 export const Sandbox = () => {

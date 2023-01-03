@@ -1,9 +1,9 @@
-use std::panic::catch_unwind;
+use std::{panic::catch_unwind, time::Duration};
 
 use hakim_engine::{
     all_library_data,
     engine::Engine,
-    interactive::{tactic, Session, Suggestion},
+    interactive::{tactic, Session, Suggestion, Z3_TIMEOUT},
     notation_list,
 };
 
@@ -56,6 +56,7 @@ enum Command {
     Check(String),
     ActionOfTactic(String),
     TryTactic(String),
+    ChangeZ3Timeout(u64),
 }
 
 use Command::*;
@@ -287,6 +288,11 @@ fn run_command(command: Command, state: &mut State) -> String {
         ),
         PosOfSpanGoal { l, r } => {
             serialize(state.session.as_ref().unwrap().pos_of_span_goal((l, r)))
+        }
+        ChangeZ3Timeout(t) => {
+            let mut g = Z3_TIMEOUT.lock().unwrap();
+            *g = Duration::from_millis(t);
+            serialize(())
         }
     }
 }

@@ -9,6 +9,7 @@ declare let window: Window & {
   hakimQuery: (x: any) => any;
   hakimQueryLoad: Promise<void>;
   hardReset: () => void;
+  instance: Instance;
 };
 
 window.ask_question = (x) => {
@@ -64,6 +65,8 @@ const instance: Instance = new Proxy(
     },
   }
 );
+
+window.instance = instance;
 
 if (prevBackup) {
   if (!instance.from_backup(JSON.parse(prevBackup))) {

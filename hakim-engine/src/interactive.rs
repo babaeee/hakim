@@ -8,6 +8,8 @@ use crate::interactive::suggest::Applicablity;
 use crate::library::{engine_from_middle_of_lib, proof_of_theorem};
 use crate::parser::is_whity_char;
 
+pub use tactic::Z3_TIMEOUT;
+
 #[cfg(test)]
 mod tests;
 
