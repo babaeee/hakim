@@ -1,6 +1,7 @@
 import { normalPrompt } from "../dialog";
 import { fromRust } from "../i18n";
 import { loadLibText } from "./lib_text";
+import { hakimQueryImpl } from "./network_provider";
 
 declare let window: Window & {
   ask_question: (q: string) => Promise<string>;
@@ -42,8 +43,8 @@ type Instance = {
   [key: string]: (x?: any) => Promise<any>;
 };
 
-await window.hakimQueryLoad;
-window.hakimQuery({ command: "load_lib", arg: window.load_lib_json() });
+// await window.hakimQueryLoad;
+// window.hakimQuery({ command: "load_lib", arg: window.load_lib_json() });
 
 const instance: Instance = new Proxy(
   {},
@@ -51,10 +52,13 @@ const instance: Instance = new Proxy(
     get(_, prop) {
       return async (arg: any) => {
         try {
-          let r = window.hakimQuery({ command: prop, arg });
+          let r = await hakimQueryImpl({ command: prop, arg });
           while (r && typeof r === "object" && r.AskQuestion) {
             const answer = await window.ask_question(r.AskQuestion);
-            r = window.hakimQuery({ command: "answer_question", arg: answer });
+            r = await hakimQueryImpl({
+              command: "answer_question",
+              arg: answer,
+            });
           }
           return r;
         } catch (e) {
@@ -183,7 +187,7 @@ export const getNatural = async (): Promise<string> => {
 };
 
 export const tryTactic = (tactic: string): boolean => {
-  return window.hakimQuery({ command: "try_tactic", arg: tactic });
+  return true; //window.hakimQuery({ command: "try_tactic", arg: tactic });
 };
 
 export const check = (query: string): Promise<string> => {
@@ -321,7 +325,7 @@ export const tryAuto = async (): Promise<TryAutoResult> => {
 
 export type LibraryItemKind = "Import" | "Axiom" | "Suggestion" | "Theorem";
 
-type LibraryData = {
+export type LibraryData = {
   name: string;
   rules: {
     kind: LibraryItemKind;

@@ -56,13 +56,13 @@ pub struct Snapshot {
     pub frames: im::Vector<Frame>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoryRecord {
     tactic: String,
     snapshot: Snapshot,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
     history: im::Vector<HistoryRecord>,
     /// frames that will used for redo

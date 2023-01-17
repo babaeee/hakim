@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { allLibraryData, fromMiddleOfLib, LibraryItemKind } from "../../hakim";
+import { allLibraryData, fromMiddleOfLib, LibraryItemKind, LibraryData } from "../../hakim";
 import { g } from "../../i18n";
 import { openProofSession } from "../root/Root";
 import { Title } from "../util/Title";
@@ -15,13 +15,22 @@ const Collapsable: React.FC<{ name: string, children: any }> = ({ name, children
 };
 
 export const LibraryViewer = () => {
-    const data = allLibraryData();
+    const [data, setData] = useState("loading" as ("loading" | LibraryData[]));
     const navigator = useNavigate();
     const onFinish = async (lib: string, name: string, kind: LibraryItemKind) => {
-        if (await fromMiddleOfLib(lib, name, kind)) {
-            openProofSession(navigator, {});
-        }
+        alert('Im broken');
+        // if (await fromMiddleOfLib(lib, name, kind)) {
+        //     openProofSession(navigator, {});
+        // }
     };
+    useEffect(() => {
+        (async () => {
+            setData(await allLibraryData());
+        })();
+    }, []);
+    if (data === "loading") {
+        return <div>loading</div>
+    }
     return (
         <div dir="ltr" className={css.main}>
             <Title title={g`library`} />
