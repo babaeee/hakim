@@ -209,6 +209,7 @@ Todo prime_divide_mult: ∀ x: ℤ, prime x -> ∀ a b: ℤ, x | a * b -> x | a 
 Axiom gcd: ℤ -> ℤ -> ℤ;
 Axiom gcd_divide: ∀ k x y: ℤ, k | x -> k | y -> k | gcd x y;
 Suggest goal default apply gcd_divide with label k | gcd a b => k | a and k | b;
+Todo gcd_factor: ∀ k x y: ℤ, gcd (k * x) (k * y) = k * gcd x y;
 
 Import /ProductOperator;
 Axiom divide_multi:   ∀ A: set ℤ, ∀ a : ℤ, a ∈ A -> a | multi A;

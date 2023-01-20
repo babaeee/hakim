@@ -228,3 +228,4 @@ Suggest goal default apply odd_fold with label odd x => ∃ k, x = 2 * k + 1;
 Todo even_or_odd: ∀ x: ℤ, even x ∨ odd x;
 
 Todo not_even: ∀ x: ℤ, ~ even x -> odd x;
+Suggest hyp apply not_even in $n with label ~ even x => odd x;

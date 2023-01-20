@@ -429,7 +429,7 @@ fn definitely_zero(op2: &Term) -> bool {
     }
 }
 
-pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(400));
+pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(900));
 
 fn z3_can_solve(frame: Frame) -> bool {
     let cfg = &Config::new();
@@ -439,7 +439,7 @@ fn z3_can_solve(frame: Frame) -> bool {
         unknowns: Z3Names::default(),
     };
     let solver = Tactic::new(ctx, "default")
-        //.try_for(*Z3_TIMEOUT.lock().unwrap())
+        .try_for(*Z3_TIMEOUT.lock().unwrap())
         .solver();
     for hyp in frame.hyps {
         println!("{:?}", &hyp.ty.clone());
