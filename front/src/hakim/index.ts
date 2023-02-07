@@ -199,8 +199,13 @@ export type SearchResult = {
   ty: string;
 };
 
-export const searchPattern = async (expr: string): Promise<SearchResult[]> => {
+export const searchPattern = async (
+  expr: string
+): Promise<SearchResult[] | string> => {
   const r = await instance.search(expr);
+  if (typeof r === "string") {
+    return r;
+  }
   return r.map(([a, b]: [string, string]) => {
     return {
       name: a,
