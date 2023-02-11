@@ -439,7 +439,7 @@ fn z3_can_solve(frame: Frame) -> bool {
         unknowns: Z3Names::default(),
     };
     let solver = Tactic::new(ctx, "default")
-        //.try_for(*Z3_TIMEOUT.lock().unwrap())
+        .try_for(*Z3_TIMEOUT.lock().unwrap())
         .solver();
     for hyp in frame.hyps {
         println!("{:?}", &hyp.ty.clone());

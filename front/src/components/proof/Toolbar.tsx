@@ -42,6 +42,7 @@ const AutoProofButton = () => {
             }
             // removing lock will lead to errors and panics!
             isWorking = true;
+            setS({ available: false });
             const r = await tryAuto();
             if (mode === 'boost') {
                 if (r.available) {
