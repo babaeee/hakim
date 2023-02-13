@@ -46,12 +46,18 @@ type Instance = {
 // await window.hakimQueryLoad;
 // window.hakimQuery({ command: "load_lib", arg: window.load_lib_json() });
 
+let queryLock = false;
+
 const instance: Instance = new Proxy(
   {},
   {
     get(_, prop) {
       return async (arg: any) => {
         try {
+          while (queryLock) {
+            await new Promise((res) => setTimeout(res, 10));
+          }
+          queryLock = true;
           let r = await hakimQueryImpl({ command: prop, arg });
           while (r && typeof r === "object" && r.AskQuestion) {
             const answer = await window.ask_question(r.AskQuestion);
@@ -60,6 +66,7 @@ const instance: Instance = new Proxy(
               arg: answer,
             });
           }
+          queryLock = false;
           return r;
         } catch (e) {
           console.log(e);
