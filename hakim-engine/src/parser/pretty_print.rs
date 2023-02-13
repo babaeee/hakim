@@ -590,10 +590,15 @@ pub fn pretty_print_ast(
         AstTerm::NumberR(value, point) => {
             HighlightTag::Literal.print(r, |r| {
                 let s = format!("{value}");
-                let pos = s.len() - point;
-                if pos == 0 {
-                    write!(r, "0.{}", s)
+                if s.len() <= *point {
+                    let cnt = point - s.len();
+                    write!(r, "0.")?;
+                    for _ in 0..cnt {
+                        write!(r, "0")?;
+                    }
+                    write!(r, "{value}")
                 } else {
+                    let pos = s.len() - point;
                     write!(r, "{}.{}", &s[..pos], &s[pos..])
                 }
             })?;
