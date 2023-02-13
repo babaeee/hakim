@@ -29,6 +29,7 @@ async fn main() -> std::io::Result<()> {
         let mut state = State::default();
         loop {
             let command: Value = command_n.recv().unwrap();
+            dbg!(&command);
             let command: Command = serde_json::from_value(command).unwrap();
             dbg!(&command);
             let result = run_command(command, &mut state);
