@@ -44,7 +44,6 @@ type Instance = {
 };
 
 // await window.hakimQueryLoad;
-// window.hakimQuery({ command: "load_lib", arg: window.load_lib_json() });
 
 let queryLock = false;
 
@@ -78,6 +77,8 @@ const instance: Instance = new Proxy(
 );
 
 window.instance = instance;
+
+await instance.load_lib(window.load_lib_json());
 
 if (prevBackup) {
   if (!instance.from_backup(JSON.parse(prevBackup))) {

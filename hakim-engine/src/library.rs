@@ -11,7 +11,6 @@ use self::{
 pub mod prelude;
 mod text;
 
-#[cfg(target_arch = "wasm32")]
 pub use text::LIB_TEXT_STORE;
 
 mod ast;

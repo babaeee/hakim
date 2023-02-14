@@ -2,7 +2,7 @@ Import /Logic;
 Import /Induction;
 Import /Eq;
 
-Axiom set_from_func_unfold: ∀ A: U, ∀ f: A -> U, ∀ a: A, a ∈ (set_from_func A f) -> f a;
+Axiom set_from_func_unfold: ∀ A: U, ∀ f: A -> U, ∀ a: A, a ∈ { x: A | f x } -> f a;
 Axiom set_from_func_fold: ∀ A: U, ∀ f: A -> U, ∀ a: A, f a -> a ∈ (set_from_func A f);
 Suggest hyp default apply set_from_func_unfold in $n with label a ∈ {b | f b} => f a;
 Suggest goal default apply set_from_func_fold with label a ∈ {b | f b} => f a;

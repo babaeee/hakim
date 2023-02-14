@@ -7,7 +7,6 @@ use hakim_engine::{
     notation_list,
 };
 
-#[cfg(target_arch = "wasm32")]
 use hakim_engine::library::LIB_TEXT_STORE;
 
 use serde::{Deserialize, Serialize};
@@ -23,7 +22,6 @@ pub enum Command {
         libs: String,
         params: String,
     },
-    #[cfg(target_arch = "wasm32")]
     LoadLib(std::collections::HashMap<String, String>),
     NotationList,
     Monitor,
@@ -127,9 +125,8 @@ pub fn run_command(command: Command, state: &mut State) -> String {
             };
             serialize(DONE)
         }
-        #[cfg(target_arch = "wasm32")]
         LoadLib(lib) => {
-            LIB_TEXT_STORE.with(|x| *x.borrow_mut() = lib);
+            *LIB_TEXT_STORE.lock().unwrap() = Some(lib);
             serialize(DONE)
         }
         NotationList => serialize(notation_list()),
@@ -194,17 +191,26 @@ pub fn run_command(command: Command, state: &mut State) -> String {
                 .unwrap();
             serialize(run_sugg(state, sugg, vec![]))
         }
+        AnswerQuestion(answer) if answer.is_empty() => {
+            // empty answer is equivalent to cancelling request
+            state.question = None;
+            "null".to_string()
+        }
         AnswerQuestion(answer) => match state.question.take().expect("Unexpected answer") {
             QuestionState::ForTactic(e) => {
                 let qt = e.question_text();
-                match e.tactic_by_answer(&answer) {
+                match e.clone().tactic_by_answer(&answer) {
                     Ok(t) => match run_tactic(state, t) {
                         UntaggedEither::Left(Some(er)) => {
+                            state.question = Some(QuestionState::ForTactic(e));
                             serialize(AskQuestion(format!("$error: {er}\n{qt}")))
                         }
                         rest => serialize(rest),
                     },
-                    Err(er) => serialize(AskQuestion(format!("$error: {er:?}\n{qt}"))),
+                    Err(er) => {
+                        state.question = Some(QuestionState::ForTactic(e));
+                        serialize(AskQuestion(format!("$error: {er:?}\n{qt}")))
+                    }
                 }
             }
             QuestionState::ForSuggestion {
@@ -243,7 +249,7 @@ pub fn run_command(command: Command, state: &mut State) -> String {
                         .collect::<Vec<_>>();
                     serialize(x)
                 }
-                Err(e) => serialize(&format!("{:?}", e)),
+                Err(e) => serialize(format!("{:?}", e)),
             }
         }
         ActionOfTactic(tactic) => {
