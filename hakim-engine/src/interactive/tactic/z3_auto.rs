@@ -429,7 +429,7 @@ fn definitely_zero(op2: &Term) -> bool {
     }
 }
 
-pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(400));
+pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(2000));
 
 fn z3_can_solve(frame: Frame) -> bool {
     let cfg = &Config::new();
@@ -484,24 +484,32 @@ mod tests {
     fn simple_variables() {
         success("∀ x: ℝ, x = 3. -> x < 3.01");
     }
+
     #[test]
     fn modulo_test() {
         success("6 | 24");
         // z3 can't prove that, we just want to check it doesn't hang
         fail("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
     }
+
+    #[test]
+    fn success_unused_var() {
+        success("forall x c a: ℤ, 2 * c = a -> ~ 2 * x = 1");
+    }
+
     #[test]
     fn multiple_theories() {
         success("∀ x: ℤ, x ∈ {2} -> x + x = 4");
         //    success("∀ k p: ℤ, ~ 4 * k * + 4 * k + 1 = 2 * p");
     }
+
     #[test]
     fn pow_rules() {
         success("2 ^ 3 = 8");
         success("sqrt 8. = 2. * sqrt 2.");
         success("∀ a b: ℤ, ~ b = 0 -> (a / b) ^ 2. = (a * a) / (b * b)");
         // success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x -> (∀ y: ℤ, y > 0 -> 2 ^ (y + y) = 2 ^ y * 2 ^ y)");
-        //   success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x");
+        // success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x");
     }
 
     #[test]
