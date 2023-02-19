@@ -1954,7 +1954,7 @@ checksum = "447660ad36a13288b1db4d4248e857b510e8c3a225c822ba4fb748c0aafecffd"
 [[package]]
 name = "z3"
 version = "0.11.2"
-source = "git+https://github.com/HKalbasi/z3.rs#2d9fec1dcd9e05e3d89d73b69d71fdaf75f4f29b"
+source = "git+https://github.com/HKalbasi/z3.rs#86d51eafa0f1a687aa2b4ed45f6298d82e9332ed"
 dependencies = [
  "log",
  "z3-sys",
@@ -1963,7 +1963,7 @@ dependencies = [
 [[package]]
 name = "z3-sys"
 version = "0.7.1"
-source = "git+https://github.com/HKalbasi/z3.rs#2d9fec1dcd9e05e3d89d73b69d71fdaf75f4f29b"
+source = "git+https://github.com/HKalbasi/z3.rs#86d51eafa0f1a687aa2b4ed45f6298d82e9332ed"
 dependencies = [
  "bindgen",
  "cmake",

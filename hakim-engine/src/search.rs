@@ -139,6 +139,11 @@ mod tests {
     }
 
     #[test]
+    fn dont_stack_overflow2() {
+        do_search("∃ x, ? < x / 1 * ?");
+    }
+
+    #[test]
     fn panic_in_infer() {
         do_search("∃ x, ?");
     }

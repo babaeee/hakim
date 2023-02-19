@@ -1,10 +1,10 @@
-use std::{cell::Cell, sync::Mutex, time::Duration};
+use std::{cell::Cell, collections::HashSet, sync::Mutex, time::Duration};
 
 use im::HashMap;
 use num_bigint::BigInt;
 use z3::{
-    ast::{self, Ast, Dynamic},
-    Config, Context, FuncDecl, SatResult, Sort, Tactic,
+    ast::{self, forall_const, Ast, Bool, Dynamic, Set},
+    Config, Context, FuncDecl, SatResult, Solver, Sort, Tactic,
 };
 
 use crate::{
@@ -37,9 +37,18 @@ fn lookup_in_cell_hashmap(x: &Cell<HashMap<TermRef, usize>>, key: TermRef) -> us
     r
 }
 
+fn check_exists_and_insert(x: &Cell<HashSet<usize>>, key: usize) -> bool {
+    let mut h = x.take();
+    let ex = h.insert(key);
+    x.set(h);
+    !ex
+}
+
 struct Z3Manager<'a> {
     ctx: &'a Context,
     unknowns: Z3Names,
+    finite_axioms: Cell<HashSet<usize>>,
+    solver: Solver<'a>,
 }
 
 impl<'a> SigmaSimplifier for &Z3Manager<'a> {
@@ -154,14 +163,22 @@ impl<'a> Z3Manager<'a> {
                     }
                 }
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                    if unique_name == "divide" {
-                        let op1 = self.convert_int_term(op1)?;
-                        let op2 = self.convert_int_term(op2)?;
-                        let exp = op2
-                            .modulo(&op1)
-                            ._safe_eq(&ast::Int::from_i64(self.ctx, 0))
-                            .ok()?;
-                        return Some(exp);
+                    match unique_name.as_str() {
+                        "divide" => {
+                            let op1 = self.convert_int_term(op1)?;
+                            let op2 = self.convert_int_term(op2)?;
+                            let exp = op2
+                                .modulo(&op1)
+                                ._safe_eq(&ast::Int::from_i64(self.ctx, 0))
+                                .ok()?;
+                            return Some(exp);
+                        }
+                        "finite" => {
+                            let x = self.get_finite_for_sort(op1)?;
+                            let set = self.convert_general_term(op2)?;
+                            return Some(x.apply(&[&set]).try_into().unwrap());
+                        }
+                        _ => (),
                     }
                 }
             }
@@ -428,6 +445,59 @@ impl<'a> Z3Manager<'a> {
         }
         None
     }
+
+    fn get_finite_for_sort(&self, ty: TermRef) -> Option<FuncDecl<'a>> {
+        let sort_elem = self.convert_sort(&ty)?;
+        let sort = Sort::set(self.ctx, &sort_elem);
+        let id = lookup_in_cell_hashmap(&self.unknowns.0, ty);
+        let r = FuncDecl::new(
+            self.ctx,
+            format!("$finite{id}"),
+            &[&sort],
+            &Sort::bool(self.ctx),
+        );
+        if !check_exists_and_insert(&self.finite_axioms, id) {
+            self.solver.assert(
+                &r.apply(&[&Set::empty(self.ctx, &sort_elem)])
+                    .try_into()
+                    .unwrap(),
+            );
+            let elem = Dynamic::new_const(self.ctx, "e", &sort_elem);
+            let set1: Set = Dynamic::new_const(self.ctx, "s1", &sort)
+                .try_into()
+                .unwrap();
+            let set2: Set = Dynamic::new_const(self.ctx, "s2", &sort)
+                .try_into()
+                .unwrap();
+            let s1f: Bool = r.apply(&[&set1]).try_into().unwrap();
+            let s2f: Bool = r.apply(&[&set2]).try_into().unwrap();
+            self.solver.assert(&forall_const(
+                self.ctx,
+                &[&elem, &set1],
+                &[],
+                &s1f.implies(&r.apply(&[&set1.add(&elem)]).try_into().unwrap()),
+            ));
+            self.solver.assert(&forall_const(
+                self.ctx,
+                &[&set2, &set1],
+                &[],
+                &s1f.implies(
+                    &s2f.implies(
+                        &r.apply(&[&Set::set_union(self.ctx, &[&set1, &set2])])
+                            .try_into()
+                            .unwrap(),
+                    ),
+                ),
+            ));
+            self.solver.assert(&forall_const(
+                self.ctx,
+                &[&set2, &set1],
+                &[],
+                &s1f.implies(&set2.set_subset(&set1).implies(&s2f)),
+            ));
+        }
+        Some(r)
+    }
 }
 
 fn definitely_zero(op2: &Term) -> bool {
@@ -438,28 +508,30 @@ fn definitely_zero(op2: &Term) -> bool {
     }
 }
 
-pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(900));
+pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(2000));
 
 fn z3_can_solve(frame: Frame) -> bool {
     let cfg = &Config::new();
     let ctx = &Context::new(cfg);
-    let z3manager = Z3Manager {
-        ctx,
-        unknowns: Z3Names::default(),
-    };
     let solver = Tactic::new(ctx, "default")
         .try_for(*Z3_TIMEOUT.lock().unwrap())
         .solver();
+    let z3manager = Z3Manager {
+        ctx,
+        unknowns: Z3Names::default(),
+        finite_axioms: Cell::default(),
+        solver,
+    };
     for hyp in frame.hyps {
         println!("{:?}", &hyp.ty.clone());
         let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty) else { continue; };
-        solver.assert(&b);
+        z3manager.solver.assert(&b);
     }
     if let Some(b) = z3manager.covert_prop_to_z3_bool(frame.goal) {
-        solver.assert(&b.not());
+        z3manager.solver.assert(&b.not());
     }
-    dbg!(&solver);
-    solver.check() == SatResult::Unsat
+    dbg!(&z3manager.solver);
+    z3manager.solver.check() == SatResult::Unsat
 }
 
 #[cfg(test)]
@@ -493,24 +565,32 @@ mod tests {
     fn simple_variables() {
         success("∀ x: ℝ, x = 3. -> x < 3.01");
     }
+
     #[test]
     fn modulo_test() {
         success("6 | 24");
         // z3 can't prove that, we just want to check it doesn't hang
         fail("∀ x y z, x > 0 -> y > 0 -> z > 0 -> x | y -> y | z -> x | z");
     }
+
+    #[test]
+    fn success_unused_var() {
+        success("forall x c a: ℤ, 2 * c = a -> ~ 2 * x = 1");
+    }
+
     #[test]
     fn multiple_theories() {
         success("∀ x: ℤ, x ∈ {2} -> x + x = 4");
         //    success("∀ k p: ℤ, ~ 4 * k * + 4 * k + 1 = 2 * p");
     }
+
     #[test]
     fn pow_rules() {
         success("2 ^ 3 = 8");
         success("sqrt 8. = 2. * sqrt 2.");
         success("∀ a b: ℤ, ~ b = 0 -> (a / b) ^ 2. = (a * a) / (b * b)");
         // success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x -> (∀ y: ℤ, y > 0 -> 2 ^ (y + y) = 2 ^ y * 2 ^ y)");
-        //   success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x");
+        // success("∀ x: ℤ, x > 0 -> 2 ^ (x + x) = 2 ^ x * 2 ^ x");
     }
 
     #[test]

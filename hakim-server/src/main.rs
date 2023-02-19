@@ -1,9 +1,11 @@
 use std::{
+    panic,
     sync::{
         mpsc::{channel, Receiver, Sender},
         Mutex,
     },
     thread,
+    time::SystemTime,
 };
 
 use actix_cors::Cors;
@@ -27,12 +29,38 @@ async fn main() -> std::io::Result<()> {
     let (answer_p, answer_n) = channel();
     thread::spawn(move || {
         let mut state = State::default();
+        static HISTORY: Mutex<String> = Mutex::new(String::new());
+        panic::set_hook(Box::new(|info| {
+            println!("Got panic. @info: {}", info);
+            let _ = std::fs::write(
+                format!(
+                    "hakim_log_{}.log",
+                    SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis()
+                ),
+                &*HISTORY.lock().unwrap(),
+            );
+            std::process::abort();
+        }));
         loop {
             let command: Value = command_n.recv().unwrap();
+            {
+                let mut h = HISTORY.lock().unwrap();
+                h.push_str(&serde_json::to_string(&command).unwrap());
+                h.push('\n');
+            }
+            dbg!(&command);
             let command: Command = serde_json::from_value(command).unwrap();
             dbg!(&command);
             let result = run_command(command, &mut state);
             dbg!(&result);
+            {
+                let mut h = HISTORY.lock().unwrap();
+                h.push_str(&result);
+                h.push('\n');
+            }
             answer_p.send(result).unwrap();
         }
     });

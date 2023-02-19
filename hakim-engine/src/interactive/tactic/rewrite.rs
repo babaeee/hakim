@@ -263,7 +263,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn replace_panic() {
         run_interactive(
             r#"∀ n: ℤ,
