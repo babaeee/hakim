@@ -25,26 +25,29 @@ Axiom sqrt: ℝ -> ℝ;
 
 Axiom sqrt_def: ∀ x: ℝ, 0. ≤ x -> sqrt x * sqrt x = x;
 
-Axiom is_q_unfold: ∀ x: ℝ, is_q x -> ∃ a b: ℤ, x = a / b ∧ gcd a b = 1 ∧ b > 0;
+Axiom in_q_unfold: ∀ x: ℝ, x ∈ ℚ -> ∃ a b: ℤ, x = a / b ∧ gcd a b = 1 ∧ b > 0;
 
-Suggest hyp default apply is_q_unfold in $n with label is_q x => ∃ a b: ℤ, a / b = x ∧ gcd a b = 1 ∧ b > 0;
+Suggest hyp default apply in_q_unfold in $n with label x ∈ ℚ => ∃ a b: ℤ, a / b = x ∧ gcd a b = 1 ∧ b > 0;
  
-Todo is_q_plus: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a + b);
-Suggest goal default apply is_q_plus with label is_q (a + b) => is_q a and is_q b;
-Todo is_q_minus: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a - b);
-Suggest goal default apply is_q_minus with label is_q (a - b) => is_q a and is_q b;
-Todo is_q_mult: ∀ a b: ℝ, is_q a -> is_q b -> is_q (a * b);
-Suggest goal default apply is_q_mult with label is_q (a * b) => is_q a and is_q b;
+Todo in_q_plus: ∀ a b: ℝ, a ∈ ℚ -> b ∈ ℚ -> (a + b) ∈ ℚ;
+Suggest goal default apply in_q_plus with label (a + b) ∈ ℚ => a ∈ ℚ and b ∈ ℚ;
+Todo in_q_minus: ∀ a b: ℝ, a ∈ ℚ -> b ∈ ℚ -> (a - b) ∈ ℚ;
+Suggest goal default apply in_q_minus with label (a - b) ∈ ℚ => a ∈ ℚ and b ∈ ℚ;
+Todo in_q_mult: ∀ a b: ℝ, a ∈ ℚ -> b ∈ ℚ -> (a * b) ∈ ℚ;
+Suggest goal default apply in_q_mult with label (a * b) ∈ ℚ => a ∈ ℚ and b ∈ ℚ;
 
-Theorem multiple_gt_Q: ∀ x: ℝ, ∀ e: ℝ, is_q x -> is_q e -> e > 0. -> ∃ N, N > 0 ∧ (N / 1) * e > x;
+Todo pow_2_gt_Q: ∀ a b: ℝ, a ∈ ℚ -> b ∈ ℚ -> a ^ 2. < b ^ 2. -> a < b;
+Todo pow_2_ge_Q: ∀ a b: ℝ, a ∈ ℚ -> b ∈ ℚ -> a ^ 2. ≤ b ^ 2. -> a ≤ b;
+
+Theorem multiple_gt_Q: ∀ x: ℝ, ∀ e: ℝ, x ∈ ℚ -> e ∈ ℚ -> e > 0. -> ∃ N, N > 0 ∧ (N / 1) * e > x;
 Proof;
     intros;
-    apply is_q_unfold in H;
+    apply in_q_unfold in H;
     destruct H with (ex_ind ? ?) to (a a_property);
     destruct a_property with (ex_ind ? ?) to (b b_property);
     destruct b_property with (and_ind ? ?) to (b_property_l b_property_r);
     rewrite b_property_l;
-    apply is_q_unfold in H0;
+    apply in_q_unfold in H0;
     destruct H0 with (ex_ind ? ?) to (c c_property);
     destruct c_property with (ex_ind ? ?) to (d d_property);
     destruct d_property with (and_ind ? ?) to (d_property_l d_property_r);
@@ -100,4 +103,46 @@ Todo glb_fold: ∀ E: set ℝ, ∀ x, lower_bound E x ∧ (∀ y, lower_bound E 
 Suggest hyp default apply glb_unfold in $n with label glb E x => lower_bound E x ∧ (∀ y, lower_bound E y -> y ≤ x);
 Suggest goal default apply glb_fold with label glb E x => lower_bound E x ∧ (∀ y, lower_bound E y -> y ≤ x);
 
-Todo sup_in_Q_not_exits: ~ ∃ x, is_q x ∧ lub ({a | a * a < 2.}) x; 
+Todo sup_in_Q_not_exits: ~ ∃ x, x ∈ ℚ ∧ lub ({a | a * a < 2.}) x;
+
+Axiom extR: U;
+Axiom Fin: ℝ -> extR;
+Axiom p_infty: extR;
+Axiom m_infty: extR;
+Axiom Rext_total: ∀ r: extR, r = p_infty ∨ r = m_infty ∨ ∃ x, r = Fin x;
+
+Axiom real: extR -> ℝ;
+Axiom real_fin: ∀ r: ℝ, real (Fin r) = r;
+
+Definition is_Fin := λ r: extR, Fin (real r) = r;
+
+Axiom extR_lt: ∀ a b: ℝ, a < b -> Fin a < Fin b; 
+Axiom extR_le: ∀ a b: ℝ, a ≤ b -> Fin a ≤ Fin b;
+Axiom p_infty_ge: ∀ r: extR, r ≤ p_infty;
+Axiom m_infty_le: ∀ r: extR, m_infty ≤ r;
+
+Todo extRtotal_order: ∀ x a: extR, x = a ∨ x < a ∨ x > a;
+
+Axiom Fin_plus: ∀ x y: ℝ, Fin x + Fin y = Fin (x + y);
+Axiom p_infty_plus: ∀ r: extR, ~ r = m_infty -> r + p_infty = p_infty;
+Axiom m_infty_plus: ∀ r: extR, ~ r = p_infty -> r + m_infty = m_infty;
+Axiom extR_comm: ∀ x y: extR, x + y = y + x;
+
+Axiom Fin_minus: ∀ x y: ℝ, Fin x - Fin y = Fin (x - y);
+Axiom p_infty_minus: ∀ r: extR, ~ r = p_infty -> r - p_infty = m_infty;
+Axiom m_infty_minus: ∀ r: extR, ~ r = m_infty -> r - m_infty = p_infty;
+
+
+Axiom Fin_mult: ∀ x y: ℝ, Fin x * Fin y = Fin (x * y);
+Axiom p_infty_mult: p_infty * p_infty = p_infty;
+Axiom m_infty_mult: m_infty * m_infty = p_infty;
+Axiom p_infty_mult_Fin_pos: ∀ r: ℝ, r > 0. -> Fin r * p_infty = p_infty;
+Axiom p_infty_mult_Fin_neg: ∀ r: ℝ, r < 0. -> Fin r * p_infty = m_infty;
+Axiom m_infty_mult_Fin_pos: ∀ r: ℝ, r > 0. -> Fin r * m_infty = m_infty;
+Axiom m_infty_mult_Fin_neg: ∀ r: ℝ, r < 0. -> Fin r * m_infty = p_infty;
+
+Axiom Fin_div: ∀ x y: ℝ, (Fin x) / (Fin y) = x / y;
+Axiom p_infty_div: ∀ r: ℝ, (Fin r) / p_infty = 0.;
+Axiom m_infty_div: ∀ r: ℝ, (Fin r) / m_infty = 0.;
+
+Definition is_cut := λ S: set ℝ, (∀ a b, a < b -> b ∈ S -> a ∈ S) ∧ (∀ a, a ∈ S -> ∃ b, a < b ∧ b ∈ S);

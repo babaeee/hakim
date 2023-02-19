@@ -154,6 +154,7 @@ fn uniop() {
     parse_pretty("2. * 3. / 5. + 4.");
     parse_pretty("∀ x: ℝ, x + 0. = x");
     parse_pretty("2. ^ 3. * 4.");
+    parse_pretty("- 2.");
 }
 
 #[test]
@@ -201,6 +202,7 @@ fn sets() {
     parse_pretty("{2} ∩ {}");
     parse_pretty("{1, 2, 3}");
     parse_not_pretty("set_from_func ℤ (lt ℤ 5)", "{ x: ℤ | 5 < x }");
+    parse_pretty("ℚ");
 }
 
 #[test]

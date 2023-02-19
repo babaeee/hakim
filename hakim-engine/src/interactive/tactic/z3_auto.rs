@@ -377,6 +377,15 @@ impl<'a> Z3Manager<'a> {
                                         .into(),
                                 );
                             }*/
+                            "neg" => {
+                                if detect_z_ty(op1) {
+                                    let op = self.convert_int_term(op2.clone())?;
+                                    return Some((-op).into());
+                                } else if detect_r_ty(op1) {
+                                    let op = self.convert_real_term(op2.clone())?;
+                                    return Some((-op).into());
+                                }
+                            }
                             _ => (),
                             //     "minus" => minus(
                             //         term_ref_to_arith(op1.clone(), arena),
