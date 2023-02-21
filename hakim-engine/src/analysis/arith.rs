@@ -257,10 +257,6 @@ fn pow_to_arith<N: ConstRepr>(
             return r;
         }
     }
-    //   if let Term::NumberR { value, point } = op2.as_ref() && point == 0 && value < 6 {
-    //       let exp = term_ref_to_arith(op1, arena);
-    //     repeat(exp).to_
-    //  }
     atom_normalizer(app_ref!(pow(), op1, op2))
 }
 

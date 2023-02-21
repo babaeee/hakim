@@ -330,6 +330,7 @@ fn sigma() {
     parse_not_pretty("λ f: ℤ → ℤ, sigma 0 5 f", "λ f: ℤ → ℤ, Σ x in [0, 5) f x");
     parse_pretty("Σ x in [0, 5) x * x");
     parse_pretty("Σ i in [0, 5) 12");
+    parse_error("(1 + 2) ^ 0 = Σ i in [0, 0 + 1) cm 0 i * 1 ^ i * 2 ^ (0 - i)");
 }
 
 #[test]
@@ -361,6 +362,7 @@ fn max_width() {
   ∀ P: ℤ → Universe,
     (∀ n: ℤ, k ≤ n → (∀ m: ℤ, k ≤ m → m < n → P m) → P n) → ∀ n: ℤ, k ≤ n → P n"#,
     );
+    
 }
 
 #[test]
