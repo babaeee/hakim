@@ -59,8 +59,14 @@ impl From<i32> for BigFraction {
 impl TryFrom<BigFraction> for i32 {
     type Error = ();
 
-    fn try_from(_: BigFraction) -> std::result::Result<Self, Self::Error> {
-        todo!()
+    fn try_from(f: BigFraction) -> std::result::Result<Self, Self::Error> {
+        if f.soorat.clone() % f.makhraj.clone() == 0.into() {
+            let Ok(ans) = i32::try_from(f.soorat / f.makhraj) else {
+                return Err(());
+            };
+            return Ok(ans);
+        }
+        Err(())
     }
 }
 
