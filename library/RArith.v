@@ -82,8 +82,15 @@ Todo upper_bound_fold: ∀ E: set ℝ, ∀ x, (∀ y, y ∈ E -> y ≤ x) -> upp
 Suggest hyp default apply upper_bound_unfold in $n with label upper_bound E x => ∀ y, y ∈ E -> y ≤ x;
 Suggest goal default apply upper_bound_fold with label upper_bound E x => ∀ y, y ∈ E -> y ≤ x;
 
+Definition bounded_abow := λ E: set ℝ, (∃ x, upper_bound E x);
+
+Todo bounded_abow_unfold: ∀ E: set ℝ, bounded_abow E -> (∃ x, upper_bound E x);
+Todo bounded_abow_fold: ∀ E: set ℝ, (∃ x, upper_bound E x) -> bounded_abow E;
+Suggest hyp default apply bounded_abow_unfold in $n with label bounded_abow E => (∃ x, upper_bound E x);
+Suggest goal default apply bounded_abow_fold with label bounded_abow E => (∃ x, upper_bound E x);
+
 Definition lower_bound := λ E: set ℝ, λ x, ∀ y, y ∈ E -> x ≤ y;
- 
+
 Todo lower_bound_unfold: ∀ E: set ℝ, ∀ x, lower_bound E x -> ∀ y, y ∈ E -> x ≤ y;
 Todo lower_bound_fold: ∀ E: set ℝ, ∀ x, (∀ y, y ∈ E -> x ≤ y) -> lower_bound E x;
 Suggest hyp default apply lower_bound_unfold in $n with label lower_bound E x => ∀ y, y ∈ E -> x ≤ y;
@@ -145,4 +152,16 @@ Axiom Fin_div: ∀ x y: ℝ, (Fin x) / (Fin y) = x / y;
 Axiom p_infty_div: ∀ r: ℝ, (Fin r) / p_infty = 0.;
 Axiom m_infty_div: ∀ r: ℝ, (Fin r) / m_infty = 0.;
 
-Definition is_cut := λ S: set ℝ, (∀ a b, a < b -> b ∈ S -> a ∈ S) ∧ (∀ a, a ∈ S -> ∃ b, a < b ∧ b ∈ S);
+Definition is_cut := λ S: set ℝ, ~ (∀ a, a ∈ ℚ -> a ∈ S) ∧ (∃ a, a ∈ S) ∧ (∀ a, a ∈ S -> a ∈ ℚ) ∧ (∀ a b, a ∈ ℚ -> a < b -> b ∈ S -> a ∈ S) ∧ (∀ a, a ∈ S -> ∃ b, a < b ∧ b ∈ S);
+
+Axiom cut: ℝ -> set ℝ;
+Axiom r_is_cut: ∀ r: ℝ, is_cut (cut r);
+Axiom cut_le: ∀ a b, cut a ⊆ cut b -> a ≤ b;
+Todo cut_eq: ∀ a b, cut a = cut b -> a = b;
+
+Axiom rcut: set ℝ → ℝ;
+Axiom rcut_of_cut: ∀ r: ℝ rcut (cut r) = r;
+Axiom cut_have_rcut: ∀ S: set ℝ, is_cut S -> ∃ r: ℝ, rcut S = r;
+Todo cut_of_rcut: ∀ S: set ℝ, is_cut S -> cut (rcut S) = S;
+
+Todo lub_prop: ∀ E: set ℝ, (∃ x, x ∈ E) -> bounded_abow E -> ∃ a, lub E a;
