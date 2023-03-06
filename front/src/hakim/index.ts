@@ -256,13 +256,23 @@ export const spanPosOfHyp = async (
   l: number,
   r: number
 ): Promise<number | undefined> => {
-  return instance.pos_of_span_hyp({ hyp, l, r });
+  const result = await instance.pos_of_span_hyp({ hyp, l, r });
+  if (typeof result === "string") {
+    alert(result);
+    return;
+  }
+  return result;
 };
-export const spanPosOfGoal = (
+export const spanPosOfGoal = async (
   l: number,
   r: number
 ): Promise<number | undefined> => {
-  return instance.pos_of_span_goal({ l, r });
+  const result = await instance.pos_of_span_goal({ l, r });
+  if (typeof result === "string") {
+    alert(result);
+    return;
+  }
+  return result;
 };
 
 const parenSplit = (txt: string): string[] => {

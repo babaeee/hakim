@@ -42,12 +42,12 @@ pub enum Command {
     },
     PosOfSpanHyp {
         hyp: String,
-        l: usize,
-        r: usize,
+        l: i32,
+        r: i32,
     },
     PosOfSpanGoal {
-        l: usize,
-        r: usize,
+        l: i32,
+        r: i32,
     },
     AnswerQuestion(String),
     Search(String),
@@ -256,14 +256,20 @@ pub fn run_command(command: Command, state: &mut State) -> String {
             serialize(state.session.as_mut().unwrap().action_of_tactic(&tactic))
         }
         TryTactic(tactic) => serialize(state.session.as_ref().unwrap().try_tactic(&tactic)),
-        PosOfSpanHyp { hyp, l, r } => serialize(
-            state
-                .session
-                .as_ref()
-                .unwrap()
-                .pos_of_span_hyp(&hyp, (l, r)),
-        ),
+        PosOfSpanHyp { hyp, l, r } => {
+            let Ok(l) = l.try_into() else { return serialize("negative bound") };
+            let Ok(r) = r.try_into() else { return serialize("negative bound") };
+            serialize(
+                state
+                    .session
+                    .as_ref()
+                    .unwrap()
+                    .pos_of_span_hyp(&hyp, (l, r)),
+            )
+        }
         PosOfSpanGoal { l, r } => {
+            let Ok(l) = l.try_into() else { return serialize("negative bound") };
+            let Ok(r) = r.try_into() else { return serialize("negative bound") };
             serialize(state.session.as_ref().unwrap().pos_of_span_goal((l, r)))
         }
         ChangeZ3Timeout(t) => {
