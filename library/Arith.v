@@ -210,6 +210,8 @@ Axiom abs_eq: ∀ a: ℤ, |a| = a ∨ |a| = -a;
 
 Todo ex_min: ∀ P: ℤ -> U, ∀ k, (∃ x, k < x ∧ P x) -> (∃ x, k < x ∧ P x ∧ (∀ y, k < y -> P y -> x ≤ y));  
 
+Todo ex_first_true: ∀ P: ℤ → U, ∀ k: ℤ, ~ P k -> ~ (∀ n, n > k -> ~ P n) -> ∃ n, n > k ∧ P n ∧ (∀ x, x ≥ k -> x < n -> ~ P x);
+
 Definition even := λ x: ℤ, ∃ k: ℤ, x = 2 * k;
 Theorem even_unfold: ∀ x: ℤ, even x -> ∃ k: ℤ, x = 2 * k;
 Proof; unfold even; intros; assumption; Qed;

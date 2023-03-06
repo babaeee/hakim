@@ -37,7 +37,7 @@ fn convert(
                     }
                     if let Term::App { func, op: op2 } = op.as_ref() {
                         if let Term::App { func, op: op1 } = func.as_ref() {
-                            if let Term::App { func, op: _ } = func.as_ref() {
+                            if let Term::App { func, op: ty } = func.as_ref() {
                                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                                     match unique_name.as_str() {
                                         "plus" | "minus" | "mult" => {
@@ -48,7 +48,7 @@ fn convert(
                                                 );
                                         }
                                         "div" => {
-                                            if detect_z_ty(op1) {
+                                            if detect_z_ty(ty) {
                                                 return LogicValue::True;
                                             }
                                             return convert(in_q_term(op1.clone()), _logic_arena)
@@ -190,7 +190,7 @@ mod tests {
     fn rational_numbers_checks() {
         success("2. ∈ ℚ ");
         success("∀ x y z t, x ∈ ℚ -> y ∈ ℚ -> z ∈ ℚ -> t ∈ ℚ -> x * y + z - t ∈ ℚ ");
-        success("2 / 3 ∈ ℚ");
+        success("∀ n, 1. - n / 1 * 1. ∈ ℚ");
     }
     #[test]
     fn eq_ext_r_tests() {
