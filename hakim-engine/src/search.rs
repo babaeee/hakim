@@ -163,25 +163,7 @@ mod tests {
 
     #[test]
     fn dont_stack_overflow() {
-        check_search(
-            "?x -> ?x -> ?x -> ?x",
-            r"
-        P_hold_for_multi
-        P_hold_for_multi_not_complete
-        contpos
-        ex_proof
-        if_f
-        iff_imp_l
-        iff_imp_r
-        imply_trans
-        list_induction_len
-        set_from_func_unfold
-        set_induction
-        z_induction_simple
-        z_induction_strong
-        ",
-            DEFAULT_LIBS,
-        );
+        do_search("?x -> ?x -> ?x -> ?x");
     }
 
     #[test]

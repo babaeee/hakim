@@ -184,13 +184,14 @@ impl Engine {
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {
+        let name = name.trim();
         if !name.starts_with('/') {
             return Err(Error::UnknownLibrary(name.to_string()));
         }
         let mut find = false;
         for lib in all_names() {
             if let Some(rest) = lib.strip_prefix(name) {
-                if !rest.starts_with('/') && !name.ends_with('/') {
+                if !rest.is_empty() && !rest.starts_with('/') && !name.ends_with('/') {
                     continue;
                 }
                 find = true;
