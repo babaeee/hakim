@@ -161,7 +161,6 @@ impl InferResults {
             }
         });
         if need_var {
-            dbg!(&t);
             return Err(WildNeedLocalVar(i).into());
         }
         self.set(i, t)

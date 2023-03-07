@@ -184,10 +184,21 @@ impl Engine {
     }
 
     pub fn load_library(&mut self, name: &str) -> Result<()> {
+        if !name.starts_with('/') {
+            return Err(Error::UnknownLibrary(name.to_string()));
+        }
+        let mut find = false;
         for lib in all_names() {
-            if lib.starts_with(name) {
+            if let Some(rest) = lib.strip_prefix(name) {
+                if !rest.starts_with('/') && !name.ends_with('/') {
+                    continue;
+                }
+                find = true;
                 self.load_library_single(&lib)?;
             }
+        }
+        if !find {
+            return Err(Error::UnknownLibrary(name.to_string()));
         }
         Ok(())
     }
@@ -382,6 +393,13 @@ pub mod tests {
         assert_eq!(structural_print(&term), "(((plus ℤ) 2) 3)");
         let term = eng.parse_text("2 + 3 = 5").unwrap();
         assert_eq!(structural_print(&term), "(((eq ℤ) (((plus ℤ) 2) 3)) 5)");
+    }
+
+    #[test]
+    fn unknown_library() {
+        let mut eng = build_engine(EngineLevel::Empty);
+        assert!(eng.load_library("/Goodzilla").is_err());
+        assert!(eng.load_library("/A").is_err());
     }
 
     #[test]
