@@ -67,6 +67,23 @@ fn proof_f_equal() {
 }
 
 #[test]
+fn dont_panic_on_mismatched_paren_in_seq() {
+    run_interactive_to_fail(
+        F_EQUAL,
+        r#"
+    intros t1
+    intros t2
+    intros f
+    intros a
+    intros b
+    intros eq_proof
+    rewrite eq_proof
+    "#,
+        "Seq (ad",
+    );
+}
+
+#[test]
 fn check_undo() {
     run_interactive_to_end(
         F_EQUAL,

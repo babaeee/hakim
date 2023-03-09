@@ -113,7 +113,7 @@ impl From<Session> for NaturalProof {
                     tactic,
                     children,
                 } => {
-                    let tacvec = smart_split(tactic);
+                    let tacvec = smart_split(tactic).unwrap();
                     match tacvec[0].as_str() {
                         "intros" => Sibling(
                             Box::new(Statement(intros(frame, pt[children[0]].frame()))),

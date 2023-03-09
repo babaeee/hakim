@@ -69,7 +69,7 @@ pub struct Session {
     undone: im::Vector<HistoryRecord>,
 }
 
-fn smart_split(text: &str) -> Vec<String> {
+fn smart_split(text: &str) -> Result<Vec<String>, tactic::Error> {
     let mut r = vec![];
     let mut s = "".to_string();
     let mut d = 0;
@@ -100,7 +100,11 @@ fn smart_split(text: &str) -> Vec<String> {
     if !s.is_empty() {
         r.push(s);
     }
-    r
+    if d != 0 {
+        Err(tactic::Error::MismatchedParen)
+    } else {
+        Ok(r)
+    }
 }
 
 impl Session {
@@ -311,7 +315,7 @@ impl Snapshot {
         }
         let mut snapshot = self.clone();
         if let Some(x) = line.strip_prefix("Seq ") {
-            let tacs = smart_split(x);
+            let tacs = smart_split(x)?;
             for tac in tacs {
                 if let Some(tac) = tac.strip_prefix('(') {
                     if let Some(tac) = tac.strip_suffix(')') {
@@ -441,7 +445,7 @@ impl Frame {
         suggest_on_hyp(self, hyp_name)
     }
     pub fn run_tactic(&self, line: &str) -> Result<Vec<Self>, tactic::Error> {
-        let parts = smart_split(line);
+        let parts = smart_split(line)?;
         let mut parts = parts.iter().map(|x| x.as_str());
         let name = parts.next().ok_or(tactic::Error::EmptyTactic)?;
         if self.engine.is_disabled_tactic(name) {

@@ -57,6 +57,7 @@ pub enum Error {
     CanNotFindInstance(Box<FindInstance>),
     ContextDependOnHyp(String, TermRef),
     TermIsNotType(TermRef),
+    MismatchedParen,
 }
 
 impl Error {
