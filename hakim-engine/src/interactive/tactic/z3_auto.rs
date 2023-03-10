@@ -49,6 +49,7 @@ struct Z3Manager<'a> {
     unknowns: Z3Names,
     finite_axioms: Cell<HashSet<usize>>,
     solver: Solver<'a>,
+    is_calculator: bool,
 }
 
 impl<'a> SigmaSimplifier for &Z3Manager<'a> {
@@ -223,6 +224,9 @@ impl<'a> Z3Manager<'a> {
     fn convert_general_term(&self, t: TermRef) -> Option<ast::Dynamic<'a>> {
         match t.as_ref() {
             Term::Axiom { ty, unique_name } => {
+                if self.is_calculator {
+                    return None;
+                }
                 let sort = self.convert_sort(ty)?;
                 return Some(ast::Dynamic::new_const(
                     self.ctx,
@@ -420,6 +424,9 @@ impl<'a> Z3Manager<'a> {
             }
             Term::Wild { .. } => unreachable!(),
         }
+        if self.is_calculator {
+            return None;
+        }
         let ty = type_of(t.clone()).unwrap();
         let sort = self.convert_sort(&ty)?;
         Some(self.generate_unknown(t, sort))
@@ -521,6 +528,7 @@ fn z3_can_solve(frame: Frame) -> bool {
         unknowns: Z3Names::default(),
         finite_axioms: Cell::default(),
         solver,
+        is_calculator: frame.engine.params.get("auto_level") == Some(&"calculator".to_string()),
     };
     for hyp in frame.hyps {
         println!("{:?}", &hyp.ty.clone());

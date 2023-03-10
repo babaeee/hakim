@@ -4,7 +4,7 @@
   x: 0
   y: 0
   children: !include ./tutorial.yml
-  engineParams: 'lia=calculator'
+  engineParams: "auto_level=calculator"
 - id: logical propositions
   name: گزاره های منطفی
   type: collection
@@ -18,8 +18,8 @@
   x: 0
   y: 1
   dependencies:
-   - tutorial
-   - logical propositions
+    - tutorial
+    - logical propositions
   children: !include ./logic.yml
   engineParams: "disabled_tactics=assumption"
 - id: equality
@@ -28,7 +28,7 @@
   x: -1
   y: 2
   dependencies:
-   - logic
+    - logic
   children: !include ./todo.yml
 - id: induction
   name: استقرا
@@ -36,7 +36,7 @@
   x: 1
   y: 2
   dependencies:
-   - logic
+    - logic
   children: !include ./todo.yml
 - id: number_theory
   type: collection
@@ -44,6 +44,6 @@
   y: 3
   name: نظریه اعداد
   dependencies:
-   - induction
-   - equality
+    - induction
+    - equality
   children: !include ./todo.yml
