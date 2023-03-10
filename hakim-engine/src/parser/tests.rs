@@ -362,7 +362,6 @@ fn max_width() {
   ∀ P: ℤ → Universe,
     (∀ n: ℤ, k ≤ n → (∀ m: ℤ, k ≤ m → m < n → P m) → P n) → ∀ n: ℤ, k ≤ n → P n"#,
     );
-    
 }
 
 #[test]
