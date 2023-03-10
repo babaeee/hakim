@@ -9,4 +9,5 @@ edition = "2021"
 actix-cors = "0.6.4"
 actix-web = "4.2.1"
 hakim-json = { path = "../hakim-json" }
+open = "4.0.0"
 serde_json = "1.0.91"

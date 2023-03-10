@@ -25,6 +25,9 @@ async fn hello(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    if open::that("https://proof.babaeee.ir").is_err() {
+        println!("Failed to open https://proof.babaeee.ir due some error. Open it manually.");
+    }
     let (command_p, command_n) = channel();
     let (answer_p, answer_n) = channel();
     thread::spawn(move || {
