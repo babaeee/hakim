@@ -121,7 +121,6 @@ impl InferResults {
     }
 
     fn set(&mut self, i: usize, term: TermRef) -> Result<()> {
-        let term_clone = term.clone();
         match VarCategory::from(i) {
             VarCategory::Term(i) => self.terms[i] = term,
             VarCategory::Ty(i) => self.tys[i] = term,
@@ -131,21 +130,23 @@ impl InferResults {
         for _ in 0..self.n {
             self.relax()?;
         }
-        let mut loop_free = true;
+        self.assert_loop_free()
+    }
+
+    fn assert_loop_free(&mut self) -> Result<()> {
+        let mut loop_free = Ok(());
         for x in 0..RESERVED_SPACE * self.n {
             let t = self.get(x);
             if !matches!(t.as_ref(), Term::Wild { index, .. } if *index == x)
                 && predict_wild(&t, &|j, _| x == j)
             {
-                loop_free = false;
+                loop_free = Err(LoopOfInference(x, t));
             }
         }
-        if loop_free {
-            Ok(())
-        } else {
-            Err(LoopOfInference(i, term_clone).into())
-        }
+        loop_free?;
+        Ok(())
     }
+
     fn set_with_scope(&mut self, i: usize, scope: &[usize], term: TermRef) -> Result<()> {
         let mut need_var = false;
         let t = map_foreign_vars(term, |vi, is_var| {
@@ -160,7 +161,6 @@ impl InferResults {
             }
         });
         if need_var {
-            dbg!(&t);
             return Err(WildNeedLocalVar(i).into());
         }
         self.set(i, t)
@@ -185,6 +185,19 @@ impl InferResults {
         fill_wild(term, &|i, s| self.get_with_scope(i, s.unwrap()))
     }
 
+    // pub fn fill_in_context_of_variable(&self, term: TermRef, v: usize) -> Result<TermRef> {
+    //     if let Term::Wild { scope: None, .. } = term.as_ref() {
+    //         return Ok(term);
+    //     }
+    //     fill_wild(term, &|i, s| {
+    //         if i == v {
+    //             Err(LoopOfInference(i))
+    //         } else {
+    //             self.get_with_scope(i, s.unwrap())
+    //         }
+    //     })
+    // }
+
     fn relax(&mut self) -> Result<()> {
         self.terms = self
             .terms
@@ -196,7 +209,7 @@ impl InferResults {
             .iter()
             .map(|x| self.fill(x.clone()))
             .collect::<Result<_>>()?;
-        Ok(())
+        self.assert_loop_free()
     }
 }
 

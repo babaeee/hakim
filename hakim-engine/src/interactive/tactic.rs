@@ -35,7 +35,7 @@ mod assumption;
 pub(crate) use assumption::assumption;
 
 mod z3_auto;
-pub(crate) use z3_auto::z3_auto;
+pub use z3_auto::{z3_auto, Z3_TIMEOUT};
 
 #[derive(Debug)]
 pub enum Error {
@@ -57,6 +57,7 @@ pub enum Error {
     CanNotFindInstance(Box<FindInstance>),
     ContextDependOnHyp(String, TermRef),
     TermIsNotType(TermRef),
+    MismatchedParen,
 }
 
 impl Error {

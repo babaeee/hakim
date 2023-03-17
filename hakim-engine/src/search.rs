@@ -1,8 +1,7 @@
 use crate::{
     brain::{
-        get_forall_depth,
         infer::{match_and_infer, InferResults, VarCategory},
-        subst,
+        subst, TermRef,
     },
     engine::{Engine, Result},
     parser::is_valid_ident,
@@ -23,48 +22,49 @@ pub fn search(engine: &Engine, query: &str) -> Result<Vec<String>> {
         return Ok(search_with_name(engine, query));
     }
     let (qt, infer_cnt) = engine.parse_text_with_wild(query)?;
-    let forall_cnt = get_forall_depth(&qt);
     Ok(engine
         .lib_iter()
-        .filter_map(|(name, ty)| {
+        .filter_map(|(name, mut ty)| {
             let mut infers = InferResults::new(infer_cnt);
-            let their_forall_cnt = get_forall_depth(&ty);
-            if forall_cnt > their_forall_cnt {
-                return None;
+            if is_match(qt.clone(), ty.clone(), infers.clone(), infer_cnt) {
+                return Some(name.to_string());
             }
-            let forall_diff = their_forall_cnt - forall_cnt;
-            let mut ty_subst = ty;
-            for _ in 0..forall_diff {
-                if let Term::Forall(Abstraction { body, .. }) = ty_subst.as_ref() {
-                    ty_subst = subst(body.clone(), infers.add_var_top_level());
-                } else {
-                    return None;
+            while let Term::Forall(Abstraction { body, .. }) = ty.as_ref() {
+                ty = subst(body.clone(), infers.add_var_top_level());
+                if is_match(qt.clone(), ty.clone(), infers.clone(), infer_cnt) {
+                    return Some(name.to_string());
                 }
             }
-            match_and_infer(qt.clone(), ty_subst, &mut infers).ok()?;
-            let mut good = vec![false; infer_cnt];
-            for i in infer_cnt..infers.n {
-                let t = infers.get(i);
-                if let Term::Wild { index, .. } = t.as_ref() {
-                    let index = *index / 2;
-                    if index < infer_cnt {
-                        good[index] = true;
-                    }
-                }
-            }
-            for (i, is_good) in good.into_iter().enumerate() {
-                if is_good {
-                    continue;
-                }
-                if let Term::Wild { index, .. } = &infers.terms[i].as_ref() {
-                    if VarCategory::from(*index) == VarCategory::Term(i) {
-                        return None;
-                    }
-                }
-            }
-            Some(name.to_string())
+            None
         })
         .collect())
+}
+
+fn is_match(qt: TermRef, ty: TermRef, mut infers: InferResults, infer_cnt: usize) -> bool {
+    if match_and_infer(qt, ty, &mut infers).is_err() {
+        return false;
+    }
+    let mut good = vec![false; infer_cnt];
+    for i in infer_cnt..infers.n {
+        let t = infers.get(i);
+        if let Term::Wild { index, .. } = t.as_ref() {
+            let index = *index / 2;
+            if index < infer_cnt {
+                good[index] = true;
+            }
+        }
+    }
+    for (i, is_good) in good.into_iter().enumerate() {
+        if is_good {
+            continue;
+        }
+        if let Term::Wild { index, .. } = &infers.terms[i].as_ref() {
+            if VarCategory::from(*index) == VarCategory::Term(i) {
+                return false;
+            }
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -73,16 +73,20 @@ mod tests {
 
     use crate::engine::Engine;
 
-    fn build_engine() -> Engine {
+    const DEFAULT_LIBS: &str = r#"/Arith
+    /Logic
+    /Eq"#;
+
+    fn build_engine(libs: &str) -> Engine {
         let mut eng = Engine::default();
-        eng.load_library("/Arith").unwrap();
-        eng.load_library("/Logic").unwrap();
-        eng.load_library("/Eq").unwrap();
+        for lib in libs.lines() {
+            eng.load_library(lib).unwrap();
+        }
         eng
     }
 
     fn do_search(query: &str) {
-        let eng = build_engine();
+        let eng = build_engine(DEFAULT_LIBS);
         let r = eng.search(query).unwrap();
         for x in r {
             let r = catch_unwind(|| {
@@ -93,8 +97,8 @@ mod tests {
         }
     }
 
-    fn check_search(query: &str, list: &str) {
-        let eng = build_engine();
+    fn check_search(query: &str, list: &str, libs: &str) {
+        let eng = build_engine(libs);
         let mut result = eng.search(query).unwrap();
         let mut items = list
             .lines()
@@ -114,6 +118,7 @@ mod tests {
             lt_plus_r
             lt_plus_l
         "#,
+            DEFAULT_LIBS,
         );
     }
 
@@ -125,6 +130,29 @@ mod tests {
             lt_plus_r
             lt_plus_l
         "#,
+            DEFAULT_LIBS,
+        );
+    }
+
+    #[test]
+    fn forall_depth() {
+        check_search(
+            "forall A B:?, is_cut A -> ?",
+            r#"
+        P_hold_for_multi
+        P_hold_for_multi_not_complete
+        cut_minus
+        cut_mult_pos
+        cut_mult_pos_is_cut
+        cut_plus
+        cut_plus_is_cut
+        ex_proof
+        set_from_func_unfold
+        set_induction
+        z_induction_simple
+        z_induction_strong
+        "#,
+            "/RArith",
         );
     }
 
@@ -135,7 +163,12 @@ mod tests {
 
     #[test]
     fn dont_stack_overflow() {
-        check_search("?x -> ?x -> ?x -> ?x", "if_f");
+        do_search("?x -> ?x -> ?x -> ?x");
+    }
+
+    #[test]
+    fn dont_stack_overflow2() {
+        do_search("∃ x, ? < x / 1 * ?");
     }
 
     #[test]

@@ -37,14 +37,15 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Build wasm
-        run: |
-          cd hakim-json
-          EMCC_CFLAGS="-s TOTAL_STACK=32MB" cargo build -vv --release --target wasm32-unknown-emscripten
-          cd ..
-          node scripts/patch-emscripten.js ./target/wasm32-unknown-emscripten/release/hakim-json.js
-          cp ./target/wasm32-unknown-emscripten/release/hakim-json.js ./front/static/.
-          cp ./target/wasm32-unknown-emscripten/release/hakim_json.wasm ./front/static/.
+      # enable in wasm mode:
+      # - name: Build wasm
+      #   run: |
+      #     cd hakim-json
+      #     EMCC_CFLAGS="-s TOTAL_STACK=32MB" cargo build -vv --release --target wasm32-unknown-emscripten
+      #     cd ..
+      #     node scripts/patch-emscripten.js ./target/wasm32-unknown-emscripten/release/hakim-json.js
+      #     cp ./target/wasm32-unknown-emscripten/release/hakim-json.js ./front/static/.
+      #     cp ./target/wasm32-unknown-emscripten/release/hakim_json.wasm ./front/static/.
 
       # Runs a set of commands using the runners shell
       - name: Build www

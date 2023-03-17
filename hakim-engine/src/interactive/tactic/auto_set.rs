@@ -553,7 +553,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "z3 does not support finite"]
     fn finite() {
         success("finite {2}");
         success("finite {2, 3, 5}");
@@ -565,5 +564,7 @@ mod tests {
         success("∀ S: set ℤ, finite ({2, 3} ∖ S)");
         fail("∀ A B: set ℤ, finite A -> A ⊆ B -> finite B");
         success("∀ A B: set ℤ, finite A -> B ⊆ A -> finite B");
+        success("∀ A: set ℤ, finite A -> finite {A}");
+        fail("∀ A: set ℤ, finite {A} -> finite A");
     }
 }

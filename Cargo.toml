@@ -1,6 +1,16 @@
 [workspace]
 
-members = ["hakim-engine", "hakim-cli", "hakim-wasm", "hakim-json"]
+members = [
+    "hakim-engine",
+    "hakim-cli",
+    "hakim-wasm",
+    "hakim-json",
+    "hakim-server",
+]
+
+[profile.dev]
+# These are needed to prevent timeout in tests
+opt-level = 3
 
 [profile.release.package.hakim-wasm]
 # Tell `rustc` to optimize for small code size.

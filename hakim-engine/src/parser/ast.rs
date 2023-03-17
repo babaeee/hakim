@@ -507,7 +507,7 @@ pub fn ast_to_term(
                 let a = v.next().unwrap();
                 let b = v.next().unwrap();
                 let mut result = make_pair(b, a);
-                for x in v.into_iter().rev() {
+                for x in v.rev() {
                     result = make_pair(x, result);
                 }
                 result

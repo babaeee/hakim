@@ -42,14 +42,14 @@ pub fn pow() -> TermRef {
 pub fn minus() -> TermRef {
     term_ref!(axiom "minus", forall u(), forall v0(), forall v1(), v2())
 }
+pub fn neg() -> TermRef {
+    term_ref!(axiom "neg", forall u(), forall v0(), v1())
+}
 pub fn mult() -> TermRef {
     term_ref!(axiom "mult", forall u(), forall v0(), forall v1(), v2())
 }
 pub fn div() -> TermRef {
     term_ref!(axiom "div", forall u(), forall v0(), forall v1(), r())
-}
-pub fn is_q() -> TermRef {
-    term_ref!(axiom "is_q", forall r(), u())
 }
 pub fn ex() -> TermRef {
     term_ref!(axiom "ex", forall u(), forall term_ref!(forall v0(), u()), u())
@@ -79,6 +79,9 @@ pub fn set_singleton() -> TermRef {
 }
 pub fn finite() -> TermRef {
     term_ref!(axiom "finite", forall u(), forall app_ref!(set(), v0()), u())
+}
+pub fn q_set() -> TermRef {
+    term_ref!(axiom "ℚ", app_ref!(set(), r()))
 }
 pub fn inset() -> TermRef {
     term_ref!(axiom "inset", forall u(), forall v0(), forall app_ref!(set(), v1()), u())
@@ -138,6 +141,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("U".to_string(), u());
     name_dict.insert("ℤ".to_string(), z());
     name_dict.insert("ℝ".to_string(), r());
+    name_dict.insert("ℚ".to_string(), q_set());
     name_dict.insert("False".to_string(), false_ty());
     name_dict.insert("True".to_string(), true_ty());
     name_dict.insert("div".to_string(), div());
@@ -149,6 +153,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("minus".to_string(), minus());
     name_dict.insert("mod_of".to_string(), mod_of());
     name_dict.insert("mult".to_string(), mult());
+    name_dict.insert("neg".to_string(), neg());
     name_dict.insert("div".to_string(), div());
     name_dict.insert("or".to_string(), or());
     name_dict.insert("lt".to_string(), lt());
@@ -167,7 +172,6 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("inlist".to_string(), inlist());
     name_dict.insert("intersection".to_string(), intersection());
     name_dict.insert("inset".to_string(), inset());
-    name_dict.insert("is_q".to_string(), is_q());
     name_dict.insert("finite".to_string(), finite());
     name_dict.insert("included".to_string(), included());
     name_dict.insert("sigma".to_string(), sigma());

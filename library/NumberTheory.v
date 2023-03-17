@@ -127,6 +127,9 @@ Theorem prime_unfold: ∀ x: ℤ, prime x -> 1 < x ∧ (∀ y: ℤ, 0 < y -> y |
 Proof; unfold prime; intros; assumption; Qed;
 Theorem prime_fold: ∀ x: ℤ, 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x) -> prime x;
 Proof; unfold prime; intros; assumption; Qed;
+Suggest hyp default chain (apply prime_unfold in $n) (destruct $n with (and_ind ? ?) to ($n_pos $n_div)) with label prime x => 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x);
+Suggest goal default apply prime_fold with label prime x => 1 < x ∧ (∀ y: ℤ, 0 < y -> y | x -> y = 1 ∨ y = x);
+
 Theorem contpos_prime_fold: ∀ x: ℤ, ~ prime x -> 1 < x -> ∃ y: ℤ, 1 < y ∧ y < x ∧ y | x; 
 Proof;
     intros;
@@ -206,6 +209,7 @@ Todo prime_divide_mult: ∀ x: ℤ, prime x -> ∀ a b: ℤ, x | a * b -> x | a 
 Axiom gcd: ℤ -> ℤ -> ℤ;
 Axiom gcd_divide: ∀ k x y: ℤ, k | x -> k | y -> k | gcd x y;
 Suggest goal default apply gcd_divide with label k | gcd a b => k | a and k | b;
+Todo gcd_factor: ∀ k x y: ℤ, gcd (k * x) (k * y) = k * gcd x y;
 
 Import /ProductOperator;
 Axiom divide_multi:   ∀ A: set ℤ, ∀ a : ℤ, a ∈ A -> a | multi A;

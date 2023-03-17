@@ -1,6 +1,7 @@
 import { normalPrompt } from "../dialog";
 import { fromRust } from "../i18n";
 import { loadLibText } from "./lib_text";
+import { hakimQueryImpl } from "./network_provider";
 
 declare let window: Window & {
   ask_question: (q: string) => Promise<string>;
@@ -9,6 +10,7 @@ declare let window: Window & {
   hakimQuery: (x: any) => any;
   hakimQueryLoad: Promise<void>;
   hardReset: () => void;
+  instance: Instance;
 };
 
 window.ask_question = (x) => {
@@ -41,8 +43,9 @@ type Instance = {
   [key: string]: (x?: any) => Promise<any>;
 };
 
-await window.hakimQueryLoad;
-window.hakimQuery({ command: "load_lib", arg: window.load_lib_json() });
+// await window.hakimQueryLoad;
+
+let queryLock = false;
 
 const instance: Instance = new Proxy(
   {},
@@ -50,20 +53,40 @@ const instance: Instance = new Proxy(
     get(_, prop) {
       return async (arg: any) => {
         try {
-          let r = window.hakimQuery({ command: prop, arg });
+          while (queryLock) {
+            await new Promise((res) => setTimeout(res, 10));
+          }
+          queryLock = true;
+          let r = await hakimQueryImpl({ command: prop, arg });
           while (r && typeof r === "object" && r.AskQuestion) {
             const answer = await window.ask_question(r.AskQuestion);
-            r = window.hakimQuery({ command: "answer_question", arg: answer });
+            r = await hakimQueryImpl({
+              command: "answer_question",
+              arg: answer,
+            });
           }
+          queryLock = false;
           return r;
         } catch (e) {
           console.log(e);
+          alert(`
+خطا در اتصال به برنامه جانبی. آیا آن را اجرا کرده اید؟
+اگر بدون اجرای برنامه جانبی وارد سایت شده اید، لطفا برنامه را دانلود کرده و اجرا کنید و سپس وارد سایت شوید.
+اگر برنامه جانبی را اجرا کرده بودید و در میانه کار به این پیغام برخوردید، به این \
+معنی است که برنامه با خطا مواجه شده و بسته شده است. می توانید این صفحه را ببندید و برنامه را \
+مجددا اجرا کنید. هم چنین در این صورت فایل گزارشی در کنار برنامه جانبی ساخته می شود. لطفا آن را \
+برای ما ارسال کنید تا بتوانیم این خطا را رفع کنیم.
+          `);
           document.body.innerHTML = "panic";
         }
       };
     },
   }
 );
+
+window.instance = instance;
+
+await instance.load_lib(window.load_lib_json());
 
 if (prevBackup) {
   if (!instance.from_backup(JSON.parse(prevBackup))) {
@@ -180,7 +203,7 @@ export const getNatural = async (): Promise<string> => {
 };
 
 export const tryTactic = (tactic: string): boolean => {
-  return window.hakimQuery({ command: "try_tactic", arg: tactic });
+  return true; //window.hakimQuery({ command: "try_tactic", arg: tactic });
 };
 
 export const check = (query: string): Promise<string> => {
@@ -192,8 +215,13 @@ export type SearchResult = {
   ty: string;
 };
 
-export const searchPattern = async (expr: string): Promise<SearchResult[]> => {
+export const searchPattern = async (
+  expr: string
+): Promise<SearchResult[] | string> => {
   const r = await instance.search(expr);
+  if (typeof r === "string") {
+    return r;
+  }
   return r.map(([a, b]: [string, string]) => {
     return {
       name: a,
@@ -213,8 +241,10 @@ export const setGoal = (
   );
 };
 
-export const runSuggMenuHyp = (hypName: string, i: number) => {
-  // FIXME: return checkErrorAndUpdate(() => instance.run_suggest_menu_hyp(hypName, i));
+export const runSuggMenuHyp = (hyp_name: string, index: number) => {
+  return checkErrorAndUpdate(() =>
+    instance.run_suggest_menu_hyp({ hyp_name, index })
+  );
 };
 
 export const runSuggMenuGoal = (i: number) => {
@@ -229,19 +259,28 @@ export const runSuggDblHyp = (hyp: string) => {
   return checkErrorAndUpdate(() => instance.suggest_dblclk_hyp(hyp));
 };
 
-export const spanPosOfHyp = (
+export const spanPosOfHyp = async (
   hyp: string,
   l: number,
   r: number
-): number | undefined => {
-  // FIXME: const x = instance.pos_of_span_hyp(hyp, l, r);
-  // FIXME: return x;
-  return;
+): Promise<number | undefined> => {
+  const result = await instance.pos_of_span_hyp({ hyp, l, r });
+  if (typeof result === "string") {
+    alert(result);
+    return;
+  }
+  return result;
 };
-export const spanPosOfGoal = (l: number, r: number): number | undefined => {
-  // FIXME: const x = instance.pos_of_span_goal(l, r);
-  // FIXME: return x;
-  return;
+export const spanPosOfGoal = async (
+  l: number,
+  r: number
+): Promise<number | undefined> => {
+  const result = await instance.pos_of_span_goal({ l, r });
+  if (typeof result === "string") {
+    alert(result);
+    return;
+  }
+  return result;
 };
 
 const parenSplit = (txt: string): string[] => {
@@ -317,7 +356,7 @@ export const tryAuto = async (): Promise<TryAutoResult> => {
 
 export type LibraryItemKind = "Import" | "Axiom" | "Suggestion" | "Theorem";
 
-type LibraryData = {
+export type LibraryData = {
   name: string;
   rules: {
     kind: LibraryItemKind;

@@ -5,7 +5,6 @@ pub enum UniOp {
 }
 
 use std::fmt::{Display, Formatter};
-
 use UniOp::*;
 
 use crate::{
@@ -34,15 +33,13 @@ impl UniOp {
         })
     }
 
-    pub fn run_on_term(&self, _: &mut InferGenerator, t: TermRef) -> TermRef {
+    pub fn run_on_term(&self, infer_cnt: &mut InferGenerator, t: TermRef) -> TermRef {
         match self {
             Not => term_ref!(forall t, library::prelude::false_ty()),
-            Neg => app_ref!(
-                library::prelude::minus(),
-                library::prelude::z(),
-                term_ref!(n 0),
-                t
-            ),
+            Neg => {
+                let i = infer_cnt.generate();
+                app_ref!(library::prelude::neg(), term_ref!(_ i), t)
+            }
         }
     }
 
@@ -56,22 +53,21 @@ impl UniOp {
 
     pub(crate) fn detect(term: &crate::brain::Term) -> Option<(Self, TermRef)> {
         if let Some((a, op, b)) = BinOp::detect(term) {
-            match op {
-                BinOp::Imply => {
-                    if let Term::Axiom { unique_name, .. } = b.as_ref() {
-                        if unique_name == "False" {
-                            return Some((Not, a));
-                        }
+            if op == BinOp::Imply {
+                if let Term::Axiom { unique_name, .. } = b.as_ref() {
+                    if unique_name == "False" {
+                        return Some((Not, a));
                     }
                 }
-                BinOp::Minus => {
-                    if let Term::Number { value } = a.as_ref() {
-                        if value == &0.into() {
-                            return Some((Neg, b));
-                        }
+            }
+        }
+        if let Term::App { func, op } = term {
+            if let Term::App { func, op: _ } = func.as_ref() {
+                if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                    if unique_name == "neg" {
+                        return Some((Neg, op.clone()));
                     }
                 }
-                _ => (),
             }
         }
         None

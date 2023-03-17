@@ -77,6 +77,14 @@ pub fn detect_r_ty(ty: &Term) -> bool {
     }
     false
 }
+pub fn detect_q_set(ty: &Term) -> bool {
+    if let Term::Axiom { unique_name, .. } = ty {
+        if unique_name == "ℚ" {
+            return true;
+        }
+    }
+    false
+}
 
 pub fn detect_pair(t: &Term) -> Option<(TermRef, TermRef, TermRef, TermRef)> {
     if let Term::App { func, op: op2 } = t {

@@ -154,6 +154,7 @@ fn uniop() {
     parse_pretty("2. * 3. / 5. + 4.");
     parse_pretty("∀ x: ℝ, x + 0. = x");
     parse_pretty("2. ^ 3. * 4.");
+    parse_pretty("- 2.");
 }
 
 #[test]
@@ -201,6 +202,7 @@ fn sets() {
     parse_pretty("{2} ∩ {}");
     parse_pretty("{1, 2, 3}");
     parse_not_pretty("set_from_func ℤ (lt ℤ 5)", "{ x: ℤ | 5 < x }");
+    parse_pretty("ℚ");
 }
 
 #[test]
@@ -328,6 +330,7 @@ fn sigma() {
     parse_not_pretty("λ f: ℤ → ℤ, sigma 0 5 f", "λ f: ℤ → ℤ, Σ x in [0, 5) f x");
     parse_pretty("Σ x in [0, 5) x * x");
     parse_pretty("Σ i in [0, 5) 12");
+    parse_pretty("(1 + 2) ^ 0 = Σ i in [0, 0 + 1) cm 0 i * 1 ^ i * 2 ^ (0 - i)");
 }
 
 #[test]
