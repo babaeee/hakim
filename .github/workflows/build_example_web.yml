@@ -41,14 +41,16 @@ jobs:
         run: |
           cd hakim-server
           cargo build --release
-      - name: Upload artifacts
-        uses: taiki-e/upload-rust-binary-action@v1
+      - uses: actions/upload-artifact@v3
+        if: matrix.os == 'windows-latest'
         with:
-          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
-          # Note that glob pattern is not supported yet.
-          bin: hakim-server
-          # (required) GitHub token for uploading assets to GitHub Releases.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: hakim-server-windows
+          path: target/release/hakim-server.exe
+      - uses: actions/upload-artifact@v3
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: hakim-server-linux
+          path: target/release/hakim-server
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
