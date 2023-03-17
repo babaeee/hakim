@@ -15,6 +15,7 @@ on:
 jobs:
   build_server:
     strategy:
+      fail-fast: false
       matrix:
         build: [linux, macos, windows]
         include:
