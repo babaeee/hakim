@@ -328,3 +328,15 @@ Todo lub_eq_sup: ∀ A: set ℝ, ∀ s, lub A s -> sup A = s;
 Suggest goal apply lub_eq_sup with label sup A = s => lub A s;
 Todo eq_sup_lub: ∀ A: set ℝ, ∀ s, sup A = s -> lub A s;
 Suggest hyp apply eq_sup_lub in $n with label sup A = s => lub A s;
+
+Todo ceil: ∀ r: ℝ, ∃ n: ℤ, n / 1 ≥ r∧ n / 1 < r + 1.; 
+Todo lt_pow_lt: ∀ x a b: ℝ, x > 1. -> x ^ a < x ^ b -> a < b;
+Todo lt_pow_gt: ∀ x a b: ℝ, 0. < x -> x < 1. -> x ^ a > x ^ b -> a < b;
+Todo pow_lt_lt: ∀ x a b: ℝ, x > 1. -> a < b -> x ^ a < x ^ b;
+Todo pow_lt_gt: ∀ x a b: ℝ, 0. < x -> x < 1. -> a > b -> x ^ a < x ^ b;
+Todo pow_lt_1: ∀ x a: ℝ, x > 1. -> a > 0. -> x ^ a > 1.;
+Todo pow_plus: ∀ x a b: ℝ, x ≥ 0. -> x ^ (a + b) = x ^ a * x ^ b;
+Todo pow_pow: ∀ x a b: ℝ, x ≥ 0. -> (x ^ a) ^ b = x ^ (a * b);
+
+Suggest goal apply pow_plus with label Trivial;
+Suggest goal apply pow_pow with label Trivial;

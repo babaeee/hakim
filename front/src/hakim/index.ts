@@ -264,6 +264,10 @@ export const spanPosOfHyp = async (
   l: number,
   r: number
 ): Promise<number | undefined> => {
+  if (l == null || r == null || l <= -1 || r <= -1) {
+    alert(`l or r is null or negative. l = ${l}, r = ${r}`);
+    return;
+  }
   const result = await instance.pos_of_span_hyp({ hyp, l, r });
   if (typeof result === "string") {
     alert(result);
@@ -275,6 +279,10 @@ export const spanPosOfGoal = async (
   l: number,
   r: number
 ): Promise<number | undefined> => {
+  if (l == null || r == null || l <= -1 || r <= -1) {
+    alert(`l or r is null or negative. l = ${l}, r = ${r}`);
+    return;
+  }
   const result = await instance.pos_of_span_goal({ l, r });
   if (typeof result === "string") {
     alert(result);

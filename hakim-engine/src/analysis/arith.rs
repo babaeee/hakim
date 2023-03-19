@@ -57,6 +57,14 @@ impl ConstRepr for BigInt {
     fn from_term(term: &Term) -> Option<Self> {
         match term {
             Term::Number { value } => Some(value.clone()),
+            Term::NumberR { value, point } => {
+                let makhraj = BigInt::pow(&10.into(), *point as u32);
+                if value % makhraj.clone() == 0.into() {
+                    Some(value / makhraj)
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -253,6 +261,21 @@ fn pow_to_arith<N: ConstRepr>(
             let op1a = term_ref_to_arith(op1, arena);
             for _ in 0i32..v {
                 r = Mult(op1a, arena.alloc(r));
+            }
+            return r;
+        }
+    }
+    if let Some(num) = BigInt::from_term(op2.as_ref()) {
+        if <i32 as Into<BigInt>>::into(-5) <= num && num <= 5i32.into() {
+            let v = i32::abs(num.clone().try_into().unwrap());
+
+            let mut r = Const(1i32.into());
+            let op1a = term_ref_to_arith(op1, arena);
+            for _ in 0i32..v {
+                r = Mult(op1a, arena.alloc(r));
+            }
+            if num.sign() == Sign::Minus {
+                r = Div(arena.alloc(Const(1.into())), arena.alloc(r));
             }
             return r;
         }
