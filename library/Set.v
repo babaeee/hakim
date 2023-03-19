@@ -14,6 +14,14 @@ Todo eq_set_empty: ∀ A: U, ∀ S: set A, S = {} -> ∀ a: A, ~ a ∈ S;
 Todo empty_set_eq: ∀ A: U, ∀ S: set A, (∀ x: A, ~ x ∈ S) -> S = {};
 Suggest goal default apply empty_set_eq with label Trivial;
 
+Definition #1 complement := λ A: U, λ x: set A, {a | ~ a ∈ x};
+
+Todo complement_unfold: ∀ A: U, ∀ x: set A, ∀ a: A, a ∈ complement x -> (~ a ∈ x);
+Todo complement_fold: ∀ A: U, ∀ x: set A, ∀ a: A, (~ a ∈ x) -> a ∈ complement x;
+Todo in_complement_detect: ∀ A: U, ∀ x: set A, ∀ a: A, a ∈ complement x -> a ∈ complement x;
+Suggest hyp default chain (apply in_complement_detect in $n) (apply complement_unfold in $n) with label a ∈ complement x => ~ a ∈ x;
+Suggest goal default apply complement_fold with label a ∈ complement x => ~ a ∈ x;
+
 Theorem singleton_unfold: ∀ A: U, ∀ a b: A, b ∈ {a} -> a = b;
 Proof; intros; auto_set; Qed;
 Theorem singleton_fold: ∀ A: U, ∀ a b: A, a = b -> b ∈ {a}; 

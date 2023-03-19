@@ -15,6 +15,7 @@ import Game from "../../../library/Game.v";
 import Tuples from "../../../library/Tuples.v";
 import EnumerativeCombinatorics from "../../../library/EnumerativeCombinatorics.v";
 import Field from "../../../library/Field.v";
+import MetricSpace from "../../../library/MetricSpace.v";
 
 export const loadLibText = () => {
   return {
@@ -35,5 +36,6 @@ export const loadLibText = () => {
     "/Tuples": Tuples,
     "/EnumerativeCombinatorics": EnumerativeCombinatorics,
     "/Field": Field,
+    "/MetricSpace": MetricSpace,
   };
 };

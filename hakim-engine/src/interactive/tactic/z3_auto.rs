@@ -373,6 +373,17 @@ impl<'a> Z3Manager<'a> {
                                 }
                                 _ => (),
                             },
+                            Term::App { func, op: _ } => {
+                                if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                                    if unique_name == "if_f" {
+                                        let prop = self.covert_prop_to_z3_bool(op.clone())?;
+                                        //let ty = self.convert_sort(ty)?;
+                                        let op1 = self.convert_general_term(op1.clone())?;
+                                        let op2 = self.convert_general_term(op2.clone())?;
+                                        return Some(prop.ite(&op1, &op2));
+                                    }
+                                }
+                            }
                             _ => (),
                         },
                         Term::Axiom { unique_name, .. } => match unique_name.as_str() {
@@ -610,5 +621,6 @@ mod tests {
         success("∀ k p: ℤ, ~ 2 * (2 * k ^ 2 + 2 * k) + 1 = 2 * p");
         success("∀ k: ℤ, True");
         success("∀ p q: ℤ, ~ 2 * gcd p q = 1");
+        success("∀ p q: ℤ, ~ p = q -> if_f (p = q) 1 0 = 0");
     }
 }
