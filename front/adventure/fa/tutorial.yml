@@ -160,7 +160,8 @@
   y: 5
   dependencies:
     - equation
-  goal: "(∀ x, x mod 2 = 1 -> (x*x) mod 2 = 1) -> (∀ x, x mod 2 = 0 -> (x*x) mod 2 = 0)
+  goal:
+    "(∀ x, x mod 2 = 1 -> (x*x) mod 2 = 1) -> (∀ x, x mod 2 = 0 -> (x*x) mod 2 = 0)
     -> (∀ x, x mod 2 = 0 ∨ x mod 2 = 1 -> (x*x) mod 2 = x mod 2)"
   initTactics:
     - intros H_fard H_zoj a H_mod2
@@ -182,15 +183,16 @@
     هست با کمک کاراکتر `;` می توانید کاراکتر های یونیکد مورد نیاز را تایپ کنید. مثلا برای تایپ
     یای منطقی `∨` که در این قسمت نیاز است
     می توانید از `;\/;` استفاده کنید. با تایپ کردن کاراکتر `;` یک راهنما برای شما
-    فعال می شود و نیازی به حفظ کردن قاعده ها ندارید. 
+    فعال می شود و نیازی به حفظ کردن قاعده ها ندارید.
   type: level
   x: 0
   y: 6
   dependencies:
     - cases
-  goal: "(∀ x, x mod 2 = 1 -> (x*x) mod 2 = 1) -> (∀ x, x mod 2 = 0 -> (x*x) mod 2 = 0)
+  goal:
+    "(∀ x, x mod 2 = 1 -> (x*x) mod 2 = 1) -> (∀ x, x mod 2 = 0 -> (x*x) mod 2 = 0)
     -> (∀ x, (x*x) mod 2 = x mod 2)"
-  engineParams: 'lia=full'
+  engineParams: "auto_level=full"
   initTactics:
     - intros H_fard H_zoj a
 - id: function
@@ -227,7 +229,7 @@
     - assert
   goal: "∀ fibo: ℤ -> ℤ, (fibo 0 = 0) -> (fibo 1 = 1)
     -> (∀ n, 2 ≤ n -> fibo n = fibo (n-1) + fibo (n-2)) -> fibo 5 = 5"
-  engineParams: 'lia=full'
+  engineParams: "auto_level=full"
   initTactics:
     - intros fibo fibo_0 fibo_1 fibo_n
 - id: universe
@@ -242,7 +244,7 @@
     است. (هنوز مجموعه ها را ندیدیم ولی وجود دارند) تایپ تابعی که یک مجموعه می گیرد و یک عدد خروجی می دهد
     `set ℤ → ℤ`
     است و ... .
-    
+
     از جمله چیز هایی که در اثبات چک کن وجود دارند و در نتیجه تایپ هم دارند اثبات ها و گزاره ها هستند. در
     قسمت های قبلی دیدید که مثلا چیزی مثل
     `H: 2 * x + 3 = 11`
