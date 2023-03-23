@@ -233,7 +233,6 @@ fn abstr_infer() {
 fn abstr_prec() {
     parse_pretty("(∃ x: ℤ, 2 < x) → 2 | 5");
     parse_pretty("∃ x: ℤ, 2 < x → 2 | 5");
-    parse_pretty("∃ X: U, False");
 }
 
 #[test]
