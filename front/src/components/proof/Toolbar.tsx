@@ -32,17 +32,22 @@ const AutoProofButton = () => {
         placement: 'left',
     });
     const [hover, setHover] = useState(false);
-    const [s, setS] = useState({ available: false } as TryAutoResult);
+    const [s, setS] = useState({ loading: true } as TryAutoResult | { loading: true });
     const [mode, setMode] = useState('normal' as 'boost' | 'normal');
     useEffect(() => {
         return subscribe(async () => {
+            await new Promise((res) => setTimeout(res, 10));
+            setS({ loading: true });
             // lock this function so it won't be multiple instances of it sending tactics
             while (isWorking) {
                 await new Promise((res) => setTimeout(res, 10));
             }
             // removing lock will lead to errors and panics!
+            if (!('loading' in s)) {
+                // we have the result
+                return;
+            }
             isWorking = true;
-            setS({ available: false });
             const r = await tryAuto();
             if (mode === 'boost') {
                 if (r.available) {
@@ -63,6 +68,10 @@ const AutoProofButton = () => {
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
                 onClick={async () => {
+                    if ('loading' in s) {
+                        alert('اثبات خودکار هنوز به نتیجه نرسیده است');
+                        return;
+                    }
                     if (s.available) {
                         for (const tac of s.tactic) {
                             await sendTactic(tac);
@@ -74,7 +83,7 @@ const AutoProofButton = () => {
                     }
                 }}>
                 {g`auto_proof`}
-                {s.available && <><br /><span className={css.autoProof}>{s.type === 'normal' ? '✓' : '🕮'}</span></>}
+                {'loading' in s ? <><br /><span className={css.autoProof}>O</span></> : s.available && <><br /><span className={css.autoProof}>{s.type === 'normal' ? '✓' : '🕮'}</span></>}
                 {mode === 'boost' && <><br /><span className={css.autoProof}>{'>>'}</span></>}
             </button>
             {showTurboTooltip && <div
