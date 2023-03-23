@@ -1,5 +1,5 @@
-use std::cell::Cell;
 use std::fmt::Debug;
+use std::{cell::Cell, time::Instant};
 
 use typed_arena::Arena;
 
@@ -197,6 +197,7 @@ pub struct LogicBuilder<'a, T> {
     arena: Arena<LogicTree<'a, T>>,
     hyps: Hyps<'a, T>,
     root: Cell<LogicValue<'a, T>>,
+    timer: Instant,
     f: fn(t: TermRef, arena: LogicArena<'a, T>) -> LogicValue<'a, T>,
 }
 
@@ -229,6 +230,7 @@ impl<'a, T: Clone + Debug + Eq> LogicBuilder<'a, T> {
             arena,
             hyps: Hyps::new(),
             root: Cell::new(LogicValue::unknown()),
+            timer: Instant::now(),
             f,
         }
     }
@@ -304,7 +306,7 @@ impl<'a, T: Clone + Debug + Eq> LogicBuilder<'a, T> {
         }
         (self.f)(term, &self.arena)
     }
-    fn dfs(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> bool {
+    fn dfs(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> Option<bool> {
         /*        println!("bhyps");
                 let tmp = self.hyps.bhyps.0.take();
                 for a in &tmp {
@@ -322,20 +324,20 @@ impl<'a, T: Clone + Debug + Eq> LogicBuilder<'a, T> {
             self.hyps.add_hyp(h1, false, negator);
             //            dbg!("h2");
             self.hyps.add_hyp(h2, false, negator);
-            let c = self.dfs(checker, negator);
+            let c = self.dfs(checker, negator)?;
             self.hyps.add_hyp(h2, true, negator);
             self.hyps.add_hyp(h1, true, negator);
-            c
+            Some(c)
         };
         if let Some(h) = self.hyps.ahyps.pop() {
             match h {
                 And(x, y) => {
-                    ans = step1(x, y);
+                    ans = step1(x, y)?;
                     found = true;
                 }
                 Not(Atom(..)) => todo!(),
                 Not(Or(x, y)) => {
-                    ans = step1(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+                    ans = step1(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)))?;
                     found = true;
                 }
                 _ => (),
@@ -343,42 +345,45 @@ impl<'a, T: Clone + Debug + Eq> LogicBuilder<'a, T> {
             self.hyps.ahyps.push(h);
         }
         if found {
-            return ans;
+            return Some(ans);
         }
 
         let step2 = |h1, h2| {
             //            dbg!("step2");
             //            dbg!("h1");
             self.hyps.add_hyp(h1, false, negator);
-            let mut ans = self.dfs(checker, negator);
+            let mut ans = self.dfs(checker, negator)?;
             self.hyps.add_hyp(h1, true, negator);
 
             if ans {
                 //                dbg!("h2");
                 self.hyps.add_hyp(h2, false, negator);
-                ans = self.dfs(checker, negator);
+                ans = self.dfs(checker, negator)?;
                 self.hyps.add_hyp(h2, true, negator);
             }
-            ans
+            Some(ans)
         };
         if let Some(h) = self.hyps.bhyps.pop() {
             if let Or(x, y) = h {
-                ans = step2(x, y);
+                ans = step2(x, y)?;
                 found = true;
             }
             if let Not(And(x, y)) = h {
-                ans = step2(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)));
+                ans = step2(self.arena.alloc(Not(x)), self.arena.alloc(Not(y)))?;
                 found = true;
             }
             self.hyps.bhyps.push(h);
         }
         if found {
-            return ans;
+            return Some(ans);
         }
         let sh = self.hyps.simple_hyps.0.take();
+        if self.timer.elapsed().as_millis() > 1000 {
+            return None; // timed out
+        }
         ans = checker(&sh);
         self.hyps.simple_hyps.0.set(sh);
-        ans
+        Some(ans)
     }
     pub fn check_contradiction(&'a self, checker: fn(&[T]) -> bool, negator: fn(T) -> T) -> bool {
         let root = self.root.take();
@@ -388,6 +393,6 @@ impl<'a, T: Clone + Debug + Eq> LogicBuilder<'a, T> {
             LogicValue::False => return true,
         };
         self.hyps.add_hyp(root, false, negator);
-        self.dfs(checker, negator)
+        self.dfs(checker, negator).unwrap_or(false)
     }
 }
