@@ -326,6 +326,15 @@ fn hidden_args() {
 }
 
 #[test]
+fn binop_test() {
+    parse_pretty("∀ X Y Z: Universe, ∀ f: Y → Z, ∀ g: X → Y, ∀ h: X → Z, f ∘ g = h");
+    parse_not_pretty(
+        "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, (f ∘ g) x = 0",
+        "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, f (g x) = 0",
+    );
+}
+
+#[test]
 fn sigma() {
     parse_not_pretty("λ f: ℤ → ℤ, sigma 0 5 f", "λ f: ℤ → ℤ, Σ x in [0, 5) f x");
     parse_pretty("Σ x in [0, 5) x * x");

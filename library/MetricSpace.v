@@ -2,8 +2,8 @@ Definition Metric := λ X:U, λ d: X -> X -> ℝ, ∀ x y z: X, d x x = 0. ∧ d
 
 Todo Metric_unfold: ∀ X: U, ∀ d: X -> X -> ℝ, Metric X d -> ( ∀ x y: X, d x y ≥ 0. ∧ (d x y = 0. -> x = y) ∧ (x = y -> d x y = 0.)) ∧ (∀ x y, d x y = d y x) ∧ (∀ x y z, d x z ≤ d x y + d y z);
 Todo Metric_fold: ∀ X: U, ∀ d: X -> X -> ℝ, (∀ x y z: X, d x x = 0. ∧ d x y ≥ 0. ∧ (d x y = 0. -> x = y) ∧ d x y = d y x ∧ d x z ≤ d x y + d y z) -> Metric X d;
-Suggest hyp default chain (apply Metric_unfold in $n) (destruct $n with (and_ind ? ?) to ($n_no_neg $n)) (destruct $n with (and_ind ? ?) to  ($n_sym $n_triangle_ineq)) with label Metric X d => (∀ x y: X, d x y ≥ 0. ∧ (d x y = 0. -> x = y) ) ∧ (∀ x y, d x y = d y x) ∧ (∀ x y z, d x z ≤ d x y + d y z);
-Suggest goal default apply Metric_fold with label Metric X d => ∀ x y z: X, d x y ≥ 0. ∧ (d x y = 0. -> x = y) ∧ d x y = d y x ∧ d x z ≤ d x y + d y z;
+Suggest hyp default chain (apply Metric_unfold in $n) (destruct $n with (and_ind ? ?) to ($n_no_neg $n)) (destruct $n with (and_ind ? ?) to  ($n_sym $n_triangle_ineq)) with label Metric X d => (∀ x y: X, d x y ≥ 0. ∧ (d x y = 0. <-> x = y) ) ∧ (∀ x y, d x y = d y x) ∧ (∀ x y z, d x z ≤ d x y + d y z);
+Suggest goal default apply Metric_fold with label Metric X d => ∀ x y z: X, d x y ≥ 0. ∧ (d x y = 0. <-> x = y) ∧ d x y = d y x ∧ d x z ≤ d x y + d y z;
 
 Definition #1 ball := λ X: U, λ d: X → X → ℝ, λ u: X, λ r: ℝ, {x | d u x < r};
 
@@ -60,3 +60,21 @@ Proof;
     add_hyp H_no_neg_ex_ex := (H_no_neg_ex (a));
     z3;
 Qed;
+
+
+Definition sub_seq := λ k: ℤ -> ℤ, ∀ n m, n > 0 ∧ n < m -> k n < k m;
+Todo sub_seq_unfold: ∀ k: ℤ -> ℤ, sub_seq k -> ∀ n m, n > 0 ∧ n < m -> k n < k m;
+Todo sub_seq_fold: ∀ k: ℤ -> ℤ, (∀ n, n > 0 -> k n < k (n + 1)) -> sub_seq k;
+Suggest hyp default apply sub_seq_unfold in $n with label sub_seq k => ∀ n m, n > 0 ∧ n < m -> k n < k m;
+Suggest goal default apply with label sub_seq k => ∀ n, n > 0 -> k n < k (n + 1);
+
+Import /RArith;
+Definition Eucli := λ x y: ℝ, abs (x - y);
+
+Theorem Metric_Eucli: Metric ℝ Eucli;
+Proof;
+    apply Metric_fold ;
+    intros;
+    z3;
+Qed;
+

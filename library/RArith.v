@@ -75,6 +75,10 @@ Proof;
     assumption;
 Qed;
 
+Axiom Rabs_pos: ∀ x, x ≥ 0. -> abs x = x;
+Axiom Rabs_neg: ∀ x, x < 0. -> abs x = -x;
+Todo Rabs_triangle: ∀ a b, abs (a + b) ≤ abs a + abs b;
+
 Definition upper_bound := λ E: set ℝ, λ x, ∀ y, y ∈ E -> y ≤ x;
 
 Todo upper_bound_unfold: ∀ E: set ℝ, ∀ x, upper_bound E x -> ∀ y, y ∈ E -> y ≤ x;
@@ -95,6 +99,13 @@ Todo lower_bound_unfold: ∀ E: set ℝ, ∀ x, lower_bound E x -> ∀ y, y ∈ 
 Todo lower_bound_fold: ∀ E: set ℝ, ∀ x, (∀ y, y ∈ E -> x ≤ y) -> lower_bound E x;
 Suggest hyp default apply lower_bound_unfold in $n with label lower_bound E x => ∀ y, y ∈ E -> x ≤ y;
 Suggest goal default apply lower_bound_fold with label lower_bound E x => ∀ y, y ∈ E -> x ≤ y;
+
+Definition bounded_below := λ E: set ℝ, (∃ x, lower_bound E x);
+
+Todo bounded_below_unfold: ∀ E: set ℝ, bounded_below E -> (∃ x, lower_bound E x);
+Todo bounded_below_fold: ∀ E: set ℝ, (∃ x, lower_bound E x) -> bounded_below E;
+Suggest hyp default apply bounded_below_unfold in $n with label bounded_below E => (∃ x, lower_bound E x);
+Suggest goal default apply bounded_below_fold with label bounded_below E => (∃ x, lower_bound E x);
 
 Definition lub := λ E: set ℝ, λ x, upper_bound E x ∧ (∀ y, upper_bound E y -> x ≤ y);
 
@@ -329,14 +340,34 @@ Suggest goal apply lub_eq_sup with label sup A = s => lub A s;
 Todo eq_sup_lub: ∀ A: set ℝ, ∀ s, sup A = s -> lub A s;
 Suggest hyp apply eq_sup_lub in $n with label sup A = s => lub A s;
 
-Todo ceil: ∀ r: ℝ, ∃ n: ℤ, n / 1 ≥ r∧ n / 1 < r + 1.; 
+Axiom inf: set ℝ -> ℝ;
+Axiom inf_glb: ∀ E: set ℝ, (~ E = {}) -> bounded_below E -> lub E (inf E);
+
+Todo glb_eq_inf: ∀ A: set ℝ, ∀ s, glb A s -> inf A = s;
+Suggest goal apply glb_eq_inf with label sup A = s => glb A s;
+Todo eq_inf_glb: ∀ A: set ℝ, ∀ s, inf A = s -> glb A s;
+Suggest hyp apply eq_inf_glb in $n with label sup A = s => glb A s;
+
+Todo ceil_exists: ∀ r: ℝ, ∃ n: ℤ, n / 1 ≥ r ∧ n / 1 < r + 1.; 
+Todo near_irrational: ∀ a b: ℝ, a < b -> ∃ x, ~ x ∈ ℚ ∧ a < x ∧ x < b;
+Todo near_rational: ∀ a b: ℝ, a < b -> ∃ x, x ∈ ℚ ∧ a < x ∧ x < b;
 Todo lt_pow_lt: ∀ x a b: ℝ, x > 1. -> x ^ a < x ^ b -> a < b;
 Todo lt_pow_gt: ∀ x a b: ℝ, 0. < x -> x < 1. -> x ^ a > x ^ b -> a < b;
 Todo pow_lt_lt: ∀ x a b: ℝ, x > 1. -> a < b -> x ^ a < x ^ b;
+Todo pow_le_le: ∀ x a b: ℝ, x > 1. -> a ≤ b -> x ^ a ≤ x ^ b;
 Todo pow_lt_gt: ∀ x a b: ℝ, 0. < x -> x < 1. -> a > b -> x ^ a < x ^ b;
+Todo pow_le_ge: ∀ x a b: ℝ, 0. < x -> x < 1. -> a ≥ b -> x ^ a ≤ x ^ b;
 Todo pow_lt_1: ∀ x a: ℝ, x > 1. -> a > 0. -> x ^ a > 1.;
+Todo pow_lt_0: ∀ x a: ℝ, x > 0. -> x ^ a > 0.;
 Todo pow_plus: ∀ x a b: ℝ, x ≥ 0. -> x ^ (a + b) = x ^ a * x ^ b;
 Todo pow_pow: ∀ x a b: ℝ, x ≥ 0. -> (x ^ a) ^ b = x ^ (a * b);
+Todo pow_neg: ∀ x a: ℝ, x > 0. -> x ^ (- a) = 1. / x ^ a;
 
+Suggest goal apply pow_lt_lt with label x ^ a < x ^ b => a < b;
+Suggest goal apply pow_le_le with label x ^ a ≤ x ^ b => a ≤ b;
+Suggest goal apply pow_lt_gt with label x ^ a < x ^ b => a > b;
+Suggest goal apply pow_le_ge with label x ^ a ≤ x ^ b => a ≥ b;
 Suggest goal apply pow_plus with label Trivial;
 Suggest goal apply pow_pow with label Trivial;
+
+

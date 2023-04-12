@@ -9,11 +9,13 @@ use z3::{
 
 use crate::{
     analysis::arith::{sigma_to_arith, SigmaSimplifier},
+    app_ref,
     brain::{
         detect::{detect_r_ty, detect_set_ty, detect_z_ty},
         remove_unused_var, type_of, Abstraction, Term, TermRef,
     },
     interactive::Frame,
+    library::prelude::{abs, minus, r},
 };
 
 use super::{Error::CanNotSolve, Result};
@@ -262,6 +264,15 @@ impl<'a> Z3Manager<'a> {
                             let op2 = self.convert_real_term(op2.clone())?;
                             return Some(op2.power(&ast::Real::from_real(self.ctx, 5, 10)).into());
                         }
+                        if unique_name == "abs" {
+                            let op2 = self.convert_real_term(op2.clone())?;
+                            return Some(
+                                (op2.clone()
+                                    .ge(&ast::Real::from_real(self.ctx, 0, 1))
+                                    .ite(&op2.clone(), &(-op2)))
+                                .into(),
+                            );
+                        }
                     }
                     Term::App { func, op: op1 } => match func.as_ref() {
                         Term::App { func, op } => match func.as_ref() {
@@ -417,6 +428,13 @@ impl<'a> Z3Manager<'a> {
                                     let op = self.convert_real_term(op2.clone())?;
                                     return Some((-op).into());
                                 }
+                            }
+                            "Eucli" => {
+                                let op = self.convert_general_term(app_ref!(
+                                    abs(),
+                                    app_ref!(app_ref!(app_ref!(minus(), r()), op1), op2)
+                                ))?;
+                                return Some(op);
                             }
                             _ => (),
                             //     "minus" => minus(
@@ -622,5 +640,10 @@ mod tests {
         success("∀ k: ℤ, True");
         success("∀ p q: ℤ, ~ 2 * gcd p q = 1");
         success("∀ p q: ℤ, ~ p = q -> if_f (p = q) 1 0 = 0");
+    }
+    #[test]
+    fn abs_test() {
+        success("abs (2. - 4.) = 2.");
+        success("Eucli 2. 4. = 2.");
     }
 }
