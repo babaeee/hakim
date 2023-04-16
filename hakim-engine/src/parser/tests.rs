@@ -8,6 +8,8 @@ use crate::{
 
 use std::{sync::mpsc, thread, time::Duration};
 
+mod ast_layer;
+
 fn panic_after<T, F>(d: Duration, f: F) -> T
 where
     T: Send + 'static,
