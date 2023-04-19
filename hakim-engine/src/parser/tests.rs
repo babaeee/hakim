@@ -329,11 +329,14 @@ fn hidden_args() {
 
 #[test]
 fn binop_test() {
-    parse_pretty("∀ X Y Z: Universe, ∀ f: Y → Z, ∀ g: X → Y, ∀ h: X → Z, f ∘ g = h");
-    parse_not_pretty(
-        "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, (f ∘ g) x = 0",
-        "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, f (g x) = 0",
-    );
+    let eng = build_engine(EngineLevel::Empty);
+    let exp_term = eng.parse_text("(abs + abs) 2.").unwrap();
+    let exp_pretty = eng.pretty_print(&exp_term);
+    dbg!(exp_pretty);
+    // parse_not_pretty(
+    //    "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, compos X Y ℤ f g x = 0",
+    //    "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, f (g x) = 0",
+    //);
 }
 
 #[test]

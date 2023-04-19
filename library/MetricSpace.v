@@ -61,12 +61,23 @@ Proof;
     z3;
 Qed;
 
+Definition #1 converge := λ X: U, λ d: X → X → ℝ, λ xn: ℤ -> X, λ x: X, ∀ e, e > 0. -> ∃ N, N > 0 ∧ ∀ n, n ≥ N -> d (xn n) x < e;
+Todo converge_unfold: ∀ X: U, ∀ d: X → X → ℝ, ∀ xn: ℤ -> X, ∀ x: X, converge d xn x -> ∀ e, e > 0. -> ∃ N, N > 0 ∧ ∀ n, n ≥ N -> d (xn n) x < e;
+Todo converge_fold: ∀ X: U, ∀ d: X → X → ℝ, ∀ xn: ℤ -> X, ∀ x: X, (∀ e, e > 0. -> ∃ N, N > 0 ∧ ∀ n, n ≥ N -> d (xn n) x < e) -> converge d xn x;
+Suggest hyp default apply converge_unfold in $n with label converge d xn x => ∀ e, e > 0. -> ∃ N, N > 0 ∧ ∀ n, n ≥ N -> d (xn n) x < e;
+Suggest goal default apply converge_fold with label converge d xn x => ∀ e, e > 0. -> ∃ N, N > 0 ∧ ∀ n, n ≥ N -> d (xn n) x < e;
 
 Definition sub_seq := λ k: ℤ -> ℤ, ∀ n m, n > 0 ∧ n < m -> k n < k m;
 Todo sub_seq_unfold: ∀ k: ℤ -> ℤ, sub_seq k -> ∀ n m, n > 0 ∧ n < m -> k n < k m;
 Todo sub_seq_fold: ∀ k: ℤ -> ℤ, (∀ n, n > 0 -> k n < k (n + 1)) -> sub_seq k;
 Suggest hyp default apply sub_seq_unfold in $n with label sub_seq k => ∀ n m, n > 0 ∧ n < m -> k n < k m;
 Suggest goal default apply with label sub_seq k => ∀ n, n > 0 -> k n < k (n + 1);
+
+Definition #1 compact := λ X: U, λ d: X → X → ℝ, λ E: set X, ∀ x: ℤ -> X, ∃ k: ℤ -> ℤ, sub_seq k ∧ ∃ a, converge d (x ∘ k) a ∧ a ∈ E;
+Todo compact_unfold: ∀ X: U, ∀ d: X → X → ℝ, ∀ E: set X, compact d E -> ∀ x: ℤ -> X, ∃ k: ℤ -> ℤ, sub_seq k ∧ ∃ a, converge d (x ∘ k) a ∧ a ∈ E;
+Todo compact_fold: ∀ X: U, ∀ d: X → X → ℝ, ∀ E: set X, Metric X d -> (∀ Un: ℤ -> set X, (∀ n, n > 0 -> open_set d (Un n) ) -> E ⊆ {x | ∃ i, i > 0 ∧ x ∈ Un i} -> ∃ k, k > 0 ∧ ∀ x, x ∈ E -> ∃ ix, ix > 0 ∧ ix ≤ k ∧ x ∈ (Un ix)) -> compact d E;
+Suggest hyp default apply compact_unfold in $n with label compact d E => ∀ x: ℤ -> X, ∃ k: ℤ -> ℤ, sub_seq k ∧ ∃ a, converge d (x ∘ k) a ∧ a ∈ E;
+Suggest goal default apply compact_fold with label compact d E => ∀ Un: ℤ -> set X, (∀ n, n > 0, open_set d (Un n) ) -> E ⊆ {x | ∃ i, i > 0 ∧ x ∈ Un i} -> ∃ k, k > 0 ∧ ∀ x, x ∈ E -> ∃ ix, ix > 0 ∧ ix ≤ k ∧ x ∈ (Un ix);
 
 Import /RArith;
 Definition Eucli := λ x y: ℝ, abs (x - y);

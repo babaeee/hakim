@@ -117,7 +117,7 @@ impl BinOp {
     }
 
     pub fn run_on_term(&self, infer_cnt: &mut InferGenerator, l: TermRef, r: TermRef) -> TermRef {
-        /*   if self.eq(&BinOp::Compos) {
+        if self.eq(&BinOp::Compos) {
             let x = infer_cnt.generate();
             let y = infer_cnt.generate();
             let z = infer_cnt.generate();
@@ -126,7 +126,7 @@ impl BinOp {
                 l,
                 r
             );
-        }*/
+        }
         self.run_on_term_with_ty(l, r, || {
             let i = infer_cnt.generate();
             term_ref!(_ i)
@@ -234,7 +234,7 @@ impl BinOp {
                             "setminus" => found!(op, Setminus, op2, ty),
                             _ => found!(original_func, App, op2, ty),
                         },
-        /*                 Term::App { func, op: _ } => match func.as_ref() {
+                        Term::App { func, op: _ } => match func.as_ref() {
                             Term::App { func, op: _ } => match func.as_ref() {
                                 Term::Axiom { unique_name, .. } => {
                                     if unique_name == "compos" {
@@ -242,10 +242,18 @@ impl BinOp {
                                     }
                                     found!(original_func, App, op2)
                                 }
+                                Term::App { func, op: _ } => match func.as_ref() {
+                                    Term::Axiom { unique_name, .. } => {
+                                        if unique_name == "compos" {
+                                            found!(original_func, App, op2)
+                                        }
+                                    }
+                                    _ => found!(original_func, App, op2),
+                                },
                                 _ => found!(original_func, App, op2),
                             },
                             _ => found!(original_func, App, op2),
-                        },*/
+                        },
                         _ => found!(original_func, App, op2),
                     },
                     Term::Axiom { ty: _, unique_name } => match unique_name.as_str() {
