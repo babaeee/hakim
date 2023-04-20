@@ -8,3 +8,5 @@ Proof;
     apply (ex_proof B (P x) ?1);
 Qed;
 
+Axiom compos_eq: ∀ X Y Z: U, ∀ f: Y -> Z, ∀ g: X -> Y, ∀ x: X, (f ∘ g) x = f (g x);
+Suggest goal default apply compact_eq with label Trivial;

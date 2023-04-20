@@ -541,14 +541,6 @@ pub fn ast_to_term(
             Ok(op.run_on_term(infer_cnt, ta))
         }
         BinOp(a, op, b) => {
-            /*    if let BinOp(f, op2, g) = *(a.clone()) {
-                if op2 == BinOp::Compos && op == BinOp::App {
-                    let tf = ast_to_term(*f, globals, name_stack, infer_dict, infer_cnt, config)?;
-                    let tg = ast_to_term(*g, globals, name_stack, infer_dict, infer_cnt, config)?;
-                    let tb = ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt, config)?;
-                    return Ok(app_ref!(tf, app_ref!(tg, tb)));
-                }
-            }*/
             let ta = ast_to_term(*a, globals, name_stack, infer_dict, infer_cnt, config)?;
             let tb = ast_to_term(*b, globals, name_stack, infer_dict, infer_cnt, config)?;
             Ok(op.run_on_term(infer_cnt, ta, tb))

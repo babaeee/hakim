@@ -329,14 +329,8 @@ fn hidden_args() {
 
 #[test]
 fn binop_test() {
-    let eng = build_engine(EngineLevel::Empty);
-    let exp_term = eng.parse_text("(abs + abs) 2.").unwrap();
-    let exp_pretty = eng.pretty_print(&exp_term);
-    dbg!(exp_pretty);
-    // parse_not_pretty(
-    //    "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, compos X Y ℤ f g x = 0",
-    //    "∀ X Y: Universe, ∀ f: Y → ℤ, ∀ g: X → Y, ∀ x: X, f (g x) = 0",
-    //);
+    parse_error("(abs + abs) 2.");
+    parse_not_pretty("(abs ∘ abs) 2.", "compos ℝ ℝ ℝ abs abs 2.");
 }
 
 #[test]

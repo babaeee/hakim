@@ -242,14 +242,6 @@ impl BinOp {
                                     }
                                     found!(original_func, App, op2)
                                 }
-                                Term::App { func, op: _ } => match func.as_ref() {
-                                    Term::Axiom { unique_name, .. } => {
-                                        if unique_name == "compos" {
-                                            found!(original_func, App, op2)
-                                        }
-                                    }
-                                    _ => found!(original_func, App, op2),
-                                },
                                 _ => found!(original_func, App, op2),
                             },
                             _ => found!(original_func, App, op2),
