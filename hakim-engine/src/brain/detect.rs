@@ -18,6 +18,35 @@ pub fn detect_char(term: &Term) -> Option<char> {
     }
     None
 }
+pub fn detect_string(term: &Term) -> Option<String> {
+    fn generate_reverse_string(t: &Term) -> Option<String> {
+        if let Term::App { func, op: op2 } = t {
+            if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                if unique_name == "nil" && detect_char_ty(op2) {
+                    return Some("".to_string());
+                }
+            }
+            if let Term::App { func, op: op1 } = func.as_ref() {
+                if let Term::App { func, op: ty } = func.as_ref() {
+                    if detect_char_ty(ty) {
+                        if let Term::Axiom { unique_name, .. } = func.as_ref() {
+                            if unique_name == "cons" {
+                                let c = detect_char(&op1)?;
+                                let mut s = generate_reverse_string(&op2)?;
+                                s.push(c);
+                                return Some(s);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+    let s = generate_reverse_string(term)?;
+    let s = s.chars().rev().collect::<String>();
+    return Some(s);
+}
 
 pub fn detect_len(t: &Term) -> Option<(TermRef, TermRef)> {
     match t {
@@ -59,7 +88,14 @@ pub fn detect_list_ty(ty: &Term) -> Option<TermRef> {
     }
     None
 }
-
+pub fn detect_char_ty(ty: &Term) -> bool {
+    if let Term::Axiom { unique_name, .. } = ty {
+        if unique_name == "char" {
+            return true;
+        }
+    }
+    false
+}
 pub fn detect_z_ty(ty: &Term) -> bool {
     if let Term::Axiom { unique_name, .. } = ty {
         if unique_name == "ℤ" {

@@ -2,20 +2,24 @@ use std::{cell::Cell, collections::HashSet, sync::Mutex, time::Duration};
 
 use im::HashMap;
 use num_bigint::BigInt;
+
 use z3::{
     ast::{self, forall_const, Ast, Bool, Dynamic, Set},
-    Config, Context, FuncDecl, SatResult, Solver, Sort, Tactic,
+    Config, Context, FuncDecl, SatResult, Solver, Sort, Symbol, Tactic,
 };
 
 use crate::{
     analysis::arith::{sigma_to_arith, SigmaSimplifier},
     app_ref,
     brain::{
-        detect::{detect_r_ty, detect_set_ty, detect_z_ty},
+        detect::{
+            detect_char, detect_char_ty, detect_list_ty, detect_r_ty, detect_set_ty, detect_string,
+            detect_z_ty,
+        },
         remove_unused_var, type_of, Abstraction, Term, TermRef,
     },
     interactive::Frame,
-    library::prelude::{abs, minus, r},
+    library::prelude::{abs, list, minus, r},
 };
 
 use super::{Error::CanNotSolve, Result};
@@ -81,12 +85,16 @@ impl<'a> SigmaSimplifier for &Z3Manager<'a> {
     }
 
     fn handle_term(self, t: TermRef) -> Self::T {
-        self.convert_int_term(t).unwrap()
+        self.convert_int_term(t, &[]).unwrap()
     }
 }
 
 impl<'a> Z3Manager<'a> {
-    fn covert_prop_to_z3_bool(&self, t: TermRef) -> Option<ast::Bool<'a>> {
+    fn covert_prop_to_z3_bool(
+        &self,
+        t: TermRef,
+        bound_variable: &[Sort<'a>],
+    ) -> Option<ast::Bool<'a>> {
         if let Term::Forall(Abstraction {
             var_ty,
             body,
@@ -94,8 +102,8 @@ impl<'a> Z3Manager<'a> {
         }) = t.as_ref()
         {
             if let Some(body) = remove_unused_var(body.clone()) {
-                let op1 = self.covert_prop_to_z3_bool(var_ty.clone())?;
-                let op2 = self.covert_prop_to_z3_bool(body)?;
+                let op1 = self.covert_prop_to_z3_bool(var_ty.clone(), bound_variable)?;
+                let op2 = self.covert_prop_to_z3_bool(body, bound_variable)?;
                 return Some(op1.implies(&op2));
             }
         }
@@ -103,8 +111,8 @@ impl<'a> Z3Manager<'a> {
             if let Term::App { func, op: op1 } = func.as_ref() {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     if unique_name == "and" || unique_name == "or" {
-                        let op1 = &self.covert_prop_to_z3_bool(op1.clone())?;
-                        let op2 = &self.covert_prop_to_z3_bool(op2.clone())?;
+                        let op1 = &self.covert_prop_to_z3_bool(op1.clone(), bound_variable)?;
+                        let op2 = &self.covert_prop_to_z3_bool(op2.clone(), bound_variable)?;
                         let values = &[op1, op2];
                         return Some(match unique_name.as_str() {
                             "and" => ast::Bool::and(self.ctx, values),
@@ -135,29 +143,29 @@ impl<'a> Z3Manager<'a> {
                     if let Term::Axiom { unique_name, .. } = func.as_ref() {
                         match unique_name.as_str() {
                             "eq" => {
-                                let op1 = self.convert_general_term(op1)?;
-                                let op2 = self.convert_general_term(op2)?;
+                                let op1 = self.convert_general_term(op1, bound_variable)?;
+                                let op2 = self.convert_general_term(op2, bound_variable)?;
                                 return Some(op1._safe_eq(&op2).unwrap());
                             }
                             "inset" => {
-                                let op2 = self.convert_set_term(op2)?;
-                                let op1 = self.convert_general_term(op1)?;
+                                let op2 = self.convert_set_term(op2, bound_variable)?;
+                                let op1 = self.convert_general_term(op1, bound_variable)?;
                                 return Some(op2.member(&op1));
                             }
                             "included" => {
-                                let op2 = self.convert_set_term(op2)?;
-                                let op1 = self.convert_set_term(op1)?;
+                                let op2 = self.convert_set_term(op2, bound_variable)?;
+                                let op1 = self.convert_set_term(op1, bound_variable)?;
                                 return Some(op1.set_subset(&op2));
                             }
                             "lt" => {
                                 if detect_z_ty(ty) {
-                                    let op1 = self.convert_int_term(op1)?;
-                                    let op2 = self.convert_int_term(op2)?;
+                                    let op1 = self.convert_int_term(op1, bound_variable)?;
+                                    let op2 = self.convert_int_term(op2, bound_variable)?;
                                     return Some(op1.lt(&op2));
                                 }
                                 if detect_r_ty(ty) {
-                                    let op1 = self.convert_real_term(op1)?;
-                                    let op2 = self.convert_real_term(op2)?;
+                                    let op1 = self.convert_real_term(op1, bound_variable)?;
+                                    let op2 = self.convert_real_term(op2, bound_variable)?;
                                     return Some(op1.lt(&op2));
                                 }
                             }
@@ -168,8 +176,8 @@ impl<'a> Z3Manager<'a> {
                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
                     match unique_name.as_str() {
                         "divide" => {
-                            let op1 = self.convert_int_term(op1)?;
-                            let op2 = self.convert_int_term(op2)?;
+                            let op1 = self.convert_int_term(op1, bound_variable)?;
+                            let op2 = self.convert_int_term(op2, bound_variable)?;
                             let exp = op2
                                 .modulo(&op1)
                                 ._safe_eq(&ast::Int::from_i64(self.ctx, 0))
@@ -178,7 +186,7 @@ impl<'a> Z3Manager<'a> {
                         }
                         "finite" => {
                             let x = self.get_finite_for_sort(op1)?;
-                            let set = self.convert_general_term(op2)?;
+                            let set = self.convert_general_term(op2, &[])?;
                             return Some(x.apply(&[&set]).try_into().unwrap());
                         }
                         _ => (),
@@ -198,38 +206,94 @@ impl<'a> Z3Manager<'a> {
         ast::Dynamic::new_const(self.ctx, format!("$x{id}"), &sort)
     }
 
-    fn convert_int_term(&self, t: TermRef) -> Option<ast::Int<'a>> {
+    fn convert_int_term(&self, t: TermRef, bound_variable: &[Sort<'a>]) -> Option<ast::Int<'a>> {
         Some(
-            self.convert_general_term(t)?
+            self.convert_general_term(t, bound_variable)?
                 .try_into()
                 .expect("mismatched type"),
         )
     }
 
-    fn convert_set_term(&self, t: TermRef) -> Option<ast::Set<'a>> {
+    fn convert_set_term(&self, t: TermRef, bound_variable: &[Sort<'a>]) -> Option<ast::Set<'a>> {
         Some(
-            self.convert_general_term(t)?
+            self.convert_general_term(t, bound_variable)?
                 .try_into()
                 .expect("mismatched type"),
         )
     }
 
-    fn convert_real_term(&self, t: TermRef) -> Option<ast::Real<'a>> {
+    fn convert_real_term(&self, t: TermRef, bound_variable: &[Sort<'a>]) -> Option<ast::Real<'a>> {
         Some(
-            self.convert_general_term(t)?
+            self.convert_general_term(t, bound_variable)?
                 .try_into()
                 .expect("mismatched type"),
         )
+    }
+
+    fn convert_string_term(
+        &self,
+        t: TermRef,
+        bound_variable: &[Sort<'a>],
+    ) -> Option<ast::String<'a>> {
+        Some(
+            self.convert_general_term(t, bound_variable)?
+                .try_into()
+                .expect("mismatched type"),
+        )
+    }
+
+    fn convert_list_term(&self, t: TermRef, bound_variable: &[Sort<'a>]) -> Option<ast::Seq<'a>> {
+        Some(
+            self.convert_general_term(t, bound_variable)?
+                .try_into()
+                .expect("mismatched type"),
+        )
+    }
+
+    fn convert_array_term(&self, t: TermRef) -> Option<ast::Array<'a>> {
+        if let Some(t) = self.convert_general_term(t.clone(), &[]) {
+            let t = t.as_array()?;
+            return Some(t);
+        }
+        let mut bound_variable = vec![];
+        let mut names = vec![];
+        let mut term_body = t;
+        while let Term::Fun(a) = term_body.as_ref() {
+            let sort = self.convert_sort(&a.var_ty)?;
+            dbg!(sort.clone());
+            bound_variable.push(sort);
+            names.push(
+                a.hint_name
+                    .clone()
+                    .unwrap_or(format!("$arg{}", names.len())),
+            );
+            term_body = a.body.clone();
+        }
+        dbg!(bound_variable.len());
+        //we want to bound last element in bound_varible with Var{0} term in t so we should reverse bound_variable
+        // bound_variable.reverse();
+        let body = self.convert_general_term(term_body, &bound_variable)?;
+        dbg!(body.clone());
+
+        let names: Vec<_> = names.into_iter().map(Symbol::from).collect();
+        let sorts: Vec<_> = bound_variable.iter().rev().collect();
+
+        return Some(ast::Array::lambda(self.ctx, &names, &sorts, body));
     }
 
     #[allow(clippy::single_match)]
-    fn convert_general_term(&self, t: TermRef) -> Option<ast::Dynamic<'a>> {
+    fn convert_general_term(
+        &self,
+        t: TermRef,
+        bound_variable: &[Sort<'a>],
+    ) -> Option<ast::Dynamic<'a>> {
         match t.as_ref() {
             Term::Axiom { ty, unique_name } => {
                 if self.is_calculator {
                     return None;
                 }
                 let sort = self.convert_sort(ty)?;
+                dbg!(sort.clone());
                 return Some(ast::Dynamic::new_const(
                     self.ctx,
                     unique_name.as_str(),
@@ -238,8 +302,11 @@ impl<'a> Z3Manager<'a> {
             }
             Term::Universe { .. } => (),
             Term::Forall(_) => todo!(),
-            Term::Fun(_) => todo!(),
-            Term::Var { .. } => unreachable!(),
+            Term::Fun(_) => (),
+            Term::Var { index } => {
+                let sort = bound_variable.get(*index)?;
+                return Some(ast::Dynamic::bound_varible(self.ctx, *index as u8, sort));
+            }
             Term::Number { value } => {
                 let x = ast::Int::from_i64(self.ctx, value.try_into().ok()?);
                 return Some(x.into());
@@ -260,12 +327,26 @@ impl<'a> Z3Manager<'a> {
                                 ast::Set::empty(self.ctx, &self.convert_sort(op2)?).into(),
                             );
                         }
+                        if unique_name == "nil" {
+                            if detect_char_ty(op2) {
+                                let emp = ast::String::from_str(self.ctx, "").ok()?;
+                                return Some(emp.into());
+                            } else {
+                                let sort = self.convert_sort(op2)?;
+                                return Some(ast::Seq::empty(self.ctx, &sort).into());
+                            }
+                        }
+                        if unique_name == "chr" {
+                            let c = detect_char(&t)?;
+                            let c = ast::String::from_str(self.ctx, c.to_string().as_str()).ok()?;
+                            return Some(c.into());
+                        }
                         if unique_name == "sqrt" {
-                            let op2 = self.convert_real_term(op2.clone())?;
+                            let op2 = self.convert_real_term(op2.clone(), bound_variable)?;
                             return Some(op2.power(&ast::Real::from_real(self.ctx, 5, 10)).into());
                         }
                         if unique_name == "abs" {
-                            let op2 = self.convert_real_term(op2.clone())?;
+                            let op2 = self.convert_real_term(op2.clone(), bound_variable)?;
                             return Some(
                                 (op2.clone()
                                     .ge(&ast::Real::from_real(self.ctx, 0, 1))
@@ -292,59 +373,92 @@ impl<'a> Z3Manager<'a> {
                                 //     return cnt_to_arith(op.clone(), op1.clone(), op2.clone(), arena);
                                 // }
                                 "union" => {
-                                    let op2 = self.convert_set_term(op2.clone())?;
-                                    let op1 = self.convert_set_term(op1.clone())?;
+                                    let op2 = self.convert_set_term(op2.clone(), bound_variable)?;
+                                    let op1 = self.convert_set_term(op1.clone(), bound_variable)?;
                                     return Some(
                                         ast::Set::set_union(self.ctx, &[&op1, &op2]).into(),
                                     );
                                 }
                                 "intersection" => {
-                                    let op2 = self.convert_set_term(op2.clone())?;
-                                    let op1 = self.convert_set_term(op1.clone())?;
+                                    let op2 = self.convert_set_term(op2.clone(), bound_variable)?;
+                                    let op1 = self.convert_set_term(op1.clone(), bound_variable)?;
                                     return Some(
                                         ast::Set::intersect(self.ctx, &[&op1, &op2]).into(),
                                     );
                                 }
                                 "setminus" => {
-                                    let op2 = self.convert_set_term(op2.clone())?.complement();
-                                    let op1 = self.convert_set_term(op1.clone())?;
+                                    let op2 = self
+                                        .convert_set_term(op2.clone(), bound_variable)?
+                                        .complement();
+                                    let op1 = self.convert_set_term(op1.clone(), bound_variable)?;
                                     return Some(
                                         ast::Set::intersect(self.ctx, &[&op1, &op2]).into(),
                                     );
                                 }
                                 "plus" => {
                                     if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2.clone())?;
-                                        let op1 = self.convert_int_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_int_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_int_term(op1.clone(), bound_variable)?;
                                         return Some((op1 + op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2.clone())?;
-                                        let op1 = self.convert_real_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_real_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_real_term(op1.clone(), bound_variable)?;
                                         return Some((op1 + op2).into());
+                                    }
+                                    if let Some(elem_ty) = detect_list_ty(op) {
+                                        if detect_char_ty(&elem_ty) {
+                                            let a = self
+                                                .convert_string_term(op1.clone(), bound_variable)?;
+                                            let b = self
+                                                .convert_string_term(op2.clone(), bound_variable)?;
+                                            return Some(
+                                                ast::String::concat(self.ctx, &[&a, &b]).into(),
+                                            );
+                                        } else {
+                                            let a = self
+                                                .convert_list_term(op2.clone(), bound_variable)?;
+                                            let b = self
+                                                .convert_list_term(op1.clone(), bound_variable)?;
+                                            return Some(
+                                                ast::Seq::concat(self.ctx, &[&a, &b]).into(),
+                                            );
+                                        }
                                     }
                                 }
                                 "minus" => {
                                     if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2.clone())?;
-                                        let op1 = self.convert_int_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_int_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_int_term(op1.clone(), bound_variable)?;
                                         return Some((op1 - op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2.clone())?;
-                                        let op1 = self.convert_real_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_real_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_real_term(op1.clone(), bound_variable)?;
                                         return Some((op1 - op2).into());
                                     }
                                 }
                                 "mult" => {
                                     if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2.clone())?;
-                                        let op1 = self.convert_int_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_int_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_int_term(op1.clone(), bound_variable)?;
                                         return Some((op1 * op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2.clone())?;
-                                        let op1 = self.convert_real_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_real_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_real_term(op1.clone(), bound_variable)?;
                                         return Some((op1 * op2).into());
                                     }
                                 }
@@ -354,44 +468,132 @@ impl<'a> Z3Manager<'a> {
                                     }
                                     if detect_z_ty(op) {
                                         let op2 = ast::Real::from_int(
-                                            &self.convert_int_term(op2.clone())?,
+                                            &self.convert_int_term(op2.clone(), bound_variable)?,
                                         );
                                         let op1 = ast::Real::from_int(
-                                            &self.convert_int_term(op1.clone())?,
+                                            &self.convert_int_term(op1.clone(), bound_variable)?,
                                         );
                                         return Some((op1 / op2).into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2.clone())?;
-                                        let op1 = self.convert_real_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_real_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_real_term(op1.clone(), bound_variable)?;
                                         return Some((op1 / op2).into());
                                     }
                                 }
                                 "pow" => {
                                     if detect_z_ty(op) {
-                                        let op2 = self.convert_int_term(op2.clone())?;
-                                        let op1 = self.convert_int_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_int_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_int_term(op1.clone(), bound_variable)?;
                                         let real_pw =
                                             Dynamic::as_real(&op1.power(&op2.clone()).into())?;
                                         return Some(real_pw.to_int().into());
                                     }
                                     if detect_r_ty(op) {
-                                        let op2 = self.convert_real_term(op2.clone())?;
-                                        let op1 = self.convert_real_term(op1.clone())?;
+                                        let op2 =
+                                            self.convert_real_term(op2.clone(), bound_variable)?;
+                                        let op1 =
+                                            self.convert_real_term(op1.clone(), bound_variable)?;
                                         return Some(op1.power(&op2).into());
                                     }
                                     return None;
+                                }
+                                "cons" => {
+                                    if detect_char_ty(op) {
+                                        if let Some(s) = detect_string(&t) {
+                                            let s =
+                                                ast::String::from_str(self.ctx, s.as_str()).ok()?;
+                                            return Some(s.into());
+                                        }
+                                        let s =
+                                            self.convert_string_term(op2.clone(), bound_variable)?;
+                                        let c =
+                                            self.convert_string_term(op1.clone(), bound_variable)?;
+                                        return Some(
+                                            ast::String::concat(self.ctx, &[&c, &s]).into(),
+                                        );
+                                    } else {
+                                        let head = self.convert_general_term(op1.clone(), &[])?;
+                                        let head = ast::Seq::unit(self.ctx, &head);
+                                        let tail =
+                                            self.convert_list_term(op2.clone(), bound_variable)?;
+                                        return Some(
+                                            ast::Seq::concat(self.ctx, &[&head, &tail]).into(),
+                                        );
+                                    }
                                 }
                                 _ => (),
                             },
                             Term::App { func, op: _ } => {
                                 if let Term::Axiom { unique_name, .. } = func.as_ref() {
-                                    if unique_name == "if_f" {
-                                        let prop = self.covert_prop_to_z3_bool(op.clone())?;
-                                        //let ty = self.convert_sort(ty)?;
-                                        let op1 = self.convert_general_term(op1.clone())?;
-                                        let op2 = self.convert_general_term(op2.clone())?;
-                                        return Some(prop.ite(&op1, &op2));
+                                    match unique_name.as_str() {
+                                        "if_f" => {
+                                            let prop = self.covert_prop_to_z3_bool(
+                                                op.clone(),
+                                                bound_variable,
+                                            )?;
+                                            let op1 =
+                                                self.convert_general_term(op1.clone(), &[])?;
+                                            let op2 =
+                                                self.convert_general_term(op2.clone(), &[])?;
+                                            return Some(prop.ite(&op1, &op2));
+                                        }
+                                        "map" => {
+                                            if !detect_char_ty(op) {
+                                                let ls = self.convert_list_term(
+                                                    op2.clone(),
+                                                    bound_variable,
+                                                )?;
+                                                let ls_type = type_of(op1.clone()).ok()?;
+                                                let fun_as_arr =
+                                                    self.convert_array_term(op1.clone())?;
+                                                let fun_type = type_of(op2.clone()).ok()?;
+
+                                                let maped_ls_sort = self.convert_sort(op)?;
+                                                let maped_ls_sort =
+                                                    Sort::seq(self.ctx, &maped_ls_sort);
+
+                                                let fun = self
+                                                    .generate_unknown(
+                                                        fun_type,
+                                                        fun_as_arr.get_sort(),
+                                                    )
+                                                    .as_array()?;
+                                                let from = self
+                                                    .generate_unknown(ls_type, ls.get_sort())
+                                                    .as_seq()?;
+                                                let maped_ls = self
+                                                    .generate_unknown(
+                                                        app_ref!(list(), op),
+                                                        maped_ls_sort,
+                                                    )
+                                                    .as_seq()?;
+                                                let prob = self.ctx.from_string(
+                                                    "(assert (= (seq.map fun from) to))",
+                                                    &[],
+                                                    &[],
+                                                    &["fun", "from", "to"],
+                                                    &[&fun.decl(), &from.decl(), &maped_ls.decl()],
+                                                );
+                                                self.solver.assert(prob.first().unwrap());
+                                                self.solver.assert(&from._eq(&ls));
+                                                self.solver.assert(&fun._eq(&fun_as_arr));
+                                                return Some(maped_ls.into());
+                                            }
+                                        }
+                                        //nth: forall X, X -> list X -> Z -> X
+                                        "nth" => {
+                                            let index =
+                                                self.convert_int_term(op2.clone(), bound_variable)?;
+                                            let ls = self
+                                                .convert_list_term(op1.clone(), bound_variable)?;
+                                            return Some(ls.nth(&index));
+                                        }
+                                        _ => (),
                                     }
                                 }
                             }
@@ -401,13 +603,13 @@ impl<'a> Z3Manager<'a> {
                             "set_singleton" => {
                                 return Some(
                                     ast::Set::empty(self.ctx, &self.convert_sort(op1)?)
-                                        .add(&self.convert_general_term(op2.clone())?)
+                                        .add(&self.convert_general_term(op2.clone(), &[])?)
                                         .into(),
                                 );
                             }
                             "mod_of" => {
-                                let op2 = self.convert_int_term(op2.clone())?;
-                                let op1 = self.convert_int_term(op1.clone())?;
+                                let op2 = self.convert_int_term(op2.clone(), bound_variable)?;
+                                let op1 = self.convert_int_term(op1.clone(), bound_variable)?;
                                 return Some((op1.rem(&op2)).into());
                             }
                             /*      "pow" => {
@@ -422,18 +624,35 @@ impl<'a> Z3Manager<'a> {
                             }*/
                             "neg" => {
                                 if detect_z_ty(op1) {
-                                    let op = self.convert_int_term(op2.clone())?;
+                                    let op = self.convert_int_term(op2.clone(), bound_variable)?;
                                     return Some((-op).into());
                                 } else if detect_r_ty(op1) {
-                                    let op = self.convert_real_term(op2.clone())?;
+                                    let op = self.convert_real_term(op2.clone(), bound_variable)?;
                                     return Some((-op).into());
                                 }
                             }
+                            "len1" => {
+                                if detect_z_ty(op1) {
+                                    let a = self.convert_int_term(op2.clone(), bound_variable)?;
+                                    return Some(
+                                        a.clone()
+                                            .ge(&ast::Int::from_u64(self.ctx, 0))
+                                            .ite(&a.clone(), &(-a))
+                                            .into(),
+                                    );
+                                } else if detect_list_ty(op1).is_some() {
+                                    let l = self.convert_list_term(op2.clone(), bound_variable)?;
+                                    return Some(l.length().into());
+                                }
+                            }
                             "Eucli" => {
-                                let op = self.convert_general_term(app_ref!(
-                                    abs(),
-                                    app_ref!(app_ref!(app_ref!(minus(), r()), op1), op2)
-                                ))?;
+                                let op = self.convert_general_term(
+                                    app_ref!(
+                                        abs(),
+                                        app_ref!(app_ref!(app_ref!(minus(), r()), op1), op2)
+                                    ),
+                                    &[],
+                                )?;
                                 return Some(op);
                             }
                             _ => (),
@@ -468,6 +687,17 @@ impl<'a> Z3Manager<'a> {
         if detect_r_ty(t) {
             return Some(Sort::real(self.ctx));
         }
+        if detect_char_ty(t) {
+            return Some(Sort::string(self.ctx));
+        }
+        if let Some(elt) = detect_list_ty(t) {
+            if detect_char_ty(&elt) {
+                return Some(Sort::string(self.ctx));
+            } else {
+                let elt = self.convert_sort(&elt)?;
+                return Some(Sort::seq(self.ctx, &elt));
+            }
+        }
         if let Some(ty) = detect_set_ty(t) {
             let sort = self.convert_sort(&ty)?;
             return Some(Sort::set(self.ctx, &sort));
@@ -478,6 +708,11 @@ impl<'a> Z3Manager<'a> {
                 self.ctx,
                 z3::Symbol::String(unique_name.to_string()),
             ));
+        }
+        if let Term::Forall(a) = t {
+            let domain = self.convert_sort(&a.var_ty)?;
+            let range = self.convert_sort(&a.body)?;
+            return Some(Sort::array(self.ctx, &domain, &range));
         }
         None
     }
@@ -561,12 +796,13 @@ fn z3_can_solve(frame: Frame) -> bool {
     };
     for hyp in frame.hyps {
         println!("{:?}", &hyp.ty.clone());
-        let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty) else { continue; };
+        let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty, &[]) else { continue; };
         z3manager.solver.assert(&b);
     }
-    if let Some(b) = z3manager.covert_prop_to_z3_bool(frame.goal) {
+    if let Some(b) = z3manager.covert_prop_to_z3_bool(frame.goal, &[]) {
         z3manager.solver.assert(&b.not());
     }
+
     dbg!(&z3manager.solver);
     z3manager.solver.check() == SatResult::Unsat
 }
@@ -596,6 +832,7 @@ mod tests {
         success("1 / 2 + 0.5 = 1.");
         success("0.5 * 0.5 = 0.25");
         fail("1. + 2. = 4.");
+        success("|-2| > 0");
     }
 
     #[test]
@@ -645,5 +882,26 @@ mod tests {
     fn abs_test() {
         success("abs (2. - 4.) = 2.");
         success("Eucli 2. 4. = 2.");
+    }
+
+    #[test]
+    fn string_test() {
+        success(r#""sa" + "lam" + " ali" = "salam ali""#);
+    }
+
+    #[test]
+    fn list_calculate() {
+    //    success("|[2, 3, 4]| = 3");
+        success(r#"map (λ x, if_f (x = 2) 2 4) [2, 3] = [2, 4]"#);
+        //  success("∀ X Y: U, ∀ f: X -> Y, ∀ p q: X, f p = f q");
+    }
+    #[test]
+    fn map_bug() {
+        fail("∀ X Y: U, ∀ default: Y, ∀ default2: X, ∀ l: list X, ∀ f: X -> Y, ∀ i, 0 ≤ i -> i < |l| -> nth default (map f l) i = f (nth default2 l i)");
+        fail("∀ X Y: Universe, ∀ default: Y, ∀ default2: X, ∀ f: X → Y, ∀ i: ℤ, ∀ b: list X, 0 ≤ i → i < |b| → ∀ y: list X, ∀ x: X, b = x :: y → nth default (map f (x::y)) i = f (nth default2 b i)")
+    }
+    #[test]
+    fn list_not_solve() {
+        success("∀ n: ℤ, 0 < n → ∀ x y: list char, (0, 0) :: list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn x i), cnt ')' (firstn x i))) = (0, 0) :: list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn y i), cnt ')' (firstn y i))) → list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn x i), cnt ')' (firstn x i))) = list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn y i), cnt ')' (firstn y i)))");
     }
 }
