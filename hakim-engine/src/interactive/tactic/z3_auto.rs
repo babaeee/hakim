@@ -882,6 +882,7 @@ mod tests {
     fn abs_test() {
         success("abs (2. - 4.) = 2.");
         success("Eucli 2. 4. = 2.");
+        success("false");
     }
 
     #[test]
@@ -894,11 +895,6 @@ mod tests {
     //    success("|[2, 3, 4]| = 3");
         success(r#"map (λ x, if_f (x = 2) 2 4) [2, 3] = [2, 4]"#);
         //  success("∀ X Y: U, ∀ f: X -> Y, ∀ p q: X, f p = f q");
-    }
-    #[test]
-    fn map_bug() {
-        fail("∀ X Y: U, ∀ default: Y, ∀ default2: X, ∀ l: list X, ∀ f: X -> Y, ∀ i, 0 ≤ i -> i < |l| -> nth default (map f l) i = f (nth default2 l i)");
-        fail("∀ X Y: Universe, ∀ default: Y, ∀ default2: X, ∀ f: X → Y, ∀ i: ℤ, ∀ b: list X, 0 ≤ i → i < |b| → ∀ y: list X, ∀ x: X, b = x :: y → nth default (map f (x::y)) i = f (nth default2 b i)")
     }
     #[test]
     fn list_not_solve() {

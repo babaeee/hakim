@@ -193,3 +193,5 @@ Suggest goal auto apply singleton_len with label Trivial;
 Axiom len_eq_eq: ∀ T: U, ∀ A B: set T, A = B -> |A| = |B|;
 Axiom set_from_func_eq: ∀ A: U, ∀ f: A -> U, ∀ g: A -> U, (∀ x: A, f x ↔ g x) -> set_from_func A f = set_from_func A g;
 Todo len_gt_0_not_empty_set: ∀ T: U, ∀ S: set T, |S| > 0 → ∃ t: T, t ∈ S;
+Todo len_eq_1_sing: ∀ T: U, ∀ S: set T, |S| = 1 → ∃ t: T, S = {t};
+Suggest hyp default apply len_eq_1_sing in $n with label |S| = 1 => S = {t};
