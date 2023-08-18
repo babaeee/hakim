@@ -155,9 +155,13 @@ Axiom #1 unique_elements: ∀ A: Universe, list A -> Universe;
 Axiom unique_elements_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements ([a] + l) -> ~ a in l ∧ unique_elements l;
 Axiom unique_elements_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements ([a] + l);
 Axiom unique_elements_nil: ∀ A: U, unique_elements (nil A);
+Todo unique_elements_cons_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements (a :: l);
+Todo unique_elements_cons_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements (a :: l) -> ~ a in l ∧ unique_elements l;
 Suggest hyp default apply unique_elements_unfold in $n with label unique_elements ([x] + l) => ~ x in l ∧ unique_elements l;
-Suggest goal default apply unique_elements_fold with label ~ x in l ∧ unique_elements l => unique_elements ([x] + l);
+Suggest goal default apply unique_elements_fold with label unique_elements ([x] + l) => ~ x in l ∧ unique_elements l;
 Suggest goal default apply unique_elements_nil with label Trivial;
+Suggest goal default apply unique_elements_cons_fold with label unique_elements (a :: l) =>  ~ a in l ∧ unique_elements l;
+Suggest hyp default apply unique_elements_cons_unfold in $n with label unique_elements (a :: l) =>  ~ a in l ∧ unique_elements l;
 
 Todo listing_set: ∀ T: U, ∀ S: set T, finite S -> ∃ l: list T, member_set l = S ∧ |l| = |S| ∧ unique_elements l;
 
@@ -360,6 +364,11 @@ Proof;
     z3;
     z3;
 Qed;
+
+Todo in_nth: ∀ X: U, ∀ default: X, ∀ i, ∀ l, 0 ≤ i ∧ i < |l| -> nth default l i in l;
+Suggest goal default apply in_nth with label nth default l i in l =>  0 ≤ i ∧ i < |l|;
+Todo nth_in: ∀ X: U, ∀ default: X, ∀ a, ∀ l, a in l -> (∃ i, 0 ≤ i ∧ i < |l| ∧ nth default l i = a);
+Suggest hyp default apply nth_in in $n with label a in l => nth default l i = a;
 
 Axiom #1 list_of_fun: ∀ X: U, ℤ -> (ℤ -> X) -> list X;
 Axiom list_of_fun_not_pos: ∀ X: U, ∀ n, n ≤ 0 -> ∀ f: ℤ -> X, list_of_fun n f = [];

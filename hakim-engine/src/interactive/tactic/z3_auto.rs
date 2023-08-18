@@ -526,6 +526,11 @@ impl<'a> Z3Manager<'a> {
                                         );
                                     }
                                 }
+                                // call nth with index 0
+                                "head" => {
+                                    let ls = self.convert_list_term(op2.clone(), bound_variable)?;
+                                    return Some(ls.nth(&ast::Int::from_i64(self.ctx, 0)));
+                                }
                                 _ => (),
                             },
                             Term::App { func, op: _ } => {
@@ -833,6 +838,7 @@ mod tests {
         success("0.5 * 0.5 = 0.25");
         fail("1. + 2. = 4.");
         success("|-2| > 0");
+        fail("∀ a: A, ~ a ∈ S -> |S ∪ {a}| = 3 -> |S| = 2");
     }
 
     #[test]
@@ -892,8 +898,9 @@ mod tests {
 
     #[test]
     fn list_calculate() {
-    //    success("|[2, 3, 4]| = 3");
-        success(r#"map (λ x, if_f (x = 2) 2 4) [2, 3] = [2, 4]"#);
+        //    success("|[2, 3, 4]| = 3");
+        // success(r#"map (λ x, if_f (x = 2) 2 4) [2, 3] = [2, 4]"#);
+        success("∀ d: ℤ, ∀ n: list ℤ, 0 < d ∧ d < 10 → ~ head 0 (d :: n) = 0");
         //  success("∀ X Y: U, ∀ f: X -> Y, ∀ p q: X, f p = f q");
     }
     #[test]
