@@ -152,6 +152,11 @@ impl<'a> Z3Manager<'a> {
                                 let op1 = self.convert_general_term(op1, bound_variable)?;
                                 return Some(op2.member(&op1));
                             }
+                            "inlist" => {
+                                let ls = self.convert_list_term(op2, bound_variable)?;
+                                let elem = self.convert_general_term(op1, &[])?;
+                                return Some(ls.contains(&ast::Seq::unit(self.ctx, &elem)));
+                            }
                             "included" => {
                                 let op2 = self.convert_set_term(op2, bound_variable)?;
                                 let op1 = self.convert_set_term(op1, bound_variable)?;
@@ -531,6 +536,23 @@ impl<'a> Z3Manager<'a> {
                                     let ls = self.convert_list_term(op2.clone(), bound_variable)?;
                                     return Some(ls.nth(&ast::Int::from_i64(self.ctx, 0)));
                                 }
+                                "firstn" => {
+                                    let length =
+                                        self.convert_int_term(op2.clone(), bound_variable)?;
+                                    let ls = self.convert_list_term(op1.clone(), bound_variable)?;
+                                    return Some(
+                                        ls.subsequance(ast::Int::from_i64(self.ctx, 0), length)
+                                            .into(),
+                                    );
+                                }
+                                "skipn" => {
+                                    let start =
+                                        self.convert_int_term(op2.clone(), bound_variable)?;
+                                    let ls = self.convert_list_term(op1.clone(), bound_variable)?;
+                                    return Some(
+                                        ls.subsequance(start.clone(), ls.length() - start).into(),
+                                    );
+                                }
                                 _ => (),
                             },
                             Term::App { func, op: _ } => {
@@ -902,6 +924,10 @@ mod tests {
         // success(r#"map (λ x, if_f (x = 2) 2 4) [2, 3] = [2, 4]"#);
         success("∀ d: ℤ, ∀ n: list ℤ, 0 < d ∧ d < 10 → ~ head 0 (d :: n) = 0");
         //  success("∀ X Y: U, ∀ f: X -> Y, ∀ p q: X, f p = f q");
+        success("2 in 3::[4, 2]");
+        success("firstn [2, 3, 4] 2 = [2, 3]");
+        success("skipn [2, 3, 4] 2 = [4]");
+        fail("∀ T: U, ∀ l: list T, ∀ i: ℤ, 0 < i -> i < |l| -> l = firstn l i + skipn l i");
     }
     #[test]
     fn list_not_solve() {

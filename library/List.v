@@ -7,6 +7,8 @@ Axiom #1 head: ∀ A: U, A -> list A -> A;
 Axiom head_nil: ∀ A: U, ∀ default: A, head default [] = default;
 Axiom head_cons: ∀ A: U, ∀ default: A, ∀ x: list A, ∀ a: A, head default (cons A a x) = a;
 
+Todo head_append_l: ∀ A: U, ∀ default: A, ∀ a b: list A, ~ a = [] -> head default (a + b) = head default a;
+
 Axiom #1 tail: ∀ A: U, list A -> list A;
 Axiom tail_nil: ∀ A: U, tail (nil A) = nil A;
 Axiom tail_cons: ∀ A: U, ∀ x: list A, ∀ a: A, tail (cons A a x) = x;
@@ -19,23 +21,23 @@ Proof; intros; auto_list; Qed;
 Suggest goal default apply tail_add with label Trivial;
 Theorem cons_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, ~ x = [] -> x = cons A (head default x) (tail x);
 Proof;
-intros;
-add_from_lib cons_nil_case;
-add_hyp cons_nil_case_ex := (cons_nil_case (A));
-add_hyp cons_nil_case_ex_ex := (cons_nil_case_ex (x));
-destruct cons_nil_case_ex_ex with (or_ind ? ?);
-destruct cons_nil_case_ex_ex with (ex_ind ? ?) to (a a_property);
-destruct a_property with (ex_ind ? ?) to (y y_property);
-replace #2 (x) with (cons A y a);
-assumption;
-replace #2 (x) with (cons A y a);
-assumption;
-replace #1 (head default (cons A y a)) with (y);
-apply head_cons;
-replace #1 (tail (cons A y a)) with (a);
-apply tail_cons;
-assumption;
-assumption;
+    intros;
+    add_from_lib cons_nil_case;
+    add_hyp cons_nil_case_ex := (cons_nil_case (A));
+    add_hyp cons_nil_case_ex_ex := (cons_nil_case_ex (x));
+    destruct cons_nil_case_ex_ex with (or_ind ? ?);
+    destruct cons_nil_case_ex_ex with (ex_ind ? ?) to (a a_property);
+    destruct a_property with (ex_ind ? ?) to (y y_property);
+    replace #2 (x) with (cons A y a);
+    assumption;
+    replace #2 (x) with (cons A y a);
+    assumption;
+    replace #1 (head default (cons A y a)) with (y);
+    apply head_cons;
+    replace #1 (tail (cons A y a)) with (a);
+    apply tail_cons;
+    assumption;
+    assumption;
 Qed;
 
 Theorem add_head_tail: ∀ A: U, ∀ default: A, ∀ x: list A, ~ x = [] -> x = [ head default x ] + (tail x);
@@ -142,9 +144,10 @@ Axiom inlist_nil: ∀ A: U, ∀ a: A, a in [] -> False;
 Axiom inlist_unfold: ∀ A: U, ∀ l: list A, ∀ a x: A, a in [x] + l -> a = x ∨ a in l;
 Axiom inlist_fold: ∀ A: U, ∀ l: list A, ∀ a x: A, a = x ∨ a in l -> a in [x] + l;
 Todo inlist_singleton: ∀ A: U, ∀ a x: A, a in [x] -> a = x; 
-Todo inlist_add: ∀ A: U, ∀ x y: list A, ∀ a: A, a in x + y -> a in x ∨ a in y;
+Todo inlist_append: ∀ A: U, ∀ x y: list A, ∀ a: A, a in x + y -> a in x ∨ a in y;
 Suggest hyp default apply inlist_unfold in $n with label a in [x] + l => a = x ∨ a in l;
 Suggest goal default apply inlist_fold with label a in [x] + l => a = x ∨ a in l;
+Suggest hyp default apply inlist_append in $n with label a in x + y => a in x ∨ a in y;
 
 Todo inlist_member_set: ∀ A: U, ∀ a: A, ∀ l: list A, a in l -> a ∈ member_set l;
 Suggest goal default apply inlist_member_set with label a ∈ member_set l => a in l;
@@ -155,13 +158,18 @@ Axiom #1 unique_elements: ∀ A: Universe, list A -> Universe;
 Axiom unique_elements_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements ([a] + l) -> ~ a in l ∧ unique_elements l;
 Axiom unique_elements_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements ([a] + l);
 Axiom unique_elements_nil: ∀ A: U, unique_elements (nil A);
+Todo unique_elements_sing: ∀ A: U, ∀ a: A, unique_elements [a];
 Todo unique_elements_cons_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements (a :: l);
 Todo unique_elements_cons_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements (a :: l) -> ~ a in l ∧ unique_elements l;
 Suggest hyp default apply unique_elements_unfold in $n with label unique_elements ([x] + l) => ~ x in l ∧ unique_elements l;
 Suggest goal default apply unique_elements_fold with label unique_elements ([x] + l) => ~ x in l ∧ unique_elements l;
 Suggest goal default apply unique_elements_nil with label Trivial;
+Suggest goal default apply unique_elements_sing with label Trivial;
 Suggest goal default apply unique_elements_cons_fold with label unique_elements (a :: l) =>  ~ a in l ∧ unique_elements l;
 Suggest hyp default apply unique_elements_cons_unfold in $n with label unique_elements (a :: l) =>  ~ a in l ∧ unique_elements l;
+
+Todo unique_elements_append: ∀ A: U, ∀ x y: list A, unique_elements (y + x) -> unique_elements(x + y);
+Suggest goal default apply unique_elements_append with label unique_elements (x + y) =>  unique_elements (y + x);
 
 Todo listing_set: ∀ T: U, ∀ S: set T, finite S -> ∃ l: list T, member_set l = S ∧ |l| = |S| ∧ unique_elements l;
 
@@ -203,6 +211,8 @@ Proof;
     lia;
     auto_list;
 Qed;
+
+Todo inlist_split: ∀ T: U, ∀ l: list T, ∀ a, a in l -> ∃ i, 0 ≤ i ∧ i < |l| ∧ ∃ x y, |x| = i ∧ |y| = |l| - i - 1 ∧ l = x + a :: y;
 
 Axiom #1 firstn: ∀ T: U, list T -> ℤ -> list T;
 Axiom firstn_nil: ∀ T: U, ∀ n: ℤ, firstn (nil T) n = [];
@@ -364,6 +374,9 @@ Proof;
     z3;
     z3;
 Qed;
+
+Todo nth_append_l: ∀ T: U, ∀ d: T, ∀ x y: list T, ∀ i, 0 ≤ i ∧ i < |x| -> nth d (x + y) i = nth d x i;
+Todo nth_append_r: ∀ T: U, ∀ d: T, ∀ x y: list T, ∀ i, |x| ≤ i ∧ i < |x| + |y| -> nth d (x + y) i = nth d y (i - |x|);
 
 Todo in_nth: ∀ X: U, ∀ default: X, ∀ i, ∀ l, 0 ≤ i ∧ i < |l| -> nth default l i in l;
 Suggest goal default apply in_nth with label nth default l i in l =>  0 ≤ i ∧ i < |l|;

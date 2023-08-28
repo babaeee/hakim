@@ -195,3 +195,4 @@ Axiom set_from_func_eq: ∀ A: U, ∀ f: A -> U, ∀ g: A -> U, (∀ x: A, f x �
 Todo len_gt_0_not_empty_set: ∀ T: U, ∀ S: set T, |S| > 0 → ∃ t: T, t ∈ S;
 Todo len_eq_1_sing: ∀ T: U, ∀ S: set T, |S| = 1 → ∃ t: T, S = {t};
 Suggest hyp default apply len_eq_1_sing in $n with label |S| = 1 => S = {t};
+Suggest goal default apply set_from_func_eq with label {x | P x} = {y | Q y} => P x <-> Q x;
