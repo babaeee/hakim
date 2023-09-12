@@ -454,4 +454,12 @@ mod tests {
             "head 0",
         );
     }
+    #[test]
+    fn apply_input_change() {
+        run_interactive_to_fail(
+            "∀ X: Universe → Universe, ∀ x: species X, (∀ Y: (Universe → Universe), ∀ x0: species X, ∀ y: species Y, ∀ tr: ∀ A: Universe, X A → Y A, naturality x0 y tr → eq_sp x0 y) → eq_sp x sp1",
+            r#"intros"#,
+            "apply (H ?0 ?2 ?4 (λ A: Universe, λ a: X A, {}) ?8)",
+        );
+    }
 }

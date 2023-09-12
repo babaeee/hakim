@@ -249,6 +249,7 @@ Todo map_f_o_g: ∀ X Y Z: U, ∀ f: Y -> Z, ∀ g: X -> Y, ∀ l, map f (map g 
 Todo map_eq: ∀ X Y: U, ∀ f: X -> Y, ∀ g: X -> Y, ∀ l, (∀ a, a in l -> f a = g a) -> map f l = map g l;
 Todo map_identity: ∀ X: U, ∀ f: X -> X, ∀ l, (∀ a, a in l -> f a = a) ->  map f l = l;
 Todo firstn_map: ∀ X Y: U, ∀ f: X -> Y, ∀ l, ∀ i, firstn (map f l) i = map f (firstn l i);
+Todo injective_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S: set (list X), ∀ D: set X, (∀ l, l ∈ S -> member_set l ⊆ D) -> injective f D -> injective (map f) S;
 
 Axiom #2 fold_left: ∀ X Y: U, (X -> Y -> X) -> X -> list Y -> X;
 Axiom fold_left_nil: ∀ X Y: U, ∀ f: X -> Y -> X, ∀ hesab_shode: X, ∀ l: list Y, fold_left f hesab_shode l = hesab_shode;
@@ -338,6 +339,7 @@ Proof;
     rewrite cons_nil_case_ex_ex ;
     apply nth_nil;
 Qed;
+
 Theorem nth_map: ∀ X Y: U, ∀ default: Y, ∀ default2: X, ∀ l: list X, ∀ f: X -> Y, ∀ i, 0 ≤ i -> i < |l| -> nth default (map f l) i = f (nth default2 l i);
 Proof;
     intros;
@@ -355,7 +357,7 @@ Proof;
     destruct y_property with (ex_ind ? ?) to (x x_property);
     rewrite x_property ;
     replace #1 (map f (x :: y)) with (f x :: map f ( y));
-    z3;
+    apply map_cons;
     destruct H0 with (or_ind ? ?) ;
     apply eq_sym in H0 ;
     rewrite H0 ;

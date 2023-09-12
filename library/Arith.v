@@ -178,6 +178,8 @@ Qed;
 Suggest goal apply pow_unfold_l with label  a ^ (n + 1) = a * a ^ n => 0 ≤ n;
 Suggest goal apply pow_unfold_r with label  a ^ (n + 1) = a ^ n * a => 0 ≤ n;
 
+Todo pow_plusZ: ∀ a x y: ℤ, 0 ≤ x ∧ 0 ≤ y -> a ^ (x + y) = a ^ x * a ^ y;
+
 Theorem pow_pos: ∀ a n: ℤ, 0 ≤ n -> 0 < a -> 0 < a ^ n;
 Proof;
     intros a;

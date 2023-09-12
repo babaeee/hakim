@@ -1,4 +1,4 @@
-use std::{cell::Cell, collections::HashSet, sync::Mutex, time::Duration};
+use std::{cell::Cell, collections::HashSet, panic, rc::Rc, sync::Mutex, time::Duration};
 
 use im::HashMap;
 use num_bigint::BigInt;
@@ -19,7 +19,7 @@ use crate::{
         remove_unused_var, type_of, Abstraction, Term, TermRef,
     },
     interactive::Frame,
-    library::prelude::{abs, list, minus, r},
+    library::prelude::{abs, minus, r},
 };
 
 use super::{Error::CanNotSolve, Result};
@@ -191,7 +191,7 @@ impl<'a> Z3Manager<'a> {
                         }
                         "finite" => {
                             let x = self.get_finite_for_sort(op1)?;
-                            let set = self.convert_general_term(op2, &[])?;
+                            let set = self.convert_general_term(op2, &bound_variable)?;
                             return Some(x.apply(&[&set]).try_into().unwrap());
                         }
                         _ => (),
@@ -206,8 +206,8 @@ impl<'a> Z3Manager<'a> {
         )
     }
 
-    fn generate_unknown(&self, t: TermRef, sort: Sort<'a>) -> ast::Dynamic<'a> {
-        let id = lookup_in_cell_hashmap(&self.unknowns.0, t);
+    fn generate_unknown(&self, key: TermRef, sort: Sort<'a>) -> ast::Dynamic<'a> {
+        let id = lookup_in_cell_hashmap(&self.unknowns.0, key);
         ast::Dynamic::new_const(self.ctx, format!("$x{id}"), &sort)
     }
 
@@ -256,16 +256,11 @@ impl<'a> Z3Manager<'a> {
     }
 
     fn convert_array_term(&self, t: TermRef) -> Option<ast::Array<'a>> {
-        if let Some(t) = self.convert_general_term(t.clone(), &[]) {
-            let t = t.as_array()?;
-            return Some(t);
-        }
         let mut bound_variable = vec![];
         let mut names = vec![];
         let mut term_body = t;
         while let Term::Fun(a) = term_body.as_ref() {
             let sort = self.convert_sort(&a.var_ty)?;
-            dbg!(sort.clone());
             bound_variable.push(sort);
             names.push(
                 a.hint_name
@@ -274,15 +269,13 @@ impl<'a> Z3Manager<'a> {
             );
             term_body = a.body.clone();
         }
-        dbg!(bound_variable.len());
-        //we want to bound last element in bound_varible with Var{0} term in t so we should reverse bound_variable
-        // bound_variable.reverse();
         let body = self.convert_general_term(term_body, &bound_variable)?;
-        dbg!(body.clone());
-
+        if bound_variable.is_empty() {
+            let t = body.as_array()?;
+            return Some(t);
+        }
         let names: Vec<_> = names.into_iter().map(Symbol::from).collect();
         let sorts: Vec<_> = bound_variable.iter().rev().collect();
-
         return Some(ast::Array::lambda(self.ctx, &names, &sorts, body));
     }
 
@@ -298,7 +291,6 @@ impl<'a> Z3Manager<'a> {
                     return None;
                 }
                 let sort = self.convert_sort(ty)?;
-                dbg!(sort.clone());
                 return Some(ast::Dynamic::new_const(
                     self.ctx,
                     unique_name.as_str(),
@@ -522,7 +514,8 @@ impl<'a> Z3Manager<'a> {
                                             ast::String::concat(self.ctx, &[&c, &s]).into(),
                                         );
                                     } else {
-                                        let head = self.convert_general_term(op1.clone(), &[])?;
+                                        let head =
+                                            self.convert_general_term(op1.clone(), bound_variable)?;
                                         let head = ast::Seq::unit(self.ctx, &head);
                                         let tail =
                                             self.convert_list_term(op2.clone(), bound_variable)?;
@@ -563,10 +556,14 @@ impl<'a> Z3Manager<'a> {
                                                 op.clone(),
                                                 bound_variable,
                                             )?;
-                                            let op1 =
-                                                self.convert_general_term(op1.clone(), &[])?;
-                                            let op2 =
-                                                self.convert_general_term(op2.clone(), &[])?;
+                                            let op1 = self.convert_general_term(
+                                                op1.clone(),
+                                                bound_variable,
+                                            )?;
+                                            let op2 = self.convert_general_term(
+                                                op2.clone(),
+                                                bound_variable,
+                                            )?;
                                             return Some(prop.ite(&op1, &op2));
                                         }
                                         "map" => {
@@ -575,29 +572,23 @@ impl<'a> Z3Manager<'a> {
                                                     op2.clone(),
                                                     bound_variable,
                                                 )?;
-                                                let ls_type = type_of(op1.clone()).ok()?;
                                                 let fun_as_arr =
                                                     self.convert_array_term(op1.clone())?;
-                                                let fun_type = type_of(op2.clone()).ok()?;
 
-                                                let maped_ls_sort = self.convert_sort(op)?;
+                                                //let maped_ls_sort = self.convert_sort(op)?;
                                                 let maped_ls_sort =
-                                                    Sort::seq(self.ctx, &maped_ls_sort);
-
+                                                    Sort::seq(self.ctx, &self.convert_sort(op)?);
                                                 let fun = self
                                                     .generate_unknown(
-                                                        fun_type,
+                                                        op1.clone(),
                                                         fun_as_arr.get_sort(),
                                                     )
                                                     .as_array()?;
                                                 let from = self
-                                                    .generate_unknown(ls_type, ls.get_sort())
+                                                    .generate_unknown(op2.clone(), ls.get_sort())
                                                     .as_seq()?;
                                                 let maped_ls = self
-                                                    .generate_unknown(
-                                                        app_ref!(list(), op),
-                                                        maped_ls_sort,
-                                                    )
+                                                    .generate_unknown(t.clone(), maped_ls_sort)
                                                     .as_seq()?;
                                                 let prob = self.ctx.from_string(
                                                     "(assert (= (seq.map fun from) to))",
@@ -630,7 +621,12 @@ impl<'a> Z3Manager<'a> {
                             "set_singleton" => {
                                 return Some(
                                     ast::Set::empty(self.ctx, &self.convert_sort(op1)?)
-                                        .add(&self.convert_general_term(op2.clone(), &[])?)
+                                        .add(
+                                            &self.convert_general_term(
+                                                op2.clone(),
+                                                &bound_variable,
+                                            )?,
+                                        )
                                         .into(),
                                 );
                             }
@@ -678,7 +674,7 @@ impl<'a> Z3Manager<'a> {
                                         abs(),
                                         app_ref!(app_ref!(app_ref!(minus(), r()), op1), op2)
                                     ),
-                                    &[],
+                                    &bound_variable,
                                 )?;
                                 return Some(op);
                             }
@@ -696,6 +692,15 @@ impl<'a> Z3Manager<'a> {
                     },
                     _ => (),
                 }
+                /*if let Some(func) = self.convert_array_term(func.clone()) {
+                    let index = self.convert_general_term(op2.clone(), bound_variable)?;
+                    dbg!(func.clone());
+                    let result = panic::catch_unwind(|| func.select(&index));
+                    match result {
+                        Ok(res) => return Some(res),
+                        Err(_) => print!("ehahd"),
+                    }
+                }*/
             }
             Term::Wild { .. } => unreachable!(),
         }
@@ -740,6 +745,15 @@ impl<'a> Z3Manager<'a> {
             let domain = self.convert_sort(&a.var_ty)?;
             let range = self.convert_sort(&a.body)?;
             return Some(Sort::array(self.ctx, &domain, &range));
+        }
+        let ty = type_of(Rc::new(t.clone())).ok()?;
+        if let Term::Universe { index } = ty.as_ref() {
+            if *index == 0 {
+                return Some(Sort::uninterpreted(
+                    self.ctx,
+                    z3::Symbol::String(format!("{:?}", t)),
+                ));
+            }
         }
         None
     }
@@ -823,7 +837,9 @@ fn z3_can_solve(frame: Frame) -> bool {
     };
     for hyp in frame.hyps {
         println!("{:?}", &hyp.ty.clone());
-        let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty, &[]) else { continue; };
+        let Some(b) = z3manager.covert_prop_to_z3_bool(hyp.ty, &[]) else {
+            continue;
+        };
         z3manager.solver.assert(&b);
     }
     if let Some(b) = z3manager.covert_prop_to_z3_bool(frame.goal, &[]) {
@@ -888,6 +904,7 @@ mod tests {
 
     #[test]
     fn pow_rules() {
+        success("∀ x y: ℤ, 2 ^ (x + y) = 2^x * 2^y");
         success("2 ^ 3 = 8");
         success("sqrt 8. = 2. * sqrt 2.");
         success("∀ a b: ℤ, ~ b = 0 -> (a / b) ^ 2. = (a * a) / (b * b)");
@@ -920,10 +937,12 @@ mod tests {
 
     #[test]
     fn list_calculate() {
-        //    success("|[2, 3, 4]| = 3");
-        // success(r#"map (λ x, if_f (x = 2) 2 4) [2, 3] = [2, 4]"#);
+        success("|[2, 3, 4]| = 3");
+        success(r#"map (λ x, if_f (x = 2) 2 4) [2, 3] = [2, 4]"#);
+        fail("(λ x y: ℤ, if_f (x = 2) y (2 * y)) 2 3 = 3");
+        fail("∀ y: list ℤ, ∀ x: ℤ, ∀ f: ℤ → ℤ, map f (x :: y) = f x :: map f y");
         success("∀ d: ℤ, ∀ n: list ℤ, 0 < d ∧ d < 10 → ~ head 0 (d :: n) = 0");
-        //  success("∀ X Y: U, ∀ f: X -> Y, ∀ p q: X, f p = f q");
+        fail("∀ X Y: U, ∀ f: X -> Y, ∀ p q: X, f p = f q");
         success("2 in 3::[4, 2]");
         success("firstn [2, 3, 4] 2 = [2, 3]");
         success("skipn [2, 3, 4] 2 = [4]");
@@ -932,5 +951,9 @@ mod tests {
     #[test]
     fn list_not_solve() {
         success("∀ n: ℤ, 0 < n → ∀ x y: list char, (0, 0) :: list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn x i), cnt ')' (firstn x i))) = (0, 0) :: list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn y i), cnt ')' (firstn y i))) → list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn x i), cnt ')' (firstn x i))) = list_of_fun (2 * n) (λ i: ℤ, (cnt '(' (firstn y i), cnt ')' (firstn y i)))");
+    }
+    #[test]
+    fn if_f_not_solve() {
+        success("∀ X: Universe → Universe, ∀ A B: Universe, ∀ s: X A, ∀ m: X B, ∀ t: set (X A), s ∈ t → ∀ n: X B, if_f (s ∈ t) m n = m");
     }
 }

@@ -95,6 +95,10 @@ Proof;
     lia;
 Qed;
 Todo divide_factor: ∀ a b c: ℤ, a | b -> a | b * c;
+Todo divide_multipy: ∀ a x y: ℤ, a | x * y → ∃ b c: ℤ, a = b * c ∧ b | x ∧ c | y;
+
+Suggest hyp apply divide_multipy in $n with label a | x * y => ∃ b c, a = b * c ∧ b | x ∧ c | y;
+
 Todo divide_plus: ∀ a b c: ℤ, a | b -> a | c -> a | b + c;
 Theorem divide_minus: ∀ a b c: ℤ, a | b -> a | b + c -> a | c;
 Proof;
