@@ -1,4 +1,4 @@
-use std::{cell::Cell, collections::HashSet, panic, rc::Rc, sync::Mutex, time::Duration};
+use std::{cell::Cell, collections::HashSet, rc::Rc, sync::Mutex, time::Duration};
 
 use im::HashMap;
 use num_bigint::BigInt;
@@ -19,7 +19,7 @@ use crate::{
         remove_unused_var, type_of, Abstraction, Term, TermRef,
     },
     interactive::Frame,
-    library::prelude::{abs, minus, r},
+    library::prelude::{abs, chr, minus, r},
 };
 
 use super::{Error::CanNotSolve, Result};
@@ -150,6 +150,8 @@ impl<'a> Z3Manager<'a> {
                             "inset" => {
                                 let op2 = self.convert_set_term(op2, bound_variable)?;
                                 let op1 = self.convert_general_term(op1, bound_variable)?;
+                                dbg!(op2.get_sort().clone());
+                                dbg!(op1.get_sort().clone());
                                 return Some(op2.member(&op1));
                             }
                             "inlist" => {
@@ -191,7 +193,7 @@ impl<'a> Z3Manager<'a> {
                         }
                         "finite" => {
                             let x = self.get_finite_for_sort(op1)?;
-                            let set = self.convert_general_term(op2, &bound_variable)?;
+                            let set = self.convert_general_term(op2, bound_variable)?;
                             return Some(x.apply(&[&set]).try_into().unwrap());
                         }
                         _ => (),
@@ -336,7 +338,8 @@ impl<'a> Z3Manager<'a> {
                         if unique_name == "chr" {
                             let c = detect_char(&t)?;
                             let c = ast::String::from_str(self.ctx, c.to_string().as_str()).ok()?;
-                            return Some(c.into());
+                            let c = unsafe { ast::Seq::wrap(self.ctx, c.get_z3_ast()) };
+                            return Some(c.nth(&ast::Int::from_i64(self.ctx, 0)));
                         }
                         if unique_name == "sqrt" {
                             let op2 = self.convert_real_term(op2.clone(), bound_variable)?;
@@ -500,7 +503,7 @@ impl<'a> Z3Manager<'a> {
                                     return None;
                                 }
                                 "cons" => {
-                                    if detect_char_ty(op) {
+                                    /*if detect_char_ty(op) {
                                         if let Some(s) = detect_string(&t) {
                                             let s =
                                                 ast::String::from_str(self.ctx, s.as_str()).ok()?;
@@ -509,20 +512,21 @@ impl<'a> Z3Manager<'a> {
                                         let s =
                                             self.convert_string_term(op2.clone(), bound_variable)?;
                                         let c =
-                                            self.convert_string_term(op1.clone(), bound_variable)?;
+                                            self.convert_general_term(op1.clone(), bound_variable)?;
+
                                         return Some(
                                             ast::String::concat(self.ctx, &[&c, &s]).into(),
                                         );
-                                    } else {
-                                        let head =
-                                            self.convert_general_term(op1.clone(), bound_variable)?;
-                                        let head = ast::Seq::unit(self.ctx, &head);
-                                        let tail =
-                                            self.convert_list_term(op2.clone(), bound_variable)?;
-                                        return Some(
-                                            ast::Seq::concat(self.ctx, &[&head, &tail]).into(),
-                                        );
-                                    }
+                                    } else {*/
+                                    let head =
+                                        self.convert_general_term(op1.clone(), bound_variable)?;
+                                    let head = ast::Seq::unit(self.ctx, &head);
+                                    let tail =
+                                        self.convert_list_term(op2.clone(), bound_variable)?;
+                                    return Some(
+                                        ast::Seq::concat(self.ctx, &[&head, &tail]).into(),
+                                    );
+                                    //}
                                 }
                                 // call nth with index 0
                                 "head" => {
@@ -709,6 +713,7 @@ impl<'a> Z3Manager<'a> {
         }
         let ty = type_of(t.clone()).unwrap();
         let sort = self.convert_sort(&ty)?;
+        dbg!(sort.clone());
         Some(self.generate_unknown(t, sort))
     }
 
@@ -720,7 +725,10 @@ impl<'a> Z3Manager<'a> {
             return Some(Sort::real(self.ctx));
         }
         if detect_char_ty(t) {
-            return Some(Sort::string(self.ctx));
+            let c = ast::String::from_str(self.ctx, "a").unwrap();
+            let c = unsafe { ast::Seq::wrap(self.ctx, c.get_z3_ast()) };
+            let c = c.nth(&ast::Int::from_i64(self.ctx, 0));
+            return Some(c.get_sort());
         }
         if let Some(elt) = detect_list_ty(t) {
             if detect_char_ty(&elt) {
@@ -918,6 +926,7 @@ mod tests {
     }
     #[test]
     fn z3_simple_can_solve() {
+        success("∀ x y: ℤ, x mod y = x - y mod y");
         success("∀ k p: ℤ, ~ 2 * (2 * k ^ 2 + 2 * k) + 1 = 2 * p");
         success("∀ k: ℤ, True");
         success("∀ p q: ℤ, ~ 2 * gcd p q = 1");
@@ -955,5 +964,11 @@ mod tests {
     #[test]
     fn if_f_not_solve() {
         success("∀ X: Universe → Universe, ∀ A B: Universe, ∀ s: X A, ∀ m: X B, ∀ t: set (X A), s ∈ t → ∀ n: X B, if_f (s ∈ t) m n = m");
+    }
+    #[test]
+    fn char_parse() {
+        success(r#" ∀ s, 'a'::s = "a" + s "#);
+        success(r#"nth '*' "aa" 0 = 'a'"#);
+        fail(r#"nth '*' "aa" 0 ∈ member_set "a""#);
     }
 }

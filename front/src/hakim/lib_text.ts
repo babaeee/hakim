@@ -17,6 +17,7 @@ import EnumerativeCombinatorics from "../../../library/EnumerativeCombinatorics.
 import Field from "../../../library/Field.v";
 import MetricSpace from "../../../library/MetricSpace.v";
 import Species from "../../../library/Species.v";
+import Automata from "../../../library/Automata.v";
 
 export const loadLibText = () => {
   return {
@@ -39,5 +40,6 @@ export const loadLibText = () => {
     "/Field": Field,
     "/MetricSpace": MetricSpace,
     "/Species": Species,
+    "/Automata": Automata,
   };
 };

@@ -384,6 +384,8 @@ Todo in_nth: ∀ X: U, ∀ default: X, ∀ i, ∀ l, 0 ≤ i ∧ i < |l| -> nth 
 Suggest goal default apply in_nth with label nth default l i in l =>  0 ≤ i ∧ i < |l|;
 Todo nth_in: ∀ X: U, ∀ default: X, ∀ a, ∀ l, a in l -> (∃ i, 0 ≤ i ∧ i < |l| ∧ nth default l i = a);
 Suggest hyp default apply nth_in in $n with label a in l => nth default l i = a;
+Todo nth_eq: ∀ A: U, ∀ d: A, ∀ a b, |a| = |b| -> (∀ i, 0 ≤ i ∧ i < |a| -> nth d a i = nth d b i) -> a = b;
+Suggest goal default apply nth_eq with label a = b => |a| = |b| and nth a i = nth b i;
 
 Axiom #1 list_of_fun: ∀ X: U, ℤ -> (ℤ -> X) -> list X;
 Axiom list_of_fun_not_pos: ∀ X: U, ∀ n, n ≤ 0 -> ∀ f: ℤ -> X, list_of_fun n f = [];

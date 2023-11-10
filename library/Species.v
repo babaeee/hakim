@@ -5,14 +5,27 @@ Axiom species: (U → U) → U;
 
 Axiom #2 Fun: ∀ A: U, ∀ X: U → U, ∀ x: species X, set A → set (X A);
 Axiom #6 Is: ∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, ∀ X: U → U, ∀ x: species X, ∀ H: bijective f a b, (X A) -> (X B);
-Axiom specise_compos: ∀ X: U → U, ∀ x: species X,
+Axiom Is_intro: ∀ X: U → U, ∀ x: species X,
     ∀ A B C: U, ∀ n: ℤ, 0 < n → ∀ a: set A, |a| = n → ∀ b: set B, ∀ c: set C, 
         ∀ f: A → B, ∀ H: bijective f a b, ∀ g: B → C, ∀ H0: bijective g b c,
             ∀ s: X A, s ∈ Fun x a → Is x (bicompos H0 H) s = Is x H0 (Is x H s);
-Axiom specise_id: ∀ X: U → U, ∀ x: species X,
+Axiom #1 species_compos: ∀ X: U → U, species X -> (∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, X A → X B) -> U;
+Axiom species_compos_unfold: ∀ X: U → U, ∀ x: species X,
+    ∀ is: ∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, X A → X B,
+        species_compos x is -> 
+            ∀ A B C: U, ∀ n: ℤ, 0 < n → ∀ a: set A, |a| = n → ∀ b: set B, ∀ c: set C, 
+                ∀ f: A → B, bijective f a b → ∀ g: B → C, bijective g b c →
+                    ∀ s: X A, s ∈ Fun x a → is A C a c (g ∘ f) s = is B C b c g (is A B a b f s);
+Suggest hyp default apply species_compos_unfold in $n with label Destruct;
+Axiom #1 species_id: ∀ X: U → U, species X -> (∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, X A → X B) -> U;
+Axiom species_id_unfold: ∀ X: U → U, ∀ x: species X, ∀ is, species_id x is ->
     ∀ A: U, ∀ n: ℤ, 0 < n → ∀ a: set A, |a| = n 
         → ∀ f: A → A, ∀ H: bijective f a a, 
             (∀ s: X A, s ∈ Fun x a -> Is x H s = s);
+Axiom species_range: ∀ X: U → U, ∀ x: species X,     
+    ∀ A B: U, ∀ n: ℤ, 0 < n → ∀ a: set A, |a| = n → ∀ b: set B,         
+        ∀ f: A → B, ∀ H: bijective f a b,              
+            (∀ s: X A, s ∈ Fun x a -> (Is x H s) ∈ Fun x b);
 
 Axiom #1 Fun_eq: ∀ X: U → U, ∀ x: species X, ∀ F: ∀ A: U, set A → set (X A), Universe;
 Axiom Fun_eq_unfold: ∀ X: U → U, ∀ x: species X, ∀ F: ∀ A: U, set A → set (X A), 
@@ -25,22 +38,21 @@ Axiom Is_eq_unfold: ∀ X: U → U, ∀ x: species X,
             Is x H = is A B a b f;
 Suggest hyp default apply Is_eq_unfold in $n with label Destruct;
 
-Axiom specise_intro: ∀ X: U → U,
+Axiom species_intro: ∀ X: U → U, species X → (∀ A: U, set A → set (X A)) → 
+    (∀ A B: U, set A → set B → (A → B) → X A → X B) → U;
+Axiom species_intro_unfold: ∀ X: U → U, ∀ x: species X,
     ∀ F: ∀ A: U, set A → set (X A),      
     ∀ is: ∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, X A → X B,
-        (∀ A B C: U, ∀ n: ℤ, 0 < n → ∀ a: set A, |a| = n → ∀ b: set B, ∀ c: set C, 
-            (∀ f: A → B, bijective f a b → ∀ g: B → C, bijective g b c 
-                → ∀ s: X A, s ∈ F A a → is A C a c (g ∘ f) s = is B C b c g (is A B a b f s))
-            ∧ (∀ f: (A → A), bijective f a a → ∀ s: X A, s ∈ F A a → is A A a a f s = s) )
-                -> ∃ x: species X, Fun_eq x F ∧ Is_eq x is;
-Suggest hyp default apply specise_compos in $n with label Destruct;
-Suggest goal default apply specise_intro with label Destruct;
+        species_intro X x F is -> species_compos x is ∧ species_id x is ∧ Fun_eq x F ∧ Is_eq x is;
+Suggest hyp default apply species_intro_unfold in $n with label Destruct;
 
 Import /Set;
 
 Definition projection_Is := λ x: species (λ A: Universe, set A), ∀ A B: Universe, ∀ a: set A, ∀ b: set B, ∀ f: A → B, ∀ H: bijective f a b, ∀ s: set A, Is x H s = projection s f;
 Axiom projection_Is_unfold: ∀ x: species (λ A: U, set A), projection_Is x → ∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, ∀ H: bijective f a b, ∀ s: set A, Is x H s = projection s f;
 Suggest hyp default apply projection_Is_unfold in $n with label Destruct;
+
+Todo Is_bijection: ∀ X: U → U, ∀ x: species X, ∀ A B: U, ∀ a: set A, |a| > 0 -> ∀ b: set B, ∀ f: A → B, ∀ H: bijective f a b, bijective (Is x H) (Fun x a) (Fun x b);
 
 Axiom spX: species (λ A: U, set A);
 Axiom FspX: ∀ A: U, ∀ a: set A, Fun spX a = if_f (|a| = 1) {a} {};
@@ -153,9 +165,16 @@ Proof;
     assumption;
 Qed; 
 
+Todo spplus_zero: ∀ X: U → U, ∀ x: species X, eq_sp (x + sp0 X) x;
+
 Axiom #1 sp_nth: ∀ X: U → U, species X -> ℤ -> species X;
 Axiom Fsp_nth: ∀ X: U → U, ∀ x: species X, ∀ n: ℤ, ∀ A: U, ∀ a: set A, Fun (sp_nth x n) a = if_f (|a| = n) (Fun x a) ({});
 Axiom Issp_nth: ∀ X: U → U, ∀ x: species X, ∀ n: ℤ, 
     ∀ A B: U, ∀ a: set A, finite a -> ∀ b: set B, ∀ f: A → B, ∀ H: bijective f a b, 
         Is x H = Is (sp_nth x n) H;
+
+Todo sp_nth_0_sp1: ∀ X: U → U, ∀ x: species X, eq_sp (sp_nth x 0) sp1;
+Todo sp_nth_1_xpX: ∀ X: U → U, ∀ x: species X, eq_sp (sp_nth x 1) spX;
+
+Axiom #2 dot: ∀ X Y: U → U, species X -> species Y -> species (λ A: U, X A ∧ Y A);
 
