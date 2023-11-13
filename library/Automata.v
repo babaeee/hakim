@@ -89,29 +89,32 @@ Suggest goal default apply star_append with label a + b ∈ star L =>  a ∈ sta
 
 Todo star_incl_sigma: ∀ sigma, ∀ L, L ⊆ words sigma → star L ⊆ words sigma;
 
-Axiom NFA: ℤ → list char → list (char → ℤ) → ℤ → set ℤ → U;
-Axiom NFA_unfold: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, (NFA n sigma edges start F)
-    → 0 < n ∧ 0 < |sigma| ∧ |edges| = n ∧ (0 ≤ start ∧ start < n) ∧ F ⊆ { x: ℤ | 0 ≤ x ∧ x < n };
-Axiom NFA_fold: ∀ n, 0 < n → ∀ sigma: list char, 0 < |sigma| 
-    → ∀ edges: list (char → ℤ), |edges| = n → ∀ start, 0 ≤ start ∧ start < n 
-    → ∀ F, F ⊆ { x: ℤ | 0 ≤ x ∧ x < n } → NFA n sigma edges start F;
-Suggest goal default apply NFA_fold with label Destruct;
-Suggest hyp default apply NFA_unfold with label Destruct;
+Axiom #1 DFA: list char -> U.
+Axiom construct_DFA: ∀ sigma: list char, ℤ → list (char → ℤ) → ℤ → set ℤ → DFA sigma;
+Axiom #1 edges_of_DFA: ∀ sigma: list char, DFA sigma -> list (char → ℤ);
+Axiom #1 accept_nodes_of_DFA: ∀ sigma: list char, DFA sigma -> set ℤ;
+// Axiom DFA_unfold: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, (DFA n sigma edges start F)
+//     → 0 < n ∧ 0 < |sigma| ∧ |edges| = n ∧ (0 ≤ start ∧ start < n) ∧ F ⊆ { x: ℤ | 0 ≤ x ∧ x < n };
+// Axiom DFA_fold: ∀ n, 0 < n → ∀ sigma: list char, 0 < |sigma| 
+//     → ∀ edges: list (char → ℤ), |edges| = n → ∀ start, 0 ≤ start ∧ start < n 
+//     → ∀ F, F ⊆ { x: ℤ | 0 ≤ x ∧ x < n } → DFA n sigma edges start F;
+// Suggest goal default apply DFA_fold with label Destruct;
+// Suggest hyp default apply DFA_unfold with label Destruct;
 
-Axiom #5 run_nfa: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, (NFA n sigma edges start F) → ℤ → (list char) → ℤ;
-Axiom run_nfa_nil: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, ∀ A: NFA n sigma edges start F, ∀ u, run_nfa A u "" = u;
-Axiom run_nfa_cons: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, ∀ A: NFA n sigma edges start F, ∀ u, ∀ s, ∀ c, ∀ f: char → ℤ, f = nth (λ a: char, - 1) edges u → ∀ v, v = f c → run_nfa A u (c :: s) = run_nfa A v s;
+Axiom #1 run_dfa: ∀ sigma: list char, (DFA sigma) → ℤ → (list char) → ℤ;
+Axiom run_dfa_nil: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, run_dfa A u "" = u;
+Axiom run_dfa_cons: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, ∀ s, ∀ c, ∀ f: char → ℤ, f = nth (λ a: char, - 1) (edges_of_DFA A) u → ∀ v, v = f c → run_dfa A u (c :: s) = run_dfa A v s;
 
-Todo run_nfa_append: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, ∀ A: NFA n sigma edges start F, ∀ u, ∀ a b, run_nfa A u (a + b) = run_nfa A (run_nfa A u a) b;
+Todo run_dfa_append: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, ∀ a b, run_dfa A u (a + b) = run_dfa A (run_dfa A u a) b;
 
-Axiom #5 Lnfa: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, (NFA n sigma edges start F) → set (list char);
-Axiom Lnfa_unfold: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, ∀ A: NFA n sigma edges start F, ∀ s, s ∈ Lnfa A -> IsWord sigma s ∧ run_nfa A start s ∈ F;
-Axiom Lnfa_fold: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, ∀ A: NFA n sigma edges start F, ∀ s, IsWord sigma s ∧ run_nfa A start s ∈ F -> s ∈ Lnfa A;
-Suggest goal default apply Lnfa_fold with label Destruct;
-Suggest hyp default apply NFA_unfold in $n with label Destruct;
+Axiom #1 Ldfa: ∀ sigma: list char, DFA sigma → set (list char);
+Axiom Ldfa_unfold: ∀ sigma: list char, ∀ A: DFA sigma, ∀ s, s ∈ Ldfa A -> IsWord sigma s ∧ run_dfa A start s ∈ accept_nodes_of_DFA A;
+Axiom Ldfa_fold: ∀ sigma: list char, ∀ A: DFA sigma, ∀ s, IsWord sigma s ∧ run_dfa A start s ∈ accept_nodes_of_DFA A -> s ∈ Ldfa A;
+Suggest goal default apply Ldfa_fold with label Destruct;
+Suggest hyp default apply DFA_unfold in $n with label Destruct;
 
-Axiom pumping_lemma: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, ∀ A: NFA n sigma edges start F, 
+Axiom pumping_lemma: ∀ sigma, ∀ A: DFA sigma, 
     ∀ s, IsWord sigma s → |s| ≥ n → 
-    ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |z| ≤ n ∧ ∀ i, i ≥ 0 → run_nfa A start (x + rep y i + z) = run_nfa A start s;
+    ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |z| ≤ n ∧ ∀ i, i ≥ 0 → run_dfa A start (x + rep y i + z) = run_dfa A start s;
 
 
