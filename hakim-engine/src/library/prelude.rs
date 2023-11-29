@@ -146,6 +146,9 @@ pub fn char_ty() -> TermRef {
 pub fn chr() -> TermRef {
     term_ref!(axiom "chr", forall z(), char_ty())
 }
+pub fn to_universe() -> TermRef {
+    term_ref!(axiom "to_universe", forall u(), forall v0(), u())
+}
 pub fn init_dict() -> im::HashMap<String, TermRef> {
     let mut name_dict = im::HashMap::<String, TermRef>::default();
     name_dict.insert("U".to_string(), u());
@@ -190,5 +193,6 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("abs".to_string(), abs());
     name_dict.insert("char".to_string(), char_ty());
     name_dict.insert("chr".to_string(), chr());
+    name_dict.insert("to_universe".to_string(), to_universe());
     name_dict
 }

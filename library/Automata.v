@@ -89,32 +89,26 @@ Suggest goal default apply star_append with label a + b ∈ star L =>  a ∈ sta
 
 Todo star_incl_sigma: ∀ sigma, ∀ L, L ⊆ words sigma → star L ⊆ words sigma;
 
-Axiom #1 DFA: list char -> U.
-Axiom construct_DFA: ∀ sigma: list char, ℤ → list (char → ℤ) → ℤ → set ℤ → DFA sigma;
-Axiom #1 edges_of_DFA: ∀ sigma: list char, DFA sigma -> list (char → ℤ);
-Axiom #1 accept_nodes_of_DFA: ∀ sigma: list char, DFA sigma -> set ℤ;
-// Axiom DFA_unfold: ∀ n, ∀ sigma, ∀ edges, ∀ start, ∀ F, (DFA n sigma edges start F)
-//     → 0 < n ∧ 0 < |sigma| ∧ |edges| = n ∧ (0 ≤ start ∧ start < n) ∧ F ⊆ { x: ℤ | 0 ≤ x ∧ x < n };
-// Axiom DFA_fold: ∀ n, 0 < n → ∀ sigma: list char, 0 < |sigma| 
-//     → ∀ edges: list (char → ℤ), |edges| = n → ∀ start, 0 ≤ start ∧ start < n 
-//     → ∀ F, F ⊆ { x: ℤ | 0 ≤ x ∧ x < n } → DFA n sigma edges start F;
-// Suggest goal default apply DFA_fold with label Destruct;
-// Suggest hyp default apply DFA_unfold with label Destruct;
+Axiom DFA: list char -> U;
+Axiom construct_DFA: ∀ sigma, ℤ → list (char → ℤ) → ℤ → set ℤ → DFA sigma;
+Axiom #1 edges_of_DFA: ∀ sigma, DFA sigma -> list (char → ℤ);
+Axiom #1 accept_nodes_of_DFA: ∀ sigma, DFA sigma -> set ℤ;
+Axiom #1 n_of_DFA: ∀ sigma, DFA sigma -> ℤ;
+Axiom #1 start_of_DFA: ∀ sigma, DFA sigma -> ℤ;
 
-Axiom #1 run_dfa: ∀ sigma: list char, (DFA sigma) → ℤ → (list char) → ℤ;
-Axiom run_dfa_nil: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, run_dfa A u "" = u;
-Axiom run_dfa_cons: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, ∀ s, ∀ c, ∀ f: char → ℤ, f = nth (λ a: char, - 1) (edges_of_DFA A) u → ∀ v, v = f c → run_dfa A u (c :: s) = run_dfa A v s;
+Axiom #1 run_dfa: ∀ sigma, (DFA sigma) → ℤ → (list char) → ℤ;
+Axiom run_dfa_nil: ∀ sigma, ∀ A: DFA sigma, ∀ u, run_dfa A u "" = u;
+Axiom run_dfa_cons: ∀ sigma, ∀ A: DFA sigma, ∀ u, ∀ s, ∀ c, ∀ f: char → ℤ, f = nth (λ a: char, - 1) (edges_of_DFA A) u → ∀ v, v = f c → run_dfa A u (c :: s) = run_dfa A v s;
 
 Todo run_dfa_append: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, ∀ a b, run_dfa A u (a + b) = run_dfa A (run_dfa A u a) b;
 
-Axiom #1 Ldfa: ∀ sigma: list char, DFA sigma → set (list char);
-Axiom Ldfa_unfold: ∀ sigma: list char, ∀ A: DFA sigma, ∀ s, s ∈ Ldfa A -> IsWord sigma s ∧ run_dfa A start s ∈ accept_nodes_of_DFA A;
-Axiom Ldfa_fold: ∀ sigma: list char, ∀ A: DFA sigma, ∀ s, IsWord sigma s ∧ run_dfa A start s ∈ accept_nodes_of_DFA A -> s ∈ Ldfa A;
+Axiom #1 Ldfa: ∀ sigma, DFA sigma → set (list char);
+Axiom Ldfa_unfold: ∀ sigma, ∀ A: DFA sigma, ∀ s, s ∈ Ldfa A -> IsWord sigma s ∧ run_dfa A (start_of_DFA A) s ∈ accept_nodes_of_DFA A;
+Axiom Ldfa_fold: ∀ sigma, ∀ A: DFA sigma, ∀ s, IsWord sigma s ∧ run_dfa A (start_of_DFA A) s ∈ accept_nodes_of_DFA A -> s ∈ Ldfa A;
 Suggest goal default apply Ldfa_fold with label Destruct;
-Suggest hyp default apply DFA_unfold in $n with label Destruct;
+Suggest hyp default apply Ldfa_unfold in $n with label Destruct;
 
 Axiom pumping_lemma: ∀ sigma, ∀ A: DFA sigma, 
-    ∀ s, IsWord sigma s → |s| ≥ n → 
-    ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |z| ≤ n ∧ ∀ i, i ≥ 0 → run_dfa A start (x + rep y i + z) = run_dfa A start s;
-
+    ∀ s, IsWord sigma s → |s| ≥ |A| → ∀ start, 0 ≤ start ∧ start < |A| →
+    ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |z| ≤ |A| ∧ ∀ i, i ≥ 0 → run_dfa A start (x + rep y i + z) = run_dfa A start s;
 

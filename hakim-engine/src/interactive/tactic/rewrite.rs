@@ -1,13 +1,17 @@
 use std::collections::HashSet;
 
 use crate::{
-    brain::{Term, TermRef},
+    app_ref,
+    brain::{increase_foreign_vars, type_of, Term, TermRef},
     interactive::Frame,
+    library::prelude::to_universe,
     parser::BinOp,
-    Abstraction,
+    term_ref, Abstraction,
 };
 
-use super::{deny_arg, get_one_arg, next_arg, next_arg_constant, Error::*, Result};
+use super::{
+    apply::apply_for_hyp, deny_arg, get_one_arg, next_arg, next_arg_constant, Error::*, Result,
+};
 
 pub fn replace_term(
     exp: TermRef,
@@ -132,7 +136,92 @@ pub fn rewrite<'a>(mut frame: Frame, args: impl Iterator<Item = &'a str>) -> Res
         None => Err(BadHyp("no rewrite option", term)),
     }
 }
+fn get_eq_form(term: TermRef) -> Option<(TermRef, TermRef, TermRef, TermRef)> {
+    match term.as_ref() {
+        Term::Forall(Abstraction { body, .. }) => get_eq_form(body.clone()),
+        Term::App { func, op: op2 } => match func.as_ref() {
+            Term::App { func, op: op1 } => match func.as_ref() {
+                Term::App { func, op: ty } => match func.as_ref() {
+                    Term::Axiom { unique_name, .. } => {
+                        if unique_name == "eq" {
+                            Some((term.clone(), ty.clone(), op1.clone(), op2.clone()))
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                },
+                _ => None,
+            },
+            _ => None,
+        },
+        _ => None,
+    }
+}
+pub fn replace_using(
+    mut frame: Frame,
+    find: &str,
+    hyp_name: &str,
+) -> Result<(Vec<Frame>, TermRef, TermRef)> {
+    let Ok(hyp) = frame.engine.parse_text(hyp_name) else {
+        return Err(BadArg {
+            tactic_name: "replace".to_string(),
+            arg: "hyp is not from lib".to_string(),
+        });
+    };
+    let hyp = type_of(hyp)?;
 
+    //transform forall (x1 :A1 ) ... (xn :An ), eq term1 term2 into
+    //forall (x1 :A1 ) ... (xn :An ), to_universe (term1) -> to_universe (term2)
+    let Some((eq_term, ty, term1, term2)) = get_eq_form(hyp.clone()) else {
+        return Err(BadArg {
+            tactic_name: "replace".to_string(),
+            arg: "no equality found in hyp result".to_string(),
+        });
+    };
+    let term2 = increase_foreign_vars(term2);
+    let imply = term_ref!(forall app_ref!(app_ref!(to_universe(), ty), term1), app_ref!(app_ref!(to_universe(), ty), term2));
+    let imply_term = replace_term(hyp.clone(), eq_term, imply, &mut None);
+    let imply_name = frame.engine.generate_name("temp");
+    //dbg!(imply_term.clone());
+    frame.add_hyp_with_name(&imply_name, imply_term)?;
+
+    let hyp_name = frame.engine.generate_name("temp");
+    let find = frame.engine.parse_text(find)?;
+    let ty_of_find = type_of(find.clone())?;
+    //dbg!(find.clone());
+    frame.add_hyp_with_name(
+        &hyp_name,
+        app_ref!(app_ref!(to_universe(), ty_of_find), find),
+    )?;
+
+    let mut frames = apply_for_hyp(frame, &imply_name, &hyp_name)?;
+    let after_replace = frames.first_mut().unwrap();
+    after_replace.remove_hyp_with_name(&imply_name)?;
+    let prev_hyp = after_replace.remove_hyp_with_name(&hyp_name)?.ty;
+
+    if let Term::App { op: replace, .. } = prev_hyp.as_ref() {
+        return Ok((frames, find, replace.clone()));
+    }
+    unreachable!();
+}
+pub fn replace_with(
+    frame: Frame,
+    find: &str,
+    replace: &str,
+) -> Result<(Vec<Frame>, TermRef, TermRef)> {
+    let eq = format!("({}) = ({})", find, replace);
+    let eq = frame.engine.parse_text(&eq)?;
+    let mut proof_eq = frame.clone();
+    proof_eq.goal = eq.clone();
+    let after_replace = frame;
+    if let Term::App { func, op: replace } = eq.as_ref() {
+        if let Term::App { func: _, op: find } = func.as_ref() {
+            return Ok((vec![after_replace, proof_eq], find.clone(), replace.clone()));
+        }
+    }
+    unreachable!();
+}
 pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<Vec<Frame>> {
     let mut args = args.peekable();
     let mut which = None;
@@ -146,56 +235,49 @@ pub fn replace<'a>(frame: Frame, args: impl Iterator<Item = &'a str>) -> Result<
             args.next();
         }
     }
-    let find = next_arg(&mut args, "replace")?;
-    next_arg_constant(&mut args, "replace", "with")?;
-    let replace = next_arg(&mut args, "replace")?;
-    let eq = format!("({}) = ({})", find, replace);
-    let eq = frame.engine.parse_text(&eq)?;
-    let mut proof_eq = frame.clone();
-    proof_eq.goal = eq.clone();
-    let mut after_replace = frame;
 
-    if let Term::App { func, op: replace } = eq.as_ref() {
-        if let Term::App { func: _, op: find } = func.as_ref() {
-            let result = if args.peek().is_some() {
-                next_arg_constant(&mut args, "replace", "in")?;
-                let hyp_name = next_arg(&mut args, "replace")?;
-                if let Some((i, _)) = after_replace
-                    .hyps
-                    .iter()
-                    .enumerate()
-                    .find(|(_, x)| x.name == hyp_name)
-                {
-                    deny_arg(args, "replace")?;
-                    replace_term_in_frame(
-                        &mut after_replace,
-                        i,
-                        find.clone(),
-                        replace.clone(),
-                        &mut which,
-                    )
-                } else {
-                    None
-                }
-            } else {
-                replace_term_in_frame(
-                    &mut after_replace,
-                    usize::MAX,
-                    find.clone(),
-                    replace.clone(),
-                    &mut which,
-                )
-            };
-            return match result {
-                Some(_) => Ok(vec![after_replace, proof_eq]),
-                None => Err(BadArg {
-                    tactic_name: "replace".to_string(),
-                    arg: "no change".to_string(),
-                }),
-            };
+    let find = next_arg(&mut args, "replace")?;
+    let (mut frames, find, replace) = if args.peek() == Some(&"using") {
+        args.next();
+        let lib_hyp_name = next_arg(&mut args, "replace")?;
+        replace_using(frame, find, lib_hyp_name)?
+    } else {
+        next_arg_constant(&mut args, "replace", "with")?;
+        let replace = next_arg(&mut args, "replace")?;
+        replace_with(frame, find, replace)?
+    };
+
+    let after_replace = frames.first_mut().unwrap();
+    let result = if args.peek().is_some() {
+        next_arg_constant(&mut args, "replace", "in")?;
+        let hyp_name: &str = next_arg(&mut args, "replace")?;
+        if let Some((i, _)) = after_replace
+            .hyps
+            .iter()
+            .enumerate()
+            .find(|(_, x)| x.name == hyp_name)
+        {
+            deny_arg(args, "replace")?;
+            replace_term_in_frame(after_replace, i, find.clone(), replace.clone(), &mut which)
+        } else {
+            None
         }
+    } else {
+        replace_term_in_frame(
+            after_replace,
+            usize::MAX,
+            find.clone(),
+            replace.clone(),
+            &mut which,
+        )
+    };
+    match result {
+        Some(_) => Ok(frames),
+        None => Err(BadArg {
+            tactic_name: "replace".to_string(),
+            arg: "no change".to_string(),
+        }),
     }
-    unreachable!();
 }
 /*
 fn build_eq_term(t1: TermRef, t2: TermRef) -> Result<TermRef> {
@@ -311,5 +393,15 @@ mod tests {
         destruct cons_nil_case_ex_ex with (ex_ind ? ?) to (y y_property)
         destruct y_property with (ex_ind ? ?) to (a a_property)
         rewrite a_property"#,  EngineLevel::Full);
+    }
+    #[test]
+    fn rewrtie_using() {
+        run_interactive(
+            "2 ^ (2 + 1) = 9 -> False",
+            r#" 
+        intros
+        replace #1 (2 ^ (2 + 1)) using pow_unfold_l in H"#,
+            EngineLevel::Full,
+        );
     }
 }

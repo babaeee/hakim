@@ -135,7 +135,7 @@ fn find_args_in_apply_hyp(
     None
 }
 
-fn apply_for_hyp(mut frame: Frame, exp: &str, name: &str) -> Result<Vec<Frame>> {
+pub fn apply_for_hyp(mut frame: Frame, exp: &str, name: &str) -> Result<Vec<Frame>> {
     let orig_frame = frame.clone();
     let (term, ic) = frame.engine.parse_text_with_wild(exp)?;
     let prev_hyp = frame.remove_hyp_with_name(name)?.ty;
