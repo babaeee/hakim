@@ -1,7 +1,8 @@
 import { normalPrompt } from "../dialog";
 import { fromRust } from "../i18n";
 import { loadLibText } from "./lib_text";
-import { hakimQueryImpl } from "./network_provider";
+import { hakimQueryImpl } from "./wasm_provider";
+import { init } from "z3-solver";
 
 declare let window: Window & {
   ask_question: (q: string) => Promise<string>;
@@ -43,9 +44,12 @@ type Instance = {
   [key: string]: (x?: any) => Promise<any>;
 };
 
-// await window.hakimQueryLoad;
+await window.hakimQueryLoad;
 
 let queryLock = false;
+
+const { Context, em } = await init();
+const Z3 = Context('main');
 
 const instance: Instance = new Proxy(
   {},
@@ -64,6 +68,18 @@ const instance: Instance = new Proxy(
               command: "answer_question",
               arg: answer,
             });
+          }
+          if (r && typeof r === "object" && r.Z3State) {
+            const solver = new Z3.Solver();
+
+            solver.fromString(r.Z3State);
+            solver.set("timeout", 1500);
+            let sat = await solver.check();
+            if (sat === 'unsat') {
+              r = "z3_solved";
+            } else {
+              r = "z3_cant_solve";
+            }
           }
           queryLock = false;
           return r;
@@ -103,15 +119,15 @@ export type State = {
   undoHistory: string[];
   redoHistory: string[];
 } & (
-  | { isFinished: true }
-  | {
+    | { isFinished: true }
+    | {
       isFinished: false;
       monitor: {
         hyps: string[];
         goals: string[];
       };
     }
-);
+  );
 
 type EventListener = (s: State) => void;
 
@@ -185,13 +201,28 @@ const checkErrorAndUpdate = async (
   return false;
 };
 
+const checkErrorOfTacticAndUpdate = async (
+  error: () => Promise<string | undefined>
+) => {
+  let r = await error();
+  if (r === 'z3_solved') {
+    return checkErrorAndUpdate(() => z3Solved());
+  }
+  if (checkError(r)) {
+    emit();
+    return true;
+  } else {
+    return false;
+  }
+};
+
 export const getActionHint = (tactic: string) => {
   return instance.action_of_tactic(tactic);
 };
 
 export const sendTactic = (tactic: string) => {
   console.log(`tactic: `, tactic);
-  return checkErrorAndUpdate(() => instance.run_tactic(tactic));
+  return checkErrorOfTacticAndUpdate(() => instance.run_tactic(tactic));
 };
 
 export const notationList = (): Promise<string[]> => {
@@ -201,6 +232,10 @@ export const notationList = (): Promise<string[]> => {
 export const getNatural = async (): Promise<string> => {
   return fromRust((await instance.natural()) || "$invalid_state");
 };
+
+export const z3Solved = (): Promise<string | undefined> => {
+  return instance.z3_solved();
+}
 
 export const tryTactic = (tactic: string): boolean => {
   return true; //window.hakimQuery({ command: "try_tactic", arg: tactic });
@@ -333,23 +368,33 @@ export const suggMenuGoal = async () => {
 };
 
 export type TryAutoResult =
+  {
+    available: false;
+  }
   | {
-      available: false;
-    }
-  | {
-      available: true;
-      type: "normal" | "history";
-      tactic: string[];
-    };
+    available: true;
+    type: "normal" | "history";
+    tactic: string[];
+  };
 
 export const tryAuto = async (): Promise<TryAutoResult> => {
   const tactic = await instance.try_auto();
+
   if (tactic) {
-    return {
-      available: true,
-      type: "normal",
-      tactic: [tactic],
-    };
+    if (tactic === 'z3_solved') {
+      return {
+        available: true,
+        type: "normal",
+        tactic: ["z3_solved"],
+      };
+    }
+    if (tactic !== 'z3_cant_solve') {
+      return {
+        available: true,
+        type: "normal",
+        tactic: [tactic],
+      };
+    }
   }
   const history_tactics = await instance.try_auto_history();
   if (history_tactics) {

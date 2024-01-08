@@ -5,7 +5,7 @@ use num_bigint::BigInt;
 
 use z3::{
     ast::{self, forall_const, Ast, Bool, Dynamic, Set},
-    Config, Context, FuncDecl, SatResult, Solver, Sort, Symbol, Tactic,
+    Config, Context, FuncDecl, Solver, Sort, Symbol, Tactic,
 };
 
 use crate::{
@@ -13,23 +13,16 @@ use crate::{
     app_ref,
     brain::{
         detect::{
-            detect_char, detect_char_ty, detect_list_ty, detect_r_ty, detect_set_ty, detect_string,
-            detect_z_ty,
+            detect_char, detect_char_ty, detect_list_ty, detect_r_ty, detect_set_ty, detect_z_ty,
         },
         remove_unused_var, type_of, Abstraction, Term, TermRef,
     },
     interactive::Frame,
-    library::prelude::{abs, chr, minus, r},
+    library::prelude::{abs, minus, r},
 };
 
-use super::{Error::CanNotSolve, Result};
-
-pub fn z3_auto(frame: Frame) -> Result<Vec<Frame>> {
-    if z3_can_solve(frame) {
-        Ok(vec![])
-    } else {
-        Err(CanNotSolve("z3"))
-    }
+pub fn z3_auto(frame: Frame) -> String {
+    z3_can_solve(frame)
 }
 
 #[derive(Default)]
@@ -628,7 +621,7 @@ impl<'a> Z3Manager<'a> {
                                         .add(
                                             &self.convert_general_term(
                                                 op2.clone(),
-                                                &bound_variable,
+                                                bound_variable,
                                             )?,
                                         )
                                         .into(),
@@ -678,7 +671,7 @@ impl<'a> Z3Manager<'a> {
                                         abs(),
                                         app_ref!(app_ref!(app_ref!(minus(), r()), op1), op2)
                                     ),
-                                    &bound_variable,
+                                    bound_variable,
                                 )?;
                                 return Some(op);
                             }
@@ -830,7 +823,7 @@ fn definitely_zero(op2: &Term) -> bool {
 
 pub static Z3_TIMEOUT: Mutex<Duration> = Mutex::new(Duration::from_millis(2000));
 
-fn z3_can_solve(frame: Frame) -> bool {
+fn z3_can_solve(frame: Frame) -> String {
     let cfg = &Config::new();
     let ctx = &Context::new(cfg);
     let solver = Tactic::new(ctx, "default")
@@ -855,7 +848,7 @@ fn z3_can_solve(frame: Frame) -> bool {
     }
 
     dbg!(&z3manager.solver);
-    z3manager.solver.check() == SatResult::Unsat
+    z3manager.solver.to_string()
 }
 
 #[cfg(test)]

@@ -7,7 +7,12 @@
 
 <body>
     <div id="root"></div>
-    <!-- enable in wasm mode: <script src="/static/hakim-json.js"></script> -->
+    <script src="/static/hakim-json.js"></script>
 </body>
+
+<script src="z3-built.js"></script>
+<script>
+    globalThis.global = { initZ3: globalThis.initZ3 };
+</script>
 
 </html>
