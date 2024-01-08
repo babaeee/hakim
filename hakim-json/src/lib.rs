@@ -55,6 +55,7 @@ pub enum Command {
     ActionOfTactic(String),
     TryTactic(String),
     ChangeZ3Timeout(u64),
+    Z3Solved,
 }
 
 use Command::*;
@@ -71,11 +72,13 @@ const DONE: Option<&str> = None;
 struct Error(String);
 
 #[derive(Serialize, Deserialize)]
-enum AskQuestionHolder {
+enum StateHolder {
     AskQuestion(String),
+    Z3State(String),
 }
 
-use AskQuestionHolder::AskQuestion;
+use StateHolder::AskQuestion;
+use StateHolder::Z3State;
 
 #[derive(Serialize, Deserialize)]
 struct Panic;
@@ -133,7 +136,16 @@ pub fn run_command(command: Command, state: &mut State) -> String {
         Monitor => serialize(state.session.as_ref().map(|s| s.monitor(true))),
         AllLibraryData => serialize(all_library_data()),
         Natural => serialize(state.session.as_ref().map(|s| s.natural())),
-        TryAuto => serialize(state.session.as_ref().and_then(|s| s.try_auto())),
+        TryAuto => {
+            let Some(s) = state.session.as_ref() else {
+                return serialize(None::<String>);
+            };
+            if let Some(x) = s.try_auto() {
+                serialize(x)
+            } else {
+                serialize(s.z3_get_state().map(Z3State))
+            }
+        }
         TryAutoHistory => serialize(state.session.as_ref().and_then(|s| s.history_based_auto())),
         GetHistory => serialize(state.session.as_ref().map(|s| s.get_history())),
         RunTactic(tactic) => serialize(run_tactic(state, tactic)),
@@ -257,8 +269,12 @@ pub fn run_command(command: Command, state: &mut State) -> String {
         }
         TryTactic(tactic) => serialize(state.session.as_ref().unwrap().try_tactic(&tactic)),
         PosOfSpanHyp { hyp, l, r } => {
-            let Ok(l) = l.try_into() else { return serialize("negative bound") };
-            let Ok(r) = r.try_into() else { return serialize("negative bound") };
+            let Ok(l) = l.try_into() else {
+                return serialize("negative bound");
+            };
+            let Ok(r) = r.try_into() else {
+                return serialize("negative bound");
+            };
             serialize(
                 state
                     .session
@@ -268,14 +284,22 @@ pub fn run_command(command: Command, state: &mut State) -> String {
             )
         }
         PosOfSpanGoal { l, r } => {
-            let Ok(l) = l.try_into() else { return serialize("negative bound") };
-            let Ok(r) = r.try_into() else { return serialize("negative bound") };
+            let Ok(l) = l.try_into() else {
+                return serialize("negative bound");
+            };
+            let Ok(r) = r.try_into() else {
+                return serialize("negative bound");
+            };
             serialize(state.session.as_ref().unwrap().pos_of_span_goal((l, r)))
         }
         ChangeZ3Timeout(t) => {
             let mut g = Z3_TIMEOUT.lock().unwrap();
             *g = Duration::from_millis(t);
             serialize(())
+        }
+        Z3Solved => {
+            state.session.as_mut().map(|s| s.z3_solved());
+            serialize(UntaggedEither::<Option<String>, StateHolder>::Left(None))
         }
     }
 }
@@ -293,10 +317,7 @@ fn sugg_menu(suggs: Vec<Suggestion>) -> String {
         .collect()
 }
 
-fn run_tactic(
-    state: &mut State,
-    tactic: String,
-) -> UntaggedEither<Option<String>, AskQuestionHolder> {
+fn run_tactic(state: &mut State, tactic: String) -> UntaggedEither<Option<String>, StateHolder> {
     use UntaggedEither::*;
     let session = match &mut state.session {
         Some(s) => s,
@@ -309,6 +330,7 @@ fn run_tactic(
             state.question = Some(QuestionState::ForTactic(*e));
             Right(AskQuestion(qt))
         }
+        Err(tactic::Error::Z3State(s)) => Right(Z3State(s)),
         Err(e) => Left(Some(format!("{:?}", e))),
     }
 }
@@ -317,7 +339,7 @@ fn run_sugg(
     state: &mut State,
     sugg: Suggestion,
     answers: Vec<String>,
-) -> UntaggedEither<Option<String>, AskQuestionHolder> {
+) -> UntaggedEither<Option<String>, StateHolder> {
     use UntaggedEither::*;
     let session = match &mut state.session {
         Some(s) => s,

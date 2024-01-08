@@ -62,14 +62,14 @@ const config = {
       React: "react",
     }),
     // enable in wasm mode:
-    // new CopyPlugin({
-    //   patterns: [
-    //     {
-    //       from: "static",
-    //       to: "static",
-    //     },
-    //   ],
-    // }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: "static",
+          to: "static",
+        },
+      ],
+    }),
   ],
   experiments: {
     topLevelAwait: true,

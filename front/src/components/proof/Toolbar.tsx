@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { normalPrompt } from "../../dialog";
-import { sendTactic, subscribe, tryAuto, TryAutoResult } from "../../hakim";
+import { sendTactic, subscribe, tryAuto, TryAutoResult, z3Solved } from "../../hakim";
 import { g } from "../../i18n";
 import css from "./toolbar.module.css";
 import logo from "../../logo.png"
@@ -51,8 +51,12 @@ const AutoProofButton = () => {
             const r = await tryAuto();
             if (mode === 'boost') {
                 if (r.available) {
-                    for (const tac of r.tactic) {
-                        await sendTactic(tac);
+                    if (r.tactic[0] === "z3_solved") {
+                        z3Solved();
+                    } else {
+                        for (const tac of r.tactic) {
+                            await sendTactic(tac);
+                        }
                     }
                 }
             } else {
@@ -73,8 +77,13 @@ const AutoProofButton = () => {
                         return;
                     }
                     if (s.available) {
-                        for (const tac of s.tactic) {
-                            await sendTactic(tac);
+                        console.log(s.tactic[0]);
+                        if (s.tactic[0] === "z3_solved") {
+                            z3Solved();
+                        } else {
+                            for (const tac of s.tactic) {
+                                await sendTactic(tac);
+                            }
                         }
                     } else if (mode === 'boost') {
                         setMode('normal');

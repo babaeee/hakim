@@ -105,6 +105,9 @@ pub fn included() -> TermRef {
 pub fn len1() -> TermRef {
     term_ref!(axiom "len1", forall u(), forall v0(), z())
 }
+pub fn abs() -> TermRef {
+    term_ref!(axiom "abs", forall r(), r())
+}
 pub fn list() -> TermRef {
     term_ref!(axiom "list", forall u(), u())
 }
@@ -130,11 +133,21 @@ pub fn mod_of() -> TermRef {
 pub fn sigma() -> TermRef {
     term_ref!(axiom "sigma", forall z(), forall z(), forall term_ref!( forall z(), z()), z())
 }
+//∀ X Y Z: U, (Y → Z) → (X → Y) → (X → Z)
+pub fn compos() -> TermRef {
+    term_ref!(axiom "compos", forall u(), forall u(), forall u(), 
+        forall term_ref!(forall v1(), v1()), 
+        forall term_ref!(forall v3(), v3()),
+        term_ref!(forall term_ref!(v 4), v3()))
+}
 pub fn char_ty() -> TermRef {
     term_ref!(axiom "char" , u())
 }
 pub fn chr() -> TermRef {
     term_ref!(axiom "chr", forall z(), char_ty())
+}
+pub fn to_universe() -> TermRef {
+    term_ref!(axiom "to_universe", forall u(), forall v0(), u())
 }
 pub fn init_dict() -> im::HashMap<String, TermRef> {
     let mut name_dict = im::HashMap::<String, TermRef>::default();
@@ -167,6 +180,7 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("list".to_string(), list());
     name_dict.insert("nil".to_string(), nil());
     name_dict.insert("cons".to_string(), cons());
+    name_dict.insert("compos".to_string(), compos());
     name_dict.insert("cnt".to_string(), cnt());
     name_dict.insert("union".to_string(), union());
     name_dict.insert("inlist".to_string(), inlist());
@@ -176,7 +190,9 @@ pub fn init_dict() -> im::HashMap<String, TermRef> {
     name_dict.insert("included".to_string(), included());
     name_dict.insert("sigma".to_string(), sigma());
     name_dict.insert("len1".to_string(), len1());
+    name_dict.insert("abs".to_string(), abs());
     name_dict.insert("char".to_string(), char_ty());
     name_dict.insert("chr".to_string(), chr());
+    name_dict.insert("to_universe".to_string(), to_universe());
     name_dict
 }

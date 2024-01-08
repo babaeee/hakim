@@ -58,6 +58,7 @@ pub enum Error {
     ContextDependOnHyp(String, TermRef),
     TermIsNotType(TermRef),
     MismatchedParen,
+    Z3State(String),
 }
 
 impl Error {

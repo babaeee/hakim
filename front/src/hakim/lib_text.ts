@@ -16,6 +16,8 @@ import Tuples from "../../../library/Tuples.v";
 import EnumerativeCombinatorics from "../../../library/EnumerativeCombinatorics.v";
 import Field from "../../../library/Field.v";
 import MetricSpace from "../../../library/MetricSpace.v";
+import Species from "../../../library/Species.v";
+import Automata from "../../../library/Automata.v";
 
 export const loadLibText = () => {
   return {
@@ -37,5 +39,7 @@ export const loadLibText = () => {
     "/EnumerativeCombinatorics": EnumerativeCombinatorics,
     "/Field": Field,
     "/MetricSpace": MetricSpace,
+    "/Species": Species,
+    "/Automata": Automata,
   };
 };

@@ -53,6 +53,7 @@ binop! {
     And, 80, Right, "∧";
     App, 1, Left, " ";
     Cons, 45, Right, "::";
+    Compos, 40, Left, "∘";
     Divide, 70, No, "|";
     Eq, 70, No, "=";
     Ge, 70, No, "≥";
@@ -116,6 +117,16 @@ impl BinOp {
     }
 
     pub fn run_on_term(&self, infer_cnt: &mut InferGenerator, l: TermRef, r: TermRef) -> TermRef {
+        if self.eq(&BinOp::Compos) {
+            let x = infer_cnt.generate();
+            let y = infer_cnt.generate();
+            let z = infer_cnt.generate();
+            return app_ref!(
+                app_ref!(compos(), term_ref!(_ x), term_ref!(_ y), term_ref!(_ z)),
+                l,
+                r
+            );
+        }
         self.run_on_term_with_ty(l, r, || {
             let i = infer_cnt.generate();
             term_ref!(_ i)
@@ -132,6 +143,7 @@ impl BinOp {
             And => app_ref!(and(), l, r),
             App => app_ref!(l, r),
             Cons => app_ref!(cons(), ty(), l, r),
+            Compos => unreachable!(),
             Div => app_ref!(div(), ty(), l, r),
             Divide => app_ref!(divide(), l, r),
             Eq => {
@@ -221,6 +233,18 @@ impl BinOp {
                             "union" => found!(op, Union, op2, ty),
                             "setminus" => found!(op, Setminus, op2, ty),
                             _ => found!(original_func, App, op2, ty),
+                        },
+                        Term::App { func, op: _ } => match func.as_ref() {
+                            Term::App { func, op: _ } => match func.as_ref() {
+                                Term::Axiom { unique_name, .. } => {
+                                    if unique_name == "compos" {
+                                        found!(op, Compos, op2)
+                                    }
+                                    found!(original_func, App, op2)
+                                }
+                                _ => found!(original_func, App, op2),
+                            },
+                            _ => found!(original_func, App, op2),
                         },
                         _ => found!(original_func, App, op2),
                     },

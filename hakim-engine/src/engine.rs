@@ -416,4 +416,10 @@ pub mod tests {
             "∀ A: Universe, ∀ P: A → Universe, ∀ e: ∃ x: A, P x, P (ex_value A P e)"
         );
     }
+    #[test]
+    fn type_is_func_app() {
+        let eng = build_engine(EngineLevel::Full);
+        let exp = eng.check("Fun (dot sp1 sp1) {1}").unwrap();
+        print!("{exp}");
+    }
 }

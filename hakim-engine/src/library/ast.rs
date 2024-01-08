@@ -4,6 +4,7 @@ use crate::{
     engine::{Engine, Result},
     interactive::{suggest::Applicablity, SuggClass, SuggRule},
 };
+use regex::Regex;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum SuggTarget {
@@ -56,12 +57,11 @@ fn eat_signature(mut r: &str) -> Signature {
 }
 
 fn eat_hidden_args(r: &mut &str) -> usize {
-    let hidden_args = if let Some(x) = r.strip_prefix("#1 ") {
-        *r = x;
-        1
-    } else if let Some(x) = r.strip_prefix("#2 ") {
-        *r = x;
-        2
+    let re = Regex::new(r"#(\d+)\s+(.*)").unwrap();
+    let hidden_args = if let Some(captures) = re.captures(r) {
+        let n = captures.get(1).unwrap().as_str();
+        *r = captures.get(2).unwrap().as_str();
+        n.parse::<usize>().unwrap()
     } else {
         0
     };

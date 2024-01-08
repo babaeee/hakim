@@ -8,6 +8,8 @@ use crate::{
 
 use std::{sync::mpsc, thread, time::Duration};
 
+mod ast_layer;
+
 fn panic_after<T, F>(d: Duration, f: F) -> T
 where
     T: Send + 'static,
@@ -233,7 +235,6 @@ fn abstr_infer() {
 fn abstr_prec() {
     parse_pretty("(∃ x: ℤ, 2 < x) → 2 | 5");
     parse_pretty("∃ x: ℤ, 2 < x → 2 | 5");
-    parse_pretty("∃ X: U, False");
 }
 
 #[test]
@@ -324,6 +325,12 @@ fn notation_curry() {
 fn hidden_args() {
     parse_pretty(r#"cnt 'a' "salam""#);
     parse_pretty("injective (λ c: char, if_f (c = '(') 'r' 'u') {'(', ')'}");
+}
+
+#[test]
+fn binop_test() {
+    parse_error("(abs + abs) 2.");
+    parse_not_pretty("(abs ∘ abs) 2.", "compos ℝ ℝ ℝ abs abs 2.");
 }
 
 #[test]

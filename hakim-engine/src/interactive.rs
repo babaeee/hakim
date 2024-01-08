@@ -167,6 +167,16 @@ impl Session {
         Ok(())
     }
 
+    pub fn z3_solved(&mut self) -> Option<()> {
+        let mut snapshot = self.last_snapshot().clone();
+        snapshot.pop_frame();
+        self.add_history_record(HistoryRecord {
+            tactic: "z3".to_string(),
+            snapshot: snapshot.clone(),
+        });
+        Some(())
+    }
+
     pub fn run_suggestion(
         &mut self,
         sugg: Suggestion,
@@ -269,6 +279,9 @@ impl Session {
             return None;
         }
         self.last_snapshot().last_frame()?.try_auto()
+    }
+    pub fn z3_get_state(&self) -> Option<String> {
+        Some(z3_auto(self.last_snapshot().last_frame()?.clone()))
     }
 
     pub fn action_of_tactic(&self, tactic: &str) -> Option<GraphicalAction> {
@@ -469,7 +482,7 @@ impl Frame {
             "auto_set" => auto_set(frame),
             "auto_list" => auto_list(frame),
             "assumption" => assumption(frame),
-            "z3" => z3_auto(frame),
+            "z3" => Err(tactic::Error::Z3State(z3_auto(frame))),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }
     }
@@ -484,7 +497,7 @@ impl Frame {
     }
 
     pub fn try_auto(&self) -> Option<String> {
-        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia", "lra", "z3"];
+        const AUTO_TAC: &[&str] = &["assumption", "auto_set", "auto_list", "lia", "lra"];
         for tac in AUTO_TAC {
             if self.run_tactic(tac).ok().filter(|x| x.is_empty()).is_some() {
                 return Some(tac.to_string());

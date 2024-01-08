@@ -21,3 +21,4 @@ globalThis.hakimQueryCallback();
 );
 
 await writeFile(process.argv[2], text);
+
