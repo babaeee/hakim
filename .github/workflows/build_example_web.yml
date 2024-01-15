@@ -59,8 +59,8 @@ jobs:
           echo "proof.babaeee.ir" > dist/CNAME
           echo "" > dist/.nojekyll
           cat dist/index.html > dist/404.html
-          cp front/node_modules/z3-solver/build/z3-built.js dist/
-          cp front/node_modules/z3-solver/build/z3-built.wasm dist/
+          cp node_modules/z3-solver/build/z3-built.js dist/
+          cp node_modules/z3-solver/build/z3-built.wasm dist/
 
 
       - name: Deploy to github pages
