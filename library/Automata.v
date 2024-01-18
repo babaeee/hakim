@@ -112,3 +112,72 @@ Axiom pumping_lemma: ∀ sigma, ∀ A: DFA sigma,
     ∀ s, IsWord sigma s → |s| ≥ |A| → ∀ start, 0 ≤ start ∧ start < |A| →
     ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |z| ≤ |A| ∧ ∀ i, i ≥ 0 → run_dfa A start (x + rep y i + z) = run_dfa A start s;
 
+Axiom TM: U;
+Axiom turing_accept: TM -> list char -> U;
+Axiom turing_reject: TM -> list char -> U;
+Axiom turing_halt: TM -> list char -> U;
+Axiom halt_unfold: ∀ t: TM, ∀ s, turing_halt t s -> turing_accept t s ∨ turing_reject t s;
+Axiom halt_fold: ∀ t: TM, ∀ s, turing_accept t s ∨ turing_reject t s -> turing_halt t s;
+Suggest goal default apply halt_fold with label Destruct;
+Suggest hyp default apply halt_unfold in $n with label Destruct;
+
+Axiom turing_accept_not_reject: ∀ t: TM, ∀ s, turing_accept t s -> ~ turing_reject t s;
+Axiom turing_reject_not_accept: ∀ t: TM, ∀ s, turing_reject t s -> ~ turing_accept t s;
+
+Axiom accept_everything: TM;
+Axiom accept_everything_def: ∀ s, turing_accept accept_everything s;
+Suggest goal auto apply accept_everything_def with label Trivial;
+Axiom reject_everything: TM;
+Axiom reject_everything_def: ∀ s, turing_reject reject_everything s;
+Suggest goal auto apply reject_everything_def with label Trivial;
+Axiom loop_on_everything: TM;
+Axiom loop_on_everything_def: ∀ s, ~ turing_halt loop_on_everything s;
+Suggest goal auto apply loop_on_everything with label Trivial;
+
+Axiom decider: TM -> U;
+Axiom decider_fold: ∀ t: TM, (∀ s, turing_halt t s) -> decider t;
+Axiom decider_unfold: ∀ t: TM, decider t -> (∀ s, turing_halt t s);
+Suggest goal default apply decider_fold with label Destruct;
+Suggest hyp default apply decider_unfold in $n with label Destruct;
+
+Axiom turing_to_str: TM -> list char;
+
+Axiom universal_turing_machine: TM;
+
+Axiom utm_accept_unfold: ∀ t: TM, ∀ s, turing_accept universal_turing_machine (turing_to_str t + "*" + s) -> turing_accept t s;
+Axiom utm_accept_fold: ∀ t: TM, ∀ s, turing_accept t s -> turing_accept universal_turing_machine (turing_to_str t + "*" + s);
+Suggest goal default apply utm_accept_fold with label Destruct;
+Suggest hyp default apply utm_accept_unfold in $n with label Destruct;
+
+Axiom utm_reject_unfold: ∀ t: TM, ∀ s, turing_reject universal_turing_machine (turing_to_str t + "*" + s) -> turing_reject t s;
+Axiom utm_reject_fold: ∀ t: TM, ∀ s, turing_reject t s -> turing_reject universal_turing_machine (turing_to_str t + "*" + s);
+Suggest goal default apply utm_reject_fold with label Destruct;
+Suggest hyp default apply utm_reject_unfold in $n with label Destruct;
+
+Axiom utm_halt_unfold: ∀ t: TM, ∀ s, turing_halt universal_turing_machine (turing_to_str t + "*" + s) -> turing_halt t s;
+Axiom utm_halt_fold: ∀ t: TM, ∀ s, turing_halt t s -> turing_halt universal_turing_machine (turing_to_str t + "*" + s);
+Suggest goal default apply utm_halt_fold with label Destruct;
+Suggest hyp default apply utm_halt_unfold in $n with label Destruct;
+
+Axiom select_tm: list char -> TM;
+Axiom select_tm_fold: ∀ s, turing_accept (select_tm s) s;
+Axiom select_tm_unfold: ∀ s1 s2, turing_accept (select_tm s1) s2 -> s1 = s2;
+Axiom select_tm_decider: ∀ s, decider (select_tm s);
+
+Axiom conditional_tm: TM -> TM -> TM -> TM;
+Axiom conditional_tm_accept_unfold: ∀ cond then else: TM, ∀ s, turing_accept (conditional_tm cond then else) s
+    -> turing_accept cond s ∧ turing_accept then s ∨ turing_reject cond s ∧ turing_accept else s;
+Axiom conditional_tm_accept_fold: ∀ cond then else: TM, ∀ s,
+    turing_accept cond s ∧ turing_accept then s ∨ turing_reject cond s ∧ turing_accept else s
+    -> turing_accept (conditional_tm cond then else) s;
+Axiom conditional_tm_reject_unfold: ∀ cond then else: TM, ∀ s, turing_reject (conditional_tm cond then else) s
+    -> turing_accept cond s ∧ turing_reject then s ∨ turing_reject cond s ∧ turing_reject else s;
+Axiom conditional_tm_reject_fold: ∀ cond then else: TM, ∀ s,
+    turing_accept cond s ∧ turing_reject then s ∨ turing_reject cond s ∧ turing_reject else s
+    -> turing_reject (conditional_tm cond then else) s;
+
+Axiom is_decidable: set (list char) -> U;
+Axiom is_decidable_fold: ∀ lang, (∃ t, decider t ∧ ∀ s, s ∈ lang ↔ turing_accept t s) -> is_decidable lang;
+Axiom is_decidable_unfold: ∀ lang, is_decidable lang -> (∃ t, decider t ∧ ∀ s, s ∈ lang ↔ turing_accept t s);
+Suggest goal default apply is_decidable_fold with label Destruct;
+Suggest hyp default apply is_decidable_unfold in $n with label Destruct;
