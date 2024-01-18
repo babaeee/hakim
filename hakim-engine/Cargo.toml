@@ -14,12 +14,15 @@ typed-arena = "2.0.1"
 lazy_static = "1.2.0"
 minilp = { git = "https://github.com/HKalbasi/minilp" }
 pretty = "0.11.3"
-z3 = { git = "https://github.com/arshiamoeini/my_z3.git", features = [
+z3 = { git = "https://github.com/arshiamoeini/my_z3.git", optional = true, features = [
     "static-link-z3",
 ] }
-z3-sys = { git = "https://github.com/arshiamoeini/my_z3.git", features = [
+z3-sys = { git = "https://github.com/arshiamoeini/my_z3.git", optional = true, features = [
     "static-link-z3",
 ] }
+
+[features]
+z3 = ["dep:z3", "dep:z3-sys"]
 
 [dev-dependencies]
 rayon = "1.6.0"

@@ -34,7 +34,9 @@ pub(crate) use chain::{chain, destruct};
 mod assumption;
 pub(crate) use assumption::assumption;
 
+#[cfg(feature = "z3")]
 mod z3_auto;
+#[cfg(feature = "z3")]
 pub use z3_auto::{z3_auto, Z3_TIMEOUT};
 
 #[derive(Debug)]
