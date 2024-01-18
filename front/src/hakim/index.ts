@@ -2,7 +2,6 @@ import { normalPrompt } from "../dialog";
 import { fromRust } from "../i18n";
 import { loadLibText } from "./lib_text";
 import { hakimQueryImpl } from "./wasm_provider";
-import { init } from "z3-solver";
 
 declare let window: Window & {
   ask_question: (q: string) => Promise<string>;
@@ -48,9 +47,6 @@ await window.hakimQueryLoad;
 
 let queryLock = false;
 
-const { Context, em } = await init();
-const Z3 = Context('main');
-
 const instance: Instance = new Proxy(
   {},
   {
@@ -70,16 +66,16 @@ const instance: Instance = new Proxy(
             });
           }
           if (r && typeof r === "object" && r.Z3State) {
-            const solver = new Z3.Solver();
+            // const solver = new Z3.Solver();
 
-            solver.fromString(r.Z3State);
-            solver.set("timeout", 1500);
-            let sat = await solver.check();
-            if (sat === 'unsat') {
-              r = "z3_solved";
-            } else {
-              r = "z3_cant_solve";
-            }
+            // solver.fromString(r.Z3State);
+            // solver.set("timeout", 1500);
+            // let sat = await solver.check();
+            // if (sat === 'unsat') {
+            //   r = "z3_solved";
+            // } else {
+            r = "z3_cant_solve";
+            // }
           }
           queryLock = false;
           return r;
