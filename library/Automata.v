@@ -141,7 +141,8 @@ Suggest goal default apply decider_fold with label Destruct;
 Suggest hyp default apply decider_unfold in $n with label Destruct;
 
 Axiom turing_to_str: TM -> list char;
-
+Axiom turing_to_str_unique: ∀ t t0: TM, ∀ a a0: list char, turing_to_str t + "*" + a = turing_to_str t0 + "*" + a0 -> t = t0 ∧ a = a0;
+Axiom turing_to_str_not_have_star: ∀ t: TM, ~ '*' in (turing_to_str t); 
 Axiom universal_turing_machine: TM;
 
 Axiom utm_accept_unfold: ∀ t: TM, ∀ s, turing_accept universal_turing_machine (turing_to_str t + "*" + s) -> turing_accept t s;
@@ -178,6 +179,29 @@ Axiom conditional_tm_reject_fold: ∀ cond then else: TM, ∀ s,
 
 Axiom is_decidable: set (list char) -> U;
 Axiom is_decidable_fold: ∀ lang, (∃ t, decider t ∧ ∀ s, s ∈ lang ↔ turing_accept t s) -> is_decidable lang;
-Axiom is_decidable_unfold: ∀ lang, is_decidable lang -> (∃ t, decider t ∧ ∀ s, s ∈ lang ↔ turing_accept t s);
+Axiom is_decidable_unfold: ∀ lang, is_decidable lang -> 
+    (∃ t, decider t ∧ (∀ s, s ∈ lang -> turing_accept t s) ∧ (∀ s, ~ s ∈ lang -> turing_reject t s));
 Suggest goal default apply is_decidable_fold with label Destruct;
 Suggest hyp default apply is_decidable_unfold in $n with label Destruct;
+
+Axiom #2 computable: ∀ X Y: U, (X → Y) → U;
+Axiom computable_concat: computable (plus (list char));
+Axiom computable_const: ∀ X Y: U, ∀ a: Y, computable (λ x: X, a);
+
+Axiom computable_partials_first: ∀ X Y Z: U, ∀ f: (X → Y → Z), ∀ g: (X → Y), 
+    computable f -> computable g -> computable  (λ x, f x (g x));
+Axiom computable_partials_second: ∀ X Y Z: U, ∀ f: (X → Y → Z), ∀ g: (Y → X), 
+    computable f -> computable g -> computable  (λ y, f (g y) y);
+Axiom computable_compos: ∀ X Y Z: U, ∀ f: (Y → Z), ∀ g: (X → Y), computable f -> computable g
+    -> computable (λ x, f (g x));
+Axiom computable_eq_if_f: ∀ X Y Z: U, ∀ left: (X → Z), ∀ right: (X → Z), ∀ then: (X → Y), ∀ else: (X → Y),
+    computable left -> computable right -> computable then -> computable else
+        -> computable (λ x, if_f (left x = right x) (then x) (else x));
+
+Axiom decider_to_computable: ∀ t, decider t -> ∃ f: list char → ℤ, computable f ∧
+    (∀ s, turing_accept t s -> f s = 1) ∧ (∀ s, turing_reject t s -> f s = 0);
+
+Axiom computable_function_to_turing: ∀ f: list char  → ℤ, computable f
+    -> ∃ t: TM, (∀ s, f s > 0 -> turing_accept t s) ∧ (∀ s, f s = 0 -> turing_reject t s)
+    ∧ (∀ s, f s < 0 -> ~ turing_halt t s);
+    

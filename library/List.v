@@ -154,6 +154,9 @@ Suggest goal default apply inlist_member_set with label a ∈ member_set l => a 
 Todo member_set_inlist: ∀ A: U, ∀ a: A, ∀ l: list A, a ∈ member_set l -> a in l;
 Suggest hyp default apply member_set_inlist in $n with label a ∈ member_set l => a in l;
 
+Todo inlist_append_r: ∀ A: U, ∀ x y: list A, ∀ a: A, a in x ∨ a in y -> a in x + y; 
+Suggest goal default apply inlist_append_r with label a in x + y => a in x or a in y;
+
 Axiom #1 unique_elements: ∀ A: Universe, list A -> Universe;
 Axiom unique_elements_unfold: ∀ A: U, ∀ a: A, ∀ l: list A, unique_elements ([a] + l) -> ~ a in l ∧ unique_elements l;
 Axiom unique_elements_fold: ∀ A: U, ∀ a: A, ∀ l: list A, ~ a in l ∧ unique_elements l -> unique_elements ([a] + l);
