@@ -93,9 +93,9 @@ Axiom DFA: list char -> U;
 Axiom construct_DFA: ∀ sigma, ℤ → list (char → ℤ) → ℤ → set ℤ → DFA sigma;
 Axiom #1 edges_of_DFA: ∀ sigma, DFA sigma -> list (char → ℤ);
 Axiom #1 accept_nodes_of_DFA: ∀ sigma, DFA sigma -> set ℤ;
-Axiom #1 n_of_DFA: ∀ sigma, DFA sigma -> ℤ;
 Axiom #1 start_of_DFA: ∀ sigma, DFA sigma -> ℤ;
 
+Axiom n_DFA_pos: ∀ sigma, ∀ A: DFA sigma, |A| ≥ 0;
 Axiom #1 run_dfa: ∀ sigma, (DFA sigma) → ℤ → (list char) → ℤ;
 Axiom run_dfa_nil: ∀ sigma, ∀ A: DFA sigma, ∀ u, run_dfa A u "" = u;
 Axiom run_dfa_cons: ∀ sigma, ∀ A: DFA sigma, ∀ u, ∀ s, ∀ c, ∀ f: char → ℤ, f = nth (λ a: char, - 1) (edges_of_DFA A) u → ∀ v, v = f c → run_dfa A u (c :: s) = run_dfa A v s;
@@ -180,7 +180,7 @@ Axiom conditional_tm_reject_fold: ∀ cond then else: TM, ∀ s,
 Axiom is_decidable: set (list char) -> U;
 Axiom is_decidable_fold: ∀ lang, (∃ t, decider t ∧ ∀ s, s ∈ lang ↔ turing_accept t s) -> is_decidable lang;
 Axiom is_decidable_unfold: ∀ lang, is_decidable lang -> 
-    (∃ t, decider t ∧ (∀ s, s ∈ lang -> turing_accept t s) ∧ (∀ s, ~ s ∈ lang -> turing_reject t s));
+    (∃ t, decider t ∧ (∀ s, s ∈ lang <-> turing_accept t s) ∧ (∀ s, ~ s ∈ lang <-> turing_reject t s));
 Suggest goal default apply is_decidable_fold with label Destruct;
 Suggest hyp default apply is_decidable_unfold in $n with label Destruct;
 
@@ -199,7 +199,7 @@ Axiom computable_eq_if_f: ∀ X Y Z: U, ∀ left: (X → Z), ∀ right: (X → Z
         -> computable (λ x, if_f (left x = right x) (then x) (else x));
 
 Axiom decider_to_computable: ∀ t, decider t -> ∃ f: list char → ℤ, computable f ∧
-    (∀ s, turing_accept t s -> f s = 1) ∧ (∀ s, turing_reject t s -> f s = 0);
+    (∀ s, turing_accept t s <-> f s = 1) ∧ (∀ s, turing_reject t s <-> f s = 0);
 
 Axiom computable_function_to_turing: ∀ f: list char  → ℤ, computable f
     -> ∃ t: TM, (∀ s, f s > 0 -> turing_accept t s) ∧ (∀ s, f s = 0 -> turing_reject t s)
