@@ -11,6 +11,8 @@ import css from "./Sandbox.module.css";
 
 //∀ A: U, ∀ a: A, In A (empty A) a -> False
 const exampleGoals = [
+    '~ ∃ A: DFA "()",  Ldfa A = {s | valid_paren s}',
+    '~ is_decidable {s | ∃ t, ∃ a, s = turing_to_str t + "*" + a ∧ turing_halt t a }',
     'Goal (∀ donya_zibast: U, ∀ aye: donya_zibast, donya_zibast).\
 Proof.\
 intros.',
