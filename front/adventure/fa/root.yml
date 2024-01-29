@@ -5,13 +5,6 @@
   y: 0
   children: !include ./tutorial.yml
   engineParams: "auto_level=calculator"
-- id: logical propositions
-  name: گزاره های منطفی
-  type: collection
-  x: 1
-  y: 0
-  children: !include ./todo.yml
-  engineParams: "disabled_tactics=assumption"
 - id: logic
   name: منطق و استدلال
   type: collection
@@ -19,7 +12,6 @@
   y: 1
   dependencies:
     - tutorial
-    - logical propositions
   children: !include ./logic.yml
   engineParams: "disabled_tactics=assumption"
 - id: equality
