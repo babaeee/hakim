@@ -22,6 +22,7 @@ Todo rep_len: ∀ s: list char, ∀ n: ℤ, 0 ≤ n → |rep s n| = n * |s|;
 Suggest goal default apply rep_len with label Trivial;
 
 Todo rep_nth: ∀ d: char, ∀ s, ∀ k, k > 0 -> ∀ i, 0 ≤ i ∧ i < k * |s| -> nth d (rep s k) i = nth d s (i mod |s|);
+Todo valid_paren_n: ∀ n: ℤ, 0 ≤ n → valid_paren (rep "(" n + rep ")" n);
 
 Axiom in_Lmult_unfold: ∀ L1 L2: set (list char), ∀ s: list char, s ∈ L1 * L2 → ∃ a b: list char, s = a + b ∧ a ∈ L1 ∧ b ∈ L2;
 Axiom in_Lmult_fold: ∀ L1 L2: set (list char), ∀ a b: list char, a ∈ L1 -> b ∈ L2 -> a + b ∈ L1 * L2;
@@ -95,7 +96,7 @@ Axiom #1 edges_of_DFA: ∀ sigma, DFA sigma -> list (char → ℤ);
 Axiom #1 accept_nodes_of_DFA: ∀ sigma, DFA sigma -> set ℤ;
 Axiom #1 start_of_DFA: ∀ sigma, DFA sigma -> ℤ;
 
-Axiom n_DFA_pos: ∀ sigma, ∀ A: DFA sigma, |A| ≥ 0;
+Axiom n_DFA_pos: ∀ sigma, ∀ A: DFA sigma, |A| > 0;
 Axiom #1 run_dfa: ∀ sigma, (DFA sigma) → ℤ → (list char) → ℤ;
 Axiom run_dfa_nil: ∀ sigma, ∀ A: DFA sigma, ∀ u, run_dfa A u "" = u;
 Axiom run_dfa_cons: ∀ sigma, ∀ A: DFA sigma, ∀ u, ∀ s, ∀ c, ∀ f: char → ℤ, f = nth (λ a: char, - 1) (edges_of_DFA A) u → ∀ v, v = f c → run_dfa A u (c :: s) = run_dfa A v s;
