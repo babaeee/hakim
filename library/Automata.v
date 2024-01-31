@@ -24,7 +24,9 @@ Suggest goal default apply rep_len with label Trivial;
 Todo rep_add_1: ∀ s, ∀ n, n ≥ 0 → rep s (n + 1) = rep s n + s;
 
 Todo rep_nth: ∀ d: char, ∀ s, ∀ k, k > 0 -> ∀ i, 0 ≤ i ∧ i < k * |s| -> nth d (rep s k) i = nth d s (i mod |s|);
+Todo rep_append: ∀ s, ∀ n m, 0 ≤ n → 0 ≤ m → rep s (n + m) = rep s n + rep s m;
 Todo valid_paren_n: ∀ n: ℤ, 0 ≤ n → valid_paren (rep "(" n + rep ")" n);
+Todo rep_to_repeat: ∀ c: char, ∀ n: ℤ, 0 ≤ n → rep ([c]) n = repeat n c;
 
 Axiom in_Lmult_unfold: ∀ L1 L2: set (list char), ∀ s: list char, s ∈ L1 * L2 → ∃ a b: list char, s = a + b ∧ a ∈ L1 ∧ b ∈ L2;
 Axiom in_Lmult_fold: ∀ L1 L2: set (list char), ∀ a b: list char, a ∈ L1 -> b ∈ L2 -> a + b ∈ L1 * L2;
@@ -196,6 +198,7 @@ Suggest hyp default apply is_decidable_unfold in $n with label Destruct;
 Axiom #2 computable: ∀ X Y: U, (X → Y) → U;
 Axiom computable_concat: computable (plus (list char));
 Axiom computable_const: ∀ X Y: U, ∀ a: Y, computable (λ x: X, a);
+Suggest goal default apply computable_const with label Trivial;
 
 Axiom computable_partials_first: ∀ X Y Z: U, ∀ f: (X → Y → Z), ∀ g: (X → Y), 
     computable f -> computable g -> computable  (λ x, f x (g x));
