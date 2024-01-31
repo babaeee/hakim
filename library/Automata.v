@@ -1,5 +1,6 @@
 Import /List;
 Import /Set;
+Import /EnumerativeCombinatorics;
 
 Axiom IsWord: list char → list char → U;
 Axiom IsWord_unfold: ∀ sigma s: list char, IsWord sigma s → member_set s ⊆ member_set sigma;
@@ -20,6 +21,7 @@ Suggest goal default apply rep_0 with label Trivial;
 
 Todo rep_len: ∀ s: list char, ∀ n: ℤ, 0 ≤ n → |rep s n| = n * |s|;
 Suggest goal default apply rep_len with label Trivial;
+Todo rep_add_1: ∀ s, ∀ n, n ≥ 0 → rep s (n + 1) = rep s n + s;
 
 Todo rep_nth: ∀ d: char, ∀ s, ∀ k, k > 0 -> ∀ i, 0 ≤ i ∧ i < k * |s| -> nth d (rep s k) i = nth d s (i mod |s|);
 Todo valid_paren_n: ∀ n: ℤ, 0 ≤ n → valid_paren (rep "(" n + rep ")" n);
@@ -109,7 +111,13 @@ Axiom Ldfa_fold: ∀ sigma, ∀ A: DFA sigma, ∀ s, IsWord sigma s ∧ run_dfa 
 Suggest goal default apply Ldfa_fold with label Destruct;
 Suggest hyp default apply Ldfa_unfold in $n with label Destruct;
 
-Axiom pumping_lemma: ∀ sigma, ∀ A: DFA sigma, 
+Todo pumping_lemma: ∀ sigma, ∀ A: DFA sigma, 
+    ∀ s, IsWord sigma s → |s| ≥ |A| → ∀ start, 0 ≤ start ∧ start < |A| →
+    ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |y| ≤ |A| ∧ ∀ i, i ≥ 0 → run_dfa A start (x + rep y i + z) = run_dfa A start s;
+Todo pumping_lemma_Ldfa: ∀ sigma, ∀ A: DFA sigma, 
+    ∀ s, s ∈ Ldfa A → |s| ≥ |A| →
+    ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |y| ≤ |A| ∧ ∀ i, i ≥ 0 → x + rep y i + z ∈ Ldfa A;
+Todo pumping_lemma_mid_big: ∀ sigma, ∀ A: DFA sigma, 
     ∀ s, IsWord sigma s → |s| ≥ |A| → ∀ start, 0 ≤ start ∧ start < |A| →
     ∃ x y z, s = x + y + z ∧ |y| > 0 ∧ |x| + |z| ≤ |A| ∧ ∀ i, i ≥ 0 → run_dfa A start (x + rep y i + z) = run_dfa A start s;
 
