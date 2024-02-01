@@ -1174,6 +1174,7 @@ Proof;
     lia;
 Qed;
 Todo valid_paren_cnt_right: ∀ a, valid_paren a -> ∀ k, 2 * k = |a| -> cnt ')' a = k;
+Todo valid_paren_cnt_eq: ∀ a, valid_paren a -> cnt '(' a = cnt ')' a;
 
 Theorem count_of_lists: ∀ T: U, ∀ S: set T, ∀ m, 0 < m -> |S| = m -> ∀ n, 0 ≤ n -> |{ l: list T | member_set l ⊆ S ∧ |l| = n }| = m ^ n;
 Proof;
