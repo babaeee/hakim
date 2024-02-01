@@ -5,3 +5,4 @@ flamegraph.svg
 .z3-trace
 hakim_log*
 node_modules
+ignore
