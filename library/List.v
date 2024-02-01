@@ -75,8 +75,9 @@ Qed;
 
 Todo cons_eq: ∀ T: U, ∀ x y: list T, ∀ a b, a :: x = b :: y -> a = b ∧ x = y; 
 Todo append_eq: ∀ T: U, ∀ a b c d: list T, |a| = |b| -> a + c = b + d -> a = b ∧ c = d;
+Todo append_len: ∀ T: U, ∀ a b: list T, |a + b| = |a| + |b|;
 
-Todo tail_len: ∀ T: U, ∀ x: list T, ∀ n: ℤ, |x| = n + 1 → |tail x| = n;
+Todo tail_len: ∀ T: U, ∀ x: list T, ∀ n: ℤ, 0 ≤ n -> |x| = n + 1 → |tail x| = n;
 Suggest goal auto apply tail_len with label Trivial;
 
 Theorem list_len_gt_0: ∀ A: U, ∀ x: list A, 0 ≤ |x|;
