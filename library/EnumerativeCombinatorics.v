@@ -974,7 +974,13 @@ Proof;
     assumption;
 Qed;
 
+Todo cnt_append: ∀ X: U, ∀ a b, ∀ c: X, cnt c (a + b) = cnt c a + cnt c b;
 Todo cnt_of_map: ∀ X Y: U, ∀ f: X -> Y, ∀ S, ∀ l, injective f S -> (member_set l) ⊆ S -> ∀ a, a ∈ S -> cnt (f a) (map f l) = cnt a l;
+
+Todo cnt_eq_0: ∀ X: U, ∀ l, ∀ a: X, (∀ i, 0 ≤ i ∧ i < |l| -> ~ nth a l i = a) -> cnt a l = 0;
+Suggest goal default apply cnt_eq_0 with label cnt a l = 0 => ~ nth d l i = a;
+Todo cnt_eq_len: ∀ X: U, ∀ l, ∀ a: X, (∀ i, 0 ≤ i ∧ i < |l| -> nth a l i = a) -> cnt a l = |l|;
+Suggest goal default apply cnt_eq_len with label cnt a l = |l| => nth d l i = a;
 
 Todo count_of_paths: ∀ r, 0 ≤ r -> ∀ u, 0 ≤ u -> |{ l: list char | cnt 'r' l = r ∧ cnt 'u' l = u ∧ |l| = r + u }| = cm (r+u) u;
 Todo member_set_is_two_element_l: ∀ T: U, ∀ l: list T, ∀ a b, |l| = cnt a l + cnt b l -> member_set l ⊆ {a, b};
