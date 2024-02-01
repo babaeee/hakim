@@ -171,6 +171,8 @@ Axiom utm_halt_fold: ∀ t: TM, ∀ s, turing_halt t s -> turing_halt universal_
 Suggest goal default apply utm_halt_fold with label Destruct;
 Suggest hyp default apply utm_halt_unfold in $n with label Destruct;
 
+Axiom utm_reject_invalid_format: ∀ s: list char, (~ ∃ t: TM, ∃ a: list char, s = turing_to_str t + "*" + a) → turing_reject universal_turing_machine s;
+
 Axiom select_tm: list char -> TM;
 Axiom select_tm_fold: ∀ s, turing_accept (select_tm s) s;
 Axiom select_tm_unfold: ∀ s1 s2, turing_accept (select_tm s1) s2 -> s1 = s2;
