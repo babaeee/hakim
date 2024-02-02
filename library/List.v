@@ -241,6 +241,7 @@ Todo skipn_append_l: ∀ T: U, ∀ a b: list T, ∀ i: ℤ, |a| ≥ i -> skipn (
 Todo skipn_append_r: ∀ T: U, ∀ a b: list T, ∀ i: ℤ, i ≥ 0 -> skipn (a + b) (|a| + i) = skipn b i;
 Todo skipn_append_l_len: ∀ T: U, ∀ a b: list T, skipn (a + b) (|a|) = b;
 Todo skipn_len: ∀ T: U, ∀ l: list T, skipn l (|l|) = [];
+Todo len_skipn: ∀ T: U, ∀ l: list T, ∀ i, 0 ≤ i -> i ≤ |l| -> |skipn l i| = |l| - i;
 
 Todo firstn_skipn: ∀ T: U, ∀ l: list T, ∀ i: ℤ, l = firstn l i + skipn l i;
 

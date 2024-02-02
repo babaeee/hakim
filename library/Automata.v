@@ -106,6 +106,7 @@ Axiom run_dfa_nil: ∀ sigma, ∀ A: DFA sigma, ∀ u, run_dfa A u "" = u;
 Axiom run_dfa_cons: ∀ sigma, ∀ A: DFA sigma, ∀ u, ∀ s, ∀ c, ∀ f: char → ℤ, f = nth (λ a: char, - 1) (edges_of_DFA A) u → ∀ v, v = f c → run_dfa A u (c :: s) = run_dfa A v s;
 
 Todo run_dfa_append: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, ∀ a b, run_dfa A u (a + b) = run_dfa A (run_dfa A u a) b;
+Axiom run_dfa_range: ∀ sigma: list char, ∀ A: DFA sigma, ∀ u, ∀ s, IsWord sigma s -> run_dfa A u s ∈ {i | 0 ≤ i ∧ i < |A| };
 
 Axiom #1 Ldfa: ∀ sigma, DFA sigma → set (list char);
 Axiom Ldfa_unfold: ∀ sigma, ∀ A: DFA sigma, ∀ s, s ∈ Ldfa A -> IsWord sigma s ∧ run_dfa A (start_of_DFA A) s ∈ accept_nodes_of_DFA A;
@@ -197,6 +198,7 @@ Suggest hyp default apply is_decidable_unfold in $n with label Destruct;
 
 Axiom #2 computable: ∀ X Y: U, (X → Y) → U;
 Axiom computable_concat: computable (plus (list char));
+Axiom computable_neg: computable (neg ℤ);
 Axiom computable_const: ∀ X Y: U, ∀ a: Y, computable (λ x: X, a);
 Suggest goal default apply computable_const with label Trivial;
 
