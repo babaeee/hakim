@@ -172,6 +172,8 @@ Axiom utm_halt_fold: ∀ t: TM, ∀ s, turing_halt t s -> turing_halt universal_
 Suggest goal default apply utm_halt_fold with label Destruct;
 Suggest hyp default apply utm_halt_unfold in $n with label Destruct;
 
+Axiom utm_reject_invalid_format: ∀ s: list char, (~ ∃ t: TM, ∃ a: list char, s = turing_to_str t + "*" + a) → turing_reject universal_turing_machine s;
+
 Axiom select_tm: list char -> TM;
 Axiom select_tm_fold: ∀ s, turing_accept (select_tm s) s;
 Axiom select_tm_unfold: ∀ s1 s2, turing_accept (select_tm s1) s2 -> s1 = s2;
@@ -188,6 +190,11 @@ Axiom conditional_tm_reject_unfold: ∀ cond then else: TM, ∀ s, turing_reject
 Axiom conditional_tm_reject_fold: ∀ cond then else: TM, ∀ s,
     turing_accept cond s ∧ turing_reject then s ∨ turing_reject cond s ∧ turing_reject else s
     -> turing_reject (conditional_tm cond then else) s;
+Todo conditional_tm_halt_unfold: ∀ cond then else: TM, ∀ s, turing_halt (conditional_tm cond then else) s
+    -> turing_halt cond s ∧ (turing_accept cond s -> turing_halt then s) ∧ (turing_reject cond s -> turing_halt else s);
+Todo conditional_tm_halt_fold: ∀ cond then else: TM, ∀ s,
+    turing_halt cond s ∧ (turing_accept cond s -> turing_halt then s) ∧ (turing_reject cond s -> turing_halt else s)
+    -> turing_halt (conditional_tm cond then else) s;
 
 Axiom is_decidable: set (list char) -> U;
 Axiom is_decidable_fold: ∀ lang, (∃ t, decider t ∧ ∀ s, s ∈ lang ↔ turing_accept t s) -> is_decidable lang;
@@ -198,7 +205,8 @@ Suggest hyp default apply is_decidable_unfold in $n with label Destruct;
 
 Axiom #2 computable: ∀ X Y: U, (X → Y) → U;
 Axiom computable_concat: computable (plus (list char));
-Axiom computable_neg: computable (neg ℤ);
+Axiom computable_plus: computable (plus ℤ);
+Axiom computable_minus: computable (λ x: ℤ, - x);
 Axiom computable_const: ∀ X Y: U, ∀ a: Y, computable (λ x: X, a);
 Suggest goal default apply computable_const with label Trivial;
 

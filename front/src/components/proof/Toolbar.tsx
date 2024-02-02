@@ -6,6 +6,7 @@ import css from "./toolbar.module.css";
 import logo from "../../logo.png"
 import { flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { getDevState } from "../../dev_mode";
+import { useAutoProofState } from "../../dev_mode/auto_proof_state";
 
 export const ToolButton = ({ label, onClick }: { label: string, onClick: any }) => {
     return (
@@ -111,10 +112,11 @@ const AutoProofButton = () => {
 };
 
 export const Toolbar = () => {
+    const autoState = useAutoProofState();
     return (
         <div className={css.toolContain}>
             <ToolButton onClick={newAssert} label={g`new_assertion`} />
-            <AutoProofButton />
+            {autoState && <AutoProofButton />}
             {
                 getDevState() === "debug" && <ToolButton onClick={() => {
                     const tactic = window.prompt(g`enter_tactic`);

@@ -75,8 +75,9 @@ Qed;
 
 Todo cons_eq: ∀ T: U, ∀ x y: list T, ∀ a b, a :: x = b :: y -> a = b ∧ x = y; 
 Todo append_eq: ∀ T: U, ∀ a b c d: list T, |a| = |b| -> a + c = b + d -> a = b ∧ c = d;
+Todo append_len: ∀ T: U, ∀ a b: list T, |a + b| = |a| + |b|;
 
-Todo tail_len: ∀ T: U, ∀ x: list T, ∀ n: ℤ, |x| = n + 1 → |tail x| = n;
+Todo tail_len: ∀ T: U, ∀ x: list T, ∀ n: ℤ, 0 ≤ n -> |x| = n + 1 → |tail x| = n;
 Suggest goal auto apply tail_len with label Trivial;
 
 Theorem list_len_gt_0: ∀ A: U, ∀ x: list A, 0 ≤ |x|;
@@ -119,6 +120,7 @@ Qed;
 Suggest hyp default apply nil_unique in $n with label |l| = 0 => l = [];
 Axiom #1 repeat: ∀ A: U, ℤ -> A -> list A;
 Axiom repeat_intro: ∀ A: U, ∀ x: A, ∀ t: ℤ, 0 ≤ t -> repeat t x = [x] + repeat (t - 1) x;
+Todo cnt_ge_0: ∀ A: U, ∀ x: A, ∀ l: list A, 0 ≤ cnt x l;
 Todo repeat_unique: ∀ A: U, ∀ x: A, ∀ l: list A, cnt x l = |l| -> l = repeat (|l|) x;
 Todo repeat_len: ∀ A: U, ∀ x: A, ∀ t: ℤ, 0 ≤ t -> |repeat t x| = t;
 Todo repeat_cnt: ∀ A: U, ∀ x: A, ∀ t: ℤ, 0 ≤ t -> cnt x (repeat t x) = t;
@@ -229,6 +231,7 @@ Todo firstn_append_r: ∀ T: U, ∀ a b: list T, ∀ m, m ≥ 0 -> firstn (a + b
 Todo firstn_append_l_len: ∀ T: U, ∀ a b: list T, firstn (a + b) (|a|) = a;
 Todo cnt_of_firstn_dis_range: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, 0 ≤ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ∧ cnt c (firstn a m) - cnt c (firstn a (m - 1)) ≤ 1;
 Todo cnt_of_firstn_dis_1: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, cnt c (firstn a m) = cnt c (firstn a (m - 1)) + 1 -> firstn a m = firstn a (m - 1) + [c];
+Todo cnt_firstn_le: ∀ T: U, ∀ a: list T, ∀ m, ∀ c, cnt c (firstn a m) ≤ cnt c a;
 Todo member_set_firstn: ∀ T: U, ∀ l: list T, ∀ i, member_set (firstn l i) ⊆ member_set l;
 Todo len_firstn: ∀ T: U, ∀ l: list T, ∀ i, 0 ≤ i -> i ≤ |l| -> |firstn l i| = i; 
 Todo firstn_firstn: ∀ T: U, ∀ l: list T, ∀ i j, i ≤ j -> firstn (firstn l j) i = firstn l i;
