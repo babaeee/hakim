@@ -52,12 +52,8 @@ const AutoProofButton = () => {
             const r = await tryAuto();
             if (mode === 'boost') {
                 if (r.available) {
-                    if (r.tactic[0] === "z3_solved") {
-                        z3Solved();
-                    } else {
-                        for (const tac of r.tactic) {
-                            await sendTactic(tac);
-                        }
+                    for (const tac of r.tactic) {
+                        await sendTactic(tac);
                     }
                 }
             } else {
@@ -79,12 +75,8 @@ const AutoProofButton = () => {
                     }
                     if (s.available) {
                         console.log(s.tactic[0]);
-                        if (s.tactic[0] === "z3_solved") {
-                            z3Solved();
-                        } else {
-                            for (const tac of s.tactic) {
-                                await sendTactic(tac);
-                            }
+                        for (const tac of s.tactic) {
+                            await sendTactic(tac);
                         }
                     } else if (mode === 'boost') {
                         setMode('normal');

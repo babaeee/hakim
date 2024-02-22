@@ -1,4 +1,8 @@
 {
     "rust-analyzer.checkOnSave.command": "clippy",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "rust-analyzer.linkedProjects": [
+        "./hakim-engine/Cargo.toml"
+    ],
+    "rust-analyzer.checkOnSave": false
 }

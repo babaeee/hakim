@@ -57,7 +57,6 @@ pub enum Command {
     Check(String),
     ActionOfTactic(String),
     TryTactic(String),
-    #[cfg(feature = "z3")]
     ChangeZ3Timeout(u64),
     Z3Solved,
 }
@@ -147,11 +146,8 @@ pub fn run_command(command: Command, state: &mut State) -> String {
             if let Some(x) = s.try_auto() {
                 serialize(x)
             } else {
-                serialize(None::<String>)
+                serialize(s.z3_get_state().map(Z3State))
             }
-            // else {
-            //     serialize(s.z3_get_state().map(Z3State))
-            // }
         }
         TryAutoHistory => serialize(state.session.as_ref().and_then(|s| s.history_based_auto())),
         GetHistory => serialize(state.session.as_ref().map(|s| s.get_history())),
@@ -299,10 +295,9 @@ pub fn run_command(command: Command, state: &mut State) -> String {
             };
             serialize(state.session.as_ref().unwrap().pos_of_span_goal((l, r)))
         }
-        #[cfg(feature = "z3")]
         ChangeZ3Timeout(t) => {
-            let mut g = Z3_TIMEOUT.lock().unwrap();
-            *g = Duration::from_millis(t);
+            //let mut g = Z3_TIMEOUT.lock().unwrap();
+            //*g = Duration::from_millis(t);
             serialize(())
         }
         Z3Solved => {
