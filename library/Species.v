@@ -3,6 +3,19 @@ Import /Function;
 
 Axiom species: (U → U) → U;
 
+Axiom generator_of_species: ∀ X: U → U, (∀ A: U, set A → set (X A)) 
+    → (∀ A B: U, (A → B) → X A → X B) → U;
+Axiom generator_of_species_finite_unfold: ∀ X: U → U, ∀ F: ∀ A: U, set A → set (X A), ∀ Is, 
+    generator_of_species X F Is → ∀ A: U, ∀ a: set A, finite a → finite (F A a);
+Axiom generator_of_species_fold: ∀ X: U → U, 
+    ∀ F: ∀ A: U, set A → set (X A), ∀ Is: ∀ A B: U, (A → B) → X A → X B, 
+    (∀ A: U, ∀ a: set A, finite a → finite (F A a)) 
+    → (∀ A B C: U, ∀ a: set A, ∀ b: set B, ∀ c: set C, ∀ f: B → C, ∀ g: A → B, finite a → bijective f b c → bijective g a b → ∀ x: X A, Is A C (f ∘ g) x = Is B C f (Is A B g x)) 
+    → (∀ A: U, ∀ a: set A, finite a → ∀ x: X A, x ∈ F A a → Is A A (λ y: A, y) x = x) 
+        → generator_of_species X F Is;
+
+Todo Is_bijection_T: ∀ X: U → U, ∀ F: ∀ A: U, set A → set (X A), ∀ Is: ∀ A B: U, (A → B) → X A → X B, generator_of_species X F Is -> ∀ A B: U, ∀ a: set A, finite a -> ∀ b: set B, ∀ f: A → B, bijective f a b -> bijective (Is A B f) (F A a) (F B b);
+
 Axiom #2 Fun: ∀ A: U, ∀ X: U → U, ∀ x: species X, set A → set (X A);
 Axiom #6 Is: ∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, ∀ X: U → U, ∀ x: species X, ∀ H: bijective f a b, (X A) -> (X B);
 Axiom Is_intro: ∀ X: U → U, ∀ x: species X,
@@ -41,7 +54,7 @@ Suggest hyp default apply Is_eq_unfold in $n with label Destruct;
 Axiom species_intro: ∀ X: U → U, species X → (∀ A: U, set A → set (X A)) → 
     (∀ A B: U, set A → set B → (A → B) → X A → X B) → U;
 Axiom species_intro_unfold: ∀ X: U → U, ∀ x: species X,
-    ∀ F: ∀ A: U, set A → set (X A),      
+        ∀ F: ∀ A: U, set A → set (X A),      
     ∀ is: ∀ A B: U, ∀ a: set A, ∀ b: set B, ∀ f: A → B, X A → X B,
         species_intro X x F is -> species_compos x is ∧ species_id x is ∧ Fun_eq x F ∧ Is_eq x is;
 Suggest hyp default apply species_intro_unfold in $n with label Destruct;
@@ -178,3 +191,8 @@ Todo sp_nth_1_xpX: ∀ X: U → U, ∀ x: species X, eq_sp (sp_nth x 1) spX;
 
 Axiom #2 dot: ∀ X Y: U → U, species X -> species Y -> species (λ A: U, X A ∧ Y A);
 
+Axiom #1 generator_of_labeled_species: ∀ A: U, ∀ X: U → U, (set A → set (X A)) → (ℤ → ℤ) → U;
+
+Axiom species_intro_cama: ∀ X: U → U, ∀ A: U, ∀ F: set A → set (X A), ∀ f: ℤ -> ℤ, 
+    generator_of_labeled_species X F f ->
+    ∀ a: set A, ∀ n, 0 ≤ n -> |a| = n -> |F a| = f n;

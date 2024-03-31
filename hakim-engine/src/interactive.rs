@@ -34,10 +34,9 @@ use self::suggest::{
 
 pub use self::action_of_tactic::action_of_tactic;
 pub use self::suggest::{SuggClass, SuggRule, Suggestion};
-#[cfg(feature = "z3")]
-use self::tactic::z3_auto;
+
 use self::tactic::{
-    add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp, revert, unfold,
+    add_from_lib, assumption, auto_list, auto_set, chain, remove_hyp, revert, unfold, z3_auto,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -284,7 +283,6 @@ impl Session {
         self.last_snapshot().last_frame()?.try_auto()
     }
 
-    #[cfg(feature = "z3")]
     pub fn z3_get_state(&self) -> Option<String> {
         Some(z3_auto(self.last_snapshot().last_frame()?.clone()))
     }
@@ -487,7 +485,6 @@ impl Frame {
             "auto_set" => auto_set(frame),
             "auto_list" => auto_list(frame),
             "assumption" => assumption(frame),
-            #[cfg(feature = "z3")]
             "z3" => Err(tactic::Error::Z3State(z3_auto(frame))),
             _ => Err(tactic::Error::UnknownTactic(name.to_string())),
         }
