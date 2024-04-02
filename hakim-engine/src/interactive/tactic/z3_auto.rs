@@ -576,13 +576,13 @@ impl<'a> Z3Manager {
         if let Term::Universe { index } = ty.as_ref() {
             if *index == 0 {
                 let key = app_ref!(to_universe(), TermRef::new(t.clone()));
-                let sort_name = format!("{:?}", t);
-                if check_exists(&self.unknowns.0, key.clone()) {
-                    return Some(sort_name);
+                let exist = check_exists(&self.unknowns.0, key.clone());
+                let id = lookup_in_cell_hashmap(&self.unknowns.0, key);
+                let sort_name = format!("$Type{id}");
+                if !exist {
+                    let sort = smt2::Sort::Declare(SortDecl::new(sort_name.clone(), 0));
+                    self.smt_ctx.sort(sort);
                 }
-                let sort = smt2::Sort::Declare(SortDecl::new(sort_name.clone(), 0));
-                self.smt_ctx.sort(sort);
-                lookup_in_cell_hashmap(&self.unknowns.0, key);
                 return Some(sort_name);
             }
         }
@@ -719,7 +719,11 @@ mod tests {
         );
         convert_check(r#""s" + "l" + " a" = "sl a""#, "(assert (not (= (str.++ (str.++ (seq.++ (seq.unit #x73) ) (seq.++ (seq.unit #x6C) )) (seq.++ (seq.unit #x20) (seq.++ (seq.unit #x61) ))) (seq.++ (seq.unit #x73) (seq.++ (seq.unit #x6C) (seq.++ (seq.unit #x20) (seq.++ (seq.unit #x61) )))))))\n(check-sat)\n");
         convert_check(r#"nth '*' "aa" 0 ∈ member_set "a""#, "(declare-const $x0 (Seq (_ BitVec 8)))\n(assert (not (select $x0 (seq.nth (seq.++ (seq.unit #x61) (seq.++ (seq.unit #x61) )) 0))))\n(check-sat)\n");
-      //  convert_check(r#"map (λ x, 2*x) [2] = [4]"#, "");
+        //  convert_check(r#"map (λ x, 2*x) [2] = [4]"#, "");
+        convert_check(
+            r#"∀ A: DFA "()", Ldfa A = { s: list char | valid_paren s }"#,
+            "(declare-const $x0 Bool)\n(assert $x0)\n(declare-sort $Type1 0)\n(declare-const A $Type1)\n(declare-const $x3 (Seq String))\n(declare-const $x4 (Seq String))\n(assert (not (= $x3 $x4)))\n(check-sat)\n",
+        );
     }
     #[test]
     fn simple() {
